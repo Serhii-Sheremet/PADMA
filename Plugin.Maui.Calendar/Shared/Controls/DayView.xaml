@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="Plugin.Maui.Calendar.Controls.DayView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:conv="clr-namespace:Plugin.Maui.Calendar.Converters"
+    xmlns:models="clr-namespace:Plugin.Maui.Calendar.Models"
+    x:Name="dayView"
+    x:DataType="models:DayModel"
+    IsVisible="{Binding IsControlVisible, Mode=OneWay}"
+    BackgroundColor="{Binding BackgroundFullEventColor}">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <conv:StrokeShapeConverter x:Key="StrokeShapeConverter"/>
+        </ResourceDictionary>
+    </ContentView.Resources>
+    <Grid
+        Margin="1"
+        Padding="0"
+        HeightRequest="{Binding DayViewSize, Mode=OneWay}"
+        IsVisible="{Binding IsVisible, Mode=OneWay}"
+        WidthRequest="{Binding DayViewSize, Mode=OneWay}">
+        <Border
+            Padding="0"
+            Margin="{Binding DayViewBorderMargin, Mode=OneWay}"
+            BackgroundColor="{Binding BackgroundColor, Mode=OneWay}"
+            MaximumHeightRequest="{Binding DayViewSize, Mode=OneWay}"
+            HorizontalOptions="Fill"
+            Stroke="{Binding OutlineColor, Mode=OneWay}"
+            StrokeShape="{Binding DayViewCornerRadius, Converter={StaticResource StrokeShapeConverter}, Mode=OneWay}"
+            MaximumWidthRequest="{Binding DayViewSize, Mode=OneWay}"
+            VerticalOptions="Fill"/>
+        <FlexLayout
+            AlignItems="Start"
+            Direction="{Binding EventLayoutDirection}"
+            JustifyContent="Start">
+            <FlexLayout.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnTapped"/>
+            </FlexLayout.GestureRecognizers>
+            <Grid HeightRequest="1"/>
+            <Label
+                Padding="2"
+                HorizontalTextAlignment="Start"
+                VerticalTextAlignment="Start"
+                Style="{Binding DaysLabelStyle, Mode=OneWay}"
+                Text="{Binding Day, Mode=OneWay}"
+                TextColor="{Binding TextColor, Mode=OneWay}"/>
+            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding EventColors, Mode=OneWay}" HeightRequest="10">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="Color">
+                        <Border
+                            Padding="2"
+                            BackgroundColor="{Binding ., Mode=OneWay}"
+                            HeightRequest="10"
+                            StrokeShape="RoundRectangle 3"
+                            WidthRequest="10"/>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </HorizontalStackLayout>
+        </FlexLayout>
+    </Grid>
+</ContentView>
+
