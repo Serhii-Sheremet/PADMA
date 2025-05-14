@@ -26,7 +26,7 @@ abstract class ViewLayoutBase(DayOfWeek firstDayOfWeek)
 		var grid = new Grid
 		{
 			ColumnSpacing = 0d,
-			RowSpacing = 6d,
+			RowSpacing = 0d,
 			RowDefinitions =
 			[
 				rowDefinition,

@@ -15,7 +15,7 @@
         </ResourceDictionary>
     </ContentView.Resources>
     <Grid
-        Margin="1"
+        Margin="0"
         Padding="0"
         HeightRequest="{Binding DayViewSize, Mode=OneWay}"
         IsVisible="{Binding IsVisible, Mode=OneWay}"
