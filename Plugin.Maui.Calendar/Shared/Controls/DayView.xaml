@@ -18,8 +18,7 @@
         Margin="0"
         Padding="0"
         HeightRequest="{Binding DayViewSize, Mode=OneWay}"
-        IsVisible="{Binding IsVisible, Mode=OneWay}"
-        WidthRequest="{Binding DayViewSize, Mode=OneWay}">
+        IsVisible="{Binding IsVisible, Mode=OneWay}">
         <Border
             Padding="0"
             Margin="{Binding DayViewBorderMargin, Mode=OneWay}"
@@ -28,7 +27,6 @@
             HorizontalOptions="Fill"
             Stroke="{Binding OutlineColor, Mode=OneWay}"
             StrokeShape="{Binding DayViewCornerRadius, Converter={StaticResource StrokeShapeConverter}, Mode=OneWay}"
-            MaximumWidthRequest="{Binding DayViewSize, Mode=OneWay}"
             VerticalOptions="Fill"/>
         
         <Grid
