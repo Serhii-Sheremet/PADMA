@@ -1,4 +1,5 @@
 ﻿using Plugin.Maui.Calendar.Models;
+using Plugin.Maui.Calendar.Shared.Models;
 using System.Globalization;
 
 namespace PADMA
@@ -6,6 +7,8 @@ namespace PADMA
     public partial class MainPage : ContentPage
     {
         public EventCollection Events { get; set; }
+
+        public DayDetails DaysExtras { get; set; }
 
         public CultureInfo Culture { get; set; }
 
@@ -40,6 +43,18 @@ namespace PADMA
                 }
             };
 
+            DaysExtras = new DayDetails
+            {
+                [DateTime.Now] = new List<DaysExtraModel>
+                {
+                    new() { Text = "Awoo", BackgroundColor = "LightCyan"}
+                },
+                [DateTime.Now.AddDays(2)] = new List<DaysExtraModel>
+                {
+                    new DaysExtraModel() { Text = "Baowao", BackgroundColor = "LightPink"}
+                }
+            };
+
 
 
             BindingContext = this;
@@ -52,5 +67,11 @@ namespace PADMA
     {
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+    }
+
+    internal class DaysExtraModel
+    {
+        public string Text { get; set; } = string.Empty;
+        public string BackgroundColor { get; set; } = string.Empty;
     }
 }
