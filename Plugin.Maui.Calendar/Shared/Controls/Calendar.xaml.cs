@@ -1123,8 +1123,8 @@ public partial class Calendar : ContentView, IDisposable
 		nameof(DaysExtras),
 		typeof(DayDetails),
 		typeof(Calendar),
-		new DayDetails()
-		//propertyChanged: OnDaysExtrasChanged
+		new DayDetails(),
+		propertyChanged: OnDaysExtrasChanged
 	);
 
 	/// Eri creation :tm:
@@ -1135,6 +1135,13 @@ public partial class Calendar : ContentView, IDisposable
 		set => SetValue(DaysExtrasProperty, value);
 	}
 
+	static void OnDaysExtrasChanged(BindableObject bindable, object oldValue, object newValue)
+	{
+		if (bindable is Calendar calendar)
+		{
+			calendar.UpdateDays(true);
+		}
+	}
 
 	/// <summary>
 	/// Bindable property for SelectedDayEvents
