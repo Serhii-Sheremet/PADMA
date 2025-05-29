@@ -43,7 +43,7 @@
     <plugin:Calendar 
         Padding="10"
         FirstDayOfWeek="Monday"
-        DayViewSize="55" 
+        DayViewSize="55"
         DayViewCornerRadius="1"
         
         Culture="{Binding Culture}"
@@ -59,6 +59,7 @@
         EventIndicatorTextColor="Black"
         EventIndicatorType="TopDot"
         Events="{Binding Events}"
+        DaysExtras="{Binding DaysExtras}"
         EventsScrollViewVisible="True"
         HeaderSectionVisible="True"
         FooterSectionVisible="True"

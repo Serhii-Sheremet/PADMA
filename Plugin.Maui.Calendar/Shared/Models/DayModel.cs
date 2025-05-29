@@ -147,6 +147,12 @@ sealed partial class DayModel : ObservableObject
 	[ObservableProperty]
 	Color disabledColor = Color.FromArgb("#ECECEC");
 
+	[ObservableProperty]
+	string daySubtext;
+
+	[ObservableProperty]
+	string dayDetailsColor;
+
 	public FlexDirection EventLayoutDirection => (HasEvents && EventIndicatorType == EventIndicatorType.TopDot) ? FlexDirection.ColumnReverse : FlexDirection.Column;
 
 	public bool BackgroundEventIndicator => HasEvents && EventIndicatorType == EventIndicatorType.Background;

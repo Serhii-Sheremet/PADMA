@@ -11,6 +11,7 @@ using Plugin.Maui.Calendar.Interfaces;
 using Plugin.Maui.Calendar.Models;
 using Plugin.Maui.Calendar.Styles;
 using Plugin.Maui.Calendar.Shared.Extensions;
+using Plugin.Maui.Calendar.Shared.Models;
 
 
 namespace Plugin.Maui.Calendar.Controls;
@@ -1116,6 +1117,31 @@ public partial class Calendar : ContentView, IDisposable
 		}
 	}
 
+	/// Eri creation :tm:
+	/// Bindable property for extra details for days
+	public static readonly BindableProperty DaysExtrasProperty = BindableProperty.Create(
+		nameof(DaysExtras),
+		typeof(DayDetails),
+		typeof(Calendar),
+		new DayDetails(),
+		propertyChanged: OnDaysExtrasChanged
+	);
+
+	/// Eri creation :tm:
+	/// Collection of all the days extras in the calendar
+	public DayDetails DaysExtras
+	{
+		get => (DayDetails)GetValue(DaysExtrasProperty);
+		set => SetValue(DaysExtrasProperty, value);
+	}
+
+	static void OnDaysExtrasChanged(BindableObject bindable, object oldValue, object newValue)
+	{
+		if (bindable is Calendar calendar)
+		{
+			calendar.UpdateDays(true);
+		}
+	}
 
 	/// <summary>
 	/// Bindable property for SelectedDayEvents
@@ -2198,6 +2224,28 @@ public partial class Calendar : ContentView, IDisposable
 			}
 
 			bool currentMonthOnLine = (lastDayOfMonth == 0 || (addDays - 1) / 7 == (lastDayOfMonth - 1) / 7);
+
+			/// Eri creation :tm:
+			if (DaysExtras.TryGetValue(dayModel.Date, out var dayDetailsCollection))
+			{
+				var dayDetails = dayDetailsCollection[0];
+
+				/// Literally wtf is this
+				/// https://stackoverflow.com/questions/11395315/get-value-of-a-specific-object-property-in-c-sharp-without-knowing-the-class-beh
+				/// apparently this isn't the fasted method, but like, I don't wanna mess with dark magic anymore
+				dayModel.DaySubtext = dayDetails.GetType().GetProperty("Text").GetValue(dayDetails).ToString();
+				dayModel.DayDetailsColor = dayDetails.GetType().GetProperty("BackgroundColor").GetValue(dayDetails).ToString();
+
+				///// Because you can't just use this, obviously
+				//dayModel.DaySubtext = dayDetailsCollection[0].Text;
+				//dayModel.DayDetailsColor = dayDetailsCollection[0].BackgroundColor;
+
+			}
+			else
+			{
+				dayModel.DaySubtext = null;
+				dayModel.DayDetailsColor = null;
+			}
 
 			dayModel.Date = currentDate.Date;
 			dayModel.Day = UseNativeDigits ? currentDate.Day.ToNativeDigitString(Culture) : currentDate.Day.ToString(Culture);

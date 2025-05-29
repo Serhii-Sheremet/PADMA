@@ -62,13 +62,14 @@
                     </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
             </FlexLayout>
-            <FlexLayout
+            <FlexLayout 
                 Grid.Row="1"
-                BackgroundColor="LightCyan">
+                BackgroundColor="{Binding DayDetailsColor, Mode=OneWay}">
+                <Label Text="{Binding DaySubtext, Mode=OneWay}"/>
                 <FlexLayout.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnTapped"/>
                 </FlexLayout.GestureRecognizers>
-                <Label Text="Test"/>
+                
             </FlexLayout>
         </Grid>
         
