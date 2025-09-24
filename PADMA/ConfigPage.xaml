@@ -1,12 +1,17 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="PADMA.ConfigPage"
-             Title="Configuration Page">
-    <VerticalStackLayout>
-        <Label 
-            Text="Configuration"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             x:Class="PADMA.ConfigurationPage"
+             Title="Конфигурация">
+
+    <StackLayout Padding="20" Spacing="20">
+
+        <Label Text="Выберите первый день недели:" FontSize="16" />
+
+        <RadioButton x:Name="MondayRadio" Content="Понедельник" GroupName="FirstDayGroup" CheckedChanged="OnFirstDayCheckedChanged"/>
+        <RadioButton x:Name="SundayRadio" Content="Воскресенье" GroupName="FirstDayGroup" CheckedChanged="OnFirstDayCheckedChanged"/>
+
+        <!-- Кнопка закрытия страницы -->
+        <Button Text="Закрыть" VerticalOptions="End" HorizontalOptions="Center" Clicked="OnCloseClicked"/>
+    </StackLayout>
 </ContentPage>
+

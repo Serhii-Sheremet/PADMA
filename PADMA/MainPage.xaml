@@ -1,101 +1,26 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:plugin="clr-namespace:Plugin.Maui.Calendar.Controls;assembly=Plugin.Maui.Calendar"
-             xmlns:styles="clr-namespace:Plugin.Maui.Calendar.Styles;assembly=Plugin.Maui.Calendar"
              x:Class="PADMA.MainPage"
-             Title="Personal Astrological Diary">
+             BackgroundColor="White">
 
+    <Grid RowDefinitions="2*,1*" Padding="0" Margin="0">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <Style x:Key="MyDaysLabelStyle" TargetType="Label">
-                <Setter Property="HorizontalTextAlignment" Value="Start" />
-                <Setter Property="TextColor" Value="Black" />
-                <Setter Property="FontSize" Value="Small" />
-                <Setter Property="LineBreakMode" Value="NoWrap" />
-                <Setter Property="VerticalTextAlignment" Value="Start" />
-                <Setter Property="Margin" Value="0,5" />
-            </Style>
-            <Style
-                x:Key="MyDaysTitleLabelStyle"
-                BasedOn="{x:Static styles:DefaultStyles.DefaultMonthLabelStyle}"
-                TargetType="Label">
-                <Setter Property="TextColor" Value="Orange" />
-            </Style>
-            <Style
-                x:Key="MyWeekendTitleStyle"
-                BasedOn="{x:Static styles:DefaultStyles.DefaultMonthLabelStyle}"
-                TargetType="Label">
-                <Setter Property="TextColor" Value="Orange" />
-            </Style>
-            <Style
-                x:Key="MySelectedDateLabelStyle"
-                BasedOn="{x:Static styles:DefaultStyles.DefaultLabelStyle}"
-                TargetType="Label">
-                <Setter Property="TextColor" Value="Red" />
-            </Style>
-        </ResourceDictionary>
-    </ContentPage.Resources>
+        <!-- Календарь -->
+        <Grid x:Name="CalendarGrid"
+              Grid.Row="0"
+              RowSpacing="0"
+              ColumnSpacing="0"
+              BackgroundColor="White"
+              VerticalOptions="FillAndExpand"
+              HorizontalOptions="FillAndExpand">
+        </Grid>
 
-
-
-
-    <plugin:Calendar 
-        Padding="10"
-        FirstDayOfWeek="Monday"
-        DayViewSize="55"
-        DayViewCornerRadius="1"
-        
-        Culture="{Binding Culture}"
-        DayTappedCommand="{Binding DayTappedCommand}"
-        DaysLabelStyle="{StaticResource MyDaysLabelStyle}"
-        DaysTitleLabelStyle="{StaticResource MyDaysTitleLabelStyle}"
-        DaysTitleMaximumLength="ThreeChars"
-        DeselectedDayTextColor="Black"
-        
-        EventIndicatorColor="Red"
-        EventIndicatorSelectedColor="Black"
-        EventIndicatorSelectedTextColor="Black"
-        EventIndicatorTextColor="Black"
-        EventIndicatorType="TopDot"
-        Events="{Binding Events}"
-        DaysExtras="{Binding DaysExtras}"
-        EventsScrollViewVisible="True"
-        HeaderSectionVisible="True"
-        FooterSectionVisible="True"
-        ShowYearPicker="False"
-        HorizontalOptions="Fill"
-        OtherMonthDayColor="Gray"
-        OtherMonthDayIsVisible="True"
-        SelectedDate="{Binding SelectedDate}"
-        SelectedDateLabelStyle="{StaticResource MySelectedDateLabelStyle}"
-        SelectedDateTextFormat="ddd, dd MMM yyyy"
-        SelectedDayBackgroundColor="DarkCyan"
-        SelectedDayTextColor="Cyan"
-        SelectedTodayTextColor="Green"
-        ShownDate="{Binding ShownDate}"
-        SwipeDetectionDisabled="False"
-        SwipeToChangeMonthEnabled="False"
-        SwipeUpToHideEnabled="False"
-        TodayFillColor="Silver"
-        TodayOutlineColor="Blue"
-        TodayTextColor="Yellow"
-        VerticalOptions="Fill"
-        WeekendTitleStyle="{StaticResource MyWeekendTitleStyle}"
-        >
-
-
-        <plugin:Calendar.EventTemplate>
-            <DataTemplate>
-                <VerticalStackLayout Padding="5" >
-                    <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" />
-                    <Label Text="{Binding Description}" FontSize="14" FontAttributes="Italic" />
-                </VerticalStackLayout>
-            </DataTemplate>
-        </plugin:Calendar.EventTemplate>
-    </plugin:Calendar>
-
-
-
+        <!-- Нижняя зона -->
+        <Grid Grid.Row="1" BackgroundColor="LightGray" Padding="10">
+            <Label Text="Зона для дополнительной информации"
+                   FontSize="16"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+        </Grid>
+    </Grid>
 </ContentPage>
-
