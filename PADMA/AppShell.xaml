@@ -12,4 +12,9 @@
     <FlyoutItem Title="Настройки" Route="ConfigurationPageRoute">
         <ShellContent ContentTemplate="{DataTemplate local:ConfigurationPage}" />
     </FlyoutItem>
+
+    <!-- Exit -->
+    <FlyoutItem Title="Exit" Route="ExitPageRoute">
+        <ShellContent ContentTemplate="{DataTemplate local:ExitPage}" />
+    </FlyoutItem>
 </Shell>
