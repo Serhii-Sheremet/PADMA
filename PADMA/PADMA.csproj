@@ -65,10 +65,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Plugin.Maui.Calendar\Plugin.Maui.Calendar.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <MauiXaml Update="ConfigPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
