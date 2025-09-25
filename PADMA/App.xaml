@@ -1,7 +1,8 @@
-﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:PADMA"
+             xmlns:converters="clr-namespace:PADMA.Converters"
              x:Class="PADMA.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -9,6 +10,13 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Конвертеры -->
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:TodayBackgroundConverter x:Key="TodayBackgroundConverter" />
+            <converters:TodayBorderBrushConverter x:Key="TodayBorderBrushConverter" />
+            <converters:TodayBorderThicknessConverter x:Key="TodayBorderThicknessConverter" />
+            <converters:HeightToCellHeightConverter x:Key="HeightToCellHeightConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
