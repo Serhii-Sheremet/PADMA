@@ -1,0 +1,71 @@
+name: Build and publish project snapshot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate PROJECT_SNAPSHOT.md
+        shell: pwsh
+        run: |
+          $ProjectRoot  = "$(Get-Location)"
+          $SnapshotPath = Join-Path $ProjectRoot "PROJECT_SNAPSHOT.md"
+
+          Remove-Item $SnapshotPath -ErrorAction SilentlyContinue
+
+          [System.IO.File]::WriteAllText(
+              $SnapshotPath,
+              "Project Snapshot`r`n`r`nGenerated on $(Get-Date)`r`n`r`n",
+              (New-Object System.Text.UTF8Encoding $false)
+          )
+
+          $files = Get-ChildItem -Path $ProjectRoot -Recurse -Include *.cs, *.xaml, *.csproj, *.sln -File -ErrorAction SilentlyContinue |
+                   Where-Object { $_.FullName -notmatch "\\(bin|obj)\\" }
+
+          foreach ($file in $files | Sort-Object FullName) {
+              $relativePath = $file.FullName.Replace($ProjectRoot, ".")
+              $content = Get-Content $file.FullName -Raw
+              $extension = [System.IO.Path]::GetExtension($file.FullName).TrimStart(".")
+
+              $block = "## $relativePath`r`n```$extension`r`n$content`r`n``` `r`n`r`n"
+
+              [System.IO.File]::AppendAllText(
+                  $SnapshotPath,
+                  $block,
+                  (New-Object System.Text.UTF8Encoding $false)
+              )
+          }
+
+      - name: Upload snapshot as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: project-snapshot
+          path: PROJECT_SNAPSHOT.md
+
+      - name: Push snapshot to PADMA-snapshots
+        run: |
+          git clone https://x-access-token:${{ secrets.SNAPSHOT_REPO_TOKEN }}@github.com/Serhii-Sheremet/PADMA-snapshots.git snapshots
+          cd snapshots
+
+          cp ../PROJECT_SNAPSHOT.md .
+
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add PROJECT_SNAPSHOT.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update snapshot from PADMA [skip ci]"
+          git push origin main
