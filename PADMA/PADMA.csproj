@@ -63,6 +63,10 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.60" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.4" />
 	</ItemGroup>
+	
+	<ItemGroup>
+		<MauiAsset Include="Resources\Raw\PADMADB.dat" LogicalName="PADMADB.db3" />
+	</ItemGroup>
 
 	<ItemGroup>
 	  <MauiXaml Update="Pages\ConfigPage.xaml">
