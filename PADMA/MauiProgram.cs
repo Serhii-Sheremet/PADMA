@@ -1,25 +1,28 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using PADMA.Services;
 
-namespace PADMA
+public static class MauiProgram
 {
-    public static class MauiProgram
+    public static MauiApp CreateMauiApp()
     {
-        public static MauiApp CreateMauiApp()
-        {
-            var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            });
 
-#if DEBUG
-    		builder.Logging.AddDebug();
-#endif
+        // Register DatabaseService
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADDB.db");
 
-            return builder.Build();
-        }
+        // Copy from app bundle to writable folder if needed
+        string seedDb = Path.Combine(FileSystem.Current.AppPackageDirectory, "Data", "PADDB.db");
+        if (!File.Exists(dbPath))
+            File.Copy(seedDb, dbPath);
+
+        builder.Services.AddSingleton(new DatabaseService(dbPath));
+
+        return builder.Build();
     }
 }

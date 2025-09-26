@@ -1,5 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
+using PADMA.Services;
 
 namespace PADMA
 {
@@ -7,9 +8,12 @@ namespace PADMA
     {
         private readonly CalendarViewModel viewModel;
 
-        public MainPage()
+        private readonly DatabaseService _db;
+
+        public MainPage(DatabaseService db)
         {
             InitializeComponent();
+            _db = db;
             viewModel = new CalendarViewModel();
             BindingContext = viewModel;
 
@@ -22,6 +26,12 @@ namespace PADMA
                 viewModel.RefreshCalendar();
                 UpdateTitle();
             });
+
+            var langs = _db.GetLanguages();
+            foreach (var lang in langs)
+            {
+                Console.WriteLine($"Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
+            }
         }
 
         private void UpdateTitle()
