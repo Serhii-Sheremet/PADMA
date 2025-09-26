@@ -1,44 +1,37 @@
 ﻿using SQLite;
-using System.Collections.Generic;
 
-namespace PADMA.Services
+namespace PADMA
 {
     public class DatabaseService
     {
-        private readonly string _dbPath;
+        private readonly SQLiteConnection _connection;
 
-        public DatabaseService(string dbPath)
+        public DatabaseService()
         {
-            _dbPath = dbPath;
-        }
+            string dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
 
-        private SqliteConnection GetConnection()
-        {
-            return new SqliteConnection($"Data Source={_dbPath}");
-        }
-
-        // Example: read languages
-        public List<(int Id, string LanguageCode, string CultureCode)> GetLanguages()
-        {
-            var result = new List<(int, string, string)>();
-
-            using var conn = GetConnection();
-            conn.Open();
-
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT ID, LANGUAGECODE, CULTURECODE FROM LANGUAGE";
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            // Копируем встроенную БД в рабочую папку, если её ещё нет
+            if (!File.Exists(dbPath))
             {
-                result.Add((
-                    reader.GetInt32(0),
-                    reader.GetString(1),
-                    reader.GetString(2)
-                ));
+                using var stream = FileSystem.OpenAppPackageFileAsync("PADMADB.db3").Result;
+                using var fileStream = File.Create(dbPath);
+                stream.CopyTo(fileStream);
             }
 
-            return result;
+            _connection = new SQLiteConnection(dbPath);
         }
+
+        public List<Language> GetLanguages()
+        {
+            return _connection.Table<Language>().ToList();
+        }
+    }
+
+    public class Language
+    {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+        public string LanguageCode { get; set; }
+        public string CultureCode { get; set; }
     }
 }

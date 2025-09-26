@@ -10,7 +10,6 @@
         <CollectionView x:Name="CalendarCollection"
                         Grid.Row="0"
                         ItemsSource="{Binding Days}"
-                        ItemsLayout="VerticalGrid,7"
                         SelectionMode="Single"
                         SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
                         HorizontalOptions="Fill"

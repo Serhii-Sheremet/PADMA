@@ -1,19 +1,21 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
-using PADMA.Services;
+using PADMA;
 
 namespace PADMA
 {
     public partial class MainPage : ContentPage
     {
         private readonly CalendarViewModel viewModel;
-
         private readonly DatabaseService _db;
 
-        public MainPage(DatabaseService db)
+        public MainPage()
         {
             InitializeComponent();
-            _db = db;
+
+            // создаём сервис базы прямо здесь
+            _db = new DatabaseService();
+
             viewModel = new CalendarViewModel();
             BindingContext = viewModel;
 
@@ -27,6 +29,7 @@ namespace PADMA
                 UpdateTitle();
             });
 
+            // тестовый вывод языков из базы
             var langs = _db.GetLanguages();
             foreach (var lang in langs)
             {

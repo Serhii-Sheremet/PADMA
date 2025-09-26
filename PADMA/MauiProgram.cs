@@ -1,4 +1,4 @@
-﻿using PADMA.Services;
+﻿namespace PADMA;
 
 public static class MauiProgram
 {
@@ -13,15 +13,7 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Register DatabaseService
-        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADDB.db");
-
-        // Copy from app bundle to writable folder if needed
-        string seedDb = Path.Combine(FileSystem.Current.AppPackageDirectory, "Data", "PADDB.db");
-        if (!File.Exists(dbPath))
-            File.Copy(seedDb, dbPath);
-
-        builder.Services.AddSingleton(new DatabaseService(dbPath));
+        // больше ничего регистрировать не нужно
 
         return builder.Build();
     }
