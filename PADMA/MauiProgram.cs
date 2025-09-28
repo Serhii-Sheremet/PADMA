@@ -1,13 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.Hosting;
-using Microsoft.Maui.Storage;
-using PADMA.Core.Services; // DatabaseService, ServiceLocator
-using System.IO;
+﻿using PADMA.Core.Services;
 
 namespace PADMA;
 
 public static class MauiProgram
 {
+    public static IServiceProvider Services { get; private set; }
+
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -20,27 +18,25 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Register DatabaseService (copy seed DB from app package to AppDataDirectory once)
-        builder.Services.AddSingleton<DatabaseService>(_ =>
+        // 📌 Копируем БД, если её ещё нет
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
+        if (!File.Exists(dbPath))
         {
-            const string dbFileName = "PADMADB.db3";
-            string destPath = Path.Combine(FileSystem.Current.AppDataDirectory, dbFileName);
+            using var stream = FileSystem.OpenAppPackageFileAsync("PADMADB.db3").Result;
+            using var newFile = File.Create(dbPath);
+            stream.CopyTo(newFile);
+        }
 
-            if (!File.Exists(destPath))
-            {
-                // Copy embedded MauiAsset -> writable app data
-                using var src = FileSystem.Current.OpenAppPackageFileAsync(dbFileName).GetAwaiter().GetResult();
-                using var dst = File.Create(destPath);
-                src.CopyTo(dst);
-            }
+        // 📌 Регистрация сервисов
+        builder.Services.AddSingleton(new DatabaseService(dbPath));
 
-            return new DatabaseService(destPath);
-        });
+        // 📌 Регистрация страниц
+        builder.Services.AddSingleton<MainPage>();
 
         var app = builder.Build();
 
-        // expose IServiceProvider globally for pages with parameterless constructors
-        ServiceLocator.Services = app.Services;
+        // сохраняем ServiceProvider для ServiceLocator
+        Services = app.Services;
 
         return app;
     }

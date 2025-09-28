@@ -6,7 +6,7 @@ public partial class App : Application
     {
         InitializeComponent();
 
-        // Теперь MainPage создаётся через DI
+        // MainPage создаётся через DI
         MainPage = new NavigationPage(mainPage);
     }
 }
