@@ -2,7 +2,7 @@
 using SQLite;
 
 
-namespace PADMA.Services
+namespace PADMA.Core.Services
 {
     public class DatabaseService
     {
