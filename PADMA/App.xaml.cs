@@ -1,12 +1,16 @@
-﻿namespace PADMA;
+﻿using Microsoft.Extensions.DependencyInjection;
+using PADMA.Core.Services;
+
+namespace PADMA;
 
 public partial class App : Application
 {
-    public App(MainPage mainPage)
+    public App()
     {
         InitializeComponent();
 
-        // MainPage создаётся через DI
+        // Resolve MainPage from DI after App resources are loaded
+        var mainPage = ServiceLocator.Services.GetRequiredService<MainPage>();
         MainPage = new NavigationPage(mainPage);
     }
 }

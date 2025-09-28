@@ -18,8 +18,8 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // 📌 Копируем БД, если её ещё нет
-        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
+        // Copy seed DB if needed
+        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
         if (!File.Exists(dbPath))
         {
             using var stream = FileSystem.OpenAppPackageFileAsync("PADMADB.db3").Result;
@@ -27,16 +27,14 @@ public static class MauiProgram
             stream.CopyTo(newFile);
         }
 
-        // 📌 Регистрация сервисов
+        // DI registrations
         builder.Services.AddSingleton(new DatabaseService(dbPath));
-
-        // 📌 Регистрация страниц
         builder.Services.AddSingleton<MainPage>();
 
         var app = builder.Build();
 
-        // сохраняем ServiceProvider для ServiceLocator
-        Services = app.Services;
+        // make DI accessible to ServiceLocator BEFORE App() runs
+        ServiceLocator.Services = app.Services;
 
         return app;
     }
