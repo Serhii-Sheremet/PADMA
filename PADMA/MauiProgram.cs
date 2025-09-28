@@ -1,4 +1,5 @@
-﻿namespace PADMA;
+﻿using PADMA.Services;
+using PADMA.Core.Services;
 
 public static class MauiProgram
 {
@@ -7,13 +8,19 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .ConfigureFonts(fonts =>
+            .ConfigureFonts(f =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                f.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                f.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // больше ничего регистрировать не нужно
+        // Path to copied DB ("PADMADB.db3") — как у тебя сейчас реализовано копирование в AppDataDirectory
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
+        var db = new DatabaseService(dbPath);
+        builder.Services.AddSingleton(db);
+
+        // Load cache once (choose UI language; например, "en" по умолчанию)
+        DataCache.Instance.LoadAll(db, preferredUiLang: "en");
 
         return builder.Build();
     }
