@@ -10,12 +10,10 @@ namespace PADMA
         private readonly CalendarViewModel viewModel;
         private readonly DatabaseService _db;
 
-        public MainPage()
+        public MainPage(DatabaseService db)
         {
             InitializeComponent();
-
-            // создаём сервис базы прямо здесь
-            _db = new DatabaseService();
+            _db = db;
 
             viewModel = new CalendarViewModel();
             BindingContext = viewModel;
