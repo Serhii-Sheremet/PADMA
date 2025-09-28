@@ -1,5 +1,5 @@
-﻿using PADMA.Services;
-using System.Reflection;
+﻿using Microsoft.Maui.Controls;
+using PADMA.Services;
 
 namespace PADMA;
 
@@ -8,6 +8,7 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
+
         builder
             .UseMauiApp<App>()
             .ConfigureFonts(fonts =>
@@ -16,28 +17,21 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Путь к базе в AppDataDirectory
-        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
+        // Пути к БД
+        string dbFileName = "PADMADB.db3";
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, dbFileName);
+        string seedDbPath = Path.Combine(FileSystem.AppPackageDirectory, "Resources", "Raw", dbFileName);
 
-        // Если базы ещё нет — копируем из ресурсов
+        // Копируем, если ещё не было
         if (!File.Exists(dbPath))
-        {
-            using var stream = Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("PADMA.Resources.Raw.PADMADB.db3");
+            File.Copy(seedDbPath, dbPath);
 
-            if (stream != null)
-            {
-                using var fileStream = File.Create(dbPath);
-                stream.CopyTo(fileStream);
-            }
-            else
-            {
-                throw new FileNotFoundException("Embedded resource PADMADB.db3 not found.");
-            }
-        }
-
-        // Регистрируем сервис базы
+        // Регистрируем сервисы
         builder.Services.AddSingleton(new DatabaseService(dbPath));
+        builder.Services.AddSingleton<MainPage>();
+
+        // Загружаем кеш данных (язык можно будет выбрать из настроек позже)
+        DataCache.Instance.LoadAll(builder.Services.BuildServiceProvider().GetRequiredService<DatabaseService>(), preferredUiLang: "en");
 
         return builder.Build();
     }

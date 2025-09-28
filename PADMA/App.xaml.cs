@@ -2,9 +2,11 @@
 
 public partial class App : Application
 {
-    public App()
+    public App(MainPage mainPage)
     {
         InitializeComponent();
-        MainPage = new AppShell();
+
+        // Теперь MainPage создаётся через DI
+        MainPage = new NavigationPage(mainPage);
     }
 }
