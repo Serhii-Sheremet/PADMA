@@ -1,5 +1,8 @@
-﻿using Microsoft.Maui.Controls;
-using PADMA.Services;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Hosting;
+using Microsoft.Maui.Storage;
+using PADMA.Core.Services; // DatabaseService, ServiceLocator
+using System.IO;
 
 namespace PADMA;
 
@@ -17,22 +20,28 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Пути к БД
-        string dbFileName = "PADMADB.db3";
-        string dbPath = Path.Combine(FileSystem.AppDataDirectory, dbFileName);
-        string seedDbPath = Path.Combine(FileSystem.AppPackageDirectory, "Resources", "Raw", dbFileName);
+        // Register DatabaseService (copy seed DB from app package to AppDataDirectory once)
+        builder.Services.AddSingleton<DatabaseService>(_ =>
+        {
+            const string dbFileName = "PADMADB.db3";
+            string destPath = Path.Combine(FileSystem.Current.AppDataDirectory, dbFileName);
 
-        // Копируем, если ещё не было
-        if (!File.Exists(dbPath))
-            File.Copy(seedDbPath, dbPath);
+            if (!File.Exists(destPath))
+            {
+                // Copy embedded MauiAsset -> writable app data
+                using var src = FileSystem.Current.OpenAppPackageFileAsync(dbFileName).GetAwaiter().GetResult();
+                using var dst = File.Create(destPath);
+                src.CopyTo(dst);
+            }
 
-        // Регистрируем сервисы
-        builder.Services.AddSingleton(new DatabaseService(dbPath));
-        builder.Services.AddSingleton<MainPage>();
+            return new DatabaseService(destPath);
+        });
 
-        // Загружаем кеш данных (язык можно будет выбрать из настроек позже)
-        DataCache.Instance.LoadAll(builder.Services.BuildServiceProvider().GetRequiredService<DatabaseService>(), preferredUiLang: "en");
+        var app = builder.Build();
 
-        return builder.Build();
+        // expose IServiceProvider globally for pages with parameterless constructors
+        ServiceLocator.Services = app.Services;
+
+        return app;
     }
 }

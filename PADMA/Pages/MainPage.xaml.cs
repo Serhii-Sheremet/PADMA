@@ -1,7 +1,7 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls;
 using System;
-using PADMA;
-using PADMA.Services;
+using PADMA.Core.Services;
 
 namespace PADMA
 {
@@ -10,10 +10,12 @@ namespace PADMA
         private readonly CalendarViewModel viewModel;
         private readonly DatabaseService _db;
 
-        public MainPage(DatabaseService db)
+        public MainPage()
         {
             InitializeComponent();
-            _db = db;
+
+            // Resolve DatabaseService from DI container
+            _db = ServiceLocator.Services.GetRequiredService<DatabaseService>();
 
             viewModel = new CalendarViewModel();
             BindingContext = viewModel;
@@ -21,18 +23,18 @@ namespace PADMA
             UpdateTitle();
             AddToolbarButtons();
 
-            // Подписка на изменения настроек
-            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", (sender) =>
+            // Settings changed
+            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
                 viewModel.RefreshCalendar();
                 UpdateTitle();
             });
 
-            // тестовый вывод языков из базы
+            // Example query (shows in VS Output / Logcat)
             var langs = _db.GetLanguages();
             foreach (var lang in langs)
             {
-                Console.WriteLine($"Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
+                System.Diagnostics.Debug.WriteLine($"[PADMA] Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
             }
         }
 
