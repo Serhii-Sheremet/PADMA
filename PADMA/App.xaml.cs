@@ -2,6 +2,7 @@
 
 namespace PADMA
 {
+
     public partial class App : Application
     {
         public App()
@@ -10,4 +11,5 @@ namespace PADMA
             MainPage = new AppShell();
         }
     }
+
 }
