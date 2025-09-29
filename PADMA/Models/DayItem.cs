@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PADMA
+namespace PADMA.Core.Models
 {
     public class DayItem : INotifyPropertyChanged
     {
