@@ -1,7 +1,7 @@
 using Microsoft.Maui.Controls;
 using System;
 
-namespace PADMA.Page
+namespace PADMA.Pages
 {
     [QueryProperty(nameof(SelectedDate), "SelectedDate")]
     public partial class DayPage : ContentPage
