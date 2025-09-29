@@ -1,19 +1,30 @@
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="PADMA.Pages.ConfigurationPage"
-             Title="Настройки">
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="PADMA.Pages.ConfigurationPage"
+    Title="Settings">
 
-    <VerticalStackLayout Padding="20" Spacing="20">
-        <Label Text="Первый день недели:" FontAttributes="Bold" />
+    <ContentPage.ToolbarItems>
+        <!-- Крестик закрытия -->
+        <ToolbarItem Text="✕" Priority="0" Order="Primary" Clicked="OnCloseClicked"/>
+    </ContentPage.ToolbarItems>
 
-        <RadioButton Content="Понедельник"
-                     GroupName="FirstDayOfWeek"
-                     IsChecked="{Binding IsMondayFirst}" 
-                     CheckedChanged="OnFirstDayOfWeekChanged"/>
+    <VerticalStackLayout Padding="20" Spacing="16">
 
-        <RadioButton Content="Воскресенье"
-                     GroupName="FirstDayOfWeek"
-                     IsChecked="{Binding IsSundayFirst}" 
-                     CheckedChanged="OnFirstDayOfWeekChanged"/>
+        <Label Text="First day of week:" FontAttributes="Bold" />
+
+        <RadioButton
+            Content="Monday"
+            GroupName="FirstDayOfWeek"
+            IsChecked="{Binding IsMondayFirst}"
+            CheckedChanged="OnFirstDayOfWeekChanged" />
+
+        <RadioButton
+            Content="Sunday"
+            GroupName="FirstDayOfWeek"
+            IsChecked="{Binding IsSundayFirst}"
+            CheckedChanged="OnFirstDayOfWeekChanged" />
+
     </VerticalStackLayout>
 </ContentPage>

@@ -6,13 +6,18 @@ namespace PADMA.Pages
 {
     public partial class MainPage : ContentPage
     {
-        private readonly CalendarViewModel viewModel;
+        private CalendarViewModel viewModel => (CalendarViewModel)BindingContext;
 
         public MainPage()
         {
             InitializeComponent();
-            viewModel = new CalendarViewModel();
-            BindingContext = viewModel;
+
+            // Подписка на изменения настроек — перегенерируем календарь
+            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
+            {
+                viewModel.RefreshCalendar();
+                UpdateTitle();
+            });
 
             UpdateTitle();
             AddToolbarButtons();
@@ -36,8 +41,7 @@ namespace PADMA.Pages
 
         private void UpdateTitle()
         {
-            Title = new DateTime(viewModel.Year, viewModel.Month, 1)
-                .ToString("MMMM yyyy");
+            Title = new DateTime(viewModel.Year, viewModel.Month, 1).ToString("MMMM yyyy");
         }
 
         private void AddToolbarButtons()

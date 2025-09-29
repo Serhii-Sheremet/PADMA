@@ -1,4 +1,4 @@
-﻿using PADMA.Pages;
+﻿using Microsoft.Maui.Controls;
 
 namespace PADMA;
 
@@ -8,7 +8,8 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
 
-        // Hidden (non-flyout) route for the Day page
-        Routing.RegisterRoute("day", typeof(DayPage));
+        // Регистрируем route для страницы дня (если понадобится навигация по имени)
+        Routing.RegisterRoute("day", typeof(Pages.DayPage));
     }
 }
+
