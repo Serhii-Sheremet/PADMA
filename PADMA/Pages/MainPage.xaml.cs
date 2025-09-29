@@ -4,7 +4,7 @@ using System.Diagnostics;
 using PADMA.Core.Services;
 using PADMA.Pages;
 
-namespace PADMA
+namespace PADMA.Pages
 {
     public partial class MainPage : ContentPage
     {

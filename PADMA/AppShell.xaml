@@ -1,31 +1,32 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-       xmlns:local="clr-namespace:PADMA"
        xmlns:pages="clr-namespace:PADMA.Pages"
        x:Class="PADMA.AppShell">
 
-    <!-- Главная (календарь) -->
-    <ShellItem Route="main">
-        <ShellContent
-        Route="Main"
-        Title="PADMA"
-        ContentTemplate="{DataTemplate local:MainPage}" />
-    </ShellItem>
+    <!-- Главная: календарь в бургер-меню, маршрут //calendar -->
+    <FlyoutItem Title="Calendar" Route="calendar">
+        <ShellContent Title="Calendar">
+            <pages:MainPage />
+        </ShellContent>
+    </FlyoutItem>
 
-    <!-- Отдельный корневой маршрут для DayPage -->
-    <ShellContent
-    Title="Day"
-    Route="day"
-    ContentTemplate="{DataTemplate pages:DayPage}" />
+    <!-- Страница дня: отдельный маршрут (в меню не показываем) -->
+    <ShellContent Route="day">
+        <pages:DayPage />
+    </ShellContent>
 
     <!-- Настройки -->
     <FlyoutItem Title="Настройки" Route="ConfigurationPageRoute">
-        <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
+        <ShellContent>
+            <pages:ConfigurationPage />
+        </ShellContent>
     </FlyoutItem>
 
     <!-- Exit -->
     <FlyoutItem Title="Exit" Route="ExitPageRoute">
-        <ShellContent ContentTemplate="{DataTemplate pages:ExitPage}" />
+        <ShellContent>
+            <pages:ExitPage />
+        </ShellContent>
     </FlyoutItem>
 </Shell>
