@@ -1,84 +1,64 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:converters="clr-namespace:PADMA.Converters"
-    xmlns:models="clr-namespace:PADMA.Core.Models"
-    x:Class="PADMA.Pages.MainPage"
-    Title="Calendar"
-    BackgroundColor="White">
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:PADMA.Core.Models"
+             x:Class="PADMA.Pages.MainPage"
+             Title="Calendar">
 
     <Grid RowDefinitions="*">
         <CollectionView x:Name="CalendarCollection"
-                    Grid.Row="0"
-                    ItemsSource="{Binding Days}"
-                    SelectionMode="Single"
-                    SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
-                    SelectionChanged="OnDaySelected"
-                    HorizontalOptions="Fill"
-                    VerticalOptions="Fill"
-                    BackgroundColor="White">
+                        Grid.Row="0"
+                        ItemsSource="{Binding Days}"
+                        SelectionMode="None"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Fill"
+                        BackgroundColor="White">
 
-            <!-- single ItemsLayout definition -->
             <CollectionView.ItemsLayout>
                 <GridItemsLayout Orientation="Vertical"
-                         Span="7"
-                         HorizontalItemSpacing="0"
-                         VerticalItemSpacing="0"/>
+                                 Span="7"
+                                 HorizontalItemSpacing="0"
+                                 VerticalItemSpacing="0"/>
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:DayItem">
-                    <!-- outer border for thin black cell grid -->
+                    <!-- Ячейка календаря -->
                     <Border HeightRequest="{Binding Source={x:Reference CalendarCollection}, Path=Height, Converter={StaticResource HeightToCellHeightConverter}}"
-                  Stroke="Black"
-                  StrokeThickness="0.5"
-                  Padding="0"
-                  HorizontalOptions="Fill"
-                  VerticalOptions="Fill">
+                            Stroke="Black"
+                            StrokeThickness="0.5"
+                            Padding="0"
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Fill">
 
-                        <!-- inner area: today background + selected background (orange) -->
-                        <Border Padding="0"
-                    HorizontalOptions="Fill"
-                    VerticalOptions="Fill">
-                            <Border.Triggers>
-                                <!-- today background -->
-                                <DataTrigger TargetType="Border"
-                             Binding="{Binding IsToday}"
-                             Value="True">
-                                    <Setter Property="Background" Value="{StaticResource TodayBackgroundConverter}" />
-                                </DataTrigger>
-                                <!-- selected day background (orange) -->
-                                <DataTrigger TargetType="Border"
-                             Binding="{Binding IsSelected}"
-                             Value="True">
-                                    <Setter Property="Background" Value="Orange" />
-                                </DataTrigger>
-                            </Border.Triggers>
+                        <!-- Внутренняя область: фон для "сегодня" -->
+                        <Border Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}"
+                                Padding="0"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill">
 
                             <Grid RowDefinitions="*,2*"
-                    RowSpacing="0"
-                    ColumnSpacing="0"
-                    Padding="0"
-                    HorizontalOptions="Fill"
-                    VerticalOptions="Fill">
+                                  RowSpacing="0"
+                                  ColumnSpacing="0"
+                                  Padding="0"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill">
 
-                                <!-- day number (top-left) -->
+                                <!-- Число дня -->
                                 <Label Grid.Row="0"
-                       Text="{Binding DayNumber}"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Start"
-                       VerticalOptions="Start"
-                       Margin="2,2,0,0"
-                       TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
+                                       Text="{Binding DayNumber}"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Start"
+                                       VerticalOptions="Start"
+                                       Margin="2,2,0,0"
+                                       TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
 
-                                <!-- 6 color stripes -->
+                                <!-- Цветные полоски -->
                                 <Grid Grid.Row="1"
-                      RowDefinitions="*,*,*,*,*,*"
-                      VerticalOptions="Fill"
-                      HorizontalOptions="Fill"
-                      RowSpacing="1"
-                      Padding="0,2,0,2">
+                                      RowDefinitions="*,*,*,*,*,*"
+                                      VerticalOptions="Fill"
+                                      HorizontalOptions="Fill"
+                                      RowSpacing="1"
+                                      Padding="0,2,0,2">
                                     <BoxView Grid.Row="0" BackgroundColor="Red"/>
                                     <BoxView Grid.Row="1" BackgroundColor="Orange"/>
                                     <BoxView Grid.Row="2" BackgroundColor="Yellow"/>
@@ -86,7 +66,6 @@
                                     <BoxView Grid.Row="4" BackgroundColor="Blue"/>
                                     <BoxView Grid.Row="5" BackgroundColor="Purple"/>
                                 </Grid>
-
                             </Grid>
                         </Border>
                     </Border>
