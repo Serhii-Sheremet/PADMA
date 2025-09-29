@@ -1,22 +1,19 @@
 using Microsoft.Maui.Controls;
-using System;
 
 namespace PADMA.Pages
 {
-    [QueryProperty(nameof(Date), "date")]
+    [QueryProperty(nameof(Date), "Date")]
     public partial class DayPage : ContentPage
     {
         private DateTime _date;
 
-        public string Date
+        public DateTime Date
         {
+            get => _date;
             set
             {
-                if (DateTime.TryParse(value, out var parsed))
-                {
-                    _date = parsed;
-                    Title = _date.ToString("dd MMMM yyyy"); // титул = дата
-                }
+                _date = value;
+                Title = _date.ToString("dd MMMM yyyy"); // титул всегда выбранная дата
             }
         }
 
@@ -27,6 +24,7 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
+            // возвращаемся на календарь
             await Shell.Current.GoToAsync("//calendar");
         }
     }

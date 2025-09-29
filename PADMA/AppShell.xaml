@@ -3,27 +3,26 @@
        xmlns:pages="clr-namespace:PADMA.Pages"
        x:Class="PADMA.AppShell">
 
-    <!-- Главный пункт с календарём -->
-    <FlyoutItem Title="Calendar" Route="calendar">
+    <!-- Календарь -->
+    <ShellItem Route="calendar">
         <ShellContent
-            Route="main"
             Title="Calendar"
             ContentTemplate="{DataTemplate pages:MainPage}" />
-    </FlyoutItem>
+    </ShellItem>
 
-    <!-- Страница дня (НЕ в меню, только для навигации) -->
+    <!-- Страница дня -->
     <ShellContent
+        Title="Day"
         Route="day"
-        ContentTemplate="{DataTemplate pages:DayPage}"
-        Shell.FlyoutBehavior="Disabled" />
+        ContentTemplate="{DataTemplate pages:DayPage}" />
 
-    <!-- Страница конфигурации -->
-    <FlyoutItem Title="Настройки" Route="ConfigurationPageRoute">
+    <!-- Настройки -->
+    <FlyoutItem Title="Settings">
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>
 
     <!-- Exit -->
-    <FlyoutItem Title="Exit" Route="ExitPageRoute">
+    <FlyoutItem Title="Exit">
         <ShellContent ContentTemplate="{DataTemplate pages:ExitPage}" />
     </FlyoutItem>
 </Shell>

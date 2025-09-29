@@ -5,65 +5,66 @@
              x:Class="PADMA.Pages.MainPage"
              Title="Calendar">
 
-    <!-- Один ряд, одна колонка, чтобы календарь занимал весь экран -->
-    <Grid RowDefinitions="*" ColumnDefinitions="*">
+    <Grid RowDefinitions="*">
+
         <CollectionView x:Name="CalendarCollection"
                         Grid.Row="0"
-                        Grid.Column="0"
                         ItemsSource="{Binding Days}"
                         SelectionMode="Single"
                         SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
+                        SelectionChanged="OnSelectionChanged"
                         HorizontalOptions="FillAndExpand"
                         VerticalOptions="FillAndExpand"
-                        BackgroundColor="White">
-
-            <!-- Макет сетки 7 колонок -->
-            <CollectionView.ItemsLayout>
-                <GridItemsLayout Orientation="Vertical"
-                                 Span="7"
-                                 HorizontalItemSpacing="0"
-                                 VerticalItemSpacing="0"/>
-            </CollectionView.ItemsLayout>
+                        BackgroundColor="White"
+                        ItemsLayout="VerticalGrid,7">
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:DayItem">
+                    <!-- Тонкая чёрная рамка вокруг дня -->
                     <Border Stroke="Black"
                             StrokeThickness="0.5"
                             Padding="0"
                             HorizontalOptions="FillAndExpand"
-                            VerticalOptions="FillAndExpand">
-                        <Border Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}">
-                            <Grid RowDefinitions="Auto,*"
-                                  RowSpacing="0"
-                                  ColumnSpacing="0"
-                                  Padding="0"
+                            VerticalOptions="FillAndExpand"
+                            
+                            Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}"
+                            HeightRequest="{Binding Source={x:Reference CalendarCollection},
+                                                    Path=Height,
+                                                    Converter={StaticResource HeightToCellHeightConverter}}">
+
+                        <!-- 1/3 сверху, 2/3 снизу -->
+                        <Grid RowDefinitions="*,2*"
+                              RowSpacing="0"
+                              ColumnSpacing="0"
+                              Padding="0"
+                              HorizontalOptions="FillAndExpand"
+                              VerticalOptions="FillAndExpand">
+
+                            <!-- Число дня (левый верхний угол) -->
+                            <Label Grid.Row="0"
+                                   Text="{Binding DayNumber}"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Start"
+                                   VerticalOptions="Start"
+                                   Margin="2,2,0,0"
+                                   TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
+
+                            <!-- 6 цветных полос — занимают нижние 2/3 -->
+                            <Grid Grid.Row="1"
+                                  RowDefinitions="*,*,*,*,*,*"
+                                  RowSpacing="1"
+                                  Padding="0,2,0,2"
                                   HorizontalOptions="FillAndExpand"
                                   VerticalOptions="FillAndExpand">
-
-                                <!-- Число дня -->
-                                <Label Text="{Binding DayNumber}"
-                                       FontAttributes="Bold"
-                                       HorizontalOptions="Start"
-                                       VerticalOptions="Start"
-                                       Margin="2,2,0,0"
-                                       TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
-
-                                <!-- Цветные полоски -->
-                                <Grid Grid.Row="1"
-                                      RowDefinitions="*,*,*,*,*,*"
-                                      RowSpacing="1"
-                                      Padding="0,2,0,2"
-                                      HorizontalOptions="FillAndExpand"
-                                      VerticalOptions="FillAndExpand">
-                                    <BoxView Grid.Row="0" BackgroundColor="Red"/>
-                                    <BoxView Grid.Row="1" BackgroundColor="Orange"/>
-                                    <BoxView Grid.Row="2" BackgroundColor="Yellow"/>
-                                    <BoxView Grid.Row="3" BackgroundColor="Green"/>
-                                    <BoxView Grid.Row="4" BackgroundColor="Blue"/>
-                                    <BoxView Grid.Row="5" BackgroundColor="Purple"/>
-                                </Grid>
+                                <BoxView Grid.Row="0" BackgroundColor="Red" />
+                                <BoxView Grid.Row="1" BackgroundColor="Orange" />
+                                <BoxView Grid.Row="2" BackgroundColor="Yellow" />
+                                <BoxView Grid.Row="3" BackgroundColor="Green" />
+                                <BoxView Grid.Row="4" BackgroundColor="Blue" />
+                                <BoxView Grid.Row="5" BackgroundColor="Purple" />
                             </Grid>
-                        </Border>
+
+                        </Grid>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
