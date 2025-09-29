@@ -1,8 +1,7 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
+using PADMA.UI.Models;
 using PADMA.Core.Services;
-using PADMA.Core.Models;
-using PADMA.UI.ViewModels;
 
 namespace PADMA.Pages
 {
@@ -14,39 +13,38 @@ namespace PADMA.Pages
         public MainPage(DatabaseService db)
         {
             InitializeComponent();
-
             _db = db;
+
             viewModel = new CalendarViewModel();
             BindingContext = viewModel;
 
             UpdateTitle();
             AddToolbarButtons();
 
-            // Подписка на изменения настроек
-            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", (sender) =>
+            // Событие изменения настроек
+            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
                 viewModel.RefreshCalendar();
                 UpdateTitle();
             });
 
-            // Вывод языков в Output (для проверки)
+            // Тест: загрузка языков
             var langs = _db.GetLanguages();
             foreach (var lang in langs)
             {
                 System.Diagnostics.Debug.WriteLine($"[PADMA] Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
             }
 
-            // Обработчик выбора дня
-            CalendarCollection.SelectionChanged += async (s, e) =>
+            // Обработка выбора дня
+            CalendarCollection.SelectionChanged += OnDaySelected;
+        }
+
+        private async void OnDaySelected(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.FirstOrDefault() is DayItem selectedDay)
             {
-                if (e.CurrentSelection.FirstOrDefault() is DayItem selectedDay)
-                {
-                    await Shell.Current.GoToAsync("day", new Dictionary<string, object>
-                    {
-                        { "SelectedDay", selectedDay }
-                    });
-                }
-            };
+                await Shell.Current.GoToAsync($"day?date={selectedDay.Date:O}");
+            }
         }
 
         private void UpdateTitle()
@@ -70,15 +68,5 @@ namespace PADMA.Pages
                 UpdateTitle();
             }));
         }
-
-        private async void OnDaySelected(object sender, SelectionChangedEventArgs e)
-        {
-            if (e.CurrentSelection.FirstOrDefault() is PADMA.Models.DayItem day)
-            {
-                await Shell.Current.GoToAsync($"day?date={day.Date:yyyy-MM-dd}");
-            }
-        }
-
-
     }
 }
