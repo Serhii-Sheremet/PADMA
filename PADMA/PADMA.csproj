@@ -69,6 +69,9 @@
     <MauiXaml Update="Pages\ConfigPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Pages\DayPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\ExitPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

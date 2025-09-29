@@ -59,5 +59,21 @@ namespace PADMA
                 UpdateTitle();
             }));
         }
+
+        private async void OnDaySelected(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.FirstOrDefault() is DayItem selectedDay)
+            {
+                // Открываем новую страницу с выбранной датой
+                await Navigation.PushAsync(new Pages.DayPage(
+                    new DateTime(viewModel.Year, viewModel.Month, selectedDay.DayNumber)
+                ));
+
+                // Сбрасываем выделение (чтобы можно было повторно кликнуть тот же день)
+                ((CollectionView)sender).SelectedItem = null;
+            }
+        }
+
+
     }
 }
