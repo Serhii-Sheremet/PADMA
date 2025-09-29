@@ -5,21 +5,21 @@
        xmlns:pages="clr-namespace:PADMA.Pages"
        x:Class="PADMA.AppShell">
 
-    <!-- Главный пункт с календарём -->
+    <!-- Главная (календарь) -->
     <ShellItem Route="main">
         <ShellContent
-            Route="Main"
-            Title="PADMA"
-            ContentTemplate="{DataTemplate local:MainPage}" />
+      Route="Main"
+      Title="PADMA"
+      ContentTemplate="{DataTemplate local:MainPage}" />
     </ShellItem>
 
-    <!-- Отдельный корневой маршрут для страницы дня -->
+    <!-- Отдельный корневой маршрут для DayPage -->
     <ShellContent
-        Title="Day"
-        Route="day"
-        ContentTemplate="{DataTemplate pages:DayPage}" />
+    Title="Day"
+    Route="day"
+    ContentTemplate="{DataTemplate pages:DayPage}" />
 
-    <!-- Страница конфигурации -->
+    <!-- Настройки -->
     <FlyoutItem Title="Настройки" Route="ConfigurationPageRoute">
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>

@@ -1,7 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="PADMA.ConfigurationPage"
-             Title="Конфигурация">
+             x:Class="PADMA.Pages.ConfigurationPage"
+             Title="Настройки">
 
     <StackLayout Padding="20" Spacing="20">
 
@@ -13,5 +14,6 @@
         <!-- Кнопка закрытия страницы -->
         <Button Text="Закрыть" VerticalOptions="End" HorizontalOptions="Center" Clicked="OnCloseClicked"/>
     </StackLayout>
+    
 </ContentPage>
 
