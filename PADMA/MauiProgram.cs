@@ -1,4 +1,5 @@
 ﻿using PADMA.Core.Services;
+using PADMA.Pages;
 
 namespace PADMA;
 
@@ -28,6 +29,11 @@ public static class MauiProgram
 
         // Services
         builder.Services.AddSingleton(new DatabaseService(dbPath));
+
+        builder.Services.AddSingleton<MainPage>();
+        builder.Services.AddSingleton<DayPage>();
+        builder.Services.AddSingleton<ConfigurationPage>();
+        builder.Services.AddSingleton<ExitPage>();
 
         // Build + expose ServiceProvider (used by MainPage via ServiceLocator)
         var app = builder.Build();

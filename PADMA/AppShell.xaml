@@ -6,17 +6,16 @@
     <!-- Главный пункт с календарём -->
     <FlyoutItem Title="Calendar" Route="calendar">
         <ShellContent
+            Route="main"
             Title="Calendar"
-            Route="calendar"
             ContentTemplate="{DataTemplate pages:MainPage}" />
     </FlyoutItem>
 
-    <!-- Страница дня (скрыта из меню, вызывается только через GoToAsync) -->
+    <!-- Страница дня (НЕ в меню, только для навигации) -->
     <ShellContent
         Route="day"
-        Title="Day"
-        FlyoutItemIsVisible="False"
-        ContentTemplate="{DataTemplate pages:DayPage}" />
+        ContentTemplate="{DataTemplate pages:DayPage}"
+        Shell.FlyoutBehavior="Disabled" />
 
     <!-- Страница конфигурации -->
     <FlyoutItem Title="Настройки" Route="ConfigurationPageRoute">

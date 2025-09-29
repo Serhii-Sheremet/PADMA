@@ -1,27 +1,17 @@
-﻿using System.ComponentModel;
-
-namespace PADMA.Core.Models
+﻿namespace PADMA.Core.Models
 {
-    public class DayItem : INotifyPropertyChanged
+    public class DayItem
     {
+        // Calendar cell number
         public int DayNumber { get; set; }
+
+        // True if this cell belongs to the current month
         public bool IsCurrentMonth { get; set; }
+
+        // Absolute date of this cell (needed for navigation)
+        public DateTime Date { get; set; }
+
+        // Convenience flag for highlighting "today"
         public bool IsToday { get; set; }
-
-        private bool _isSelected;
-        public bool IsSelected
-        {
-            get => _isSelected;
-            set
-            {
-                if (_isSelected != value)
-                {
-                    _isSelected = value;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
-                }
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
     }
 }

@@ -66,31 +66,58 @@ namespace PADMA.Core.Models
 
             DateTime firstDayOfMonth = new DateTime(year, month, 1);
             int daysInMonth = DateTime.DaysInMonth(year, month);
-            int startDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
 
+            int startDayOfWeek = (int)firstDayOfMonth.DayOfWeek; // 0 = Sunday
             if (AppSettings.FirstDayOfWeek == FirstDayOfWeek.Monday)
                 startDayOfWeek = startDayOfWeek == 0 ? 6 : startDayOfWeek - 1;
 
-            // предыдущий месяц
+            // previous month lead-in
             DateTime prevMonth = firstDayOfMonth.AddMonths(-1);
             int daysInPrevMonth = DateTime.DaysInMonth(prevMonth.Year, prevMonth.Month);
+            int leading = startDayOfWeek;
 
-            for (int i = startDayOfWeek - 1; i >= 0; i--)
-                Days.Add(new DayItem { DayNumber = daysInPrevMonth - i, IsCurrentMonth = false, IsToday = false });
-
-            // текущий месяц
-            var today = DateTime.Today;
-            for (int d = 1; d <= daysInMonth; d++)
+            for (int i = leading - 1; i >= 0; i--)
             {
-                bool isToday = (year == today.Year && month == today.Month && d == today.Day);
-                Days.Add(new DayItem { DayNumber = d, IsCurrentMonth = true, IsToday = isToday });
+                int dayNum = daysInPrevMonth - i;
+                var date = new DateTime(prevMonth.Year, prevMonth.Month, dayNum);
+                Days.Add(new DayItem
+                {
+                    DayNumber = dayNum,
+                    IsCurrentMonth = false,
+                    Date = date,
+                    IsToday = date.Date == DateTime.Today
+                });
             }
 
-            // следующий месяц
-            int nextDay = 1;
+            // current month
+            for (int d = 1; d <= daysInMonth; d++)
+            {
+                var date = new DateTime(year, month, d);
+                Days.Add(new DayItem
+                {
+                    DayNumber = d,
+                    IsCurrentMonth = true,
+                    Date = date,
+                    IsToday = date.Date == DateTime.Today
+                });
+            }
+
+            // next month tail to reach 42 cells
+            DateTime nextMonth = firstDayOfMonth.AddMonths(1);
+            int nextDayNum = 1;
             while (Days.Count < 42)
-                Days.Add(new DayItem { DayNumber = nextDay++, IsCurrentMonth = false, IsToday = false });
+            {
+                var date = new DateTime(nextMonth.Year, nextMonth.Month, nextDayNum++);
+                Days.Add(new DayItem
+                {
+                    DayNumber = date.Day,
+                    IsCurrentMonth = false,
+                    Date = date,
+                    IsToday = date.Date == DateTime.Today
+                });
+            }
         }
+
 
         public void MoveMonth(int offset)
         {

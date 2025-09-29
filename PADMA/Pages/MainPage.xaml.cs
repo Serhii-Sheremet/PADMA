@@ -1,8 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.Controls;
-using PADMA.Core.Models;
-using PADMA.Core.Services;
+﻿using Microsoft.Maui.Controls;
 using System;
+using PADMA.Core.Services;
+using PADMA.Core.Models;
 
 namespace PADMA.Pages
 {
@@ -11,37 +10,42 @@ namespace PADMA.Pages
         private readonly CalendarViewModel viewModel;
         private readonly DatabaseService _db;
 
-        public MainPage()
+        public MainPage(DatabaseService db)
         {
             InitializeComponent();
 
-            // Resolve services
-            _db = ServiceLocator.Services.GetRequiredService<DatabaseService>();
-
+            _db = db;
             viewModel = new CalendarViewModel();
             BindingContext = viewModel;
 
             UpdateTitle();
             AddToolbarButtons();
 
-            // Settings changed
-            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
+            // Подписка на изменения настроек
+            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", (sender) =>
             {
                 viewModel.RefreshCalendar();
                 UpdateTitle();
             });
 
-            // Example debug: languages (visible in VS Output / Logcat)
-            try
+            // Вывод языков в Output (для проверки)
+            var langs = _db.GetLanguages();
+            foreach (var lang in langs)
             {
-                var langs = _db.GetLanguages();
-                foreach (var lang in langs)
-                    System.Diagnostics.Debug.WriteLine($"[PADMA] Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
+                System.Diagnostics.Debug.WriteLine($"[PADMA] Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
             }
-            catch (Exception ex)
+
+            // Обработчик выбора дня
+            CalendarCollection.SelectionChanged += async (s, e) =>
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] DB check failed: {ex}");
-            }
+                if (e.CurrentSelection.FirstOrDefault() is DayItem selectedDay)
+                {
+                    await Shell.Current.GoToAsync("day", new Dictionary<string, object>
+                    {
+                        { "SelectedDay", selectedDay }
+                    });
+                }
+            };
         }
 
         private void UpdateTitle()
@@ -68,14 +72,12 @@ namespace PADMA.Pages
 
         private async void OnDaySelected(object sender, SelectionChangedEventArgs e)
         {
-            if (e.CurrentSelection?.Count > 0 && e.CurrentSelection[0] is DayItem day)
+            if (e.CurrentSelection.FirstOrDefault() is PADMA.Models.DayItem day)
             {
-                // pass date via query (yyyy-MM-dd)
-                var todayLike = new DateTime(viewModel.Year, viewModel.Month, day.DayNumber);
-                var dateStr = todayLike.ToString("yyyy-MM-dd");
-
-                await Shell.Current.GoToAsync($"day?date={Uri.EscapeDataString(dateStr)}");
+                await Shell.Current.GoToAsync($"day?date={day.Date:yyyy-MM-dd}");
             }
         }
+
+
     }
 }
