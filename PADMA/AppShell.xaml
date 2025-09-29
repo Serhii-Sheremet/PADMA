@@ -8,9 +8,9 @@
     <!-- Главная (календарь) -->
     <ShellItem Route="main">
         <ShellContent
-      Route="Main"
-      Title="PADMA"
-      ContentTemplate="{DataTemplate local:MainPage}" />
+        Route="Main"
+        Title="PADMA"
+        ContentTemplate="{DataTemplate local:MainPage}" />
     </ShellItem>
 
     <!-- Отдельный корневой маршрут для DayPage -->

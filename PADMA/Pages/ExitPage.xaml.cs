@@ -1,4 +1,5 @@
-namespace PADMA;
+
+namespace PADMA.Pages;
 
 public partial class ExitPage : ContentPage
 {
