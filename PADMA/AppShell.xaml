@@ -2,34 +2,25 @@
 <Shell
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:pages="clr-namespace:PADMA.Pages"
+    xmlns:pages="clr-namespace:PADMA.UI.Pages"
     x:Class="PADMA.AppShell">
 
-    <!-- Главная: календарь -->
+    <!-- Главный пункт: календарь -->
     <FlyoutItem Title="Calendar" Route="calendar">
-        <ShellContent
-            Title="Calendar"
-            Route="main"
-            ContentTemplate="{DataTemplate pages:MainPage}" />
+        <ShellContent Title="Calendar"
+                      ContentTemplate="{DataTemplate pages:MainPage}" />
     </FlyoutItem>
 
     <!-- Настройки -->
     <FlyoutItem Title="Settings" Route="settings">
-        <ShellContent
-            Title="Settings"
-            ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
+        <ShellContent Title="Settings"
+                      ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>
 
     <!-- Exit -->
     <FlyoutItem Title="Exit" Route="exit">
-        <ShellContent
-            Title="Exit"
-            ContentTemplate="{DataTemplate pages:ExitPage}" />
+        <ShellContent Title="Exit"
+                      ContentTemplate="{DataTemplate pages:ExitPage}" />
     </FlyoutItem>
 
-    <!-- Роут страницы дня (в бургер не попадает) -->
-    <ShellContent
-        Route="day"
-        ContentTemplate="{DataTemplate pages:DayPage}"
-        FlyoutItemIsVisible="False" />
 </Shell>

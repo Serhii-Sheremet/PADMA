@@ -29,18 +29,9 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            // Закрыть страницу и вернуться к календарю
-            // Если пришли из флаяута, PopAsync корректно вернёт назад
-            try
-            {
-                await Shell.Current.GoToAsync("..");
-            }
-            catch
-            {
-                // Fallback
-                if (Navigation.NavigationStack.Count > 1)
-                    await Navigation.PopAsync();
-            }
+            // Если менялись настройки — пришли сигнал
+            MessagingCenter.Send(this, "SettingsChanged");
+            await Shell.Current.GoToAsync("//calendar");
         }
     }
 }

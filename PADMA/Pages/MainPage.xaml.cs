@@ -13,11 +13,10 @@ namespace PADMA.Pages
         {
             InitializeComponent();
 
-            // На случай, если BindingContext не задан в XAML
             if (BindingContext is not CalendarViewModel)
                 BindingContext = new CalendarViewModel();
 
-            // Подписка на изменения настроек — пересобираем календарь
+            // Обновление календаря при изменении настроек
             MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
                 Vm?.RefreshCalendar();
@@ -60,10 +59,10 @@ namespace PADMA.Pages
             if (selected == null)
                 return;
 
-            // Сбрасываем выделение, чтобы «оранжевый» не залипал
+            // Сбрасываем выделение, чтобы не «залипало»
             ((CollectionView)sender).SelectedItem = null;
 
-            // Навигация на страницу дня (титул = дата)
+            // Навигация на DayPage, заголовок = реальная дата
             await Shell.Current.GoToAsync($"day?date={selected.Date:yyyy-MM-dd}");
         }
     }
