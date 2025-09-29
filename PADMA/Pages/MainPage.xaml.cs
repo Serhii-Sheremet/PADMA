@@ -64,15 +64,19 @@ namespace PADMA
         {
             if (e.CurrentSelection.FirstOrDefault() is DayItem selectedDay)
             {
-                // Открываем новую страницу с выбранной датой
-                await Navigation.PushAsync(new Pages.DayPage(
-                    new DateTime(viewModel.Year, viewModel.Month, selectedDay.DayNumber)
-                ));
+                var date = new DateTime(viewModel.Year, viewModel.Month, selectedDay.DayNumber);
 
-                // Сбрасываем выделение (чтобы можно было повторно кликнуть тот же день)
+                // Открываем DayPage через Shell
+                await Shell.Current.GoToAsync(nameof(Pages.DayPage), true,
+                    new Dictionary<string, object>
+                    {
+                { "SelectedDate", date }
+                    });
+
                 ((CollectionView)sender).SelectedItem = null;
             }
         }
+
 
 
     }

@@ -1,4 +1,6 @@
-﻿namespace PADMA
+﻿using PADMA.Pages;
+
+namespace PADMA
 {
     public partial class AppShell : Shell
     {
@@ -6,9 +8,8 @@
         {
             InitializeComponent();
 
-            // Регистрируем маршруты для Shell навигации
-            Routing.RegisterRoute("MainPageRoute", typeof(MainPage));
-            Routing.RegisterRoute("ConfigurationPageRoute", typeof(ConfigurationPage));
+            // Регистрируем маршрут для страницы дня
+            Routing.RegisterRoute(nameof(DayPage), typeof(DayPage));
         }
     }
 

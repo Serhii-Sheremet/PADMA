@@ -3,17 +3,29 @@ using System;
 
 namespace PADMA.Pages
 {
+    [QueryProperty(nameof(SelectedDate), "SelectedDate")]
     public partial class DayPage : ContentPage
     {
-        public DayPage(DateTime date)
+        private DateTime selectedDate;
+
+        public DateTime SelectedDate
+        {
+            get => selectedDate;
+            set
+            {
+                selectedDate = value;
+                Title = selectedDate.ToString("dd MMMM yyyy");
+            }
+        }
+
+        public DayPage()
         {
             InitializeComponent();
-            Title = date.ToString("dd MMMM yyyy");
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            await Navigation.PopAsync();
+            await Shell.Current.GoToAsync(".."); // возвращаемся назад
         }
     }
 }

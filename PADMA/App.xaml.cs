@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using PADMA.Core.Services;
-
-namespace PADMA;
+﻿namespace PADMA;
 
 public partial class App : Application
 {
@@ -9,8 +6,7 @@ public partial class App : Application
     {
         InitializeComponent();
 
-        // Resolve MainPage from DI after App resources are loaded
-        var mainPage = ServiceLocator.Services.GetRequiredService<MainPage>();
-        MainPage = new NavigationPage(mainPage);
+        // Используем Shell (с бургером)
+        MainPage = new AppShell();
     }
 }
