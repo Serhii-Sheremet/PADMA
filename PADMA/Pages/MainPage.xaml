@@ -1,6 +1,7 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:PADMA.Core.Models"
+             xmlns:uiModels="clr-namespace:PADMA.UI.Models"
+             x:DataType="uiModels:DayItem"
              x:Class="PADMA.Pages.MainPage"
              Title="Calendar">
 
