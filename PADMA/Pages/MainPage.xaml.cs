@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Controls;
+using System;
 using PADMA.Core.ViewModels;
 using PADMA.UI.Models;
 
@@ -6,16 +7,20 @@ namespace PADMA.Pages
 {
     public partial class MainPage : ContentPage
     {
-        private CalendarViewModel viewModel => (CalendarViewModel)BindingContext;
+        private CalendarViewModel Vm => BindingContext as CalendarViewModel;
 
         public MainPage()
         {
             InitializeComponent();
 
-            // Подписка на изменения настроек — перегенерируем календарь
+            // На случай, если BindingContext не задан в XAML
+            if (BindingContext is not CalendarViewModel)
+                BindingContext = new CalendarViewModel();
+
+            // Подписка на изменения настроек — пересобираем календарь
             MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
-                viewModel.RefreshCalendar();
+                Vm?.RefreshCalendar();
                 UpdateTitle();
             });
 
@@ -23,25 +28,10 @@ namespace PADMA.Pages
             AddToolbarButtons();
         }
 
-        private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (e.CurrentSelection.FirstOrDefault() is DayItem selectedDay)
-            {
-                // переход на DayPage и передаём дату
-                await Shell.Current.GoToAsync("day", true,
-                    new Dictionary<string, object>
-                    {
-                        { "Date", selectedDay.Date }
-                    });
-            }
-
-            // сброс выделения (убираем системный оранжевый хайлайт)
-            ((CollectionView)sender).SelectedItem = null;
-        }
-
         private void UpdateTitle()
         {
-            Title = new DateTime(viewModel.Year, viewModel.Month, 1).ToString("MMMM yyyy");
+            if (Vm == null) return;
+            Title = new DateTime(Vm.Year, Vm.Month, 1).ToString("MMMM yyyy");
         }
 
         private void AddToolbarButtons()
@@ -50,15 +40,31 @@ namespace PADMA.Pages
 
             ToolbarItems.Add(new ToolbarItem("<", null, () =>
             {
-                viewModel.MoveMonth(-1);
+                Vm?.MoveMonth(-1);
                 UpdateTitle();
             }));
 
             ToolbarItems.Add(new ToolbarItem(">", null, () =>
             {
-                viewModel.MoveMonth(1);
+                Vm?.MoveMonth(1);
                 UpdateTitle();
             }));
+        }
+
+        private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection == null || e.CurrentSelection.Count == 0)
+                return;
+
+            var selected = e.CurrentSelection[0] as DayItem;
+            if (selected == null)
+                return;
+
+            // Сбрасываем выделение, чтобы «оранжевый» не залипал
+            ((CollectionView)sender).SelectedItem = null;
+
+            // Навигация на страницу дня (титул = дата)
+            await Shell.Current.GoToAsync($"day?date={selected.Date:yyyy-MM-dd}");
         }
     }
 }

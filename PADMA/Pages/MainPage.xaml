@@ -1,70 +1,87 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:PADMA.UI.Models"
-             x:Class="PADMA.Pages.MainPage"
-             Title="Calendar">
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:PADMA.Core.ViewModels"
+    xmlns:models="clr-namespace:PADMA.UI.Models"
+    x:Class="PADMA.Pages.MainPage"
+    Title="PADMA">
 
-    <Grid RowDefinitions="*">
+    <!-- Если ты уже задаёшь BindingContext в code-behind, этот блок можно убрать.
+         Оставил, чтобы было надежно. -->
+    <ContentPage.BindingContext>
+        <vm:CalendarViewModel />
+    </ContentPage.BindingContext>
+
+    <!-- ОДНА строка, растягиваемся на весь экран -->
+    <Grid RowDefinitions="*"
+          Padding="0" Margin="0">
 
         <CollectionView x:Name="CalendarCollection"
                         Grid.Row="0"
                         ItemsSource="{Binding Days}"
+                        ItemsLayout="VerticalGrid,7"
+                        ItemSizingStrategy="MeasureFirstItem"
                         SelectionMode="Single"
-                        SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
                         SelectionChanged="OnSelectionChanged"
-                        HorizontalOptions="FillAndExpand"
                         VerticalOptions="FillAndExpand"
-                        BackgroundColor="White"
-                        ItemsLayout="VerticalGrid,7">
+                        HorizontalOptions="FillAndExpand"
+                        BackgroundColor="White">
+
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical"
+                                 Span="7"
+                                 HorizontalItemSpacing="0"
+                                 VerticalItemSpacing="0"/>
+            </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:DayItem">
-                    <!-- Тонкая чёрная рамка вокруг дня -->
+                    <!-- Тонкая чёрная рамка ячейки -->
                     <Border Stroke="Black"
                             StrokeThickness="0.5"
                             Padding="0"
-                            HorizontalOptions="FillAndExpand"
-                            VerticalOptions="FillAndExpand"
-                            
-                            Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}"
-                            HeightRequest="{Binding Source={x:Reference CalendarCollection},
-                                                    Path=Height,
-                                                    Converter={StaticResource HeightToCellHeightConverter}}">
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Fill"
+                            HeightRequest="{Binding Source={x:Reference CalendarCollection}, Path=Height, Converter={StaticResource HeightToCellHeightConverter}}">
 
-                        <!-- 1/3 сверху, 2/3 снизу -->
-                        <Grid RowDefinitions="*,2*"
-                              RowSpacing="0"
-                              ColumnSpacing="0"
-                              Padding="0"
-                              HorizontalOptions="FillAndExpand"
-                              VerticalOptions="FillAndExpand">
+                        <!-- Фон сегодняшнего дня (не выбора!) -->
+                        <Border Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}"
+                                Padding="0">
 
-                            <!-- Число дня (левый верхний угол) -->
-                            <Label Grid.Row="0"
-                                   Text="{Binding DayNumber}"
-                                   FontAttributes="Bold"
-                                   HorizontalOptions="Start"
-                                   VerticalOptions="Start"
-                                   Margin="2,2,0,0"
-                                   TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
+                            <!-- Внутри: 1/3 число, 2/3 — 6 полос -->
+                            <Grid RowDefinitions="*,2*"
+                                  RowSpacing="0"
+                                  ColumnSpacing="0"
+                                  Padding="0"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill">
 
-                            <!-- 6 цветных полос — занимают нижние 2/3 -->
-                            <Grid Grid.Row="1"
-                                  RowDefinitions="*,*,*,*,*,*"
-                                  RowSpacing="1"
-                                  Padding="0,2,0,2"
-                                  HorizontalOptions="FillAndExpand"
-                                  VerticalOptions="FillAndExpand">
-                                <BoxView Grid.Row="0" BackgroundColor="Red" />
-                                <BoxView Grid.Row="1" BackgroundColor="Orange" />
-                                <BoxView Grid.Row="2" BackgroundColor="Yellow" />
-                                <BoxView Grid.Row="3" BackgroundColor="Green" />
-                                <BoxView Grid.Row="4" BackgroundColor="Blue" />
-                                <BoxView Grid.Row="5" BackgroundColor="Purple" />
+                                <!-- Число дня слева-сверху -->
+                                <Label Grid.Row="0"
+                                       Text="{Binding DayNumber}"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Start"
+                                       VerticalOptions="Start"
+                                       Margin="2,2,0,0"
+                                       TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
+
+                                <!-- 6 полос (пока статичные цвета) -->
+                                <Grid Grid.Row="1"
+                                      RowDefinitions="*,*,*,*,*,*"
+                                      VerticalOptions="Fill"
+                                      HorizontalOptions="Fill"
+                                      RowSpacing="1"
+                                      Padding="0,2,0,2">
+                                    <BoxView Grid.Row="0" BackgroundColor="Red"/>
+                                    <BoxView Grid.Row="1" BackgroundColor="Orange"/>
+                                    <BoxView Grid.Row="2" BackgroundColor="Yellow"/>
+                                    <BoxView Grid.Row="3" BackgroundColor="Green"/>
+                                    <BoxView Grid.Row="4" BackgroundColor="Blue"/>
+                                    <BoxView Grid.Row="5" BackgroundColor="Purple"/>
+                                </Grid>
                             </Grid>
-
-                        </Grid>
+                        </Border>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
