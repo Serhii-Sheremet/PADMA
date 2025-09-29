@@ -6,13 +6,13 @@
              BackgroundColor="White">
 
     <CollectionView x:Name="CalendarCollection"
-                    ItemsSource="{Binding Days}"
-                    SelectionMode="Single"
-                    SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
-                    HorizontalOptions="Fill"
-                    VerticalOptions="Fill"
-                    BackgroundColor="White"
-                    SelectionChanged="OnDaySelected">
+                Grid.Row="0"
+                ItemsSource="{Binding Days}"
+                SelectionMode="Single"
+                SelectionChanged="OnDayTapped"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill"
+                BackgroundColor="White">
 
         <CollectionView.ItemsLayout>
             <GridItemsLayout Orientation="Vertical"

@@ -3,10 +3,19 @@
        xmlns:local="clr-namespace:PADMA"
        x:Class="PADMA.AppShell">
 
-    <!-- Главная страница -->
-    <FlyoutItem Title="Календарь" Route="MainPageRoute">
-        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    <!-- Главный пункт с календарём -->
+    <FlyoutItem Title="PADMA" Route="home">
+        <ShellContent
+            Title="Calendar"
+            Route="calendar"
+            ContentTemplate="{DataTemplate local:MainPage}" />
     </FlyoutItem>
+
+    <!-- Отдельный корневой маршрут для страницы дня (бургер остаётся) -->
+    <ShellContent
+        Title="Day"
+        Route="day"
+        ContentTemplate="{DataTemplate local:DayPage}" />
 
     <!-- Страница конфигурации -->
     <FlyoutItem Title="Настройки" Route="ConfigurationPageRoute">

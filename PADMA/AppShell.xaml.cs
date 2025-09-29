@@ -1,17 +1,14 @@
 ﻿using PADMA.Pages;
 
-namespace PADMA
+namespace PADMA;
+
+public partial class AppShell : Shell
 {
-    public partial class AppShell : Shell
+    public AppShell()
     {
-        public AppShell()
-        {
-            InitializeComponent();
+        InitializeComponent();
 
-            // Регистрируем маршрут для страницы дня
-            Routing.RegisterRoute(nameof(DayPage), typeof(DayPage));
-        }
+        // Регистрируем маршрут для страницы дня
+        Routing.RegisterRoute(nameof(DayPage), typeof(DayPage));
     }
-
-
 }
