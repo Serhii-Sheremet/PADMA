@@ -14,8 +14,6 @@
             <!-- Только конвертеры -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
             <converters:TodayBackgroundConverter x:Key="TodayBackgroundConverter" />
-            <converters:TodayBorderBrushConverter x:Key="TodayBorderBrushConverter" />
-            <converters:TodayBorderThicknessConverter x:Key="TodayBorderThicknessConverter" />
             <converters:HeightToCellHeightConverter x:Key="HeightToCellHeightConverter" />
         </ResourceDictionary>
     </Application.Resources>

@@ -1,4 +1,5 @@
-﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:PADMA"
              x:Class="PADMA.MainPage"
@@ -15,7 +16,6 @@
                         HorizontalOptions="Fill"
                         VerticalOptions="Fill"
                         BackgroundColor="White">
-
             <CollectionView.ItemsLayout>
                 <GridItemsLayout Orientation="Vertical"
                                  Span="7"
@@ -25,45 +25,44 @@
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="local:DayItem">
-                    <!-- Ячейка календаря -->
-                    <Border HeightRequest="{Binding Source={x:Reference CalendarCollection}, Path=Height, Converter={StaticResource HeightToCellHeightConverter}}"
-                Stroke="Black"
-                StrokeThickness="0.5"
-                Padding="0"
-                HorizontalOptions="Fill"
-                VerticalOptions="Fill">
+                    <!-- Внешняя рамка ячейки (тонкая сетка календаря) -->
+                    <Border Stroke="Black"
+                            StrokeThickness="0.5"
+                            Padding="0"
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Fill"
+                            HeightRequest="{Binding Source={x:Reference CalendarCollection}, Path=Height, Converter={StaticResource HeightToCellHeightConverter}}">
 
-                        <!-- Внутренняя область: фон для "сегодня", рамка для выбранного дня -->
+                        <!-- Фон "сегодня" (мягкий голубой). Для выбранного дня теперь ничего не рисуем -->
                         <Border Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}"
-                    Stroke="{Binding IsSelected, Converter={StaticResource TodayBorderBrushConverter}}"
-                    StrokeThickness="{Binding IsSelected, Converter={StaticResource TodayBorderThicknessConverter}}"
-                    Padding="0"
-                    HorizontalOptions="Fill"
-                    VerticalOptions="Fill">
+                                Padding="0"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill">
 
+                            <!-- Верх: число дня (1/3), Низ: 6 полос (2/3) -->
                             <Grid RowDefinitions="*,2*"
-                      RowSpacing="0"
-                      ColumnSpacing="0"
-                      Padding="0"
-                      HorizontalOptions="Fill"
-                      VerticalOptions="Fill">
+                                  RowSpacing="0"
+                                  ColumnSpacing="0"
+                                  Padding="0"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill">
 
-                                <!-- Число дня (слева сверху) -->
+                                <!-- Число дня слева-сверху -->
                                 <Label Grid.Row="0"
-                           Text="{Binding DayNumber}"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Start"
-                           VerticalOptions="Start"
-                           Margin="2,2,0,0"
-                           TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
+                                       Text="{Binding DayNumber}"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Start"
+                                       VerticalOptions="Start"
+                                       Margin="2,2,0,0"
+                                       TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
 
-                                <!-- 6 цветных полосок -->
+                                <!-- 6 цветных полосок (пока статические цвета) -->
                                 <Grid Grid.Row="1"
-                          RowDefinitions="*,*,*,*,*,*"
-                          VerticalOptions="Fill"
-                          HorizontalOptions="Fill"
-                          RowSpacing="1"
-                          Padding="0,2,0,2">
+                                      RowDefinitions="*,*,*,*,*,*"
+                                      VerticalOptions="Fill"
+                                      HorizontalOptions="Fill"
+                                      RowSpacing="1"
+                                      Padding="0,2,0,2">
                                     <BoxView Grid.Row="0" BackgroundColor="Red"/>
                                     <BoxView Grid.Row="1" BackgroundColor="Orange"/>
                                     <BoxView Grid.Row="2" BackgroundColor="Yellow"/>
@@ -76,38 +75,37 @@
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
-
-
         </CollectionView>
 
-        <!-- Нижняя зона (1/3 экрана): подробности выбранного дня -->
-        <Grid Grid.Row="1"
-              BackgroundColor="White"
-              Padding="10"
-              RowDefinitions="*,2*">
+        <!-- Нижняя зона (1/3 экрана): детали выбранного дня -->
+        <Grid Grid.Row="1" BackgroundColor="White" Padding="10">
+            <Grid RowDefinitions="*,2*"
+                  RowSpacing="0"
+                  ColumnSpacing="0">
 
-            <!-- Число дня увеличенное -->
-            <Label Grid.Row="0"
-                   Text="{Binding SelectedDay.DayNumber}"
-                   FontSize="36"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Start"
-                   VerticalOptions="Start"
-                   TextColor="{Binding SelectedDay.IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
+                <!-- Число выбранного дня, крупнее -->
+                <Label Grid.Row="0"
+                       Text="{Binding SelectedDay.DayNumber}"
+                       FontAttributes="Bold"
+                       FontSize="28"
+                       HorizontalOptions="Start"
+                       VerticalOptions="Start"
+                       Margin="4,0,0,6"
+                       TextColor="{Binding SelectedDay.IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
 
-            <!-- Полоски для выбранного дня -->
-            <Grid Grid.Row="1"
-                  RowDefinitions="*,*,*,*,*,*"
-                  VerticalOptions="Fill"
-                  HorizontalOptions="Fill"
-                  RowSpacing="2"
-                  Padding="0,5,0,5">
-                <BoxView Grid.Row="0" BackgroundColor="Red"/>
-                <BoxView Grid.Row="1" BackgroundColor="Orange"/>
-                <BoxView Grid.Row="2" BackgroundColor="Yellow"/>
-                <BoxView Grid.Row="3" BackgroundColor="Green"/>
-                <BoxView Grid.Row="4" BackgroundColor="Blue"/>
-                <BoxView Grid.Row="5" BackgroundColor="Purple"/>
+                <!-- Те же 6 полосок, растянутые по ширине нижней области -->
+                <Grid Grid.Row="1"
+                      RowDefinitions="*,*,*,*,*,*"
+                      VerticalOptions="Fill"
+                      HorizontalOptions="Fill"
+                      RowSpacing="2">
+                    <BoxView Grid.Row="0" BackgroundColor="Red"/>
+                    <BoxView Grid.Row="1" BackgroundColor="Orange"/>
+                    <BoxView Grid.Row="2" BackgroundColor="Yellow"/>
+                    <BoxView Grid.Row="3" BackgroundColor="Green"/>
+                    <BoxView Grid.Row="4" BackgroundColor="Blue"/>
+                    <BoxView Grid.Row="5" BackgroundColor="Purple"/>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>
