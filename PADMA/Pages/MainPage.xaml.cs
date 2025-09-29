@@ -1,8 +1,8 @@
-﻿using Microsoft.Maui.Controls;
-using System;
-using System.Diagnostics;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls;
+using PADMA.Core.Models;
 using PADMA.Core.Services;
-using PADMA.Pages;
+using System;
 
 namespace PADMA.Pages
 {
@@ -11,29 +11,36 @@ namespace PADMA.Pages
         private readonly CalendarViewModel viewModel;
         private readonly DatabaseService _db;
 
-        public MainPage(DatabaseService db)
+        public MainPage()
         {
             InitializeComponent();
 
-            _db = db;
+            // Resolve services
+            _db = ServiceLocator.Services.GetRequiredService<DatabaseService>();
+
             viewModel = new CalendarViewModel();
             BindingContext = viewModel;
 
             UpdateTitle();
             AddToolbarButtons();
 
-            // Подписка на изменения настроек
+            // Settings changed
             MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
                 viewModel.RefreshCalendar();
                 UpdateTitle();
             });
 
-            // Тестовый вывод языков
-            var langs = _db.GetLanguages();
-            foreach (var lang in langs)
+            // Example debug: languages (visible in VS Output / Logcat)
+            try
             {
-                Debug.WriteLine($"[PADMA] Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
+                var langs = _db.GetLanguages();
+                foreach (var lang in langs)
+                    System.Diagnostics.Debug.WriteLine($"[PADMA] Language: {lang.LanguageCode}, Culture: {lang.CultureCode}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB check failed: {ex}");
             }
         }
 
@@ -49,37 +56,26 @@ namespace PADMA.Pages
             ToolbarItems.Add(new ToolbarItem("<", null, () =>
             {
                 viewModel.MoveMonth(-1);
-                CalendarCollection.SelectedItem = null; // сброс выбора
                 UpdateTitle();
             }));
 
             ToolbarItems.Add(new ToolbarItem(">", null, () =>
             {
                 viewModel.MoveMonth(1);
-                CalendarCollection.SelectedItem = null; // сброс выбора
                 UpdateTitle();
             }));
         }
 
-        // Обработчик выбора дня
-        private async void OnDayTapped(object sender, SelectionChangedEventArgs e)
+        private async void OnDaySelected(object sender, SelectionChangedEventArgs e)
         {
-            var selected = e.CurrentSelection?.Count > 0 ? e.CurrentSelection[0] as DayItem : null;
-            if (selected == null)
-                return;
-
-            // убираем выделение
-            if (sender is CollectionView cv)
-                cv.SelectedItem = null;
-
-            // вычисляем дату
-            var dateToShow = new DateTime(viewModel.Year, viewModel.Month, selected.DayNumber);
-
-            // переход на страницу дня
-            await Shell.Current.GoToAsync("//day", new Dictionary<string, object>
+            if (e.CurrentSelection?.Count > 0 && e.CurrentSelection[0] is DayItem day)
             {
-                { "SelectedDate", dateToShow }
-            });
+                // pass date via query (yyyy-MM-dd)
+                var todayLike = new DateTime(viewModel.Year, viewModel.Month, day.DayNumber);
+                var dateStr = todayLike.ToString("yyyy-MM-dd");
+
+                await Shell.Current.GoToAsync($"day?date={Uri.EscapeDataString(dateStr)}");
+            }
         }
     }
 }

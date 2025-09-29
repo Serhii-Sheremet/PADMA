@@ -1,20 +1,18 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="PADMA.Pages.DayPage"
-             Title="Day Page">
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="PADMA.Pages.DayPage"
+    Title="Day">
 
-    <!-- Кнопка закрытия -->
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✖"
-                     Priority="0"
-                     Order="Primary"
-                     Clicked="OnCloseClicked" />
+        <ToolbarItem Text="✕" Priority="0" Order="Primary" Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
 
-    <VerticalStackLayout Padding="20">
-        <Label Text="Информация по выбранному дню появится здесь"
-               HorizontalOptions="Center"
-               VerticalOptions="CenterAndExpand" />
-    </VerticalStackLayout>
+    <Grid Padding="16">
+        <Label x:Name="TitleLabel"
+           FontSize="20"
+           FontAttributes="Bold"
+           HorizontalOptions="Center" />
+    </Grid>
 </ContentPage>

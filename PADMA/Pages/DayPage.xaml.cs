@@ -1,35 +1,42 @@
 using Microsoft.Maui.Controls;
-using System;
 
 namespace PADMA.Pages
 {
-    [QueryProperty(nameof(SelectedDate), "SelectedDate")]
+    [QueryProperty(nameof(DateQuery), "date")]
     public partial class DayPage : ContentPage
     {
-        private DateTime _selectedDate;
-        public DateTime SelectedDate
-        {
-            get => _selectedDate;
-            set
-            {
-                _selectedDate = value;
-                Title = _selectedDate.ToString("dd MMMM yyyy");
-            }
-        }
-
         public DayPage()
         {
             InitializeComponent();
-            Title = "Day"; // на случай, если значение ещё не пришло
+        }
+
+        // yyyy-MM-dd from query
+        private string _dateQuery;
+        public string DateQuery
+        {
+            get => _dateQuery;
+            set
+            {
+                _dateQuery = value;
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    if (DateTime.TryParse(value, out var dt))
+                    {
+                        Title = dt.ToString("D");
+                        TitleLabel.Text = dt.ToString("D");
+                    }
+                    else
+                    {
+                        Title = value;
+                        TitleLabel.Text = value;
+                    }
+                }
+            }
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            // Переход на корневой маршрут календаря
             await Shell.Current.GoToAsync("//calendar");
         }
-
-
-
     }
 }

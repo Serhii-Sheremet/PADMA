@@ -4,29 +4,21 @@
        xmlns:pages="clr-namespace:PADMA.Pages"
        x:Class="PADMA.AppShell">
 
-    <!-- Главная: календарь в бургер-меню, маршрут //calendar -->
+    <!-- Calendar (root) -->
     <FlyoutItem Title="Calendar" Route="calendar">
-        <ShellContent Title="Calendar">
-            <pages:MainPage />
-        </ShellContent>
+        <ShellContent
+      Title="Calendar"
+      ContentTemplate="{DataTemplate pages:MainPage}" />
     </FlyoutItem>
 
-    <!-- Страница дня: отдельный маршрут (в меню не показываем) -->
-    <ShellContent Route="day">
-        <pages:DayPage />
-    </ShellContent>
-
-    <!-- Настройки -->
+    <!-- Settings -->
     <FlyoutItem Title="Настройки" Route="ConfigurationPageRoute">
-        <ShellContent>
-            <pages:ConfigurationPage />
-        </ShellContent>
+        <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>
 
     <!-- Exit -->
     <FlyoutItem Title="Exit" Route="ExitPageRoute">
-        <ShellContent>
-            <pages:ExitPage />
-        </ShellContent>
+        <ShellContent ContentTemplate="{DataTemplate pages:ExitPage}" />
     </FlyoutItem>
+
 </Shell>

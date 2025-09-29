@@ -4,8 +4,6 @@ namespace PADMA;
 
 public static class MauiProgram
 {
-    public static IServiceProvider Services { get; private set; }
-
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -18,22 +16,21 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Copy seed DB if needed
+        // Ensure DB is copied from app package to AppData folder
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
         if (!File.Exists(dbPath))
         {
-            using var stream = FileSystem.OpenAppPackageFileAsync("PADMADB.db3").Result;
-            using var newFile = File.Create(dbPath);
-            stream.CopyTo(newFile);
+            // PADMADB.db3 is included as MauiAsset with LogicalName = "PADMADB.db3"
+            using var inStream = FileSystem.OpenAppPackageFileAsync("PADMADB.db3").GetAwaiter().GetResult();
+            using var outStream = File.Create(dbPath);
+            inStream.CopyTo(outStream);
         }
 
-        // DI registrations
+        // Services
         builder.Services.AddSingleton(new DatabaseService(dbPath));
-        builder.Services.AddSingleton<MainPage>();
 
+        // Build + expose ServiceProvider (used by MainPage via ServiceLocator)
         var app = builder.Build();
-
-        // make DI accessible to ServiceLocator BEFORE App() runs
         ServiceLocator.Services = app.Services;
 
         return app;
