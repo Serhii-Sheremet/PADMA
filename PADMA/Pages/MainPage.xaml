@@ -6,12 +6,13 @@
 
     <Grid RowDefinitions="*">
         <CollectionView x:Name="CalendarCollection"
-                        Grid.Row="0"
-                        ItemsSource="{Binding Days}"
-                        SelectionMode="None"
-                        HorizontalOptions="Fill"
-                        VerticalOptions="Fill"
-                        BackgroundColor="White">
+                Grid.Row="0"
+                ItemsSource="{Binding Days}"
+                SelectionMode="Single"
+                SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill"
+                BackgroundColor="White">
 
             <CollectionView.ItemsLayout>
                 <GridItemsLayout Orientation="Vertical"
