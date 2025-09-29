@@ -1,38 +1,29 @@
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 
-namespace PADMA.Pages;
-
-public partial class ConfigurationPage : ContentPage
+namespace PADMA.Pages
 {
-    public ConfigurationPage()
+    public partial class ConfigurationPage : ContentPage
     {
-        InitializeComponent();
+        public bool IsMondayFirst => Preferences.Get("FirstDayOfWeek", "Monday") == "Monday";
+        public bool IsSundayFirst => Preferences.Get("FirstDayOfWeek", "Monday") == "Sunday";
 
-        // Устанавливаем текущий выбор
-        if (AppSettings.FirstDayOfWeek == FirstDayOfWeek.Monday)
-            MondayRadio.IsChecked = true;
-        else
-            SundayRadio.IsChecked = true;
-    }
-
-    private void OnFirstDayCheckedChanged(object sender, CheckedChangedEventArgs e)
-    {
-        if (e.Value)
+        public ConfigurationPage()
         {
-            var rb = sender as RadioButton;
-            if (rb == MondayRadio)
-                AppSettings.FirstDayOfWeek = FirstDayOfWeek.Monday;
-            else if (rb == SundayRadio)
-                AppSettings.FirstDayOfWeek = FirstDayOfWeek.Sunday;
+            InitializeComponent();
+            BindingContext = this;
         }
-    }
 
-    private async void OnCloseClicked(object sender, EventArgs e)
-    {
-        // Сообщаем всем, кто подписан, что настройки изменились
-        MessagingCenter.Send(this, "SettingsChanged");
+        private void OnFirstDayOfWeekChanged(object sender, CheckedChangedEventArgs e)
+        {
+            if (e.Value) // только при выборе
+            {
+                var rb = (RadioButton)sender;
+                Preferences.Set("FirstDayOfWeek", rb.Content.ToString());
 
-        // Абсолютный переход к MainPage, очищаем стек
-        await Shell.Current.GoToAsync("///MainPageRoute");
+                // уведомляем MainPage, что настройки изменились
+                MessagingCenter.Send(this, "SettingsChanged");
+            }
+        }
     }
 }

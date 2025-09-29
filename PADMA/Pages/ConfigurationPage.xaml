@@ -1,19 +1,19 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PADMA.Pages.ConfigurationPage"
              Title="Настройки">
 
-    <StackLayout Padding="20" Spacing="20">
+    <VerticalStackLayout Padding="20" Spacing="20">
+        <Label Text="Первый день недели:" FontAttributes="Bold" />
 
-        <Label Text="Выберите первый день недели:" FontSize="16" />
+        <RadioButton Content="Понедельник"
+                     GroupName="FirstDayOfWeek"
+                     IsChecked="{Binding IsMondayFirst}" 
+                     CheckedChanged="OnFirstDayOfWeekChanged"/>
 
-        <RadioButton x:Name="MondayRadio" Content="Понедельник" GroupName="FirstDayGroup" CheckedChanged="OnFirstDayCheckedChanged"/>
-        <RadioButton x:Name="SundayRadio" Content="Воскресенье" GroupName="FirstDayGroup" CheckedChanged="OnFirstDayCheckedChanged"/>
-
-        <!-- Кнопка закрытия страницы -->
-        <Button Text="Закрыть" VerticalOptions="End" HorizontalOptions="Center" Clicked="OnCloseClicked"/>
-    </StackLayout>
-    
+        <RadioButton Content="Воскресенье"
+                     GroupName="FirstDayOfWeek"
+                     IsChecked="{Binding IsSundayFirst}" 
+                     CheckedChanged="OnFirstDayOfWeekChanged"/>
+    </VerticalStackLayout>
 </ContentPage>
-
