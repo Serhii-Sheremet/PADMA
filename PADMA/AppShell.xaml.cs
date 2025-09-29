@@ -1,4 +1,5 @@
-﻿using PADMA.Pages;
+﻿using Microsoft.Maui.Controls;
+using PADMA.Pages; // важно
 
 namespace PADMA;
 

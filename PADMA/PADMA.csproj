@@ -66,7 +66,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <MauiXaml Update="Pages\ConfigPage.xaml">
+    <Compile Update="Pages\ConfigurationPage.xaml.cs">
+      <DependentUpon>ConfigurationPage.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <MauiXaml Update="Pages\ConfigurationPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\DayPage.xaml">

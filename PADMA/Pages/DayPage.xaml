@@ -2,16 +2,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PADMA.Pages.DayPage"
-             Title="{Binding Title}">
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✕" Priority="0" Order="Primary" Clicked="OnCloseClicked" />
-    </ContentPage.ToolbarItems>
-
-    <VerticalStackLayout Padding="20">
-        <Label Text="Детали дня появятся здесь"
-               FontSize="18"
-               TextColor="Gray"
+             Title="{Binding Date, StringFormat='{}{0:dddd, dd MMMM yyyy}'}">
+    <!-- пока пустое содержимое -->
+    <Grid Padding="16">
+        <Label Text="(Day details will go here)"
                HorizontalOptions="Center"
-               VerticalOptions="CenterAndExpand"/>
-    </VerticalStackLayout>
+               VerticalOptions="Center"/>
+    </Grid>
 </ContentPage>
+
