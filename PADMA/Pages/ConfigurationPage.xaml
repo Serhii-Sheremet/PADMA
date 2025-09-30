@@ -1,30 +1,26 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="PADMA.Pages.ConfigurationPage"
-    Title="Settings">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PADMA.Pages.ConfigurationPage"
+             Title="Settings">
 
-    <ContentPage.ToolbarItems>
-        <!-- Крестик закрытия -->
-        <ToolbarItem Text="✕" Priority="0" Order="Primary" Clicked="OnCloseClicked"/>
-    </ContentPage.ToolbarItems>
+    <VerticalStackLayout Padding="20" Spacing="20">
 
-    <VerticalStackLayout Padding="20" Spacing="16">
+        <Label Text="First day of the week:" FontAttributes="Bold" />
 
-        <Label Text="First day of week:" FontAttributes="Bold" />
+        <RadioButton Content="Monday"
+                     GroupName="WeekStart"
+                     Value="Monday"
+                     IsChecked="{Binding IsMondayFirst, Mode=TwoWay}" />
 
-        <RadioButton
-            Content="Monday"
-            GroupName="FirstDayOfWeek"
-            IsChecked="{Binding IsMondayFirst}"
-            CheckedChanged="OnFirstDayOfWeekChanged" />
+        <RadioButton Content="Sunday"
+                     GroupName="WeekStart"
+                     Value="Sunday"
+                     IsChecked="{Binding IsSundayFirst, Mode=TwoWay}" />
 
-        <RadioButton
-            Content="Sunday"
-            GroupName="FirstDayOfWeek"
-            IsChecked="{Binding IsSundayFirst}"
-            CheckedChanged="OnFirstDayOfWeekChanged" />
+        <Button Text="Apply Changes"
+                HorizontalOptions="Center"
+                Clicked="OnApplyClicked" />
 
     </VerticalStackLayout>
 </ContentPage>

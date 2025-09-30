@@ -1,37 +1,65 @@
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Storage;
 
 namespace PADMA.Pages
 {
     public partial class ConfigurationPage : ContentPage
     {
-        // Simple binding props for initial state
-        public bool IsMondayFirst => Preferences.Get("FirstDayOfWeek", "Monday") == "Monday";
-        public bool IsSundayFirst => Preferences.Get("FirstDayOfWeek", "Monday") == "Sunday";
+        private bool _isMondayFirstInitial;
+        private bool _hasChanges;
+
+        public bool IsMondayFirst { get; set; }
+        public bool IsSundayFirst => !IsMondayFirst;
 
         public ConfigurationPage()
         {
             InitializeComponent();
+
+            // читаем текущее состояние из настроек
+            IsMondayFirst = Preferences.Get("WeekStartsOnMonday", true);
+            _isMondayFirstInitial = IsMondayFirst;
+
             BindingContext = this;
         }
 
-        private void OnFirstDayOfWeekChanged(object sender, CheckedChangedEventArgs e)
+        private async void OnApplyClicked(object sender, EventArgs e)
         {
-            if (!e.Value) return;
-
-            var rb = (RadioButton)sender;
-            var selected = rb.Content?.ToString() == "Sunday" ? "Sunday" : "Monday";
-            Preferences.Set("FirstDayOfWeek", selected);
-
-            // Уведомим MainPage обновить календарь
-            MessagingCenter.Send(this, "SettingsChanged");
+            ApplyChanges();
+            await DisplayAlert("Settings", "Changes applied.", "OK");
         }
 
-        private async void OnCloseClicked(object sender, EventArgs e)
+        private void ApplyChanges()
         {
-            // Если менялись настройки — пришли сигнал
+            Preferences.Set("WeekStartsOnMonday", IsMondayFirst);
             MessagingCenter.Send(this, "SettingsChanged");
-            await Shell.Current.GoToAsync("//calendar");
+            _isMondayFirstInitial = IsMondayFirst;
+            _hasChanges = false;
+        }
+
+        protected override async void OnDisappearing()
+        {
+            base.OnDisappearing();
+
+            if (_hasChanges)
+            {
+                bool apply = await DisplayAlert("Save changes?",
+                    "Do you want to apply changes before exit?",
+                    "Yes", "No");
+
+                if (apply)
+                    ApplyChanges();
+                else
+                    _hasChanges = false;
+            }
+        }
+
+        protected override void OnPropertyChanged(string propertyName = null)
+        {
+            base.OnPropertyChanged(propertyName);
+
+            if (propertyName == nameof(IsMondayFirst))
+            {
+                _hasChanges = (IsMondayFirst != _isMondayFirstInitial);
+            }
         }
     }
 }
