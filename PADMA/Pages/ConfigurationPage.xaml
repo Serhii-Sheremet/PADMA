@@ -4,6 +4,13 @@
              x:Class="PADMA.Pages.ConfigurationPage"
              Title="Settings">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="✖"
+                     Priority="0"
+                     Order="Primary"
+                     Clicked="OnCloseClicked" />
+    </ContentPage.ToolbarItems>
+
     <VerticalStackLayout Padding="20" Spacing="20">
 
         <Label Text="First day of the week:" FontAttributes="Bold" />

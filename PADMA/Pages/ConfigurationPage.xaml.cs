@@ -35,10 +35,8 @@ namespace PADMA.Pages
             _hasChanges = false;
         }
 
-        protected override async void OnDisappearing()
+        private async void OnCloseClicked(object sender, EventArgs e)
         {
-            base.OnDisappearing();
-
             if (_hasChanges)
             {
                 bool apply = await DisplayAlert("Save changes?",
@@ -47,9 +45,9 @@ namespace PADMA.Pages
 
                 if (apply)
                     ApplyChanges();
-                else
-                    _hasChanges = false;
             }
+
+            await Shell.Current.GoToAsync("//calendar");
         }
 
         protected override void OnPropertyChanged(string propertyName = null)
