@@ -22,10 +22,7 @@ namespace PADMA.Pages
         private void OnOptionChanged(object sender, CheckedChangedEventArgs e)
         {
             bool newValue = MondayRadio.IsChecked;
-            if (newValue != _weekStartsOnMonday)
-                _hasChanges = true;
-            else
-                _hasChanges = false;
+            _hasChanges = newValue != _weekStartsOnMonday;
         }
 
         private void OnApplyClicked(object sender, EventArgs e)
@@ -44,7 +41,8 @@ namespace PADMA.Pages
                 }
             }
 
-            await Shell.Current.GoToAsync(".."); // закрыть страницу
+            // Закрываем страницу корректно
+            await Shell.Current.Navigation.PopAsync();
         }
 
         private void ApplyChanges()
