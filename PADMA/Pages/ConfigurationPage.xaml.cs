@@ -4,60 +4,57 @@ namespace PADMA.Pages
 {
     public partial class ConfigurationPage : ContentPage
     {
-        private bool _isMondayFirstInitial;
+        private bool _weekStartsOnMonday;
         private bool _hasChanges;
-
-        public bool IsMondayFirst { get; set; }
-        public bool IsSundayFirst => !IsMondayFirst;
 
         public ConfigurationPage()
         {
             InitializeComponent();
 
-            // читаем текущее состо€ние из настроек
-            IsMondayFirst = Preferences.Get("WeekStartsOnMonday", true);
-            _isMondayFirstInitial = IsMondayFirst;
+            // «агружаем сохранЄнное значение
+            _weekStartsOnMonday = Preferences.Get("WeekStartsOnMonday", true);
+            MondayRadio.IsChecked = _weekStartsOnMonday;
+            SundayRadio.IsChecked = !_weekStartsOnMonday;
 
-            BindingContext = this;
+            _hasChanges = false;
         }
 
-        private async void OnApplyClicked(object sender, EventArgs e)
+        private void OnOptionChanged(object sender, CheckedChangedEventArgs e)
+        {
+            bool newValue = MondayRadio.IsChecked;
+            if (newValue != _weekStartsOnMonday)
+                _hasChanges = true;
+            else
+                _hasChanges = false;
+        }
+
+        private void OnApplyClicked(object sender, EventArgs e)
         {
             ApplyChanges();
-            await DisplayAlert("Settings", "Changes applied.", "OK");
-        }
-
-        private void ApplyChanges()
-        {
-            Preferences.Set("WeekStartsOnMonday", IsMondayFirst);
-            MessagingCenter.Send(this, "SettingsChanged");
-            _isMondayFirstInitial = IsMondayFirst;
-            _hasChanges = false;
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             if (_hasChanges)
             {
-                bool apply = await DisplayAlert("Save changes?",
-                    "Do you want to apply changes before exit?",
-                    "Yes", "No");
-
-                if (apply)
+                bool save = await DisplayAlert("Save changes?", "Apply new settings?", "Yes", "No");
+                if (save)
+                {
                     ApplyChanges();
+                }
             }
 
-            await Shell.Current.GoToAsync("//calendar");
+            await Shell.Current.GoToAsync(".."); // закрыть страницу
         }
 
-        protected override void OnPropertyChanged(string propertyName = null)
+        private void ApplyChanges()
         {
-            base.OnPropertyChanged(propertyName);
+            _weekStartsOnMonday = MondayRadio.IsChecked;
+            Preferences.Set("WeekStartsOnMonday", _weekStartsOnMonday);
 
-            if (propertyName == nameof(IsMondayFirst))
-            {
-                _hasChanges = (IsMondayFirst != _isMondayFirstInitial);
-            }
+            MessagingCenter.Send(this, "SettingsChanged");
+
+            _hasChanges = false;
         }
     }
 }

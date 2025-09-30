@@ -4,30 +4,33 @@
              x:Class="PADMA.Pages.ConfigurationPage"
              Title="Settings">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✖"
-                     Priority="0"
-                     Order="Primary"
-                     Clicked="OnCloseClicked" />
-    </ContentPage.ToolbarItems>
-
     <VerticalStackLayout Padding="20" Spacing="20">
 
-        <Label Text="First day of the week:" FontAttributes="Bold" />
+        <Label Text="First day of week:" 
+               FontAttributes="Bold"
+               FontSize="16"/>
 
-        <RadioButton Content="Monday"
+        <RadioButton x:Name="MondayRadio"
+                     Content="Monday"
                      GroupName="WeekStart"
-                     Value="Monday"
-                     IsChecked="{Binding IsMondayFirst, Mode=TwoWay}" />
+                     CheckedChanged="OnOptionChanged"/>
 
-        <RadioButton Content="Sunday"
+        <RadioButton x:Name="SundayRadio"
+                     Content="Sunday"
                      GroupName="WeekStart"
-                     Value="Sunday"
-                     IsChecked="{Binding IsSundayFirst, Mode=TwoWay}" />
+                     CheckedChanged="OnOptionChanged"/>
 
+        <!-- Apply button -->
         <Button Text="Apply Changes"
-                HorizontalOptions="Center"
-                Clicked="OnApplyClicked" />
-
+                Clicked="OnApplyClicked"
+                HorizontalOptions="Center"/>
     </VerticalStackLayout>
+
+    <!-- Крестик -->
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="✖" 
+                     Priority="0"
+                     Order="Primary"
+                     Clicked="OnCloseClicked"/>
+    </ContentPage.ToolbarItems>
 </ContentPage>
