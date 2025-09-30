@@ -32,14 +32,18 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="ui:DayItem">
                     <!-- Ячейка календаря -->
-                    <Border Stroke="Black"
+                    <Border
+                            HeightRequest="{Binding Source={x:Reference CalendarCollection},
+                            Path=Height,
+                            Converter={StaticResource HeightToCellHeightConverter}}"
+                            Stroke="Black"
                             StrokeThickness="0.5"
                             Padding="0"
                             HorizontalOptions="FillAndExpand"
                             VerticalOptions="FillAndExpand"
                             Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}">
 
-                        <Grid RowDefinitions="Auto,*"
+                        <Grid RowDefinitions="*,2"
                               RowSpacing="0"
                               ColumnSpacing="0"
                               Padding="0"
