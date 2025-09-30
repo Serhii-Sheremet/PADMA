@@ -43,7 +43,7 @@
                             VerticalOptions="FillAndExpand"
                             Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}">
 
-                        <Grid RowDefinitions="*,2"
+                        <Grid RowDefinitions="*,2*"
                               RowSpacing="0"
                               ColumnSpacing="0"
                               Padding="0"
