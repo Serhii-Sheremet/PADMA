@@ -5,7 +5,7 @@
              x:Class="PADMA.Pages.MainPage"
              Title="Calendar">
 
-    <Grid RowDefinitions="*,Auto"
+    <Grid RowDefinitions="*"
           ColumnDefinitions="*"
           Padding="0"
           RowSpacing="0"
