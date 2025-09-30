@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PADMA.UI.Models
+namespace PADMA.UI
 {
     /// <summary>
     /// Модель одного дня в календаре.

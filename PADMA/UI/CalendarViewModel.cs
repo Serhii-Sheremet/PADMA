@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using PADMA.UI.Models;
-using Microsoft.Maui.Storage;
 
-namespace PADMA.Core.ViewModels
+namespace PADMA.UI
 {
     public class CalendarViewModel : INotifyPropertyChanged
     {

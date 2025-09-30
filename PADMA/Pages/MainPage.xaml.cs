@@ -1,7 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
-using PADMA.Core.ViewModels;
-using PADMA.UI.Models;
+using PADMA.UI;
 
 namespace PADMA.Pages
 {
