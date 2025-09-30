@@ -41,8 +41,7 @@ namespace PADMA.Pages
                 }
             }
 
-            // Закрываем страницу корректно
-            await Shell.Current.Navigation.PopAsync();
+            await Shell.Current.GoToAsync(".."); // теперь реально закроется
         }
 
         private void ApplyChanges()

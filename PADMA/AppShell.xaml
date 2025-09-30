@@ -1,26 +1,33 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<Shell
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:pages="clr-namespace:PADMA.Pages"
-    x:Class="PADMA.AppShell">
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:pages="clr-namespace:PADMA.Pages"
+       x:Class="PADMA.AppShell">
 
-    <!-- Главный пункт: календарь -->
-    <FlyoutItem Title="Calendar" Route="calendar">
-        <ShellContent Title="Calendar"
-                      ContentTemplate="{DataTemplate pages:MainPage}" />
+    <!-- Главный пункт с календарём -->
+    <ShellItem Route="calendar">
+        <ShellContent
+            Route="Main"
+            Title="PADMA"
+            ContentTemplate="{DataTemplate pages:MainPage}" />
+    </ShellItem>
+
+    <!-- Страница дня (без отдельного пункта в меню) -->
+    <ShellContent
+        Title="Day"
+        Route="day"
+        ContentTemplate="{DataTemplate pages:DayPage}" />
+
+    <!-- Бургер-меню -->
+    <FlyoutItem Title="Menu">
+        <!-- You can add navigation items here if needed -->
     </FlyoutItem>
 
-    <!-- Настройки -->
-    <FlyoutItem Title="Settings" Route="settings">
-        <ShellContent Title="Settings"
-                      ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
-    </FlyoutItem>
-
-    <!-- Exit -->
-    <FlyoutItem Title="Exit" Route="exit">
-        <ShellContent Title="Exit"
-                      ContentTemplate="{DataTemplate pages:ExitPage}" />
-    </FlyoutItem>
-
+    <!-- Action menu items (should be direct children of Shell) -->
+    <MenuItem Text="Settings"
+          IconImageSource="settings.png"
+          Clicked="OnSettingsClicked" />
+    <MenuItem Text="Exit"
+          IconImageSource="exit.png"
+          Clicked="OnExitClicked" />
 </Shell>

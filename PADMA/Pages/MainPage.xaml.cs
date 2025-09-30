@@ -64,5 +64,7 @@ namespace PADMA.Pages
             // Навигация на DayPage, заголовок = реальная дата
             await Shell.Current.GoToAsync($"day?Date={selected.Date:yyyy-MMMM-dd}");
         }
+
+
     }
 }
