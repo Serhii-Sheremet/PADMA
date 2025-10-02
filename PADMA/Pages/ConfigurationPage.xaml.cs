@@ -6,7 +6,12 @@ namespace PADMA.Pages
         {
             InitializeComponent();
 
-            // Принудительно закрыть бургер-меню при входе на страницу
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            // закрываем бургер при каждом открытии страницы
             Shell.Current.FlyoutIsPresented = false;
         }
 
