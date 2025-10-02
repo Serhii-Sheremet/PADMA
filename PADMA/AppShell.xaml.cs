@@ -11,12 +11,22 @@ public partial class AppShell : Shell
 
         // Регистрируем маршруты
         Routing.RegisterRoute("day", typeof(DayPage));
-        Routing.RegisterRoute("config", typeof(ConfigurationPage));
+
+        // Регистрируем маршруты для всех страниц конфигурации
+        Routing.RegisterRoute(nameof(ConfigurationPage), typeof(PADMA.Pages.ConfigurationPage));
+        Routing.RegisterRoute(nameof(LanguagePage), typeof(PADMA.Pages.LanguagePage));
+        Routing.RegisterRoute(nameof(FirstDayOfWeekPage), typeof(PADMA.Pages.FirstDayOfWeekPage));
+        Routing.RegisterRoute(nameof(TransitsPage), typeof(PADMA.Pages.TransitsPage));
+        Routing.RegisterRoute(nameof(NodesPage), typeof(PADMA.Pages.NodesPage));
+        Routing.RegisterRoute(nameof(HoraPage), typeof(PADMA.Pages.HoraPage));
+        Routing.RegisterRoute(nameof(MuhurtasPage), typeof(PADMA.Pages.MuhurtasPage));
+        Routing.RegisterRoute(nameof(MrityuPage), typeof(PADMA.Pages.MrityuPage));
+        Routing.RegisterRoute(nameof(SunrisePage), typeof(PADMA.Pages.SunrisePage));
     }
 
     private async void OnSettingsClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("config");
+        await Shell.Current.GoToAsync("ConfigurationPage");
     }
 
     private async void OnExitClicked(object sender, EventArgs e)
