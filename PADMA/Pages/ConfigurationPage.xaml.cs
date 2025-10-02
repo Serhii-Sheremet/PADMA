@@ -1,57 +1,39 @@
-using Microsoft.Maui.Controls;
-
 namespace PADMA.Pages
 {
     public partial class ConfigurationPage : ContentPage
     {
-        private bool _weekStartsOnMonday;
-        private bool _hasChanges;
-
         public ConfigurationPage()
         {
             InitializeComponent();
-
-            // Загружаем сохранённое значение
-            _weekStartsOnMonday = Preferences.Get("WeekStartsOnMonday", true);
-            MondayRadio.IsChecked = _weekStartsOnMonday;
-            SundayRadio.IsChecked = !_weekStartsOnMonday;
-
-            _hasChanges = false;
-        }
-
-        private void OnOptionChanged(object sender, CheckedChangedEventArgs e)
-        {
-            bool newValue = MondayRadio.IsChecked;
-            _hasChanges = newValue != _weekStartsOnMonday;
-        }
-
-        private void OnApplyClicked(object sender, EventArgs e)
-        {
-            ApplyChanges();
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            if (_hasChanges)
-            {
-                bool save = await DisplayAlert("Save changes?", "Apply new settings?", "Yes", "No");
-                if (save)
-                {
-                    ApplyChanges();
-                }
-            }
-
-            await Shell.Current.GoToAsync(".."); // теперь реально закроется
+            await Shell.Current.GoToAsync("..");
         }
 
-        private void ApplyChanges()
-        {
-            _weekStartsOnMonday = MondayRadio.IsChecked;
-            Preferences.Set("WeekStartsOnMonday", _weekStartsOnMonday);
+        private async void OnLanguageClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(LanguagePage));
 
-            MessagingCenter.Send(this, "SettingsChanged");
+        private async void OnFirstDayOfWeekClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(FirstDayOfWeekPage));
 
-            _hasChanges = false;
-        }
+        private async void OnTransitsClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(TransitsPage));
+
+        private async void OnNodesClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(NodesPage));
+
+        private async void OnHoraClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(HoraPage));
+
+        private async void OnMuhurtasClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(MuhurtasPage));
+
+        private async void OnMrityuClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(MrityuPage));
+
+        private async void OnSunriseClicked(object sender, EventArgs e)
+            => await Shell.Current.GoToAsync(nameof(SunrisePage));
     }
 }

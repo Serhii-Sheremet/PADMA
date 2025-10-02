@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PADMA.Pages.FirstDayOfWeekPage"
+             Title="First day of week">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="✖" Priority="0" Order="Primary" Clicked="OnCloseClicked"/>
+    </ContentPage.ToolbarItems>
+
+    <VerticalStackLayout Padding="20" Spacing="10">
+        <Label Text="Choose the first day of week:" FontAttributes="Bold"/>
+
+        <RadioButton Content="Monday"
+                     GroupName="WeekStart"
+                     Value="Monday"
+                     IsChecked="{Binding IsMondayStart}" />
+        <RadioButton Content="Sunday"
+                     GroupName="WeekStart"
+                     Value="Sunday"
+                     IsChecked="{Binding IsSundayStart}" />
+    </VerticalStackLayout>
+</ContentPage>

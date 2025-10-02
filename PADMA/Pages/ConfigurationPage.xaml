@@ -2,35 +2,32 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PADMA.Pages.ConfigurationPage"
-             Title="Settings">
+             Title="Configuration">
 
-    <VerticalStackLayout Padding="20" Spacing="20">
-
-        <Label Text="First day of week:" 
-               FontAttributes="Bold"
-               FontSize="16"/>
-
-        <RadioButton x:Name="MondayRadio"
-                     Content="Monday"
-                     GroupName="WeekStart"
-                     CheckedChanged="OnOptionChanged"/>
-
-        <RadioButton x:Name="SundayRadio"
-                     Content="Sunday"
-                     GroupName="WeekStart"
-                     CheckedChanged="OnOptionChanged"/>
-
-        <!-- Apply button -->
-        <Button Text="Apply Changes"
-                Clicked="OnApplyClicked"
-                HorizontalOptions="Center"/>
-    </VerticalStackLayout>
-
-    <!-- Крестик -->
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✖" 
-                     Priority="0"
-                     Order="Primary"
-                     Clicked="OnCloseClicked"/>
+        <ToolbarItem Text="✖" Priority="0" Order="Primary" Clicked="OnCloseClicked"/>
     </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <Button Text="Language"
+                    Clicked="OnLanguageClicked"/>
+            <Button Text="First day of week"
+                    Clicked="OnFirstDayOfWeekClicked"/>
+            <Button Text="Planetary transits"
+                    Clicked="OnTransitsClicked"/>
+            <Button Text="Nodes (Rahu and Ketu)"
+                    Clicked="OnNodesClicked"/>
+            <Button Text="Hora"
+                    Clicked="OnHoraClicked"/>
+            <Button Text="30 Muhurtas (60 Ghatis)"
+                    Clicked="OnMuhurtasClicked"/>
+            <Button Text="Mrityu Bhaga"
+                    Clicked="OnMrityuClicked"/>
+            <Button Text="Sunrise calculation"
+                    Clicked="OnSunriseClicked"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
