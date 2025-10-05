@@ -47,7 +47,7 @@ namespace PADMA.Pages
             await Shell.Current.GoToAsync("HoraPage");
         }
 
-        private async void OnMuhurtaClicked(object sender, EventArgs e)
+        private async void OnMuhurtasClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("MuhurtaPage");
         }
