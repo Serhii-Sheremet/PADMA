@@ -1,17 +1,24 @@
-﻿using PADMA.Core.Models;
-using SQLite;
+﻿using SQLite;
+using PADMA.Core.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 
 namespace PADMA.Core.Services
 {
     public class DatabaseService
     {
-        private readonly SQLiteConnection _connection;
+        private readonly string _dbPath;
+        private SQLiteConnection _connection;
 
         public DatabaseService(string dbPath)
         {
-            _connection = new SQLiteConnection(dbPath);
+            _dbPath = dbPath;
+            _connection = new SQLiteConnection(_dbPath);
+            _connection.CreateTable<Language>();
         }
+
+        public SQLiteConnection GetConnection() => _connection;
 
         // --- Languages ---
         public IReadOnlyList<Language> GetLanguages()
@@ -58,20 +65,17 @@ namespace PADMA.Core.Services
 
         public List<AppSettingList> GetAppSettingsList()
         {
-            using var db = new SQLiteConnection(_dbPath);
-            return db.Table<AppSettingList>().ToList();
+            return _connection.Table<AppSettingList>().ToList();
         }
 
         public void DeactivateGroup(string groupCode)
         {
-            using var db = new SQLiteConnection(_dbPath);
-            db.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", groupCode);
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", groupCode);
         }
 
         public void ActivateSetting(int id)
         {
-            using var db = new SQLiteConnection(_dbPath);
-            db.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE ID = ?", id);
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE ID = ?", id);
         }
 
 
