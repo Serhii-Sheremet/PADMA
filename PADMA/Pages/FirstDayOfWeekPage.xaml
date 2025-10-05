@@ -16,13 +16,13 @@
         <Label Text="Choose the first day of week:" FontAttributes="Bold" />
 
         <!-- Monday -->
-        <RadioButton x:Name="MondayRadio"
+        <RadioButton x:Name="MondayRadioButton"
                      Content="Monday"
                      Value="WEEKMONDAY"
                      CheckedChanged="OnRadioButtonCheckedChanged" />
 
         <!-- Sunday -->
-        <RadioButton x:Name="SundayRadio"
+        <RadioButton x:Name="SundayRadioButton"
                      Content="Sunday"
                      Value="WEEKSUNDAY"
                      CheckedChanged="OnRadioButtonCheckedChanged" />

@@ -1,87 +1,87 @@
+using Microsoft.Maui.Controls;
+using PADMA.Core.Models;
+using PADMA.Core.Services;
 using System;
 using System.Linq;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Controls.Shapes;
-using Microsoft.Extensions.DependencyInjection;
-using PADMA.Core.Services;
-using PADMA.Core.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PADMA.Pages
 {
+    [QueryProperty(nameof(Date), "Date")]
     public partial class FirstDayOfWeekPage : ContentPage
     {
         private readonly DatabaseService _db;
-
-        // ID активной настройки на входе
-        private int _originalSettingId;
-
-        // ID выбранной (потенциально новой) настройки
-        private int _pendingSettingId;
+        private string _originalSettingCode;
+        private string _currentSettingCode;
 
         public FirstDayOfWeekPage()
         {
             InitializeComponent();
 
-            _db = ServiceLocator.Services.GetRequiredService<DatabaseService>();
-            LoadCurrent();
+            _db = ServiceLocator.Services.GetService<DatabaseService>();
+
+            LoadCurrentSetting();
         }
 
-        private void LoadCurrent()
+        private void LoadCurrentSetting()
         {
-            // Берём активную настройку из группы WEEK
-            var list = _db.GetAppSettingsList();
-            var active = list.FirstOrDefault(x => x.GroupCode == "WEEK" && x.Active == 1);
+            var settings = _db.GetAppSettingsList();
+            var active = settings.FirstOrDefault(x => x.GroupCode == "WEEK" && x.Active == 1);
 
-            _originalSettingId = active?.Id ?? 0;
-            _pendingSettingId = _originalSettingId;
+            // если нет активного — выставляем по умолчанию (понедельник)
+            _originalSettingCode = active?.SettingCode ?? "WEEKMONDAY";
+            _currentSettingCode = _originalSettingCode;
 
-            // Код настройки: WEEKMONDAY / WEEKSUNDAY
-            var code = active?.SettingCode ?? "WEEKMONDAY";
-
-            MondayRadio.IsChecked = code == "WEEKMONDAY";
-            SundayRadio.IsChecked = code == "WEEKSUNDAY";
+            MondayRadioButton.IsChecked = _currentSettingCode == "WEEKMONDAY";
+            SundayRadioButton.IsChecked = _currentSettingCode == "WEEKSUNDAY";
         }
 
-        // ВАЖНО: правильная сигнатура для RadioButton.CheckedChanged
         private void OnRadioButtonCheckedChanged(object sender, CheckedChangedEventArgs e)
         {
-            if (!e.Value) return; // реагируем только когда кнопка стала Checked = true
+            if (!e.Value)
+                return;
 
-            if (sender is RadioButton rb)
-            {
-                var code = rb.Value?.ToString();
-                if (string.IsNullOrEmpty(code)) return;
-
-                var list = _db.GetAppSettingsList();
-                var found = list.FirstOrDefault(x => x.GroupCode == "WEEK" && x.SettingCode == code);
-                if (found != null)
-                    _pendingSettingId = found.Id;
-            }
+            if (sender == MondayRadioButton)
+                _currentSettingCode = "WEEKMONDAY";
+            else if (sender == SundayRadioButton)
+                _currentSettingCode = "WEEKSUNDAY";
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            // Если ничего не поменяли — просто уходим назад
-            if (_pendingSettingId == _originalSettingId)
+            // если нет изменений — просто закрываем
+            if (_currentSettingCode == _originalSettingCode)
             {
                 await Shell.Current.GoToAsync("..");
                 return;
             }
 
-            var save = await DisplayAlert("Apply changes?",
-                                          "Save and apply the new first day of week?",
-                                          "Yes", "No");
+            // спрашиваем, сохранить ли изменения
+            bool save = await DisplayAlert("Save changes?", "Apply new setting for first day of week?", "Yes", "No");
             if (save)
             {
-                // Сбрасываем группу и активируем выбранный вариант
-                _db.DeactivateGroup("WEEK");
-                _db.ActivateSetting(_pendingSettingId);
-
-                // Сообщаем наверх (ConfigurationPage/MainPage и т.п.)
-                MessagingCenter.Send(this, "SettingsChanged");
+                SaveSetting();
+                MessagingCenter.Send(this, "SettingsChanged"); // уведомляем календарь о необходимости обновить
             }
 
             await Shell.Current.GoToAsync("..");
+        }
+
+        private void SaveSetting()
+        {
+            var settings = _db.GetAppSettingsList();
+            var weekSettings = settings.Where(x => x.GroupCode == "WEEK").ToList();
+
+            // деактивируем все
+            foreach (var s in weekSettings)
+                s.Active = 0;
+
+            // активируем выбранную настройку
+            var selected = weekSettings.FirstOrDefault(x => x.SettingCode == _currentSettingCode);
+            if (selected != null)
+                selected.Active = 1;
+
+            _db.UpdateAppSettings(weekSettings);
         }
     }
 }

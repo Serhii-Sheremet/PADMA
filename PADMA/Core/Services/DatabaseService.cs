@@ -82,6 +82,19 @@ namespace PADMA.Core.Services
             }
         }
 
+        public void UpdateAppSettings(List<AppSettingList> settings)
+        {
+            try
+            {
+                foreach (var s in settings)
+                    _connection.Update(s);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB update error: {ex.Message}");
+            }
+        }
+
         public void DeactivateGroup(string groupCode)
         {
             _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", groupCode);
