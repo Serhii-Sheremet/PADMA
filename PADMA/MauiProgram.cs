@@ -28,7 +28,11 @@ public static class MauiProgram
         }
 
         // Services
-        builder.Services.AddSingleton(new DatabaseService(dbPath));
+        // 1) Регистрируем сервис БД (без параметров — он сам найдёт путь)
+        builder.Services.AddSingleton<DatabaseService>();
+
+        // 2) ВАЖНО: сохраняем провайдер, чтобы Shell-страницы могли брать сервисы
+        ServiceLocator.Services = builder.Services.BuildServiceProvider();
 
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddSingleton<DayPage>();
@@ -38,10 +42,6 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppSettingsService>();
 
 
-        // Build + expose ServiceProvider (used by MainPage via ServiceLocator)
-        var app = builder.Build();
-        ServiceLocator.Services = app.Services;
-
-        return app;
+        return builder.Build();
     }
 }
