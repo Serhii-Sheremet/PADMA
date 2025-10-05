@@ -19,7 +19,6 @@ namespace PADMA.Pages
             InitializeComponent();
 
             _db = ServiceLocator.Services.GetService<DatabaseService>();
-
             LoadCurrentSetting();
         }
 
@@ -54,14 +53,19 @@ namespace PADMA.Pages
                 bool save = await DisplayAlert("Save changes?", "Apply new setting for first day of week?", "Yes", "No");
                 if (save)
                 {
-                    _db.SetFirstDayOfWeek(_currentSettingCode);
+                    SaveSetting(); // сохраняем в БД
 
-                    // уведомляем главную страницу
+                    // обновляем кэш
+                    var cached = _db.GetAppSettingsList().Where(x => x.GroupCode == "WEEK").ToList();
+                    foreach (var s in cached)
+                        s.Active = s.SettingCode == _currentSettingCode ? 1 : 0;
+
+                    // уведомляем главную страницу для обновления календаря
                     MessagingCenter.Send(this, "SettingsChanged");
                 }
             }
 
-            await Shell.Current.GoToAsync(".."); // просто закрываем страницу
+            await Shell.Current.GoToAsync(".."); // возвращаемся на страницу конфигурации
         }
 
         private void SaveSetting()
