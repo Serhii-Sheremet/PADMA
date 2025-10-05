@@ -55,5 +55,25 @@ namespace PADMA.Core.Services
                                  FROM PLANET_DESC";
             return _connection.Query<PlanetDesc>(sql);
         }
+
+        public List<AppSettingList> GetAppSettingsList()
+        {
+            using var db = new SQLiteConnection(_dbPath);
+            return db.Table<AppSettingList>().ToList();
+        }
+
+        public void DeactivateGroup(string groupCode)
+        {
+            using var db = new SQLiteConnection(_dbPath);
+            db.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", groupCode);
+        }
+
+        public void ActivateSetting(int id)
+        {
+            using var db = new SQLiteConnection(_dbPath);
+            db.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE ID = ?", id);
+        }
+
+
     }
 }

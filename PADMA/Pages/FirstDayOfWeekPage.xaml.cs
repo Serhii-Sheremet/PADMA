@@ -1,56 +1,56 @@
-using Microsoft.Maui.Controls;
-using System;
+using PADMA.Core.Services;
+using PADMA.Core.Models;
 
 namespace PADMA.Pages
 {
     public partial class FirstDayOfWeekPage : ContentPage
     {
-        private string _originalValue;
-        private string _currentValue;
+        private readonly AppSettingsService _settingsService;
+        private AppSettingList _activeSetting;
+        private bool _hasChanges = false;
 
-        public FirstDayOfWeekPage()
+        public FirstDayOfWeekPage(AppSettingsService settingsService)
         {
             InitializeComponent();
+            _settingsService = settingsService;
+            LoadCurrentSetting();
         }
 
-        protected override void OnAppearing()
+        private void LoadCurrentSetting()
         {
-            base.OnAppearing();
+            _activeSetting = _settingsService.GetActiveSetting("WEEK");
 
-            // Загружаем значение (пока жёстко Monday)
-            _originalValue = "Monday";
-            _currentValue = _originalValue;
+            if (_activeSetting == null)
+                return;
 
-            // Устанавливаем RadioButton
-            MondayRadioButton.IsChecked = _originalValue == "Monday";
-            SundayRadioButton.IsChecked = _originalValue == "Sunday";
+            if (_activeSetting.Code == "WEEKMONDAY")
+                MondayRadioButton.IsChecked = true;
+            else if (_activeSetting.Code == "WEEKSUNDAY")
+                SundayRadioButton.IsChecked = true;
         }
 
-        private void OnRadioButtonCheckedChanged(object sender, CheckedChangedEventArgs e)
+        private void OnDaySelected(object sender, CheckedChangedEventArgs e)
         {
-            if (e.Value) // только если выбрано
-            {
-                var rb = sender as RadioButton;
-                _currentValue = rb?.Value?.ToString();
-            }
+            _hasChanges = true;
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            if (_currentValue != _originalValue)
+            if (_hasChanges)
             {
-                bool save = await DisplayAlert("Save changes?",
-                    $"Apply '{_currentValue}' as first day of week?",
-                    "Yes", "No");
-
+                bool save = await DisplayAlert("Confirm", "Apply changes?", "Yes", "No");
                 if (save)
                 {
-                    // сохраняем выбор (позже - в DataCache/базу)
+                    var selectedCode = MondayRadioButton.IsChecked ? "WEEKMONDAY" : "WEEKSUNDAY";
+                    var newSetting = _settingsService.LoadSettings().FirstOrDefault(s => s.Code == selectedCode);
+                    if (newSetting != null)
+                        _settingsService.SetActiveSetting(newSetting.Id);
+
                     MessagingCenter.Send(this, "SettingsChanged");
                 }
             }
 
-            await Shell.Current.GoToAsync(".."); // закрыть страницу
+            await Shell.Current.GoToAsync("//configuration");
         }
     }
 }

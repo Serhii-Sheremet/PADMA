@@ -35,6 +35,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<ConfigurationPage>();
         builder.Services.AddSingleton<ExitPage>();
 
+        builder.Services.AddSingleton<AppSettingsService>();
+
+
         // Build + expose ServiceProvider (used by MainPage via ServiceLocator)
         var app = builder.Build();
         ServiceLocator.Services = app.Services;
