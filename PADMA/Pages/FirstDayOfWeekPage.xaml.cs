@@ -46,6 +46,22 @@ namespace PADMA.Pages
                 _currentSettingCode = "WEEKSUNDAY";
         }
 
+        protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
+        {
+            // если пользователь просто возвращается назад стрелкой
+            if (_currentSettingCode != _originalSettingCode)
+            {
+                bool save = await DisplayAlert("Save changes?", "Apply new setting for first day of week?", "Yes", "No");
+                if (save)
+                {
+                    _db.SetFirstDayOfWeek(_currentSettingCode);
+                    MessagingCenter.Send(this, "SettingsChanged");
+                }
+            }
+
+            base.OnNavigatingFrom(args);
+        }
+
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             if (_currentSettingCode != _originalSettingCode)
