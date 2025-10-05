@@ -15,8 +15,15 @@ namespace PADMA.Pages
             if (BindingContext is not CalendarViewModel)
                 BindingContext = new CalendarViewModel();
 
-            // Обновление календаря при изменении любых настроек
-            MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
+            // Подписка на изменения настроек из ConfigurationPage
+            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
+            {
+                Vm?.RefreshCalendar();
+                UpdateTitle();
+            });
+
+            // Подписка на изменения настроек из FirstDayOfWeekPage
+            MessagingCenter.Subscribe<FirstDayOfWeekPage>(this, "SettingsChanged", _ =>
             {
                 Vm?.RefreshCalendar();
                 UpdateTitle();
