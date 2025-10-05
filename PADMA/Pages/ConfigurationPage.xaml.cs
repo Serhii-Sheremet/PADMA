@@ -17,6 +17,12 @@ namespace PADMA.Pages
             });
         }
 
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            Shell.Current.FlyoutIsPresented = false;
+        }
+
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("//main");

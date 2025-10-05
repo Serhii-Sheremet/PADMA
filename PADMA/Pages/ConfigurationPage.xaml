@@ -24,7 +24,7 @@
             <Button Text="30 Muhurtas (60 Ghatis)"
                     Clicked="OnMuhurtasClicked"/>
             <Button Text="Mrityu Bhaga"
-                    Clicked="OnMrityuClicked"/>
+                    Clicked="OnMrityuBhagaClicked"/>
             <Button Text="Sunrise calculation"
                     Clicked="OnSunriseClicked"/>
 
