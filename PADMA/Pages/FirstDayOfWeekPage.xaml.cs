@@ -36,7 +36,7 @@ namespace PADMA.Pages
             _pendingSettingId = _originalSettingId;
 
             // Код настройки: WEEKMONDAY / WEEKSUNDAY
-            var code = active?.Code ?? "WEEKMONDAY";
+            var code = active?.SettingCode ?? "WEEKMONDAY";
 
             MondayRadio.IsChecked = code == "WEEKMONDAY";
             SundayRadio.IsChecked = code == "WEEKSUNDAY";
@@ -53,7 +53,7 @@ namespace PADMA.Pages
                 if (string.IsNullOrEmpty(code)) return;
 
                 var list = _db.GetAppSettingsList();
-                var found = list.FirstOrDefault(x => x.GroupCode == "WEEK" && x.Code == code);
+                var found = list.FirstOrDefault(x => x.GroupCode == "WEEK" && x.SettingCode == code);
                 if (found != null)
                     _pendingSettingId = found.Id;
             }

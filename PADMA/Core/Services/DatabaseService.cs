@@ -2,6 +2,7 @@
 using PADMA.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 
 namespace PADMA.Core.Services
@@ -11,11 +12,16 @@ namespace PADMA.Core.Services
         private readonly string _dbPath;
         private SQLiteConnection _connection;
 
-        public DatabaseService(string dbPath)
+        public DatabaseService()
         {
-            _dbPath = dbPath;
+            _dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
+
+            // если файла нет, скопировать из ресурсов
+            var assetDb = Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "PADMADB.db3");
+            if (!File.Exists(_dbPath) && File.Exists(assetDb))
+                File.Copy(assetDb, _dbPath);
+
             _connection = new SQLiteConnection(_dbPath);
-            _connection.CreateTable<Language>();
         }
 
         public SQLiteConnection GetConnection() => _connection;
@@ -65,7 +71,15 @@ namespace PADMA.Core.Services
 
         public List<AppSettingList> GetAppSettingsList()
         {
-            return _connection.Table<AppSettingList>().ToList();
+            try
+            {
+                return _connection.Table<AppSettingList>().ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB read error: {ex.Message}");
+                return new List<AppSettingList>();
+            }
         }
 
         public void DeactivateGroup(string groupCode)
