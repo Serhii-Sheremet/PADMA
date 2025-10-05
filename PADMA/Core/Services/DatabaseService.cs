@@ -82,6 +82,26 @@ namespace PADMA.Core.Services
             }
         }
 
+        // Возвращает DayOfWeek на основе активной записи из группы WEEK
+        public DayOfWeek GetFirstDayOfWeekFromDb()
+        {
+            var settings = GetAppSettingsList();
+            var active = settings.FirstOrDefault(x => x.GroupCode == "WEEK" && x.Active == 1);
+
+            var code = active?.SettingCode ?? "WEEKMONDAY";
+            return code == "WEEKSUNDAY" ? DayOfWeek.Sunday : DayOfWeek.Monday;
+        }
+
+        // Сохраняет выбранный код (WEEKMONDAY или WEEKSUNDAY) в БД как активный
+        public void SetFirstDayOfWeek(string code)
+        {
+            // Два простых UPDATE-а над реальной таблицей
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "WEEK");
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "WEEK", code);
+        }
+
+        // Опционально — массовый апдейт списка 
+
         public void UpdateAppSettings(List<AppSettingList> settings)
         {
             try

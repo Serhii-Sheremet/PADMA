@@ -1,11 +1,21 @@
+using SQLite; // из sqlite-net-pcl
+
 namespace PADMA.Core.Models
 {
+    [Table("APPSETTING")]
     public class AppSettingList
     {
+        [PrimaryKey, AutoIncrement]
+        [Column("ID")]
         public int Id { get; set; }
-        public string GroupCode { get; set; }
-        public string SettingCode { get; set; }
-        public string Description { get; set; }
-        public int Active { get; set; }  // 1 = активен, 0 = выключен
+
+        [Column("GROUPCODE")]
+        public string GroupCode { get; set; } = "";
+
+        [Column("SETTINGCODE")]
+        public string SettingCode { get; set; } = "";
+
+        [Column("ACTIVE")]
+        public int Active { get; set; }
     }
 }

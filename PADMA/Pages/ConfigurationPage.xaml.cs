@@ -25,7 +25,7 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("//main");
+            await Shell.Current.GoToAsync("..");
         }
 
         private async void OnFirstDayOfWeekClicked(object sender, EventArgs e)

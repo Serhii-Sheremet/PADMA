@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using PADMA.Core.Services;
 
 namespace PADMA.UI
 {
@@ -63,6 +64,8 @@ namespace PADMA.UI
             GenerateDays(Year, Month);
         }
 
+        
+
         /// <summary>
         /// Core: build a 6x7 grid (42 days) based on the selected first day of week.
         /// </summary>
@@ -70,21 +73,12 @@ namespace PADMA.UI
         {
             Days.Clear();
 
-            // User pref: "Monday" (default) or "Sunday"
-            string firstDayPref = Preferences.Get("FirstDayOfWeek", "Monday");
-            // DayOfWeek: Sunday=0, Monday=1, ... Saturday=6
-            // We want offset: 0 if Sunday is first; 1 if Monday is first
-            int firstDayOffset = firstDayPref.Equals("Sunday", StringComparison.OrdinalIgnoreCase) ? 0 : 1;
+            var db = ServiceLocator.Services.GetService<DatabaseService>();
+            var firstDay = db.GetFirstDayOfWeekFromDb(); // Sunday или Monday
 
-            DateTime firstOfMonth = new DateTime(year, month, 1);
-
-            // Number of days to show from previous month at the start of the grid.
-            // For Monday-first: Mon->0, Tue->1, ... Sun->6
-            // For Sunday-first: Sun->0, Mon->1, ... Sat->6
-            int startIndex = (7 + (int)firstOfMonth.DayOfWeek - firstDayOffset) % 7;
-
-            // Start date of the 42-day grid
-            DateTime startDate = firstOfMonth.AddDays(-startIndex);
+            var firstOfMonth = new DateTime(Year, Month, 1);
+            int shift = ((7 + (int)firstOfMonth.DayOfWeek - (int)firstDay) % 7);
+            var startDate = firstOfMonth.AddDays(-shift);
 
             for (int i = 0; i < 42; i++)
             {

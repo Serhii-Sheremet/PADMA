@@ -49,22 +49,19 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            // если нет изменений — просто закрываем
-            if (_currentSettingCode == _originalSettingCode)
+            if (_currentSettingCode != _originalSettingCode)
             {
-                await Shell.Current.GoToAsync("..");
-                return;
+                bool save = await DisplayAlert("Save changes?", "Apply new setting for first day of week?", "Yes", "No");
+                if (save)
+                {
+                    _db.SetFirstDayOfWeek(_currentSettingCode);
+
+                    // уведомляем главную страницу
+                    MessagingCenter.Send(this, "SettingsChanged");
+                }
             }
 
-            // спрашиваем, сохранить ли изменения
-            bool save = await DisplayAlert("Save changes?", "Apply new setting for first day of week?", "Yes", "No");
-            if (save)
-            {
-                SaveSetting();
-                MessagingCenter.Send(this, "SettingsChanged"); // уведомляем календарь о необходимости обновить
-            }
-
-            await Shell.Current.GoToAsync("..");
+            await Shell.Current.GoToAsync(".."); // просто закрываем страницу
         }
 
         private void SaveSetting()
