@@ -130,39 +130,19 @@ namespace PADMA.Core.Services
 
         public List<AppText> GetAppTextsList()
         {
-            List<AppText> entityList = new List<AppText>();
-            using (SQLiteConnection dbCon = _connection)
+            try
             {
-                dbCon.Open();
-                try
-                {
-                    string comm = $"select ID, NATIVETEXT, FOREIGNTEXT, LANGUAGECODE from APP_TEXTS order by ID";
-                    SQLiteCommand command = new SQLiteCommand(comm, dbCon);
-                    using (SQLiteDataReader reader = command.ExecuteReader())
-                    {
-                        if (reader.HasRows)
-                        {
-                            while (reader.Read())
-                            {
-                                AppText temp = new AppText
-                                {
-                                    Id = reader.GetInt32(0),
-                                    NativeText = reader.GetString(1),
-                                    ForeignText = reader.GetString(2),
-                                    LanguageCode = reader.GetString(3)
-                                };
-                                entityList.Add(temp);
-                            }
-                        }
-                        reader.Close();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[PADMA] DB update error: {ex.Message}");
-                }
+                // если таблицы нет — создаём
+                _connection.CreateTable<AppText>();
+
+                // выгружаем все строки таблицы APP_TEXTS
+                return _connection.Table<AppText>().ToList();
             }
-            return entityList;
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DB] Error loading AppTexts: {ex.Message}");
+                return new List<AppText>();
+            }
         }
 
 
