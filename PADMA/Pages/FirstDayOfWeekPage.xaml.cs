@@ -14,6 +14,7 @@ namespace PADMA.Pages
         private readonly DatabaseService _db;
         private string _originalSettingCode;
         private string _currentSettingCode;
+        private bool _isClosingByButton = false;
 
         public FirstDayOfWeekPage()
         {
@@ -49,6 +50,13 @@ namespace PADMA.Pages
 
         protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
         {
+            // если уже выходим через крестик — не показываем второй раз диалог
+            if (_isClosingByButton)
+            {
+                base.OnNavigatingFrom(args);
+                return;
+            }
+
             // если пользователь просто возвращается назад стрелкой
             if (_currentSettingCode != _originalSettingCode)
             {
@@ -72,6 +80,8 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
+            _isClosingByButton = true; // выставляем флаг
+
             if (_currentSettingCode != _originalSettingCode)
             {
                 string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
