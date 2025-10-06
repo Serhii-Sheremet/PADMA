@@ -128,15 +128,18 @@ namespace PADMA.Core.Services
 
 
 
-        public List<AppText> GetAppTextsList()
+        public List<AppText> GetAppTextsList(string languageCode = null)
         {
             try
             {
-                // если таблицы нет — создаём
                 _connection.CreateTable<AppText>();
 
-                // выгружаем все строки таблицы APP_TEXTS
-                return _connection.Table<AppText>().ToList();
+                if (string.IsNullOrEmpty(languageCode))
+                    return _connection.Table<AppText>().ToList();
+
+                return _connection.Table<AppText>()
+                    .Where(x => x.LanguageCode == languageCode)
+                    .ToList();
             }
             catch (Exception ex)
             {
@@ -144,6 +147,7 @@ namespace PADMA.Core.Services
                 return new List<AppText>();
             }
         }
+
 
 
     }

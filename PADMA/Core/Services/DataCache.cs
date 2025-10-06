@@ -30,7 +30,7 @@ namespace PADMA.Core.Services
 
         private DataCache() { }
 
-        public List<AppText> AppTextsList { get; set; } = new();
+        public List<AppText> AppTextsList { get; private set; }
 
         public void LoadAll(DatabaseService db, string preferredUiLang = "en")
         {
@@ -63,6 +63,8 @@ namespace PADMA.Core.Services
                 .Where(d => string.Equals(d.LanguageCode, UiLanguageCode, StringComparison.OrdinalIgnoreCase))
                 .GroupBy(d => d.PlanetId)
                 .ToDictionary(g => g.Key, g => g.First().Name);
+
+            AppTextsList = db.GetAppTextsList(preferredUiLang);
         }
     }
 }
