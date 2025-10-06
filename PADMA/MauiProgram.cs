@@ -27,6 +27,7 @@ public static class MauiProgram
             inStream.CopyTo(outStream);
         }
 
+
         // Services
         // 1) Регистрируем сервис БД (без параметров — он сам найдёт путь)
         builder.Services.AddSingleton<DatabaseService>();
@@ -38,9 +39,14 @@ public static class MauiProgram
         builder.Services.AddSingleton<DayPage>();
         builder.Services.AddSingleton<ConfigurationPage>();
         builder.Services.AddSingleton<ExitPage>();
-
         builder.Services.AddSingleton<AppSettingsService>();
 
+        var db = ServiceLocator.Services.GetRequiredService<DatabaseService>();
+        
+        DataCache.CurrentLanguageCode = "ru"; // временно фиксируем русский язык
+        DataCache.Instance.LoadAll(db, DataCache.CurrentLanguageCode);
+
+        
 
         return builder.Build();
     }
