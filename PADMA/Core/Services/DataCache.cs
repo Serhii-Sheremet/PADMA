@@ -30,6 +30,8 @@ namespace PADMA.Core.Services
 
         private DataCache() { }
 
+        public static string CurrentLanguageCode { get; set; } = "ru"; // временно русский по умолчанию
+
         public List<AppText> AppTextsList { get; private set; }
 
         public void LoadAll(DatabaseService db, string preferredUiLang = "en")

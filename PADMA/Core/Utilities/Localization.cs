@@ -6,11 +6,17 @@ namespace PADMA.Core.Utilities
 {
     public static class Localization
     {
-        public static string Get(string nativeText, string langCode = "en")
+        public static string GetLocalizedText(string nativeText, string langCode)
         {
-            var list = DataCache.Instance.AppTextsList;
-            var match = list.FirstOrDefault(x => x.NativeText == nativeText && x.LanguageCode == langCode);
-            return match?.ForeignText ?? nativeText;
+            var appTextsList = DataCache.Instance.AppTextsList;
+            if (appTextsList == null || appTextsList.Count == 0)
+                return nativeText;
+
+            var translation = appTextsList
+                .FirstOrDefault(x => x.NativeText.Equals(nativeText, StringComparison.OrdinalIgnoreCase)
+                                  && x.LanguageCode.Equals(langCode, StringComparison.OrdinalIgnoreCase));
+
+            return translation?.ForeignText ?? nativeText;
         }
     }
 }

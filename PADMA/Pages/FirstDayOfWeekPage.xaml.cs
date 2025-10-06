@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
+using PADMA.Core.Utilities;
 using System;
 using System.Linq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -51,7 +52,14 @@ namespace PADMA.Pages
             // если пользователь просто возвращается назад стрелкой
             if (_currentSettingCode != _originalSettingCode)
             {
-                bool save = await DisplayAlert("Save changes?", "Apply new setting for first day of week?", "Yes", "No");
+                string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
+                string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
+                bool save = await DisplayAlert(
+                    "Save changes?",
+                    "Apply new setting for first day of week?",
+                    yesText,
+                    noText);
+
                 if (save)
                 {
                     _db.SetFirstDayOfWeek(_currentSettingCode);
@@ -66,7 +74,14 @@ namespace PADMA.Pages
         {
             if (_currentSettingCode != _originalSettingCode)
             {
-                bool save = await DisplayAlert("Save changes?", "Apply new setting for first day of week?", "Yes", "No");
+                string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
+                string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
+                bool save = await DisplayAlert(
+                    "Save changes?",
+                    "Apply new setting for first day of week?",
+                    yesText,
+                    noText);
+
                 if (save)
                 {
                     SaveSetting(); // сохраняем в БД
