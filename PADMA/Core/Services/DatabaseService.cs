@@ -3,6 +3,7 @@ using PADMA.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using PADMA.Core.Models;
 
 
 namespace PADMA.Core.Services
@@ -123,6 +124,45 @@ namespace PADMA.Core.Services
         public void ActivateSetting(int id)
         {
             _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE ID = ?", id);
+        }
+
+
+
+        public List<AppText> GetAppTextsList()
+        {
+            List<AppText> entityList = new List<AppText>();
+            using (SQLiteConnection dbCon = _connection)
+            {
+                dbCon.Open();
+                try
+                {
+                    string comm = $"select ID, NATIVETEXT, FOREIGNTEXT, LANGUAGECODE from APP_TEXTS order by ID";
+                    SQLiteCommand command = new SQLiteCommand(comm, dbCon);
+                    using (SQLiteDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.HasRows)
+                        {
+                            while (reader.Read())
+                            {
+                                AppText temp = new AppText
+                                {
+                                    Id = reader.GetInt32(0),
+                                    NativeText = reader.GetString(1),
+                                    ForeignText = reader.GetString(2),
+                                    LanguageCode = reader.GetString(3)
+                                };
+                                entityList.Add(temp);
+                            }
+                        }
+                        reader.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PADMA] DB update error: {ex.Message}");
+                }
+            }
+            return entityList;
         }
 
 
