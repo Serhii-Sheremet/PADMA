@@ -67,7 +67,7 @@ namespace PADMA.Core.Services
                 .ToDictionary(g => g.Key, g => g.First().Name);
 
             AppTextsList = db.GetAppTextsList(preferredUiLang);
-            System.Diagnostics.Debug.WriteLine($"[PADMA] AppTexts loaded: {AppTextsList?.Count ?? 0} for lang={preferredUiLang}");
+            
 
         }
     }
