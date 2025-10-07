@@ -20,57 +20,85 @@
                    FontAttributes="Bold"
                    HorizontalOptions="Center" />
 
-            <VerticalStackLayout Spacing="15">
+            <!-- ENGLISH -->
+            <Grid ColumnDefinitions="Auto,* ,Auto"
+                  Padding="10"
+                  x:Name="EnglishRow">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="ENGLISH"/>
+                </Grid.GestureRecognizers>
 
-                <!-- English -->
+                <Image Grid.Column="0" Source="flag_uk.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <Label x:Name="EnglishLabel"
+                       Grid.Column="1"
+                       Text="English"
+                       FontSize="18"
+                       VerticalOptions="Center" />
                 <RadioButton x:Name="EnglishRadioButton"
+                             Grid.Column="2"
                              GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged">
-                    <RadioButton.Content>
-                        <HorizontalStackLayout Spacing="10">
-                            <Image Source="flag_uk.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill" />
-                            <Label x:Name="EnglishLabel" Text="English" FontSize="18" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </RadioButton.Content>
-                </RadioButton>
+                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+            </Grid>
 
-                <!-- Ukrainian -->
+            <!-- UKRAINIAN -->
+            <Grid ColumnDefinitions="Auto,* ,Auto"
+                  Padding="10"
+                  x:Name="UkrainianRow">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="UKRAINIAN"/>
+                </Grid.GestureRecognizers>
+
+                <Image Grid.Column="0" Source="flag_ua.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <Label x:Name="UkrainianLabel"
+                       Grid.Column="1"
+                       Text="Українська"
+                       FontSize="18"
+                       VerticalOptions="Center" />
                 <RadioButton x:Name="UkrainianRadioButton"
+                             Grid.Column="2"
                              GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged">
-                    <RadioButton.Content>
-                        <HorizontalStackLayout Spacing="10">
-                            <Image Source="flag_ua.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill" />
-                            <Label x:Name="UkrainianLabel" Text="Українська" FontSize="18" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </RadioButton.Content>
-                </RadioButton>
+                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+            </Grid>
 
-                <!-- Polish -->
+            <!-- POLISH -->
+            <Grid ColumnDefinitions="Auto,* ,Auto"
+                  Padding="10"
+                  x:Name="PolishRow">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="POLISH"/>
+                </Grid.GestureRecognizers>
+
+                <Image Grid.Column="0" Source="flag_pl.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <Label x:Name="PolishLabel"
+                       Grid.Column="1"
+                       Text="Polski"
+                       FontSize="18"
+                       VerticalOptions="Center" />
                 <RadioButton x:Name="PolishRadioButton"
+                             Grid.Column="2"
                              GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged">
-                    <RadioButton.Content>
-                        <HorizontalStackLayout Spacing="10">
-                            <Image Source="flag_pl.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill" />
-                            <Label x:Name="PolishLabel" Text="Polski" FontSize="18" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </RadioButton.Content>
-                </RadioButton>
+                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+            </Grid>
 
-                <!-- Russian -->
+            <!-- RUSSIAN -->
+            <Grid ColumnDefinitions="Auto,* ,Auto"
+                  Padding="10"
+                  x:Name="RussianRow">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="RUSSIAN"/>
+                </Grid.GestureRecognizers>
+
+                <Image Grid.Column="0" Source="flag_ru.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <Label x:Name="RussianLabel"
+                       Grid.Column="1"
+                       Text="Русский"
+                       FontSize="18"
+                       VerticalOptions="Center" />
                 <RadioButton x:Name="RussianRadioButton"
+                             Grid.Column="2"
                              GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged">
-                    <RadioButton.Content>
-                        <HorizontalStackLayout Spacing="10">
-                            <Image Source="flag_ru.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill" />
-                            <Label x:Name="RussianLabel" Text="Русский" FontSize="18" VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </RadioButton.Content>
-                </RadioButton>
-
-            </VerticalStackLayout>
+                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+            </Grid>
 
         </VerticalStackLayout>
     </ScrollView>

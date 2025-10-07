@@ -19,11 +19,10 @@ namespace PADMA.Pages
 
             _db = ServiceLocator.Services.GetService<DatabaseService>();
 
-            // Заголовки/лейблы через локализацию (фолбэк на английский)
+            // Локализация заголовков/лейблов
             Title = Localization.GetLocalizedText("Language", DataCache.CurrentLanguageCode);
-            TitleLabel.Text = Localization.GetLocalizedText("Select Application language", DataCache.CurrentLanguageCode);
+            TitleLabel.Text = Localization.GetLocalizedText("Select application language", DataCache.CurrentLanguageCode);
 
-            // (опционально) локализуем названия языков, если появятся ключи в APP_TEXTS
             EnglishLabel.Text = Localization.GetLocalizedText("English", DataCache.CurrentLanguageCode);
             UkrainianLabel.Text = Localization.GetLocalizedText("Ukrainian", DataCache.CurrentLanguageCode);
             PolishLabel.Text = Localization.GetLocalizedText("Polish", DataCache.CurrentLanguageCode);
@@ -53,6 +52,19 @@ namespace PADMA.Pages
             else if (sender == UkrainianRadioButton) _currentLangCode = "UKRAINIAN";
             else if (sender == PolishRadioButton) _currentLangCode = "POLISH";
             else if (sender == RussianRadioButton) _currentLangCode = "RUSSIAN";
+        }
+
+        // Тап по строке делает выбор более удобным
+        private void OnRowTapped(object sender, TappedEventArgs e)
+        {
+            var code = e.Parameter as string;
+            switch (code)
+            {
+                case "ENGLISH": EnglishRadioButton.IsChecked = true; break;
+                case "UKRAINIAN": UkrainianRadioButton.IsChecked = true; break;
+                case "POLISH": PolishRadioButton.IsChecked = true; break;
+                case "RUSSIAN": RussianRadioButton.IsChecked = true; break;
+            }
         }
 
         protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
@@ -106,10 +118,10 @@ namespace PADMA.Pages
 
             _db.UpdateAppSettings(langSettings);
 
-            // обновляем текущий язык приложения
+            // Обновляем текущий язык приложения
             DataCache.CurrentLanguageCode = _currentLangCode;
 
-            // триггерим обновление UI
+            // Сообщаем остальному UI
             MessagingCenter.Send(this, "SettingsChanged");
         }
     }
