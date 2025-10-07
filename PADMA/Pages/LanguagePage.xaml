@@ -21,83 +21,118 @@
                    HorizontalOptions="Center" />
 
             <!-- ENGLISH -->
-            <Grid ColumnDefinitions="Auto,* ,Auto"
+            <Grid ColumnDefinitions="Auto,*,Auto"
                   Padding="10"
                   x:Name="EnglishRow">
                 <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="ENGLISH"/>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="ENGLISH" />
                 </Grid.GestureRecognizers>
 
-                <Image Grid.Column="0" Source="flag_uk.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <!-- Radio -->
+                <RadioButton x:Name="EnglishRadioButton"
+                             Grid.Column="0"
+                             GroupName="LanguageSelection"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <!-- Label -->
                 <Label x:Name="EnglishLabel"
                        Grid.Column="1"
                        Text="English"
                        FontSize="18"
-                       VerticalOptions="Center" />
-                <RadioButton x:Name="EnglishRadioButton"
-                             Grid.Column="2"
-                             GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+                       VerticalOptions="Center"
+                       Margin="5,0,0,0" />
+
+                <!-- Flag -->
+                <Image Grid.Column="2"
+                       Source="flag_uk.png"
+                       WidthRequest="30"
+                       HeightRequest="20"
+                       Aspect="AspectFill"
+                       Margin="10,0,0,0" />
             </Grid>
 
             <!-- UKRAINIAN -->
-            <Grid ColumnDefinitions="Auto,* ,Auto"
+            <Grid ColumnDefinitions="Auto,*,Auto"
                   Padding="10"
                   x:Name="UkrainianRow">
                 <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="UKRAINIAN"/>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="UKRAINIAN" />
                 </Grid.GestureRecognizers>
 
-                <Image Grid.Column="0" Source="flag_ua.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <RadioButton x:Name="UkrainianRadioButton"
+                             Grid.Column="0"
+                             GroupName="LanguageSelection"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
                 <Label x:Name="UkrainianLabel"
                        Grid.Column="1"
                        Text="Українська"
                        FontSize="18"
-                       VerticalOptions="Center" />
-                <RadioButton x:Name="UkrainianRadioButton"
-                             Grid.Column="2"
-                             GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+                       VerticalOptions="Center"
+                       Margin="5,0,0,0" />
+
+                <Image Grid.Column="2"
+                       Source="flag_ua.png"
+                       WidthRequest="30"
+                       HeightRequest="20"
+                       Aspect="AspectFill"
+                       Margin="10,0,0,0" />
             </Grid>
 
             <!-- POLISH -->
-            <Grid ColumnDefinitions="Auto,* ,Auto"
+            <Grid ColumnDefinitions="Auto,*,Auto"
                   Padding="10"
                   x:Name="PolishRow">
                 <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="POLISH"/>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="POLISH" />
                 </Grid.GestureRecognizers>
 
-                <Image Grid.Column="0" Source="flag_pl.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <RadioButton x:Name="PolishRadioButton"
+                             Grid.Column="0"
+                             GroupName="LanguageSelection"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
                 <Label x:Name="PolishLabel"
                        Grid.Column="1"
                        Text="Polski"
                        FontSize="18"
-                       VerticalOptions="Center" />
-                <RadioButton x:Name="PolishRadioButton"
-                             Grid.Column="2"
-                             GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+                       VerticalOptions="Center"
+                       Margin="5,0,0,0" />
+
+                <Image Grid.Column="2"
+                       Source="flag_pl.png"
+                       WidthRequest="30"
+                       HeightRequest="20"
+                       Aspect="AspectFill"
+                       Margin="10,0,0,0" />
             </Grid>
 
             <!-- RUSSIAN -->
-            <Grid ColumnDefinitions="Auto,* ,Auto"
+            <Grid ColumnDefinitions="Auto,*,Auto"
                   Padding="10"
                   x:Name="RussianRow">
                 <Grid.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="RUSSIAN"/>
+                    <TapGestureRecognizer Tapped="OnRowTapped" CommandParameter="RUSSIAN" />
                 </Grid.GestureRecognizers>
 
-                <Image Grid.Column="0" Source="flag_ru.png" WidthRequest="30" HeightRequest="20" Aspect="AspectFill"/>
+                <RadioButton x:Name="RussianRadioButton"
+                             Grid.Column="0"
+                             GroupName="LanguageSelection"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
                 <Label x:Name="RussianLabel"
                        Grid.Column="1"
                        Text="Русский"
                        FontSize="18"
-                       VerticalOptions="Center" />
-                <RadioButton x:Name="RussianRadioButton"
-                             Grid.Column="2"
-                             GroupName="LanguageSelection"
-                             CheckedChanged="OnRadioButtonCheckedChanged"/>
+                       VerticalOptions="Center"
+                       Margin="5,0,0,0" />
+
+                <Image Grid.Column="2"
+                       Source="flag_ru.png"
+                       WidthRequest="30"
+                       HeightRequest="20"
+                       Aspect="AspectFill"
+                       Margin="10,0,0,0" />
             </Grid>
 
         </VerticalStackLayout>
