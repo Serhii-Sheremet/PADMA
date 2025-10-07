@@ -10,59 +10,38 @@ namespace PADMA.Pages
     public partial class LanguagePage : ContentPage
     {
         private readonly DatabaseService _db;
-        private string _originalSettingCode;
-        private string _currentSettingCode;
+        private string _originalLangCode;
+        private string _currentLangCode;
         private bool _isClosingByButton = false;
 
         public LanguagePage()
         {
             InitializeComponent();
-
             _db = ServiceLocator.Services.GetService<DatabaseService>();
             LoadCurrentLanguage();
-            LocalizePageTexts();
         }
 
         private void LoadCurrentLanguage()
         {
             var settings = _db.GetAppSettingsList();
             var active = settings.FirstOrDefault(x => x.GroupCode == "LANGUAGE" && x.Active == 1);
+            _originalLangCode = active?.SettingCode ?? "ENGLISH";
+            _currentLangCode = _originalLangCode;
 
-            // если нет активного — выставляем по умолчанию (английский)
-            _originalSettingCode = active?.SettingCode ?? "ENGLISH";
-            _currentSettingCode = _originalSettingCode;
-
-            EnglishRadioButton.IsChecked = _currentSettingCode == "ENGLISH";
-            UkrainianRadioButton.IsChecked = _currentSettingCode == "UKRAINIAN";
-            PolishRadioButton.IsChecked = _currentSettingCode == "POLISH";
-            RussianRadioButton.IsChecked = _currentSettingCode == "RUSSIAN";
-        }
-
-        private void LocalizePageTexts()
-        {
-            string lang = DataCache.CurrentLanguageCode;
-
-            Title = Localization.GetLocalizedText("Language", lang);
-            PageTitle.Text = Localization.GetLocalizedText("Select application language:", lang);
-            EnglishLabel.Text = Localization.GetLocalizedText("English", lang);
-            UkrainianLabel.Text = Localization.GetLocalizedText("Ukrainian", lang);
-            PolishLabel.Text = Localization.GetLocalizedText("Polish", lang);
-            RussianLabel.Text = Localization.GetLocalizedText("Russian", lang);
+            EnglishRadioButton.IsChecked = _currentLangCode == "ENGLISH";
+            UkrainianRadioButton.IsChecked = _currentLangCode == "UKRAINIAN";
+            PolishRadioButton.IsChecked = _currentLangCode == "POLISH";
+            RussianRadioButton.IsChecked = _currentLangCode == "RUSSIAN";
         }
 
         private void OnRadioButtonCheckedChanged(object sender, CheckedChangedEventArgs e)
         {
-            if (!e.Value)
-                return;
+            if (!e.Value) return;
 
-            if (sender == EnglishRadioButton)
-                _currentSettingCode = "ENGLISH";
-            else if (sender == UkrainianRadioButton)
-                _currentSettingCode = "UKRAINIAN";
-            else if (sender == PolishRadioButton)
-                _currentSettingCode = "POLISH";
-            else if (sender == RussianRadioButton)
-                _currentSettingCode = "RUSSIAN";
+            if (sender == EnglishRadioButton) _currentLangCode = "ENGLISH";
+            else if (sender == UkrainianRadioButton) _currentLangCode = "UKRAINIAN";
+            else if (sender == PolishRadioButton) _currentLangCode = "POLISH";
+            else if (sender == RussianRadioButton) _currentLangCode = "RUSSIAN";
         }
 
         protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
@@ -73,19 +52,16 @@ namespace PADMA.Pages
                 return;
             }
 
-            if (_currentSettingCode != _originalSettingCode)
+            if (_currentLangCode != _originalLangCode)
             {
-                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
-                string messageText = Localization.GetLocalizedText("Apply new language setting?", DataCache.CurrentLanguageCode);
+                string title = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
+                string message = Localization.GetLocalizedText("Apply new language setting?", DataCache.CurrentLanguageCode);
                 string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
                 string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
 
-                bool save = await DisplayAlert(titleText, messageText, yesText, noText);
-
+                bool save = await DisplayAlert(title, message, yesText, noText);
                 if (save)
-                {
                     ApplyLanguageChange();
-                }
             }
 
             base.OnNavigatingFrom(args);
@@ -95,19 +71,16 @@ namespace PADMA.Pages
         {
             _isClosingByButton = true;
 
-            if (_currentSettingCode != _originalSettingCode)
+            if (_currentLangCode != _originalLangCode)
             {
-                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
-                string messageText = Localization.GetLocalizedText("Apply new language setting?", DataCache.CurrentLanguageCode);
+                string title = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
+                string message = Localization.GetLocalizedText("Apply new language setting?", DataCache.CurrentLanguageCode);
                 string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
                 string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
 
-                bool save = await DisplayAlert(titleText, messageText, yesText, noText);
-
+                bool save = await DisplayAlert(title, message, yesText, noText);
                 if (save)
-                {
                     ApplyLanguageChange();
-                }
             }
 
             await Shell.Current.GoToAsync("..");
@@ -115,24 +88,21 @@ namespace PADMA.Pages
 
         private void ApplyLanguageChange()
         {
+            // Сохраняем в БД
             var settings = _db.GetAppSettingsList();
             var langSettings = settings.Where(x => x.GroupCode == "LANGUAGE").ToList();
 
             foreach (var s in langSettings)
                 s.Active = 0;
 
-            var selected = langSettings.FirstOrDefault(x => x.SettingCode == _currentSettingCode);
+            var selected = langSettings.FirstOrDefault(x => x.SettingCode == _currentLangCode);
             if (selected != null)
                 selected.Active = 1;
 
             _db.UpdateAppSettings(langSettings);
 
-            // обновляем кэш
-            var cached = _db.GetAppSettingsList().Where(x => x.GroupCode == "LANGUAGE").ToList();
-            foreach (var s in cached)
-                s.Active = s.SettingCode == _currentSettingCode ? 1 : 0;
-
-            // уведомляем приложение о смене языка
+            // Обновляем кэш и текущий язык
+            DataCache.CurrentLanguageCode = _currentLangCode;
             MessagingCenter.Send(this, "SettingsChanged");
         }
     }
