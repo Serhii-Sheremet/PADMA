@@ -1,5 +1,4 @@
 using Microsoft.Maui.Controls;
-using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using System;
@@ -17,7 +16,19 @@ namespace PADMA.Pages
         public LanguagePage()
         {
             InitializeComponent();
+
             _db = ServiceLocator.Services.GetService<DatabaseService>();
+
+            // Заголовки/лейблы через локализацию (фолбэк на английский)
+            Title = Localization.GetLocalizedText("Language", DataCache.CurrentLanguageCode);
+            TitleLabel.Text = Localization.GetLocalizedText("Select Application language", DataCache.CurrentLanguageCode);
+
+            // (опционально) локализуем названия языков, если появятся ключи в APP_TEXTS
+            EnglishLabel.Text = Localization.GetLocalizedText("English", DataCache.CurrentLanguageCode);
+            UkrainianLabel.Text = Localization.GetLocalizedText("Ukrainian", DataCache.CurrentLanguageCode);
+            PolishLabel.Text = Localization.GetLocalizedText("Polish", DataCache.CurrentLanguageCode);
+            RussianLabel.Text = Localization.GetLocalizedText("Russian", DataCache.CurrentLanguageCode);
+
             LoadCurrentLanguage();
         }
 
@@ -60,8 +71,7 @@ namespace PADMA.Pages
                 string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
 
                 bool save = await DisplayAlert(title, message, yesText, noText);
-                if (save)
-                    ApplyLanguageChange();
+                if (save) ApplyLanguageChange();
             }
 
             base.OnNavigatingFrom(args);
@@ -79,8 +89,7 @@ namespace PADMA.Pages
                 string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
 
                 bool save = await DisplayAlert(title, message, yesText, noText);
-                if (save)
-                    ApplyLanguageChange();
+                if (save) ApplyLanguageChange();
             }
 
             await Shell.Current.GoToAsync("..");
@@ -88,21 +97,19 @@ namespace PADMA.Pages
 
         private void ApplyLanguageChange()
         {
-            // Сохраняем в БД
             var settings = _db.GetAppSettingsList();
             var langSettings = settings.Where(x => x.GroupCode == "LANGUAGE").ToList();
 
-            foreach (var s in langSettings)
-                s.Active = 0;
-
+            foreach (var s in langSettings) s.Active = 0;
             var selected = langSettings.FirstOrDefault(x => x.SettingCode == _currentLangCode);
-            if (selected != null)
-                selected.Active = 1;
+            if (selected != null) selected.Active = 1;
 
             _db.UpdateAppSettings(langSettings);
 
-            // Обновляем кэш и текущий язык
+            // обновляем текущий язык приложения
             DataCache.CurrentLanguageCode = _currentLangCode;
+
+            // триггерим обновление UI
             MessagingCenter.Send(this, "SettingsChanged");
         }
     }

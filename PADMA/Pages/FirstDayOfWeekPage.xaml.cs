@@ -32,7 +32,7 @@ namespace PADMA.Pages
             string lang = DataCache.CurrentLanguageCode;
 
             Title = Localization.GetLocalizedText("First day of week", lang);
-            //PageTitle.Text = Localization.GetLocalizedText("First day of week", lang);
+            PageTitle.Text = Localization.GetLocalizedText("Specify the first day of a week", lang);
             MondayRadioButton.Content = Localization.GetLocalizedText("Monday", lang);
             SundayRadioButton.Content = Localization.GetLocalizedText("Sunday", lang);
         }

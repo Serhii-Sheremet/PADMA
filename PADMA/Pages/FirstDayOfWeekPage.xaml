@@ -23,9 +23,9 @@
 
     <!-- Крестик для закрытия -->
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✕"
-                     Priority="0"
-                     Order="Primary"
-                     Clicked="OnCloseClicked"/>
+        <ToolbarItem IconImageSource="close_icon.png"
+                 Order="Primary"
+                 Priority="0"
+                 Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
 </ContentPage>
