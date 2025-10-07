@@ -60,11 +60,13 @@ namespace PADMA.Pages
             // если пользователь просто возвращается назад стрелкой
             if (_currentSettingCode != _originalSettingCode)
             {
+                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
+                string messageText = Localization.GetLocalizedText("Apply new setting for first day of week?", DataCache.CurrentLanguageCode);
                 string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
                 string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
                 bool save = await DisplayAlert(
-                    "Save changes?",
-                    "Apply new setting for first day of week?",
+                    titleText,
+                    messageText,
                     yesText,
                     noText);
 
@@ -84,11 +86,13 @@ namespace PADMA.Pages
 
             if (_currentSettingCode != _originalSettingCode)
             {
+                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
+                string messageText = Localization.GetLocalizedText("Apply new setting for first day of week?", DataCache.CurrentLanguageCode);
                 string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
                 string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
                 bool save = await DisplayAlert(
-                    "Save changes?",
-                    "Apply new setting for first day of week?",
+                    titleText,
+                    messageText,
                     yesText,
                     noText);
 
