@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="PADMA.Pages.FirstDayOfWeekPage"
-             Title="First day of week">
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="PADMA.Pages.FirstDayOfWeekPage">
 
-    <!-- Close (X) -->
+    <VerticalStackLayout Padding="20" Spacing="20">
+        <!-- Заголовок страницы -->
+        <Label x:Name="PageTitle"
+               FontSize="20"
+               HorizontalOptions="Center"
+               TextColor="Black"/>
+
+        <!-- Радио-кнопки -->
+        <RadioButton x:Name="MondayRadioButton"
+                     GroupName="WeekStart"
+                     CheckedChanged="OnRadioButtonCheckedChanged"/>
+
+        <RadioButton x:Name="SundayRadioButton"
+                     GroupName="WeekStart"
+                     CheckedChanged="OnRadioButtonCheckedChanged"/>
+    </VerticalStackLayout>
+
+    <!-- Крестик для закрытия -->
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="✕"
                      Priority="0"
                      Order="Primary"
-                     Clicked="OnCloseClicked" />
+                     Clicked="OnCloseClicked"/>
     </ContentPage.ToolbarItems>
-
-    <VerticalStackLayout Padding="16" Spacing="12">
-        <Label Text="Choose the first day of week:" FontAttributes="Bold" />
-
-        <!-- Monday -->
-        <RadioButton x:Name="MondayRadioButton"
-                     Content="Monday"
-                     Value="WEEKMONDAY"
-                     CheckedChanged="OnRadioButtonCheckedChanged" />
-
-        <!-- Sunday -->
-        <RadioButton x:Name="SundayRadioButton"
-                     Content="Sunday"
-                     Value="WEEKSUNDAY"
-                     CheckedChanged="OnRadioButtonCheckedChanged" />
-    </VerticalStackLayout>
 </ContentPage>

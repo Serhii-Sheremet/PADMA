@@ -20,8 +20,21 @@ namespace PADMA.Pages
         {
             InitializeComponent();
 
+            // локализуем титул и радиокнопки
+            LocalizePageTexts();
+
             _db = ServiceLocator.Services.GetService<DatabaseService>();
             LoadCurrentSetting();
+        }
+
+        private void LocalizePageTexts()
+        {
+            string lang = DataCache.CurrentLanguageCode;
+
+            Title = Localization.GetLocalizedText("First day of week", lang);
+            //PageTitle.Text = Localization.GetLocalizedText("First day of week", lang);
+            MondayRadioButton.Content = Localization.GetLocalizedText("Monday", lang);
+            SundayRadioButton.Content = Localization.GetLocalizedText("Sunday", lang);
         }
 
         private void LoadCurrentSetting()
@@ -50,67 +63,48 @@ namespace PADMA.Pages
 
         protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
         {
-            // если уже выходим через крестик — не показываем второй раз диалог
             if (_isClosingByButton)
             {
                 base.OnNavigatingFrom(args);
                 return;
             }
 
-            // если пользователь просто возвращается назад стрелкой
-            if (_currentSettingCode != _originalSettingCode)
-            {
-                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
-                string messageText = Localization.GetLocalizedText("Apply new setting for first day of week?", DataCache.CurrentLanguageCode);
-                string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
-                string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
-                bool save = await DisplayAlert(
-                    titleText,
-                    messageText,
-                    yesText,
-                    noText);
-
-                if (save)
-                {
-                    _db.SetFirstDayOfWeek(_currentSettingCode);
-                    MessagingCenter.Send(this, "SettingsChanged");
-                }
-            }
-
+            await TrySaveChangesAsync();
             base.OnNavigatingFrom(args);
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            _isClosingByButton = true; // выставляем флаг
+            _isClosingByButton = true;
+            await TrySaveChangesAsync();
+            await Shell.Current.GoToAsync("..");
+        }
 
-            if (_currentSettingCode != _originalSettingCode)
-            {
-                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
-                string messageText = Localization.GetLocalizedText("Apply new setting for first day of week?", DataCache.CurrentLanguageCode);
-                string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
-                string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
-                bool save = await DisplayAlert(
-                    titleText,
-                    messageText,
-                    yesText,
-                    noText);
+        private async Task TrySaveChangesAsync()
+        {
+            if (_currentSettingCode == _originalSettingCode)
+                return;
 
-                if (save)
-                {
-                    SaveSetting(); // сохраняем в БД
+            string lang = DataCache.CurrentLanguageCode;
+            string title = Localization.GetLocalizedText("Save changes?", lang);
+            string message = Localization.GetLocalizedText("Apply new setting for first day of week?", lang);
+            string yesText = Localization.GetLocalizedText("Yes", lang);
+            string noText = Localization.GetLocalizedText("No", lang);
 
-                    // обновляем кэш
-                    var cached = _db.GetAppSettingsList().Where(x => x.GroupCode == "WEEK").ToList();
-                    foreach (var s in cached)
-                        s.Active = s.SettingCode == _currentSettingCode ? 1 : 0;
+            bool save = await DisplayAlert(title, message, yesText, noText);
+            if (!save)
+                return;
 
-                    // уведомляем главную страницу для обновления календаря
-                    MessagingCenter.Send(this, "SettingsChanged");
-                }
-            }
+            // обновляем в базе
+            SaveSetting();
 
-            await Shell.Current.GoToAsync(".."); // возвращаемся на страницу конфигурации
+            // обновляем кэш
+            var cached = _db.GetAppSettingsList().Where(x => x.GroupCode == "WEEK").ToList();
+            foreach (var s in cached)
+                s.Active = s.SettingCode == _currentSettingCode ? 1 : 0;
+
+            // уведомляем главную страницу
+            MessagingCenter.Send(this, "SettingsChanged");
         }
 
         private void SaveSetting()
