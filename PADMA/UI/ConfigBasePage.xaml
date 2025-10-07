@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PADMA.UI.Templates.ConfigBasePage"
+             Style="{StaticResource ConfigPageStyle}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="close_icon.png"
+                     Order="Primary"
+                     Priority="0"
+                     Clicked="OnCloseClicked" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            <!-- Заголовок страницы -->
+            <Label x:Name="TitleLabel"
+                   Style="{StaticResource PageTitleStyle}"
+                   Text="Configuration" />
+
+            <!-- Слот для контента дочерних страниц -->
+            <ContentPresenter />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
