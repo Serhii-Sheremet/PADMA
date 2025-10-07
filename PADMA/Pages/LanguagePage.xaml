@@ -4,9 +4,7 @@
              x:Class="PADMA.Pages.LanguagePage"
              Title="Language">
 
-    <VerticalStackLayout
-        Padding="20"
-        Spacing="20">
+    <VerticalStackLayout Padding="20" Spacing="20">
 
         <!-- Заголовок -->
         <Label x:Name="PageTitle"
@@ -15,48 +13,76 @@
                HorizontalOptions="Center"
                Text="Select application language:" />
 
-        <!-- Радио-кнопки с флагами -->
+        <!-- Радио-кнопки -->
         <VerticalStackLayout Spacing="15">
 
+            <!-- English -->
             <RadioButton x:Name="EnglishRadioButton"
                          GroupName="LanguageSelection"
                          CheckedChanged="OnRadioButtonCheckedChanged">
-                <HorizontalStackLayout Spacing="10">
-                    <Image Source="flag_uk.png" WidthRequest="30" HeightRequest="20" />
-                    <Label x:Name="EnglishLabel" Text="English" VerticalOptions="Center" />
-                </HorizontalStackLayout>
+                <RadioButton.Content>
+                    <HorizontalStackLayout Spacing="10">
+                        <Image Source="flag_uk.png"
+                               WidthRequest="30"
+                               HeightRequest="20" />
+                        <Label x:Name="EnglishLabel"
+                               Text="English"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </RadioButton.Content>
             </RadioButton>
 
+            <!-- Ukrainian -->
             <RadioButton x:Name="UkrainianRadioButton"
                          GroupName="LanguageSelection"
                          CheckedChanged="OnRadioButtonCheckedChanged">
-                <HorizontalStackLayout Spacing="10">
-                    <Image Source="flag_ua.png" WidthRequest="30" HeightRequest="20" />
-                    <Label x:Name="UkrainianLabel" Text="Ukrainian" VerticalOptions="Center" />
-                </HorizontalStackLayout>
+                <RadioButton.Content>
+                    <HorizontalStackLayout Spacing="10">
+                        <Image Source="flag_ua.png"
+                               WidthRequest="30"
+                               HeightRequest="20" />
+                        <Label x:Name="UkrainianLabel"
+                               Text="Ukrainian"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </RadioButton.Content>
             </RadioButton>
 
+            <!-- Polish -->
             <RadioButton x:Name="PolishRadioButton"
                          GroupName="LanguageSelection"
                          CheckedChanged="OnRadioButtonCheckedChanged">
-                <HorizontalStackLayout Spacing="10">
-                    <Image Source="flag_pl.png" WidthRequest="30" HeightRequest="20" />
-                    <Label x:Name="PolishLabel" Text="Polish" VerticalOptions="Center" />
-                </HorizontalStackLayout>
+                <RadioButton.Content>
+                    <HorizontalStackLayout Spacing="10">
+                        <Image Source="flag_pl.png"
+                               WidthRequest="30"
+                               HeightRequest="20" />
+                        <Label x:Name="PolishLabel"
+                               Text="Polish"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </RadioButton.Content>
             </RadioButton>
 
+            <!-- Russian -->
             <RadioButton x:Name="RussianRadioButton"
                          GroupName="LanguageSelection"
                          CheckedChanged="OnRadioButtonCheckedChanged">
-                <HorizontalStackLayout Spacing="10">
-                    <Image Source="flag_ru.png" WidthRequest="30" HeightRequest="20" />
-                    <Label x:Name="RussianLabel" Text="Russian" VerticalOptions="Center" />
-                </HorizontalStackLayout>
+                <RadioButton.Content>
+                    <HorizontalStackLayout Spacing="10">
+                        <Image Source="flag_ru.png"
+                               WidthRequest="30"
+                               HeightRequest="20" />
+                        <Label x:Name="RussianLabel"
+                               Text="Russian"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </RadioButton.Content>
             </RadioButton>
 
         </VerticalStackLayout>
 
-        <!-- Кнопка закрытия (крестик) -->
+        <!-- Кнопка закрытия -->
         <ImageButton Source="close_icon.png"
                      HorizontalOptions="End"
                      WidthRequest="28"
