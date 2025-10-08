@@ -1,15 +1,16 @@
 using Microsoft.Maui.Controls;
-using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.UI.Templates;
 using System;
+using System.Globalization;
 using System.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Threading.Tasks;
+
 
 namespace PADMA.Pages
 {
-    [QueryProperty(nameof(Date), "Date")]
-    public partial class FirstDayOfWeekPage : ContentPage
+    public partial class FirstDayOfWeekPage : ConfigBasePage
     {
         private readonly DatabaseService _db;
         private string _originalSettingCode;
@@ -19,30 +20,26 @@ namespace PADMA.Pages
         public FirstDayOfWeekPage()
         {
             InitializeComponent();
-
-            // локализуем титул и радиокнопки
-            LocalizePageTexts();
-
             _db = ServiceLocator.Services.GetService<DatabaseService>();
+
+            Title = Localization.GetLocalizedText("First day of week", DataCache.CurrentLanguageCode);
+            HeaderLabel.Text = Title;
+
+            ApplyLocalizedDayLabels();
             LoadCurrentSetting();
         }
 
-        private void LocalizePageTexts()
+        private void ApplyLocalizedDayLabels()
         {
-            string lang = DataCache.CurrentLanguageCode;
-
-            Title = Localization.GetLocalizedText("First day of week", lang);
-            PageTitle.Text = Localization.GetLocalizedText("Specify the first day of a week", lang);
-            MondayRadioButton.Content = Localization.GetLocalizedText("Monday", lang);
-            SundayRadioButton.Content = Localization.GetLocalizedText("Sunday", lang);
+            var culture = new CultureInfo(DataCache.CurrentLanguageCode);
+            MondayLabel.Text = culture.DateTimeFormat.GetDayName(DayOfWeek.Monday);
+            SundayLabel.Text = culture.DateTimeFormat.GetDayName(DayOfWeek.Sunday);
         }
 
         private void LoadCurrentSetting()
         {
             var settings = _db.GetAppSettingsList();
             var active = settings.FirstOrDefault(x => x.GroupCode == "WEEK" && x.Active == 1);
-
-            // если нет активного Ч выставл€ем по умолчанию (понедельник)
             _originalSettingCode = active?.SettingCode ?? "WEEKMONDAY";
             _currentSettingCode = _originalSettingCode;
 
@@ -52,13 +49,9 @@ namespace PADMA.Pages
 
         private void OnRadioButtonCheckedChanged(object sender, CheckedChangedEventArgs e)
         {
-            if (!e.Value)
-                return;
+            if (!e.Value) return;
 
-            if (sender == MondayRadioButton)
-                _currentSettingCode = "WEEKMONDAY";
-            else if (sender == SundayRadioButton)
-                _currentSettingCode = "WEEKSUNDAY";
+            _currentSettingCode = sender == MondayRadioButton ? "WEEKMONDAY" : "WEEKSUNDAY";
         }
 
         protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
@@ -69,42 +62,36 @@ namespace PADMA.Pages
                 return;
             }
 
-            await TrySaveChangesAsync();
+            if (_currentSettingCode != _originalSettingCode)
+            {
+                if (await TrySaveChangesAsync("Save changes?", "Apply new setting for first day of week?"))
+                {
+                    _db.SetFirstDayOfWeek(_currentSettingCode);
+                    MessagingCenter.Send(this, "SettingsChanged");
+                }
+            }
+
             base.OnNavigatingFrom(args);
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             _isClosingByButton = true;
-            await TrySaveChangesAsync();
+
+            if (_currentSettingCode != _originalSettingCode)
+            {
+                if (await TrySaveChangesAsync("Save changes?", "Apply new setting for first day of week?"))
+                {
+                    SaveSetting();
+                    var cached = _db.GetAppSettingsList().Where(x => x.GroupCode == "WEEK").ToList();
+                    foreach (var s in cached)
+                        s.Active = s.SettingCode == _currentSettingCode ? 1 : 0;
+
+                    MessagingCenter.Send(this, "SettingsChanged");
+                }
+            }
+
             await Shell.Current.GoToAsync("..");
-        }
-
-        private async Task TrySaveChangesAsync()
-        {
-            if (_currentSettingCode == _originalSettingCode)
-                return;
-
-            string lang = DataCache.CurrentLanguageCode;
-            string title = Localization.GetLocalizedText("Save changes?", lang);
-            string message = Localization.GetLocalizedText("Apply new setting for first day of week?", lang);
-            string yesText = Localization.GetLocalizedText("Yes", lang);
-            string noText = Localization.GetLocalizedText("No", lang);
-
-            bool save = await DisplayAlert(title, message, yesText, noText);
-            if (!save)
-                return;
-
-            // обновл€ем в базе
-            SaveSetting();
-
-            // обновл€ем кэш
-            var cached = _db.GetAppSettingsList().Where(x => x.GroupCode == "WEEK").ToList();
-            foreach (var s in cached)
-                s.Active = s.SettingCode == _currentSettingCode ? 1 : 0;
-
-            // уведомл€ем главную страницу
-            MessagingCenter.Send(this, "SettingsChanged");
         }
 
         private void SaveSetting()
@@ -112,11 +99,9 @@ namespace PADMA.Pages
             var settings = _db.GetAppSettingsList();
             var weekSettings = settings.Where(x => x.GroupCode == "WEEK").ToList();
 
-            // деактивируем все
             foreach (var s in weekSettings)
                 s.Active = 0;
 
-            // активируем выбранную настройку
             var selected = weekSettings.FirstOrDefault(x => x.SettingCode == _currentSettingCode);
             if (selected != null)
                 selected.Active = 1;

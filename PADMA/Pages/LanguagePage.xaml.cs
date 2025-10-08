@@ -80,17 +80,15 @@ namespace PADMA.Pages
 
             if (_currentLanguageCode != _originalLanguageCode)
             {
-                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
-                string messageText = Localization.GetLocalizedText("Apply new language setting?", DataCache.CurrentLanguageCode);
-                string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
-                string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
-
-                bool save = await DisplayAlert(titleText, messageText, yesText, noText);
-                if (save)
+                if (await TrySaveChangesAsync("Save changes?", "Apply new language setting?"))
                 {
-                    ApplyLanguageChange();
+                    // сохраняем выбранный язык и обновляем кеш
+                    _db.SetLanguage(_currentLanguageCode);
+                    DataCache.CurrentLanguageCode = _currentLanguageCode;
+                    MessagingCenter.Send(this, "SettingsChanged");
                 }
             }
+
 
             base.OnNavigatingFrom(args);
         }
@@ -101,19 +99,16 @@ namespace PADMA.Pages
 
             if (_currentLanguageCode != _originalLanguageCode)
             {
-                string titleText = Localization.GetLocalizedText("Save changes?", DataCache.CurrentLanguageCode);
-                string messageText = Localization.GetLocalizedText("Apply new language setting?", DataCache.CurrentLanguageCode);
-                string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
-                string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
-
-                bool save = await DisplayAlert(titleText, messageText, yesText, noText);
-                if (save)
+                if (await TrySaveChangesAsync("Save changes?", "Apply new language setting?"))
                 {
-                    ApplyLanguageChange();
+                    // сохраняем выбранный язык и обновляем кеш
+                    _db.SetLanguage(_currentLanguageCode);
+                    DataCache.CurrentLanguageCode = _currentLanguageCode;
+                    MessagingCenter.Send(this, "SettingsChanged");
                 }
             }
 
-            await Shell.Current.GoToAsync("..");
+            //await Shell.Current.GoToAsync("..");
         }
 
         private void ApplyLanguageChange()

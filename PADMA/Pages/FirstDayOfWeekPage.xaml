@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
+<ui:ConfigBasePage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="PADMA.Pages.FirstDayOfWeekPage">
+    xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
+    x:Class="PADMA.Pages.FirstDayOfWeekPage"
+    Title="Day of week">
 
     <VerticalStackLayout Padding="20" Spacing="20">
         <!-- Заголовок страницы -->
@@ -28,4 +30,4 @@
                  Priority="0"
                  Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
-</ContentPage>
+</ui:ConfigBasePage>

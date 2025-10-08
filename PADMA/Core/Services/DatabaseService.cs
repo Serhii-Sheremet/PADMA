@@ -101,6 +101,15 @@ namespace PADMA.Core.Services
             _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "WEEK", code);
         }
 
+        // Сохраняет выбранный код (LANGUAGECOE) в БД как активный
+        public void SetLanguage(string code)
+        {
+            // Два простых UPDATE-а над реальной таблицей
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "LANGUAGE");
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "LANGUAGE", code);
+        }
+
+
         // Опционально — массовый апдейт списка 
 
         public void UpdateAppSettings(List<AppSettingList> settings)
