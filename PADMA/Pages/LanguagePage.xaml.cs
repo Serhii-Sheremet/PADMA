@@ -108,7 +108,7 @@ namespace PADMA.Pages
                 }
             }
 
-            //await Shell.Current.GoToAsync("..");
+            await Shell.Current.GoToAsync("..");
         }
 
         private void ApplyLanguageChange()

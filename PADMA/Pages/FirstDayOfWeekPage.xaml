@@ -3,31 +3,44 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
-    x:Class="PADMA.Pages.FirstDayOfWeekPage"
-    Title="Day of week">
+    x:Class="PADMA.Pages.FirstDayOfWeekPage">
 
-    <VerticalStackLayout Padding="20" Spacing="20">
-        <!-- Заголовок страницы -->
-        <Label x:Name="PageTitle"
-               FontSize="20"
-               HorizontalOptions="Center"
-               TextColor="Black"/>
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
 
-        <!-- Радио-кнопки -->
-        <RadioButton x:Name="MondayRadioButton"
-                     GroupName="WeekStart"
-                     CheckedChanged="OnRadioButtonCheckedChanged"/>
+            <!-- Заголовок страницы -->
+            <Label x:Name="HeaderLabel"
+                   Style="{StaticResource SectionLabelStyle}"
+                   HorizontalOptions="Start" />
 
-        <RadioButton x:Name="SundayRadioButton"
-                     GroupName="WeekStart"
-                     CheckedChanged="OnRadioButtonCheckedChanged"/>
-    </VerticalStackLayout>
+            <!-- Радиокнопки -->
+            <Grid ColumnSpacing="12" RowSpacing="16"
+                  ColumnDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto">
 
-    <!-- Крестик для закрытия -->
-    <ContentPage.ToolbarItems>
-        <ToolbarItem IconImageSource="close_icon.png"
-                 Order="Primary"
-                 Priority="0"
-                 Clicked="OnCloseClicked" />
-    </ContentPage.ToolbarItems>
+                <!-- Monday -->
+                <RadioButton x:Name="MondayRadioButton"
+                             Grid.Row="0" Grid.Column="0"
+                             GroupName="FirstDayOfWeek"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="MondayLabel"
+                       Grid.Row="0" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource RadioLabelStyle}" />
+
+                <!-- Sunday -->
+                <RadioButton x:Name="SundayRadioButton"
+                             Grid.Row="1" Grid.Column="0"
+                             GroupName="FirstDayOfWeek"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="SundayLabel"
+                       Grid.Row="1" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource RadioLabelStyle}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ui:ConfigBasePage>
