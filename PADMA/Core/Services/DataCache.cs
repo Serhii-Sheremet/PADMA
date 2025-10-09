@@ -1,72 +1,84 @@
-using PADMA.Core.Models;
-using PADMA.Core.Services;
+﻿using PADMA.Core.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PADMA.Core.Services
 {
     /// <summary>
-    /// In-memory cache for reference data. Loaded once on app startup.
+    /// Centralized in-memory cache for reference data and app settings.
     /// </summary>
     public sealed class DataCache
     {
-        // Languages
-        public IReadOnlyList<Language> Languages { get; private set; } = Array.Empty<Language>();
-
-        // Colors
-        public IReadOnlyList<ColorDef> Colors { get; private set; } = Array.Empty<ColorDef>();
-        public IReadOnlyDictionary<int, ColorDef> ColorById { get; private set; } = new Dictionary<int, ColorDef>();
-        public IReadOnlyDictionary<int, string> ColorNameById { get; private set; } = new Dictionary<int, string>();
-
-        // Planets
-        public IReadOnlyList<PlanetDef> Planets { get; private set; } = Array.Empty<PlanetDef>();
-        public IReadOnlyDictionary<int, PlanetDef> PlanetById { get; private set; } = new Dictionary<int, PlanetDef>();
-        public IReadOnlyDictionary<string, int> PlanetIdByCode { get; private set; } = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        public IReadOnlyDictionary<int, string> PlanetNameById { get; private set; } = new Dictionary<int, string>();
-
-        // Active language code for UI (e.g. "en", "ru", "pl")
-        public string UiLanguageCode { get; private set; } = "en";
-
         private static DataCache? _instance;
         public static DataCache Instance => _instance ??= new DataCache();
 
         private DataCache() { }
 
-        public List<AppText> AppTextsList { get; private set; }
+        // --- Core Cached Data ---
+        public IReadOnlyList<Language> Languages { get; private set; } = Array.Empty<Language>();
+        public IReadOnlyList<ColorDef> Colors { get; private set; } = Array.Empty<ColorDef>();
+        public IReadOnlyList<PlanetDef> Planets { get; private set; } = Array.Empty<PlanetDef>();
 
-        public void LoadAll(DatabaseService db, string preferredUiLang)
+        public IReadOnlyDictionary<int, string> ColorNameById { get; private set; } = new Dictionary<int, string>();
+        public IReadOnlyDictionary<int, string> PlanetNameById { get; private set; } = new Dictionary<int, string>();
+
+        // --- App Settings and Texts ---
+        public List<AppSettingList> AppSettingsList { get; private set; } = new();
+        public List<AppText> AppTextsList { get; private set; } = new();
+
+        // --- Current Language ---
+        public static string CurrentLanguageCode { get; private set; } = "en";
+
+        /// <summary>
+        /// Load all static and localized reference data from the database.
+        /// </summary>
+        public void LoadAll(DatabaseService db, string? preferredUiLang = null)
         {
-            UiLanguageCode = preferredUiLang;
+            // Определяем язык интерфейса
+            CurrentLanguageCode = preferredUiLang ?? db.GetActiveLanguageCode();
 
-            // Languages
-            var langs = db.GetLanguages();
-            Languages = langs;
+            // Языки
+            Languages = db.GetLanguages();
 
-            // Colors
-            var colors = db.GetColors();
-            Colors = colors;
-            ColorById = colors.ToDictionary(c => c.Id);
+            // Цвета
+            Colors = db.GetColors();
             var colorDescs = db.GetColorDescs();
             ColorNameById = colorDescs
-                .Where(d => string.Equals(d.LanguageCode, UiLanguageCode, StringComparison.OrdinalIgnoreCase))
+                .Where(d => string.Equals(d.LanguageCode, CurrentLanguageCode, StringComparison.OrdinalIgnoreCase))
                 .GroupBy(d => d.ColorId)
                 .ToDictionary(g => g.Key, g => g.First().Name);
 
-            // Planets
-            var planets = db.GetPlanets();
-            Planets = planets;
-            PlanetById = planets.ToDictionary(p => p.Id);
-            PlanetIdByCode = planets
-                .GroupBy(p => p.PlanetCode, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
-
+            // Планеты
+            Planets = db.GetPlanets();
             var planetDescs = db.GetPlanetDescs();
             PlanetNameById = planetDescs
-                .Where(d => string.Equals(d.LanguageCode, UiLanguageCode, StringComparison.OrdinalIgnoreCase))
+                .Where(d => string.Equals(d.LanguageCode, CurrentLanguageCode, StringComparison.OrdinalIgnoreCase))
                 .GroupBy(d => d.PlanetId)
                 .ToDictionary(g => g.Key, g => g.First().Name);
 
-            AppTextsList = db.GetAppTextsList(preferredUiLang);
-            
+            // Настройки приложения (APPSETTING)
+            AppSettingsList = db.GetAppSettingsList();
 
+            // Тексты интерфейса (APP_TEXTS)
+            AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
+        }
+
+        /// <summary>
+        /// Refresh app settings and localized texts (used after configuration changes).
+        /// </summary>
+        public void Refresh(DatabaseService db)
+        {
+            AppSettingsList = db.GetAppSettingsList();
+            CurrentLanguageCode = db.GetActiveLanguageCode();
+            AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
+        }
+
+        /// <summary>
+        /// Get localized text safely from cache.
+        /// </summary>
+        public string GetText(string nativeText)
+        {
+            return AppTextsList.FirstOrDefault(x => x.NativeText == nativeText)?.ForeignText ?? nativeText;
         }
     }
 }
