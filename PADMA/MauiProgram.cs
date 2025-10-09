@@ -42,11 +42,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppSettingsService>();
 
         var db = ServiceLocator.Services.GetRequiredService<DatabaseService>();
-        
-        DataCache.CurrentLanguageCode = "ru"; // временно фиксируем русский язык
-        DataCache.Instance.LoadAll(db, DataCache.CurrentLanguageCode);
 
-        
 
         return builder.Build();
     }

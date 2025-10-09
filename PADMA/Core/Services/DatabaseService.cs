@@ -157,6 +157,20 @@ namespace PADMA.Core.Services
             }
         }
 
+        public string GetActiveLanguageCode()
+        {
+            var settings = GetAppSettingsList();
+            var activeLang = settings.FirstOrDefault(x => x.GroupCode == "LANGUAGE" && x.Active == 1);
+
+            return activeLang?.SettingCode switch
+            {
+                "ENGLISH" => "en",
+                "UKRAINIAN" => "uk",
+                "POLISH" => "pl",
+                "RUSSIAN" => "ru",
+                _ => "en" // по умолчанию — английский
+            };
+        }
 
 
     }
