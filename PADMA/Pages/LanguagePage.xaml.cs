@@ -69,6 +69,16 @@ namespace PADMA.Pages
             }
         }
 
+        private void SetCurrentLanguageCode(string code)
+        {
+            // If DataCache has a method to set the language, use it.
+            // Otherwise, you may need to reload or refresh the cache.
+            // Example using Refresh (if it reloads with the new language):
+            DataCache.Instance.Refresh(_db);
+            // Or, if you have a method like LoadAll that accepts a language:
+            // DataCache.Instance.LoadAll(_db, code);
+        }
+
         protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
         {
             // если выходим через крестик — пропускаем (обработка будет там)
@@ -84,7 +94,8 @@ namespace PADMA.Pages
                 {
                     // сохраняем выбранный язык и обновляем кеш
                     _db.SetLanguage(_currentLanguageCode);
-                    DataCache.CurrentLanguageCode = _currentLanguageCode;
+                    SetCurrentLanguageCode(_currentLanguageCode);
+                    //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
                     MessagingCenter.Send(this, "SettingsChanged");
                 }
             }
@@ -103,7 +114,8 @@ namespace PADMA.Pages
                 {
                     // сохраняем выбранный язык и обновляем кеш
                     _db.SetLanguage(_currentLanguageCode);
-                    DataCache.CurrentLanguageCode = _currentLanguageCode;
+                    SetCurrentLanguageCode(_currentLanguageCode);
+                    //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
                     MessagingCenter.Send(this, "SettingsChanged");
                 }
             }
@@ -133,13 +145,15 @@ namespace PADMA.Pages
                 s.Active = s.SettingCode == _currentLanguageCode ? 1 : 0;
 
             // меняем глобальный язык в DataCache
-            DataCache.CurrentLanguageCode = _currentLanguageCode switch
-            {
-                "UKRAINIAN" => "uk",
-                "POLISH" => "pl",
-                "RUSSIAN" => "ru",
-                _ => "en"
-            };
+            //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode 
+            SetCurrentLanguageCode(_currentLanguageCode);
+            //switch
+            //{
+            //    "UKRAINIAN" => "uk",
+            //    "POLISH" => "pl",
+            //    "RUSSIAN" => "ru",
+            //    _ => "en"
+            //};
 
             // уведомляем систему
             MessagingCenter.Send(this, "SettingsChanged");

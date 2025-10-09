@@ -22,7 +22,7 @@ namespace PADMA.Pages
             InitializeComponent();
             _db = ServiceLocator.Services.GetService<DatabaseService>();
 
-            Title = Localization.GetLocalizedText("First day of week", DataCache.CurrentLanguageCode);
+            Title = Localization.GetLocalizedText("First day of week", DataCache.Instance.CurrentLanguageCode);
             HeaderLabel.Text = Title;
 
             ApplyLocalizedDayLabels();
@@ -31,7 +31,7 @@ namespace PADMA.Pages
 
         private void ApplyLocalizedDayLabels()
         {
-            var culture = new CultureInfo(DataCache.CurrentLanguageCode);
+            var culture = new CultureInfo(DataCache.Instance.CurrentLanguageCode);
             MondayLabel.Text = culture.DateTimeFormat.GetDayName(DayOfWeek.Monday);
             SundayLabel.Text = culture.DateTimeFormat.GetDayName(DayOfWeek.Sunday);
         }

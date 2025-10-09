@@ -28,10 +28,10 @@ namespace PADMA.UI.Templates
         /// <returns>True Ч сохранить, False Ч не сохран€ть</returns>
         protected async Task<bool> TrySaveChangesAsync(string titleKey, string messageKey)
         {
-            string titleText = Localization.GetLocalizedText(titleKey, DataCache.CurrentLanguageCode);
-            string messageText = Localization.GetLocalizedText(messageKey, DataCache.CurrentLanguageCode);
-            string yesText = Localization.GetLocalizedText("Yes", DataCache.CurrentLanguageCode);
-            string noText = Localization.GetLocalizedText("No", DataCache.CurrentLanguageCode);
+            string titleText = Localization.GetLocalizedText(titleKey, DataCache.Instance.CurrentLanguageCode);
+            string messageText = Localization.GetLocalizedText(messageKey, DataCache.Instance.CurrentLanguageCode);
+            string yesText = Localization.GetLocalizedText("Yes", DataCache.Instance.CurrentLanguageCode);
+            string noText = Localization.GetLocalizedText("No", DataCache.Instance.CurrentLanguageCode);
 
             return await DisplayAlert(titleText, messageText, yesText, noText);
         }

@@ -27,7 +27,7 @@ namespace PADMA.Core.Services
         public List<AppText> AppTextsList { get; private set; } = new();
 
         // --- Current Language ---
-        public static string CurrentLanguageCode { get; private set; } = "en";
+        public string CurrentLanguageCode { get; private set; } = "en";
 
         /// <summary>
         /// Load all static and localized reference data from the database.
