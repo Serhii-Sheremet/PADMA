@@ -21,6 +21,7 @@ namespace PADMA.Pages
             _db = ServiceLocator.Services.GetService<DatabaseService>();
 
             LoadCurrentLanguage();
+            ApplyLocalizedLabels();
         }
 
         private void LoadCurrentLanguage()
@@ -37,6 +38,14 @@ namespace PADMA.Pages
             UkrainianRadioButton.IsChecked = _currentLanguageCode == "UKRAINIAN";
             PolishRadioButton.IsChecked = _currentLanguageCode == "POLISH";
             RussianRadioButton.IsChecked = _currentLanguageCode == "RUSSIAN";
+        }
+
+        private void ApplyLocalizedLabels()
+        {
+            string langCode = DataCache.Instance.CurrentLanguageCode;
+
+            Title = Localization.GetLocalizedText("Language", langCode);
+            InstructionLabel.Text = Localization.GetLocalizedText("Choose application language:", langCode);
         }
 
         private void OnRadioButtonCheckedChanged(object sender, CheckedChangedEventArgs e)

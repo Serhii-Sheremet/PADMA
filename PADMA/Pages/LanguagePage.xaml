@@ -8,7 +8,7 @@
     <VerticalStackLayout Spacing="15">
 
         <!-- Заголовок -->
-        <Label Text="Select language"
+        <Label x:Name="InstructionLabel"
                FontSize="22"
                FontAttributes="Bold"
                TextColor="#222"
