@@ -1,4 +1,6 @@
-﻿using PADMA.Core.Services;
+﻿using System.IO;
+using Microsoft.Maui;
+using PADMA.Core.Services;
 using PADMA.Pages;
 
 namespace PADMA;
@@ -17,33 +19,62 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Ensure DB is copied
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
-        if (!File.Exists(dbPath))
+        // === Новый механизм автообновления базы ===
+        var dbFileName = "PADMADB.db3";
+        var dbPath = Path.Combine(FileSystem.AppDataDirectory, dbFileName);
+
+        // Копируем новую базу из ресурсов во временную директорию
+        var tempPath = Path.Combine(FileSystem.CacheDirectory, dbFileName);
+        using (var inStream = FileSystem.OpenAppPackageFileAsync(dbFileName).GetAwaiter().GetResult())
+        using (var outStream = File.Create(tempPath))
         {
-            using var inStream = FileSystem.OpenAppPackageFileAsync("PADMADB.db3").GetAwaiter().GetResult();
-            using var outStream = File.Create(dbPath);
             inStream.CopyTo(outStream);
         }
 
-        // Register services
+        bool needReplace = false;
+
+        try
+        {
+            // Проверяем версию локальной базы
+            string localVersion = null;
+            string newVersion = null;
+
+            if (File.Exists(dbPath))
+            {
+                using var localDb = new SQLite.SQLiteConnection(dbPath);
+                localVersion = localDb.ExecuteScalar<string>("SELECT VALUE FROM APP_META WHERE KEY = 'DB_VERSION'");
+            }
+
+            using var newDb = new SQLite.SQLiteConnection(tempPath);
+            newVersion = newDb.ExecuteScalar<string>("SELECT VALUE FROM APP_META WHERE KEY = 'DB_VERSION'");
+
+            if (localVersion == null || localVersion != newVersion)
+            {
+                needReplace = true;
+                System.Diagnostics.Debug.WriteLine($"[DB] Updating local DB from version {localVersion ?? "none"} to {newVersion}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DB] Version check failed: {ex.Message}");
+            needReplace = true; // если ошибка — заменяем базу
+        }
+
+        if (needReplace)
+        {
+            File.Copy(tempPath, dbPath, overwrite: true);
+        }
+
+        // === Регистрация сервисов ===
         builder.Services.AddSingleton<DatabaseService>();
-        builder.Services.AddSingleton<AppSettingsService>();
+        ServiceLocator.Services = builder.Services.BuildServiceProvider();
+
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddSingleton<DayPage>();
         builder.Services.AddSingleton<ConfigurationPage>();
         builder.Services.AddSingleton<ExitPage>();
-
-        // Build provider and initialize cache
-        var provider = builder.Services.BuildServiceProvider();
-        ServiceLocator.Services = provider;
-
-        var db = provider.GetService<DatabaseService>();
-        DataCache.Instance.LoadAll(db);
+        builder.Services.AddSingleton<AppSettingsService>();
 
         return builder.Build();
     }
-
-
-
 }
