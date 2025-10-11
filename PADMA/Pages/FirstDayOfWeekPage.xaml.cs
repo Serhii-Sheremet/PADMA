@@ -23,7 +23,7 @@ namespace PADMA.Pages
             _db = ServiceLocator.Services.GetService<DatabaseService>();
 
             Title = Localization.GetLocalizedText("First day of week", DataCache.Instance.CurrentLanguageCode);
-            HeaderLabel.Text = Title;
+            HeaderLabel.Text = Localization.GetLocalizedText("Choose the first day of the week:", DataCache.Instance.CurrentLanguageCode);
 
             ApplyLocalizedDayLabels();
             LoadCurrentSetting();
