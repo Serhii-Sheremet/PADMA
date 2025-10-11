@@ -450,7 +450,7 @@
 
     <!-- Заголовок страницы -->
     <Style x:Key="PageTitleStyle" TargetType="Label">
-        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontSize" Value="18" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="TextColor" Value="#222" />
         <Setter Property="HorizontalOptions" Value="Center" />

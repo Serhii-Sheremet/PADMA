@@ -10,7 +10,7 @@
 
             <!-- Заголовок страницы -->
             <Label x:Name="HeaderLabel"
-                   Style="{StaticResource SectionLabelStyle}"
+                   Style="{StaticResource PageTitleStyle}"
                    HorizontalOptions="Start" />
 
             <!-- Радиокнопки -->
@@ -27,7 +27,7 @@
                 <Label x:Name="MondayLabel"
                        Grid.Row="0" Grid.Column="1"
                        VerticalOptions="Center"
-                       Style="{StaticResource RadioLabelStyle}" />
+                       Style="{StaticResource LabelTextStyle}" />
 
                 <!-- Sunday -->
                 <RadioButton x:Name="SundayRadioButton"
@@ -38,7 +38,7 @@
                 <Label x:Name="SundayLabel"
                        Grid.Row="1" Grid.Column="1"
                        VerticalOptions="Center"
-                       Style="{StaticResource RadioLabelStyle}" />
+                       Style="{StaticResource LabelTextStyle}" />
             </Grid>
 
         </VerticalStackLayout>
