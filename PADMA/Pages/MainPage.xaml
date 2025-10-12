@@ -15,29 +15,22 @@
         </Grid.RowDefinitions>
 
         <!-- 🔹 Шапка с аббревиатурами дней -->
-        <Border Grid.Row="0"
-        Stroke="Black"
-        StrokeThickness="0.5"
-        Padding="0"
-        Margin="0"
-        HorizontalOptions="FillAndExpand"
-        VerticalOptions="FillAndExpand">
-            <Grid x:Name="DaysHeaderGrid"
-          HeightRequest="24"
-          Margin="0"
-          ColumnSpacing="0"
-          RowSpacing="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-            </Grid>
-        </Border>
+        <Grid x:Name="DaysHeaderGrid"
+              Grid.Row="0"
+              HeightRequest="24"
+              Margin="0"
+              ColumnSpacing="0"
+              RowSpacing="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+        </Grid>
 
         <!-- 🔹 Календарь -->
         <CollectionView x:Name="CalendarCollection"

@@ -21,6 +21,13 @@ namespace PADMA.Pages
             // Инициализация культуры
             Vm.InitializeCulture();
 
+            MessagingCenter.Subscribe<ConfigurationPage>(this, "LanguageChanged", _ =>
+            {
+                Vm?.ReloadCultureAndRefresh();
+                UpdateTitle();
+                UpdateDaysHeader();
+            });
+
             // Подписка на изменения настроек из ConfigurationPage
             MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
@@ -94,14 +101,15 @@ namespace PADMA.Pages
 
             var culture = Vm.CurrentCulture;
             var dtf = culture.DateTimeFormat;
+
             var abbreviated = dtf.AbbreviatedDayNames
                 .Select(d => (d.Length > 3 ? d.Substring(0, 3) : d).ToUpper(culture))
                 .ToArray();
 
-            // Получаем первый день недели из настроек
-            var firstDay = Vm != null
-                ? ServiceLocator.Services.GetService<DatabaseService>().GetFirstDayOfWeekFromDb()
-                : dtf.FirstDayOfWeek;
+            // Берём первый день недели из настроек (как и раньше)
+            var firstDay = ServiceLocator.Services
+                .GetService<DatabaseService>()
+                .GetFirstDayOfWeekFromDb();
 
             var ordered = Enumerable.Range(0, 7)
                 .Select(i => abbreviated[((int)firstDay + i) % 7])
@@ -109,19 +117,30 @@ namespace PADMA.Pages
 
             for (int i = 0; i < 7; i++)
             {
-                var lbl = new Label
+                // Граница как у ячеек
+                var cell = new Border
                 {
-                    Text = ordered[i],
-                    HorizontalOptions = LayoutOptions.Center,
-                    VerticalOptions = LayoutOptions.Center,
-                    FontAttributes = FontAttributes.Bold,
-                    FontSize = 16,
-                    TextColor = Colors.Black
+                    Stroke = Colors.Black,
+                    StrokeThickness = 0.5,
+                    Padding = 0,
+                    HorizontalOptions = LayoutOptions.Fill,
+                    VerticalOptions = LayoutOptions.Fill,
+                    Content = new Label
+                    {
+                        Text = ordered[i],
+                        HorizontalOptions = LayoutOptions.Center,
+                        VerticalOptions = LayoutOptions.Center,
+                        FontAttributes = FontAttributes.Bold,
+                        FontSize = 16,
+                        TextColor = Colors.Black
+                    }
                 };
-                Grid.SetColumn(lbl, i);
-                DaysHeaderGrid.Children.Add(lbl);
+
+                Grid.SetColumn(cell, i);
+                DaysHeaderGrid.Children.Add(cell);
             }
         }
+
 
         private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {

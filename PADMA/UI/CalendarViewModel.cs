@@ -83,17 +83,27 @@ namespace PADMA.UI
             try
             {
                 var db = ServiceLocator.Services.GetService<DatabaseService>();
+
+                // Принудительно перечитать активный язык (не полагаться на старые поля VM)
                 var lang = db.GetCurrentLanguage();
-                CultureCode = lang?.CultureCode ?? CultureInfo.CurrentUICulture.Name;
+                var newCulture = lang?.CultureCode ?? CultureInfo.CurrentUICulture.Name;
+
+                if (!string.Equals(CultureCode, newCulture, StringComparison.OrdinalIgnoreCase))
+                {
+                    CultureCode = newCulture;
+                    OnPropertyChanged(nameof(CurrentCulture));
+                }
             }
             catch
             {
                 CultureCode = CultureInfo.CurrentUICulture.Name;
+                OnPropertyChanged(nameof(CurrentCulture));
             }
 
-            OnPropertyChanged(nameof(CurrentCulture));
+            // Пересобрать всё, что зависит от культуры
             RefreshCalendar();
         }
+
 
 
         // === Опционально: обновлённый заголовок месяца (если где-то нужен)
