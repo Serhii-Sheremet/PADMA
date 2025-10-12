@@ -1,296 +1,303 @@
-> Context: This document is used by ChatGPT (GPT-5) for project PADMA continuation.
-> Always load this file first in a new session to resume context.
-
-
-# 🪶 PADMA — Project Requirements & Current Implementation
-> _Version: October 2025_
+# 🩶 PADMA — Requirements & Architecture Overview  
+> _Version: October 2025_  
+> _This document defines the official project requirements and describes the implemented architecture of the PADMA .NET MAUI application._  
 
 ---
 
-## 🗓️ Overview
+## **Part I — Official Functional & UI Requirements**
 
-**PADMA** — кроссплатформенное приложение на **.NET MAUI**, предназначенное для отображения календаря, расчётов и пользовательских конфигураций.  
-Все данные (настройки, тексты интерфейса, справочники, профили) хранятся в **SQLite-базе** `PADMADB.db3` и кэшируются в памяти при запуске.
+### 📃 Overview
 
----
-
-## 🧱 Architecture
-
-### 📂 Project Structure
-
-| Folder | Description |
-|---------|-------------|
-| `PADMA/Core` | Business logic, models, services, and utilities |
-| `PADMA/Pages` | UI pages (XAML + code-behind) |
-| `PADMA/UI/Templates` | Common page templates (e.g. `ConfigBasePage`) |
-| `PADMA/Resources/Raw` | Embedded SQLite database and static assets |
-| `PADMA/Resources/Styles` | Shared UI styles (fonts, colors, margins) |
-| `PADMA/docs` | Documentation and requirement files |
+**PADMA** is a cross-platform .NET MAUI application focused on calendar visualization, astrological calculations, and configurable user preferences.  
+All data (settings, UI texts, reference tables, profiles) are stored in a **SQLite** database `PADMADB.db3` and cached in memory for fast access.
 
 ---
 
-## ⚙️ Core Services
+### 🦯 Navigation Structure
 
-### 🔸 DatabaseService
-Handles all database operations via SQLite.
+| Section | Route | Description |
+|----------|--------|-------------|
+| Calendar | `//main` | Main calendar interface |
+| Settings | `//config` | Configuration hub |
+| Day details | `//day` | Detailed day view |
+| Exit | `//exit` | Closes the app |
 
-**Main methods:**
+The burger (fly-out) menu provides quick access to **Calendar**, **Settings**, and **Exit**.  
+When a settings page is opened, the fly-out automatically closes.
+
+---
+
+### 🏠 **MainPage** (Calendar)
+
+**Purpose:**  
+The central user interface showing a monthly grid calendar.
+
+#### Functional Requirements
+1. Display a **6 × 7 calendar grid** (42 days) representing the selected month.  
+2. Header elements:
+   - Toolbar title → month + year, localized and capitalized.  
+   - Navigation arrows (`left_arrow.png`, `right_arrow.png`) to move months.  
+3. Above the day grid, display a **weekday header row**:
+   - 7 cells (`MON TUE … SUN`), localized to current culture.
+   - Each cell has a thin border (0.5 px) to form a seamless grid with the days below.  
+   - Font size = 13 pt, bold, centered.  
+4. Each day cell shows:
+   - Day number in top-left corner.  
+   - 6 colored bars as placeholders for future transit visualization.  
+   - Highlight for today (light blue background).  
+5. Calendar respects:
+   - Active culture (`DataCache.Instance.CurrentLanguageCode`).  
+   - First day of week from `APPSETTING` (`WEEKMONDAY` / `WEEKSUNDAY`).  
+6. On month navigation or configuration change:
+   - Calendar and header are rebuilt.  
+   - Title and weekday names are re-localized.  
+7. On day tap:
+   - Navigate to `DayPage` using  
+     `await Shell.Current.GoToAsync($"day?Date={selected.Date:yyyy-MM-dd}");`  
+8. On app resume or return from settings (`OnAppearing`):
+   - Refresh DataCache and rebuild the calendar (ensures latest language and settings).
+
+#### Visual Style
+
+| Element | Style |
+|----------|--------|
+| Toolbar title | Font 22 pt Bold, center-aligned, localized month + year |
+| Weekday header | Font 13 pt Bold, black text, thin grid borders |
+| Day number | Bold, small margin, dark text |
+| Grid lines | Stroke 0.5 px #000 |
+| Background | White |
+| Today highlight | Light blue background |
+| Responsive layout | Columns distributed evenly across device width |
+
+#### Behavioral Notes
+- All localization uses culture from **DataCache** → **LanguagePage** → **DatabaseService**.
+- Calendar automatically rebuilds on:
+  - Language change
+  - First-day-of-week change
+  - Month navigation
+- Implemented for Android / iOS / Windows platforms.
+
+---
+
+### 🌅 **DayPage**
+
+Placeholder for future astrological details.
+
+| Feature | Description |
+|----------|-------------|
+| Navigation | Opened by selecting a day on MainPage |
+| Content | Detailed daily data (currently placeholder) |
+| Localization | All texts localized |
+| Return | Back navigation returns to the same month on MainPage |
+
+---
+
+### ⚙️ **ConfigurationPage** (Settings Hub)
+
+**Purpose:**  
+Acts as the central entry point for all configuration sections.
+
+| Property | Description |
+|-----------|-------------|
+| Route | `//config` |
+| Access | From Settings in the burger menu |
+| Layout | Inherits from `ConfigBasePage` |
+| Behavior | Automatically closes burger menu when opened |
+
+Contains navigation buttons to sub-pages:
+- **LanguagePage**
+- **FirstDayOfWeekPage**
+- *(future)* ThemePage, NotificationPage, TransitsPage, NodesPage, HoraPage, MuhurtaPage, MrityuBhagaPage, SunrisePage.
+
+All configuration pages send a unified **`MessagingCenter.Send(this, "SettingsChanged")`** message after saving settings.  
+MainPage listens once to this message and updates itself (title, culture, header grid).  
+Additionally, **OnAppearing()** ensures the calendar refreshes even if the event is missed.
+
+---
+
+### 🇨🇳 **LanguagePage**
+
+| Feature | Description |
+|----------|-------------|
+| Purpose | Select UI language |
+| Languages | English (en), Українська (uk), Polski (pl), Русский (ru) |
+| Layout | List with radio buttons, flag icons, language names |
+| Behavior | Updates `APPSETTING` (`LANGUAGE` group), refreshes `DataCache`, sends `"SettingsChanged"` |
+| Persistence | Language persists after restart |
+| Dialogs | Localized confirmation (“Save changes?” / “Yes / No”) |
+| Text | Instruction label: “Choose application language:” |
+
+---
+
+### 🗕 **FirstDayOfWeekPage**
+
+| Feature | Description |
+|----------|-------------|
+| Options | Monday / Sunday |
+| Updates | `APPSETTING` (`WEEK` group) |
+| Confirmation | “Save changes?” dialog |
+| On Change | Updates DB + cache + notifies MainPage |
+| Localization | All texts localized |
+| Current value | Read from DB on load |
+
+---
+
+### 🔲 **ConfigBasePage**
+
+Shared base layout for all configuration pages.  
+Provides:
+- Consistent background, margins, and typography  
+- Toolbar with close icon (`close_icon.png`)  
+- Standard text styles (`SectionLabelStyle`, `InstructionLabelStyle`)  
+- Unified page structure inherited by all config pages
+
+---
+
+### 🍔 **Burger Menu (AppShell Flyout)**
+
+| Item | Page | Notes |
+|-------|------|-------|
+| Calendar | MainPage | Default start page |
+| Settings | ConfigurationPage | Central settings hub |
+| Exit | ExitPage | Closes the app |
+
+Menu items are localized and automatically close the fly-out upon selection.
+
+---
+
+### 💾 **Database Schema Summary**
+
+| Table | Purpose |
+|--------|----------|
+| APPSETTING | Application settings (LANGUAGE, WEEK, etc.) |
+| APP_TEXTS | Localized UI strings |
+| LANGUAGE / LANGUAGE_DESC | Supported interface languages |
+| COLOR / COLOR_DESC | Color definitions |
+| PLANET / PLANET_DESC | Planet reference data |
+| LOCATION, PROFILE | Geographic and user data |
+| Other *_DESC | Localized reference descriptions |
+
+---
+
+## **Part II — Implemented MAUI Architecture**
+
+### 🧩 Core Components
+
+#### 🔹 DatabaseService
+- Manages direct SQLite access.  
+- Handles copying default DB from resources if missing.  
+- Provides CRUD for app settings and look-up tables.
+
+**Key Methods**
 ```csharp
 GetAppSettingsList()
-UpdateAppSettings(List<AppSettingList>)
 SetFirstDayOfWeek(string code)
 SetLanguage(string code)
-GetAppTextsList(string languageCode)
-GetActiveLanguageCode()
 GetFirstDayOfWeekFromDb()
+GetActiveLanguageCode()
+GetAppTextsList(string languageCode)
+GetLanguages()
+GetColors(), GetColorDescs()
+GetPlanets(), GetPlanetDescs()
+```
 
+---
 
-### 🔸 DataCache
+#### 🔹 DataCache
+Central in-memory cache initialized at startup.
 
-Central in-memory cache loaded at startup.
+**Responsibilities**
+- Loads all reference and localized data (`LoadAll`).
+- Refreshes localized data and app settings on configuration change (`Refresh`).
+- Stores `CurrentLanguageCode` for the active UI culture.
+- Provides localized text via `GetText(string nativeText)`.
 
-Responsibilities:
-Loads reference data (languages, colors, planets, localized texts)
-Stores the current UI language (CurrentLanguageCode)
-Provides fast access to data for all pages
+---
 
-Key method:
-LoadAll(DatabaseService db, string preferredUiLang)
-
-
-
-🔸 Localization
-
-Utility class for text localization.
-
+#### 🔹 Localization Utility
+Provides direct localized string retrieval from the cache:  
+```csharp
 public static string GetLocalizedText(string nativeText, string langCode)
-
-If no translation exists — returns the original English version.
-
-
-
-🔸 ServiceLocator
-
-Global access point for dependency-injected services (DI container).
-
-
-
-🖥️ Implemented Pages
-
-### 🏠 MainPage (Календарь)
-
-Главная страница приложения PADMA — это интерактивный **календарь**, являющийся центральной частью пользовательского интерфейса.  
-Она загружается первой при запуске приложения и отображает текущий месяц в зависимости от системной даты, локализации и настроек пользователя.
+```
+If translation missing → returns `nativeText`.
 
 ---
 
-#### 📋 Общие требования
-1. Страница отображает **месячный календарь** в виде сетки (`Grid`), содержащей:
-   - заголовок месяца и года в верхней части - на тулбаре,
-   - строку названий дней недели (верхний левый угол),
-   - основной блок дат (42 дня).
-   - Каждая ячейка дня содержит в нижней части (две трети общей площади) 6 цветных полосок (в будущем состояние транзитов) - пока в виде такой заглушки.
-2. При старте приложения:
-   - Определяется активный язык интерфейса (`DataCache.Instance.CurrentLanguageCode`);
-   - Определяется первый день недели на основе настройки в БД (`APPSETTING` → `WEEKMONDAY` / `WEEKSUNDAY`);
-   - Календарь строится согласно этим настройкам.
-3. Страница поддерживает **локализацию** всех текстовых элементов (еще не готово):
-   - названия месяцев и дней недели;
-   - заголовок месяца/года;
-   - всплывающие элементы интерфейса (например, переходы).
+#### 🔹 ServiceLocator
+Simple DI container wrapper for accessing shared services globally:  
+`ServiceLocator.Services.GetService<DatabaseService>()`
 
 ---
 
-#### 🧱 Разметка и структура (Layout)
+### 🧠 ViewModels
 
-Визуальная структура страницы:
-
-| Область | Элемент | Описание |
-|----------|----------|----------|
-| Верхняя панель | `<StackLayout>` | Содержит навигационные кнопки и заголовок текущего месяца |
-| Навигация | `<ImageButton>` | Кнопки для перехода к предыдущему и следующему месяцу (`left_arrow.png`, `right_arrow.png`) | (пока еще не готово - использован текст "<" ">")
-| Название месяца | `<Label>` | Отображает текущий месяц и год, локализовано, выровнено по центру | (на тулбаре)
-| Полоса-разделитель | `<BoxView>` | Горизонтальная линия под заголовком месяца |
-| Заголовки дней недели | `<Grid>` | Одна строка с 7 ячейками (`Mon, Tue, Wed…` или локализованные версии) |
-| Основная сетка календаря | `<Grid>` | 6 строк × 7 колонок, динамически заполняется датами |
-| Ячейка дня | `<Frame>` | Не содержит отступов, - весь Календарь - растянут на всю область экрана
-| Текст даты | `<Label>` | Цифра дня месяца в левом верхнем углу верхней области (одна треть) ячейки дня |
-| Подсветка текущего дня | `<BoxView>` или изменённый `BackgroundColor` в `Frame` | Светло-голубого цвета
-| Нижняя разделительная полоса | `<BoxView>` | Тонкая линия для визуального завершения сетки |
+#### CalendarViewModel
+- Holds current year, month, culture, and collection of day items.  
+- Generates a 6 × 7 grid of days respecting first-day-of-week setting.  
+- Supports localization via `CultureCode` → `CultureInfo`.  
+- Methods:
+  - `InitializeCulture()`  
+  - `ReloadCultureAndRefresh()`  
+  - `MoveMonth(int delta)`  
+  - `RefreshCalendar()`  
+  - `GenerateDays(year, month)`  
 
 ---
 
-#### 🎨 Пропорции и стили
+### 🧩 Messaging & Refresh Flow
 
-| Элемент | Свойства |
-|----------|-----------|
-| Заголовок месяца | `FontSize="22"`, `FontAttributes="Bold"`, `TextColor="#333"`, `HorizontalOptions="Center"` |
-| Подписи дней недели | `FontSize="14"`, `FontAttributes="Bold"`, `TextColor="#555"`, `HorizontalOptions="Center"` |
-| Ячейки дней | `Frame` с `CornerRadius="4"`, `Padding="5"`, `HasShadow="False"`, `HeightRequest="48"`, `WidthRequest="48"` |
-| Цвета | Основной фон — белый (`#FFFFFF`), границы ячеек — светло-серые (`#DDD`) |
-| Подсветка текущего дня | Светло-голубой цвет |
-| Разделительные линии | `BoxView HeightRequest="1"`, `Color="#CCC"` |
+| Event | Trigger | Result |
+|--------|----------|---------|
+| `"SettingsChanged"` | Any configuration page | MainPage → ReloadCultureAndRefresh() → UpdateTitle() + UpdateDaysHeader() |
+| OnAppearing() | Returning to MainPage | Ensures DataCache.Refresh() and UI rebuild |
 
 ---
 
-#### ⚙️ Логика и поведение
+### 🧱 Shared UI & Styles
 
-**1. Построение календаря**
-- Метод `BuildCalendar()` вызывается при:
-  - старте страницы (`OnAppearing()`),
-  - изменении месяца (`PrevMonth_Clicked` / `NextMonth_Clicked`),
-  - изменении конфигурации через `MessagingCenter` (например, смена первого дня недели).
-- Сетка календаря строится динамически с использованием `DateTime.DaysInMonth(year, month)`.
+- All configuration pages inherit **ConfigBasePage**.  
+- Shared font styles defined in `Resources/Styles`.  
+- Icon resources in `Resources/Images`:
+  - `left_arrow.png`, `right_arrow.png`, `close_icon.png`, `flags/*.png`
+- Uniform spacing and padding throughout all MAUI pages.
 
-**2. Определение первого дня недели**
-- Получается из БД через `DatabaseService.GetFirstDayOfWeekFromDb()`.
-- На основе этого устанавливается порядок заголовков (`Mon-Sun` или `Sun-Sat`).
+---
 
-**3. Навигация по месяцам**
-- При нажатии стрелок:
-  - Меняется отображаемый месяц.
-  - Календарь перестраивается.
-  - Заголовок месяца обновляется с учётом локализации.
+### 🔴 Data Flow Summary
 
-**4. Выбор даты**
-- При нажатии на ячейку дня:
-  - Сохраняется выбранная дата.
-  - Происходит переход на `DayPage`:
-    ```csharp
-    await Shell.Current.GoToAsync($"//day?date={selectedDate:yyyy-MM-dd}");
-    ```
-  - При этом закрывается бургер-меню (если оно открыто).
+```
+SQLite  ⇄  DatabaseService  ⇄  DataCache
+                              ⇓
+                        ViewModels (Calendar, Config)
+                              ⇓
+                           XAML Pages
+```
 
-**5. Реакция на изменение конфигурации**
-- Через `MessagingCenter.Subscribe` страница реагирует на событие `"SettingsChanged"`.
-- При получении сообщения календарь перерисовывается с учётом новых настроек:
-  ```csharp
-  BuildCalendar();
-  
-🚦 Навигация и взаимодействие
+- On app launch → Database copied (if missing) → DatabaseService initialized → DataCache.LoadAll().  
+- All pages access reference data and localized texts via DataCache.  
+- Configuration changes trigger DataCache.Refresh() and UI rebuilds through MessagingCenter + OnAppearing().
 
-Доступ из бургер-меню пунктом Calendar.
-Находится по маршруту //main.
-При открытии других страниц (например, настроек) бургер-меню автоматически закрывается.
-Возврат из DayPage возвращает пользователя обратно на тот же месяц.
+---
 
-Технические требования (итог)
+### 🌐 Localization Pipeline
 
-Календарь должен корректно перестраиваться при изменении:
-языка;
-первого дня недели;
-текущего месяца.
-Все тексты должны использовать систему локализации. (еще не готова)
-Страница должна быть оптимизирована для всех платформ (.NET MAUI: Android, iOS, Windows).
-Календарь адаптивен — равномерное распределение колонок по ширине экрана.
-Не допускается дублирование текстов напрямую в XAML — всё через Localization.
-Поддержка светлой темы (фон белый, текст тёмный, акценты цветные).
+1. Language selected in **LanguagePage** → `APPSETTING` updated.  
+2. **DataCache.Refresh()** reloads localized texts.  
+3. `"SettingsChanged"` event sent.  
+4. **MainPage** updates culture, title, and weekday headers.
 
-Будущие улучшения
+---
 
-Добавить кнопку Today для возврата к текущему месяцу.
-Навигация | `<ImageButton>` | Кнопки для перехода к предыдущему и следующему месяцу (`left_arrow.png`, `right_arrow.png`)
-Переход к году / месяцу через выпадающий выбор.
-Добавление событий и заметок для конкретных дат.
-Добавление системы локализации (Тексты и локализация (в APP_TEXTS)).
+### 📱 Platform Notes
 
+- Responsive grid for all screen sizes.  
+- Works on Android / iOS / Windows.  
+- Uses only built-in .NET MAUI controls and SQLite-net.  
+- Light theme (white background, dark text).  
+- Extensible structure — future pages (ThemePage, NotificationPage, etc.) can reuse ConfigBasePage template.
 
-🌅 DayPage
+---
 
-Displays details for a selected date.
-
-Features:
-Opens on day tap from the calendar
-Shows detailed information (placeholder for astrological calculations) (пока пусто - в будущем)
-Localized text and layout
-Returns to calendar via navigation shell
-
-⚙️ ConfigurationPage
-
-Main settings hub.
-
-Features:
-Accessed from Settings in the burger menu
-Buttons for configuration pages:
-LanguagePage
-FirstDayOfWeekPage
-(future) ThemePage, NotificationPage, etc.
-Closes burger menu when opened
-Inherits layout and toolbar from ConfigBasePage
-
-🈸 LanguagePage
-
-Page for selecting the application interface language.
-
-Features:
-Lists 4 languages: English, Українська, Polski, Русский
-
-Each row contains:
-Radio button
-Language name
-Flag icon with thin border
-
-On selection:
-Updates active language in APPSETTING
-Refreshes DataCache and re-renders UI
-Language persists after restart
-
-Confirmation dialog (localized Yes / No buttons)
-Instruction under header: “Choose application language:”
-
-📅 FirstDayOfWeekPage
-
-Page for selecting the first day of the week.
-
-Features:
-Options: Monday / Sunday
-Updates APPSETTING (group WEEK)
-
-On change:
-Shows confirmation dialog “Save changes?”
-Updates DB and cache
-Notifies MainPage to redraw calendar
-
-Reads current value from DB on load
-Localized all texts (title, instruction, dialog)
-
-
-
-🔲 ConfigBasePage
-
-Shared base template for all configuration pages.
-
-Provides:
-Unified background and spacing
-Consistent text styles
-Toolbar with close icon (close_icon.png)
-Standardized title and label fonts (SectionLabelStyle, InstructionLabelStyle)
-Inherited automatically by all configuration pages
-
-
-🍔 Burger Menu (Shell Flyout)
-
-Implemented in AppShell.xaml.
-
-Structure:
-Calendar → MainPage
-Settings → ConfigurationPage
-Exit → ExitPage
-
-Details:
-Always visible except on deep configuration pages
-Localized menu item names
-Closes automatically when opening a settings page
-
-🧾 Database Schema
-Table	Purpose
-APPSETTING	Stores all app configuration settings
-APP_TEXTS	Localized UI texts
-LOCATION	Geographical data (reduced to Kyiv and Chornyi Ostriv)
-PROFILE	User profiles linked to LOCATION
-PLANET, COLOR, LANGUAGE	Reference tables
-*_DESC	Language-specific descriptions for reference tables
-
-
-
+✅ **End of Document**  
+> Next revision planned after implementation of ThemePage and Transits visualization module.
 
