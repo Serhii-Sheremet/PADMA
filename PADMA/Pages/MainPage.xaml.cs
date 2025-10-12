@@ -21,15 +21,16 @@ namespace PADMA.Pages
             // Инициализация культуры
             Vm.InitializeCulture();
 
-            MessagingCenter.Subscribe<ConfigurationPage>(this, "LanguageChanged", _ =>
+            // Подписка на изменения настроек из ConfigurationPage
+            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
-                Vm?.ReloadCultureAndRefresh();
+                Vm?.RefreshCalendar();
                 UpdateTitle();
                 UpdateDaysHeader();
             });
 
-            // Подписка на изменения настроек из ConfigurationPage
-            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
+            // Подписка на изменения настроек из LanguagePage
+            MessagingCenter.Subscribe<LanguagePage>(this, "SettingsChanged", _ =>
             {
                 Vm?.ReloadCultureAndRefresh();
                 UpdateTitle();

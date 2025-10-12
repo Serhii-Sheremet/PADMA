@@ -15,6 +15,14 @@ namespace PADMA.Pages
                     "Settings have been successfully applied.",
                     "OK");
             });
+
+            // Подписка на сообщение от дочерних страниц (LanguagePage)
+            MessagingCenter.Subscribe<LanguagePage>(this, "SettingsChanged", async (sender) =>
+            {
+                await DisplayAlert("Configuration Updated",
+                    "Settings have been successfully applied.",
+                    "OK");
+            });
         }
 
         protected override void OnAppearing()
