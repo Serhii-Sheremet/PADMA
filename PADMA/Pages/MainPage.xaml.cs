@@ -21,6 +21,14 @@ namespace PADMA.Pages
             // Инициализация культуры
             Vm.InitializeCulture();
 
+            MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
+            {
+                Vm?.ReloadCultureAndRefresh();
+                UpdateTitle();
+                UpdateDaysHeader();
+            });
+
+            /*
             // Подписка на изменения настроек из ConfigurationPage
             MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
@@ -44,6 +52,7 @@ namespace PADMA.Pages
                 UpdateTitle();
                 UpdateDaysHeader();
             });
+            */
 
             UpdateTitle();
             AddToolbarButtons();
@@ -132,7 +141,7 @@ namespace PADMA.Pages
                         HorizontalOptions = LayoutOptions.Center,
                         VerticalOptions = LayoutOptions.Center,
                         FontAttributes = FontAttributes.Bold,
-                        FontSize = 14,
+                        FontSize = 13,
                         TextColor = Colors.Black
                     }
                 };

@@ -82,14 +82,7 @@ namespace PADMA.UI
         {
             try
             {
-                var db = ServiceLocator.Services.GetService<DatabaseService>();
-
-                // 🔹 Обновляем кэш (в том числе CurrentLanguageCode)
-                DataCache.Instance.Refresh(db);
-
-                // 🔹 Получаем культуру по обновлённому кэшу
                 var code = DataCache.Instance.CurrentLanguageCode;
-
                 string newCulture = code switch
                 {
                     "en" => "en-US",
@@ -142,7 +135,7 @@ namespace PADMA.UI
                 MonthTitle = $"{Year}-{Month:00}";
             }
         }
-        // === ★ Конец блока культуры ===
+        // === Конец блока культуры ===
 
 
         public CalendarViewModel()
