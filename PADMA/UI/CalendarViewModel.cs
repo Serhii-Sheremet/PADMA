@@ -84,9 +84,20 @@ namespace PADMA.UI
             {
                 var db = ServiceLocator.Services.GetService<DatabaseService>();
 
-                // Принудительно перечитать активный язык (не полагаться на старые поля VM)
-                var lang = db.GetCurrentLanguage();
-                var newCulture = lang?.CultureCode ?? CultureInfo.CurrentUICulture.Name;
+                // 🔹 Обновляем кэш (в том числе CurrentLanguageCode)
+                DataCache.Instance.Refresh(db);
+
+                // 🔹 Получаем культуру по обновлённому кэшу
+                var code = DataCache.Instance.CurrentLanguageCode;
+
+                string newCulture = code switch
+                {
+                    "en" => "en-US",
+                    "uk" => "uk-UA",
+                    "pl" => "pl-PL",
+                    "ru" => "ru-RU",
+                    _ => CultureInfo.CurrentUICulture.Name
+                };
 
                 if (!string.Equals(CultureCode, newCulture, StringComparison.OrdinalIgnoreCase))
                 {
@@ -94,16 +105,15 @@ namespace PADMA.UI
                     OnPropertyChanged(nameof(CurrentCulture));
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] ReloadCultureAndRefresh failed: {ex.Message}");
                 CultureCode = CultureInfo.CurrentUICulture.Name;
                 OnPropertyChanged(nameof(CurrentCulture));
             }
 
-            // Пересобрать всё, что зависит от культуры
             RefreshCalendar();
         }
-
 
 
         // === Опционально: обновлённый заголовок месяца (если где-то нужен)

@@ -131,7 +131,7 @@ namespace PADMA.Pages
                         HorizontalOptions = LayoutOptions.Center,
                         VerticalOptions = LayoutOptions.Center,
                         FontAttributes = FontAttributes.Bold,
-                        FontSize = 16,
+                        FontSize = 14,
                         TextColor = Colors.Black
                     }
                 };
