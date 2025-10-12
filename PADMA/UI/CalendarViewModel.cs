@@ -78,7 +78,25 @@ namespace PADMA.UI
             OnPropertyChanged(nameof(CurrentCulture));
         }
 
-        // === ★ Опционально: обновлённый заголовок месяца (если где-то нужен)
+        public void ReloadCultureAndRefresh()
+        {
+            try
+            {
+                var db = ServiceLocator.Services.GetService<DatabaseService>();
+                var lang = db.GetCurrentLanguage();
+                CultureCode = lang?.CultureCode ?? CultureInfo.CurrentUICulture.Name;
+            }
+            catch
+            {
+                CultureCode = CultureInfo.CurrentUICulture.Name;
+            }
+
+            OnPropertyChanged(nameof(CurrentCulture));
+            RefreshCalendar();
+        }
+
+
+        // === Опционально: обновлённый заголовок месяца (если где-то нужен)
         private string _monthTitle;
         public string MonthTitle
         {

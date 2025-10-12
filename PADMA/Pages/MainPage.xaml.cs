@@ -24,7 +24,7 @@ namespace PADMA.Pages
             // Подписка на изменения настроек из ConfigurationPage
             MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
-                Vm?.RefreshCalendar();
+                Vm?.ReloadCultureAndRefresh();
                 UpdateTitle();
                 UpdateDaysHeader();
             });
@@ -45,7 +45,12 @@ namespace PADMA.Pages
         private void UpdateTitle()
         {
             if (Vm == null) return;
-            Title = new DateTime(Vm.Year, Vm.Month, 1).ToString("MMMM yyyy", Vm.CurrentCulture);
+
+            var rawTitle = new DateTime(Vm.Year, Vm.Month, 1).ToString("MMMM yyyy", Vm.CurrentCulture);
+            if (!string.IsNullOrEmpty(rawTitle))
+                Title = char.ToUpper(rawTitle[0], Vm.CurrentCulture) + rawTitle.Substring(1);
+            else
+                Title = rawTitle;
         }
 
         private void AddToolbarButtons()
