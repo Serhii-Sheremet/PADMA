@@ -424,7 +424,7 @@ INSERT INTO "APPSETTING" VALUES (20,'WEEK','WEEKSUNDAY',0);
 INSERT INTO "APPSETTING" VALUES (21,'WEEK','WEEKMONDAY',1);
 INSERT INTO "APPSETTING" VALUES (22,'SUNRISE','TIP',1);
 INSERT INTO "APPSETTING" VALUES (23,'SUNRISE','CENTER',0);
-INSERT INTO "APP_META" VALUES ('DB_VERSION','0.0.4');
+INSERT INTO "APP_META" VALUES ('DB_VERSION','0.0.6');
 INSERT INTO "APP_TEXTS" VALUES (1,'Language','Language','en');
 INSERT INTO "APP_TEXTS" VALUES (2,'Language','Мова','uk');
 INSERT INTO "APP_TEXTS" VALUES (3,'Language','Język','pl');
@@ -481,6 +481,10 @@ INSERT INTO "APP_TEXTS" VALUES (53,'Choose application language:','Choose applic
 INSERT INTO "APP_TEXTS" VALUES (54,'Choose application language:','Оберіть мову застосунку:','uk');
 INSERT INTO "APP_TEXTS" VALUES (55,'Choose application language:','Wybierz język aplikacji:','pl');
 INSERT INTO "APP_TEXTS" VALUES (56,'Choose application language:','Выберите язык приложения:','ru');
+INSERT INTO "APP_TEXTS" VALUES (57,'Choose the first day of the week:','Choose the first day of the week:','en');
+INSERT INTO "APP_TEXTS" VALUES (58,'Choose the first day of the week:','Оберіть перший день тижня:','uk');
+INSERT INTO "APP_TEXTS" VALUES (59,'Choose the first day of the week:','Wybierz pierwszy dzień tygodnia:','pl');
+INSERT INTO "APP_TEXTS" VALUES (60,'Choose the first day of the week:','Выберите первый день недели:','ru');
 INSERT INTO "COLOR" VALUES (1,'GREEN',-13631697);
 INSERT INTO "COLOR" VALUES (2,'RED',-45233);
 INSERT INTO "COLOR" VALUES (3,'LIGHTGREEN',-4587591);
@@ -1037,7 +1041,7 @@ INSERT INTO "KARANA_DESC" VALUES (118,58,'Шакуни','Кали, Раху, Л�
 INSERT INTO "KARANA_DESC" VALUES (119,59,'Чатушпада','Рудра, Кету, хоз. 4 дома','Политика, государственные дела; действия касаемо предков; выполнение религиозных обрядов; животноводство.','Неблагоприятный день для важных дел.','ru');
 INSERT INTO "KARANA_DESC" VALUES (120,60,'Нага','Наги, Раху, хоз. 7 дома','Подходит для жестоких дел, хитрости, злых действий, выполнение работ с неподвижными объектами.','Неблагоприятный день для важных дел. Несет в себе импульс, ведущий к неудачам, враждебности.','ru');
 INSERT INTO "LANGUAGE" VALUES (1,'en','en-US');
-INSERT INTO "LANGUAGE" VALUES (2,'ua','uk-UA');
+INSERT INTO "LANGUAGE" VALUES (2,'uk','uk-UA');
 INSERT INTO "LANGUAGE" VALUES (3,'pl','pl-PL');
 INSERT INTO "LANGUAGE" VALUES (4,'ru','ru-RU');
 INSERT INTO "LANGUAGE_DESC" VALUES (1,1,'English','en');
@@ -2074,8 +2078,6 @@ INSERT INTO "TRANZIT_DESC" VALUES (213,105,'Конфликт, угрюмые м�
 INSERT INTO "TRANZIT_DESC" VALUES (214,106,'Враждебность, преграды','ru');
 INSERT INTO "TRANZIT_DESC" VALUES (215,107,'Счастье и большие деньги','ru');
 INSERT INTO "TRANZIT_DESC" VALUES (216,108,'Траты и опасности','ru');
-INSERT INTO "USER_EVENTS" VALUES (2,1,'2025-09-18 12:00:00','2025-09-18 12:30:00','spokojstwie','spokojstwie',-16711936);
-INSERT INTO "USER_EVENTS" VALUES (3,1,'2025-09-18 11:45:00','2025-09-18 12:15:00','jmkjym','hmhmj',-16711936);
 INSERT INTO "YOGA" VALUES (1,1,'DWIPUSHKAR');
 INSERT INTO "YOGA" VALUES (2,1,'TRIPUSHKAR');
 INSERT INTO "YOGA" VALUES (3,1,'AMRITASIDDHA');
