@@ -28,36 +28,31 @@ namespace PADMA.Pages
                 UpdateDaysHeader();
             });
 
-            /*
-            // Подписка на изменения настроек из ConfigurationPage
-            MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
-            {
-                Vm?.RefreshCalendar();
-                UpdateTitle();
-                UpdateDaysHeader();
-            });
-
-            // Подписка на изменения настроек из LanguagePage
-            MessagingCenter.Subscribe<LanguagePage>(this, "SettingsChanged", _ =>
-            {
-                Vm?.ReloadCultureAndRefresh();
-                UpdateTitle();
-                UpdateDaysHeader();
-            });
-
-            // Подписка на изменения настроек из FirstDayOfWeekPage
-            MessagingCenter.Subscribe<FirstDayOfWeekPage>(this, "SettingsChanged", _ =>
-            {
-                Vm?.RefreshCalendar();
-                UpdateTitle();
-                UpdateDaysHeader();
-            });
-            */
-
             UpdateTitle();
             AddToolbarButtons();
             UpdateDaysHeader();
         }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            try
+            {
+                // На всякий случай подтянем свежие настройки и тексты из БД в кэш
+                var db = ServiceLocator.Services.GetService<DatabaseService>();
+                DataCache.Instance.Refresh(db);
+
+                Vm?.ReloadCultureAndRefresh();
+                UpdateTitle();
+                UpdateDaysHeader();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] MainPage.OnAppearing error: {ex.Message}");
+            }
+        }
+
 
         private void UpdateTitle()
         {
