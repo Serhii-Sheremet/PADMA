@@ -172,6 +172,39 @@ namespace PADMA.Core.Services
             };
         }
 
+        // --- Culture support for CalendarViewModel ---
+        public Language GetCurrentLanguage()
+        {
+            try
+            {
+                var code = GetActiveLanguageCode();
+                string culture = code switch
+                {
+                    "en" => "en-US",
+                    "uk" => "uk-UA",
+                    "pl" => "pl-PL",
+                    "ru" => "ru-RU",
+                    _ => "en-US"
+                };
+
+                return new Language
+                {
+                    LanguageCode = code,
+                    CultureCode = culture
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] Language read error: {ex.Message}");
+                return new Language
+                {
+                    LanguageCode = "en",
+                    CultureCode = "en-US"
+                };
+            }
+        }
+
+
 
     }
 }

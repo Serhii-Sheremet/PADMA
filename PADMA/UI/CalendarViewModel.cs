@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using PADMA.Core.Services;
 
 namespace PADMA.UI
@@ -37,6 +40,73 @@ namespace PADMA.UI
             }
         }
 
+        // === ★ Добавлено: поддержка CultureCode ===
+        private string _cultureCode;
+        public string CultureCode
+        {
+            get => _cultureCode;
+            private set
+            {
+                if (_cultureCode != value)
+                {
+                    _cultureCode = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CurrentCulture));
+                }
+            }
+        }
+
+        public CultureInfo CurrentCulture =>
+            !string.IsNullOrWhiteSpace(CultureCode)
+                ? new CultureInfo(CultureCode)
+                : CultureInfo.CurrentUICulture;
+
+        // === Инициализация культуры из базы ===
+        public void InitializeCulture()
+        {
+            try
+            {
+                var db = ServiceLocator.Services.GetService<DatabaseService>();
+                var lang = db.GetCurrentLanguage();
+                CultureCode = lang?.CultureCode ?? CultureInfo.CurrentUICulture.Name;
+            }
+            catch
+            {
+                CultureCode = CultureInfo.CurrentUICulture.Name;
+            }
+
+            OnPropertyChanged(nameof(CurrentCulture));
+        }
+
+        // === ★ Опционально: обновлённый заголовок месяца (если где-то нужен)
+        private string _monthTitle;
+        public string MonthTitle
+        {
+            get => _monthTitle;
+            private set
+            {
+                if (_monthTitle != value)
+                {
+                    _monthTitle = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private void UpdateMonthTitle()
+        {
+            try
+            {
+                MonthTitle = new DateTime(Year, Month, 1).ToString("MMMM yyyy", CurrentCulture);
+            }
+            catch
+            {
+                MonthTitle = $"{Year}-{Month:00}";
+            }
+        }
+        // === ★ Конец блока культуры ===
+
+
         public CalendarViewModel()
         {
             var today = DateTime.Today;
@@ -62,9 +132,8 @@ namespace PADMA.UI
             Year = newDate.Year;
             Month = newDate.Month;
             GenerateDays(Year, Month);
+            UpdateMonthTitle(); // ★ добавлено, чтобы заголовок обновлялся по культуре
         }
-
-        
 
         /// <summary>
         /// Core: build a 6x7 grid (42 days) based on the selected first day of week.
@@ -100,7 +169,7 @@ namespace PADMA.UI
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void OnPropertyChanged(string propertyName) =>
+        private void OnPropertyChanged(string propertyName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

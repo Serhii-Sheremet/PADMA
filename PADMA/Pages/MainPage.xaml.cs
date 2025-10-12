@@ -1,6 +1,9 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
+using System.Globalization;
+using System.Linq;
 using PADMA.UI;
+using PADMA.Core.Services;
 
 namespace PADMA.Pages
 {
@@ -15,11 +18,15 @@ namespace PADMA.Pages
             if (BindingContext is not CalendarViewModel)
                 BindingContext = new CalendarViewModel();
 
+            // Инициализация культуры
+            Vm.InitializeCulture();
+
             // Подписка на изменения настроек из ConfigurationPage
             MessagingCenter.Subscribe<ConfigurationPage>(this, "SettingsChanged", _ =>
             {
                 Vm?.RefreshCalendar();
                 UpdateTitle();
+                UpdateDaysHeader();
             });
 
             // Подписка на изменения настроек из FirstDayOfWeekPage
@@ -27,33 +34,88 @@ namespace PADMA.Pages
             {
                 Vm?.RefreshCalendar();
                 UpdateTitle();
+                UpdateDaysHeader();
             });
 
             UpdateTitle();
             AddToolbarButtons();
+            UpdateDaysHeader();
         }
 
         private void UpdateTitle()
         {
             if (Vm == null) return;
-            Title = new DateTime(Vm.Year, Vm.Month, 1).ToString("MMMM yyyy");
+            Title = new DateTime(Vm.Year, Vm.Month, 1).ToString("MMMM yyyy", Vm.CurrentCulture);
         }
 
         private void AddToolbarButtons()
         {
             ToolbarItems.Clear();
 
-            ToolbarItems.Add(new ToolbarItem("<", null, () =>
+            var prev = new ToolbarItem
+            {
+                IconImageSource = "left_arrow.png",
+                Text = "Prev"
+            };
+            prev.Clicked += (s, e) =>
             {
                 Vm?.MoveMonth(-1);
                 UpdateTitle();
-            }));
+                UpdateDaysHeader();
+            };
 
-            ToolbarItems.Add(new ToolbarItem(">", null, () =>
+            var next = new ToolbarItem
+            {
+                IconImageSource = "right_arrow.png",
+                Text = "Next"
+            };
+            next.Clicked += (s, e) =>
             {
                 Vm?.MoveMonth(1);
                 UpdateTitle();
-            }));
+                UpdateDaysHeader();
+            };
+
+            ToolbarItems.Add(prev);
+            ToolbarItems.Add(next);
+        }
+
+        private void UpdateDaysHeader()
+        {
+            if (Vm == null || DaysHeaderGrid == null)
+                return;
+
+            DaysHeaderGrid.Children.Clear();
+
+            var culture = Vm.CurrentCulture;
+            var dtf = culture.DateTimeFormat;
+            var abbreviated = dtf.AbbreviatedDayNames
+                .Select(d => (d.Length > 3 ? d.Substring(0, 3) : d).ToUpper(culture))
+                .ToArray();
+
+            // Получаем первый день недели из настроек
+            var firstDay = Vm != null
+                ? ServiceLocator.Services.GetService<DatabaseService>().GetFirstDayOfWeekFromDb()
+                : dtf.FirstDayOfWeek;
+
+            var ordered = Enumerable.Range(0, 7)
+                .Select(i => abbreviated[((int)firstDay + i) % 7])
+                .ToArray();
+
+            for (int i = 0; i < 7; i++)
+            {
+                var lbl = new Label
+                {
+                    Text = ordered[i],
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center,
+                    FontAttributes = FontAttributes.Bold,
+                    FontSize = 16,
+                    TextColor = Colors.Black
+                };
+                Grid.SetColumn(lbl, i);
+                DaysHeaderGrid.Children.Add(lbl);
+            }
         }
 
         private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -65,13 +127,9 @@ namespace PADMA.Pages
             if (selected == null)
                 return;
 
-            // Сбрасываем выделение, чтобы не «залипало»
             ((CollectionView)sender).SelectedItem = null;
 
-            // Навигация на DayPage, заголовок = реальная дата
-            await Shell.Current.GoToAsync($"day?Date={selected.Date:yyyy-MMMM-dd}");
+            await Shell.Current.GoToAsync($"day?Date={selected.Date:yyyy-MM-dd}");
         }
-
-
     }
 }

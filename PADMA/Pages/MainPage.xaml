@@ -5,15 +5,36 @@
              x:Class="PADMA.Pages.MainPage"
              Title="Calendar">
 
-    <Grid RowDefinitions="*"
-          ColumnDefinitions="*"
-          Padding="0"
-          RowSpacing="0"
-          ColumnSpacing="0">
+    <Grid Padding="0" RowSpacing="0" ColumnSpacing="0">
 
-        <!-- Календарь -->
+        <Grid.RowDefinitions>
+            <!-- Новый ряд для заголовков дней недели -->
+            <RowDefinition Height="Auto" />
+            <!-- Основной календарь -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 🔹 Шапка с аббревиатурами дней -->
+        <Grid x:Name="DaysHeaderGrid"
+              Grid.Row="0"
+              HeightRequest="24"
+              Margin="0,2,0,2"
+              ColumnSpacing="0"
+              RowSpacing="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+        </Grid>
+
+        <!-- 🔹 Календарь -->
         <CollectionView x:Name="CalendarCollection"
-                        Grid.Row="0"
+                        Grid.Row="1"
                         ItemsSource="{Binding Days}"
                         SelectionMode="Single"
                         SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
@@ -26,22 +47,21 @@
                 <GridItemsLayout Orientation="Vertical"
                                  Span="7"
                                  HorizontalItemSpacing="0"
-                                 VerticalItemSpacing="0"/>
+                                 VerticalItemSpacing="0" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="ui:DayItem">
-                    <!-- Ячейка календаря -->
                     <Border
-                            HeightRequest="{Binding Source={x:Reference CalendarCollection},
-                            Path=Height,
-                            Converter={StaticResource HeightToCellHeightConverter}}"
-                            Stroke="Black"
-                            StrokeThickness="0.5"
-                            Padding="0"
-                            HorizontalOptions="FillAndExpand"
-                            VerticalOptions="FillAndExpand"
-                            Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}">
+                        HeightRequest="{Binding Source={x:Reference CalendarCollection},
+                                                 Path=Height,
+                                                 Converter={StaticResource HeightToCellHeightConverter}}"
+                        Stroke="Black"
+                        StrokeThickness="0.5"
+                        Padding="0"
+                        HorizontalOptions="FillAndExpand"
+                        VerticalOptions="FillAndExpand"
+                        Background="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}">
 
                         <Grid RowDefinitions="*,2*"
                               RowSpacing="0"
@@ -50,28 +70,26 @@
                               HorizontalOptions="FillAndExpand"
                               VerticalOptions="FillAndExpand">
 
-                            <!-- Число дня -->
                             <Label Grid.Row="0"
                                    Text="{Binding DayNumber}"
                                    FontAttributes="Bold"
                                    HorizontalOptions="Start"
                                    VerticalOptions="Start"
                                    Margin="2,2,0,0"
-                                   TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}"/>
+                                   TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
 
-                            <!-- 6 цветных полос -->
                             <Grid Grid.Row="1"
                                   RowDefinitions="*,*,*,*,*,*"
                                   VerticalOptions="FillAndExpand"
                                   HorizontalOptions="FillAndExpand"
                                   RowSpacing="1"
                                   Padding="0,2,0,2">
-                                <BoxView Grid.Row="0" BackgroundColor="Red"/>
-                                <BoxView Grid.Row="1" BackgroundColor="Orange"/>
-                                <BoxView Grid.Row="2" BackgroundColor="Yellow"/>
-                                <BoxView Grid.Row="3" BackgroundColor="Green"/>
-                                <BoxView Grid.Row="4" BackgroundColor="Blue"/>
-                                <BoxView Grid.Row="5" BackgroundColor="Purple"/>
+                                <BoxView Grid.Row="0" BackgroundColor="Red" />
+                                <BoxView Grid.Row="1" BackgroundColor="Orange" />
+                                <BoxView Grid.Row="2" BackgroundColor="Yellow" />
+                                <BoxView Grid.Row="3" BackgroundColor="Green" />
+                                <BoxView Grid.Row="4" BackgroundColor="Blue" />
+                                <BoxView Grid.Row="5" BackgroundColor="Purple" />
                             </Grid>
                         </Grid>
                     </Border>
