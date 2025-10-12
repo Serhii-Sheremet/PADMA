@@ -1,3 +1,7 @@
+> Context: This document is used by ChatGPT (GPT-5) for project PADMA continuation.
+> Always load this file first in a new session to resume context.
+
+
 # 🪶 PADMA — Project Requirements & Current Implementation
 > _Version: October 2025_
 
@@ -288,7 +292,5 @@ PLANET, COLOR, LANGUAGE	Reference tables
 *_DESC	Language-specific descriptions for reference tables
 
 
-🪄 Meta
 
-Last verified commit: 4c3157a8d6ab95402aa20ae3f89e61ab8a496455
 
