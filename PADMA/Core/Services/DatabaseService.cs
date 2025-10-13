@@ -101,13 +101,31 @@ namespace PADMA.Core.Services
             _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "WEEK", code);
         }
 
-        // Сохраняет выбранный код (LANGUAGECOE) в БД как активный
+        // Сохраняет выбранный код (LANGUAGECODE) в БД как активный
         public void SetLanguage(string code)
         {
             // Два простых UPDATE-а над реальной таблицей
             _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "LANGUAGE");
             _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "LANGUAGE", code);
         }
+
+        // Сохраняет выбранный код (TRANSITCODE) в БД как активный
+        public void SetTransitOption(string settingCode)
+        {
+            try
+            {
+                // Деактивируем все записи группы TRANSIT
+                _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "TRANSIT");
+
+                // Активируем выбранную
+                _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "TRANSIT", settingCode);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB update error in SetTransitOption: {ex.Message}");
+            }
+        }
+
 
 
         // Опционально — массовый апдейт списка 

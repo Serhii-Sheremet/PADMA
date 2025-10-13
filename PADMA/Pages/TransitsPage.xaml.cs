@@ -10,9 +10,9 @@ namespace PADMA.Pages
     public partial class TransitsPage : ConfigBasePage
     {
         private const string GROUP = "TRANSIT";
-        private const string CODE_MOON = "TRANSIT_MOON";
-        private const string CODE_ASC = "TRANSIT_ASC";
-        private const string CODE_BOTH = "TRANSIT_BOTH";
+        private const string CODE_MOON = "MOON";
+        private const string CODE_ASC = "LAGNA";
+        private const string CODE_BOTH = "MOONANDLAGNA";
 
         private string _originalSettingCode;
         private string _currentSettingCode;
@@ -104,11 +104,7 @@ namespace PADMA.Pages
                 }
 
                 // Сохраняем изменения в БД
-                _db.DeactivateGroup(GROUP);
-                var settings = _db.GetAppSettingsList();
-                var selected = settings.FirstOrDefault(x => x.GroupCode == GROUP && x.SettingCode == _currentSettingCode);
-                if (selected != null)
-                    _db.ActivateSetting(selected.Id);
+                _db.SetTransitOption(_currentSettingCode);
 
                 // Обновляем кэш
                 DataCache.Instance.Refresh(_db);
