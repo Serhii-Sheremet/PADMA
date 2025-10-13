@@ -10,6 +10,7 @@ namespace PADMA.Pages
     public partial class MainPage : ContentPage
     {
         private CalendarViewModel Vm => BindingContext as CalendarViewModel;
+        private bool _needsRefreshAfterConfig = false;
 
         public MainPage()
         {
@@ -23,6 +24,8 @@ namespace PADMA.Pages
 
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
             {
+                _needsRefreshAfterConfig = true;
+
                 Vm?.ReloadCultureAndRefresh();
                 UpdateTitle();
                 UpdateDaysHeader();
@@ -39,13 +42,18 @@ namespace PADMA.Pages
 
             try
             {
-                // На всякий случай подтянем свежие настройки и тексты из БД в кэш
-                var db = ServiceLocator.Services.GetService<DatabaseService>();
-                DataCache.Instance.Refresh(db);
+                if (_needsRefreshAfterConfig)
+                {
+                    // На всякий случай подтянем свежие настройки и тексты из БД в кэш
+                    var db = ServiceLocator.Services.GetService<DatabaseService>();
+                    DataCache.Instance.Refresh(db);
 
-                Vm?.ReloadCultureAndRefresh();
-                UpdateTitle();
-                UpdateDaysHeader();
+                    Vm?.ReloadCultureAndRefresh();
+                    UpdateTitle();
+                    UpdateDaysHeader();
+
+                    _needsRefreshAfterConfig = false; // сброс флага после обновления
+                }
             }
             catch (Exception ex)
             {

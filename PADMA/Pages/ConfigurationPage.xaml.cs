@@ -6,15 +6,19 @@ namespace PADMA.Pages
 {
     public partial class ConfigurationPage : ContentPage
     {
+        private bool _hasConfigChanges = false;
+
         public ConfigurationPage()
         {
             InitializeComponent();
 
-            // Универсальная подписка на любое событие SettingsChanged
+            // Универсальная подписка на событие "SettingsChanged" от всех дочерних страниц
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ =>
             {
-                ApplyLocalization();          // подтянуть новые подписи кнопок по языку
-                await ShowSettingsUpdatedMessage(); // локализованное подтверждение
+                _hasConfigChanges = true;
+
+                ApplyLocalization();
+                await ShowSettingsUpdatedMessage();
             });
         }
 
@@ -43,6 +47,7 @@ namespace PADMA.Pages
         private async Task ShowSettingsUpdatedMessage()
         {
             var langCode = DataCache.Instance.CurrentLanguageCode;
+
             await DisplayAlert(
                 Localization.GetLocalizedText("Configuration Updated", langCode),
                 Localization.GetLocalizedText("Settings have been successfully applied.", langCode),
@@ -52,6 +57,13 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
+            // Проверяем, были ли изменения с дочерних страниц
+            if (_hasConfigChanges)
+            {
+                // Шлём глобальное сообщение для MainPage о необходимости обновления календаря
+                MessagingCenter.Send<object>(this, "ConfigurationHubClosedWithChanges");
+            }
+
             await Shell.Current.GoToAsync("//main", true);
         }
 
