@@ -43,7 +43,7 @@ namespace PADMA.Pages
             Title = Localization.GetLocalizedText("Planetary transits", lang);
 
             // Заголовок/инструкция
-            HeaderLabel.Text = Localization.GetLocalizedText("Choose how to display planet transits:", lang);
+            HeaderLabel.Text = Localization.GetLocalizedText("Choose how to display planetary transits:", lang);
 
             // Подписи к опциям
             LblFromMoon.Text = Localization.GetLocalizedText("From natal Moon", lang);
@@ -91,7 +91,7 @@ namespace PADMA.Pages
                 var lang = DataCache.Instance.CurrentLanguageCode;
                 bool save = await DisplayAlert(
                     Localization.GetLocalizedText("Save changes?", lang),
-                    Localization.GetLocalizedText("Apply the selected option?", lang),
+                    Localization.GetLocalizedText("Apply new settings for planetary transits display?", lang),
                     Localization.GetLocalizedText("Yes", lang),
                     Localization.GetLocalizedText("No", lang)
                 );
