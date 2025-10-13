@@ -73,12 +73,6 @@ namespace PADMA.Core.Services
             AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
         }
 
-        /// <summary>
-        /// Get localized text safely from cache.
-        /// </summary>
-        public string GetText(string nativeText)
-        {
-            return AppTextsList.FirstOrDefault(x => x.NativeText == nativeText)?.ForeignText ?? nativeText;
-        }
+        
     }
 }

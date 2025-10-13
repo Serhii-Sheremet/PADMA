@@ -5,28 +5,46 @@
              Title="Configuration">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✖" Priority="0" Order="Primary" Clicked="OnCloseClicked"/>
+        <ToolbarItem IconImageSource="close_icon.png"
+                     Priority="0"
+                     Order="Primary"
+                     Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
 
-            <Button Text="Language"
-                    Clicked="OnLanguageClicked"/>
-            <Button Text="First day of week"
-                    Clicked="OnFirstDayOfWeekClicked"/>
-            <Button Text="Planetary transits"
-                    Clicked="OnTransitsClicked"/>
-            <Button Text="Nodes (Rahu and Ketu)"
-                    Clicked="OnNodesClicked"/>
-            <Button Text="Hora"
-                    Clicked="OnHoraClicked"/>
-            <Button Text="30 Muhurtas (60 Ghatis)"
-                    Clicked="OnMuhurtasClicked"/>
-            <Button Text="Mrityu Bhaga"
-                    Clicked="OnMrityuBhagaClicked"/>
-            <Button Text="Sunrise calculation"
-                    Clicked="OnSunriseClicked"/>
+            <Button x:Name="btnLanguage"
+                    Text="Language"
+                    Clicked="OnLanguageClicked" />
+
+            <Button x:Name="btnFirstDayOfWeek"
+                    Text="First day of week"
+                    Clicked="OnFirstDayOfWeekClicked" />
+
+            <Button x:Name="btnTransits"
+                    Text="Planetary transits"
+                    Clicked="OnTransitsClicked" />
+
+            <Button x:Name="btnNodes"
+                    Text="Nodes (Rahu and Ketu)"
+                    Clicked="OnNodesClicked" />
+
+            <Button x:Name="btnHora"
+                    Text="Hora"
+                    Clicked="OnHoraClicked" />
+
+            <Button x:Name="btnMuhurta"
+                    Text="30 Muhurtas (60 Ghatis)"
+                    Clicked="OnMuhurtasClicked" />
+
+            <Button x:Name="btnMrityuBhaga"
+                    Text="Mrityu Bhaga"
+                    Clicked="OnMrityuBhagaClicked" />
+
+            <Button x:Name="btnSunrise"
+                    Text="Sunrise calculation"
+                    Clicked="OnSunriseClicked" />
 
         </VerticalStackLayout>
     </ScrollView>
