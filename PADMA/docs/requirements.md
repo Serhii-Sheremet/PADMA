@@ -181,6 +181,84 @@ protected override void OnAppearing()
 
 ---
 
+### 🔸 Conditional Messaging Behavior (Hub + Sub-pages)
+
+The configuration system in **PADMA** uses an event-driven model to refresh data and UI only when **real configuration changes** occur.  
+Both the **ConfigurationPage** (hub) and its sub-pages (`LanguagePage`, `FirstDayOfWeekPage`, etc.) must follow this conditional update rule.
+
+---
+
+#### 🧭 Sub-page behavior
+
+Each sub-page sends the `"SettingsChanged"` message **only if a real modification occurs**.
+
+**Pattern (example from `LanguagePage`):**
+
+```csharp
+private string _originalSettingCode;
+private string _currentSettingCode;
+
+// Load
+_originalSettingCode = db.GetActiveLanguageCode();
+_currentSettingCode = _originalSettingCode;
+
+// On change
+_currentSettingCode = selectedLangCode;
+
+// On save
+if (_currentSettingCode != _originalSettingCode)
+{
+    db.SetLanguage(_currentSettingCode);
+    DataCache.Instance.Refresh(db);
+    MessagingCenter.Send<object>(this, "SettingsChanged");
+}```
+
+| User action                      | Message Sent | Result                                 |
+| -------------------------------- | ------------ | -------------------------------------- |
+| Setting changed and saved        | ✅ Yes        | ConfigurationPage updates localization |
+| Opened and closed without change | ❌ No         | No events triggered                    |
+
+### 🧩 Hub (ConfigurationPage) behavior
+
+The ConfigurationPage tracks whether any child page triggered updates during its lifetime.
+
+* When "SettingsChanged" is received, a local flag is set:
+
+```csharp
+private bool _hasConfigChanges = false;
+
+MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ =>
+{
+    _hasConfigChanges = true;
+    ApplyLocalization();
+    await ShowSettingsUpdatedMessage();
+});````
+
+* When the user exits the hub (via close button or navigation back), the page checks this flag before triggering a full refresh:
+
+```csharp
+private async void OnCloseClicked(object sender, EventArgs e)
+{
+    if (_hasConfigChanges)
+    {
+        // trigger calendar refresh and apply cache updates
+        MessagingCenter.Send<object>(this, "ConfigurationHubClosedWithChanges");
+    }
+
+    await Shell.Current.GoToAsync("//main", true);
+}
+````
+
+* The MainPage (calendar) listens for "ConfigurationHubClosedWithChanges" and refreshes only if this message is received.
+
+| Behavior                                               | Effect                                             |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| User opens ConfigurationPage and exits without changes | No cache refresh, no calendar redraw               |
+| User modifies settings in any sub-page                 | UI updates, cache reloads, calendar refreshed once |
+| Consistent event logic across all settings pages       | Efficient performance and predictable UX           |
+
+---
+
 ### 🈸 **LanguagePage**
 
 | Feature     | Description                                                                               |
