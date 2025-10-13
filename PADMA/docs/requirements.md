@@ -236,6 +236,14 @@ All user-facing texts in PADMA must support full multilingual localization acros
 🇬🇧 English (`en`), 🇺🇦 Ukrainian (`uk`), 🇵🇱 Polish (`pl`), 🇷🇺 Russian (`ru`).
 Localized texts are stored in the `APP_TEXTS` table and can be dynamically refreshed from the database.
 
+🧱 Localization Data Management
+
+Localized texts are added incrementally per feature or page, not globally.
+Before adding new texts to APP_TEXTS, always check for existing NATIVETEXT entries to avoid duplicates.
+Each new text must include all four language variants (en, uk, pl, ru).
+Use simple INSERT (not REPLACE) — to prevent overwriting existing translations.
+The current database damp file (for checking tables structure and content) is always stored at this location: PADMA/docs/sql/padma_tables.sql
+
 ##### 🧩 Implementation Rules
 
 1. **Localization Function (Required)**
