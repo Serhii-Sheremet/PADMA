@@ -88,7 +88,7 @@ Placeholder for future astrological details.
 | Navigation | Opened by selecting a day on MainPage |
 | Content | Detailed daily data (currently placeholder) |
 | Localization | All texts localized |
-| Return | Back navigation returns to the same month on MainPage |
+| Return | Back navigation returns to the same month on MainPage (controls fro closing "<-" "X")|
 
 ---
 
@@ -171,7 +171,7 @@ Menu items are localized and automatically close the fly-out upon selection.
 |--------|----------|
 | APPSETTING | Application settings (LANGUAGE, WEEK, etc.) |
 | APP_TEXTS | Localized UI strings |
-| LANGUAGE / LANGUAGE_DESC | Supported interface languages |
+| LANGUAGE / LANGUAGE_DESC | Supported interface languages | ??? LANGUAGE_DESC probably become obsolete  as language translations already placed into APP_TEXTS as localized strings
 | COLOR / COLOR_DESC | Color definitions |
 | PLANET / PLANET_DESC | Planet reference data |
 | LOCATION, PROFILE | Geographic and user data |
