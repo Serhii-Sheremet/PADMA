@@ -125,6 +125,60 @@ All configuration pages send a unified **`MessagingCenter.Send(this, "SettingsCh
 MainPage listens once to this message and updates itself (title, culture, header grid).
 Additionally, **OnAppearing()** ensures the calendar refreshes even if the event is missed.
 
+### ⚙️ Event Handling and Localization Refresh
+
+The ConfigurationPage acts as a hub for all configuration sub-pages (Language, FirstDayOfWeek, Transits, etc.)
+and handles configuration change notifications through a unified messaging system.
+
+###🔸 Unified Messaging Pattern
+
+* Each configuration sub-page, after applying and saving its settings, sends a single global message:
+
+MessagingCenter.Send<object>(this, "SettingsChanged");
+
+This message type (object) ensures compatibility across all pages.
+
+*The ConfigurationPage subscribes once and handles all such notifications:
+
+MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ =>
+{
+    ApplyLocalization();
+    await ShowSettingsUpdatedMessage();
+});
+
+###🔸 Refresh Behavior
+
+* ApplyLocalization() updates the page title and all button texts using
+
+Localization.GetLocalizedText(nativeText, DataCache.Instance.CurrentLanguageCode);
+
+* ShowSettingsUpdatedMessage() displays a localized confirmation alert:
+
+await DisplayAlert(
+    Localization.GetLocalizedText("Configuration Updated", langCode),
+    Localization.GetLocalizedText("Settings have been successfully applied.", langCode),
+    Localization.GetLocalizedText("OK", langCode)
+);
+
+###🔸 OnAppear Synchronization
+
+To ensure consistency even when returning via navigation gestures,
+ApplyLocalization() is also invoked in OnAppearing():
+
+protected override void OnAppearing()
+{
+    base.OnAppearing();
+    Shell.Current.FlyoutIsPresented = false;
+    ApplyLocalization();
+}
+
+### ✅ Benefits
+
+* One single message for all configuration pages — minimal code duplication.
+* Instant localization refresh on language change.
+* Scalable design — new settings pages integrate automatically.
+* Predictable and fully localized user feedback.
+
 ---
 
 ### 🈸 **LanguagePage**
