@@ -10,34 +10,18 @@ namespace PADMA.Pages
         {
             InitializeComponent();
 
-            // Subscribe to messages from child configuration pages
-            MessagingCenter.Subscribe<LanguagePage>(this, "SettingsChanged", async (sender) =>
+            // ”ниверсальна€ подписка на любое событие SettingsChanged
+            MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ =>
             {
-                await DisplayAlert(
-                    Localization.GetLocalizedText("Configuration Updated", DataCache.Instance.CurrentLanguageCode),
-                    Localization.GetLocalizedText("Settings have been successfully applied.", DataCache.Instance.CurrentLanguageCode),
-                    Localization.GetLocalizedText("OK", DataCache.Instance.CurrentLanguageCode)
-                );
+                ApplyLocalization();          // подт€нуть новые подписи кнопок по €зыку
+                await ShowSettingsUpdatedMessage(); // локализованное подтверждение
             });
-
-            MessagingCenter.Subscribe<FirstDayOfWeekPage>(this, "SettingsChanged", async (sender) =>
-            {
-                await DisplayAlert(
-                    Localization.GetLocalizedText("Configuration Updated", DataCache.Instance.CurrentLanguageCode),
-                    Localization.GetLocalizedText("Settings have been successfully applied.", DataCache.Instance.CurrentLanguageCode),
-                    Localization.GetLocalizedText("OK", DataCache.Instance.CurrentLanguageCode)
-                );
-            });
-
-            
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
-
             Shell.Current.FlyoutIsPresented = false;
-
             ApplyLocalization();
         }
 
@@ -46,7 +30,6 @@ namespace PADMA.Pages
             var langCode = DataCache.Instance.CurrentLanguageCode;
 
             Title = Localization.GetLocalizedText("Settings", langCode);
-
             btnLanguage.Text = Localization.GetLocalizedText("Language", langCode);
             btnFirstDayOfWeek.Text = Localization.GetLocalizedText("First day of week", langCode);
             btnTransits.Text = Localization.GetLocalizedText("Planetary transits", langCode);
@@ -57,19 +40,29 @@ namespace PADMA.Pages
             btnSunrise.Text = Localization.GetLocalizedText("Sunrise calculation", langCode);
         }
 
+        private async Task ShowSettingsUpdatedMessage()
+        {
+            var langCode = DataCache.Instance.CurrentLanguageCode;
+            await DisplayAlert(
+                Localization.GetLocalizedText("Configuration Updated", langCode),
+                Localization.GetLocalizedText("Settings have been successfully applied.", langCode),
+                Localization.GetLocalizedText("OK", langCode)
+            );
+        }
+
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("//main", true);
         }
 
-        private async void OnFirstDayOfWeekClicked(object sender, EventArgs e)
-        {
-            await Shell.Current.GoToAsync("FirstDayOfWeekPage");
-        }
-
         private async void OnLanguageClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("LanguagePage");
+        }
+
+        private async void OnFirstDayOfWeekClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("FirstDayOfWeekPage");
         }
 
         private async void OnTransitsClicked(object sender, EventArgs e)

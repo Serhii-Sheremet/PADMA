@@ -105,7 +105,7 @@ namespace PADMA.Pages
                     _db.SetLanguage(_currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
                     //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
-                    MessagingCenter.Send(this, "SettingsChanged");
+                    MessagingCenter.Send<object>(this, "SettingsChanged");
                 }
             }
 
@@ -125,7 +125,7 @@ namespace PADMA.Pages
                     _db.SetLanguage(_currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
                     //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
-                    MessagingCenter.Send(this, "SettingsChanged");
+                    MessagingCenter.Send<object>(this, "SettingsChanged");
                 }
             }
 
@@ -165,7 +165,7 @@ namespace PADMA.Pages
             //};
 
             // уведомляем систему
-            MessagingCenter.Send(this, "SettingsChanged");
+            MessagingCenter.Send<object>(this, "SettingsChanged");
         }
     }
 }
