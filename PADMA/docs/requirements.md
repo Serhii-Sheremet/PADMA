@@ -186,6 +186,19 @@ protected override void OnAppearing()
 The configuration system in **PADMA** uses an event-driven model to refresh data and UI only when **real configuration changes** occur.  
 Both the **ConfigurationPage** (hub) and its sub-pages (`LanguagePage`, `FirstDayOfWeekPage`, etc.) must follow this conditional update rule.
 
+###🔸 Unified Save Behavior
+
+All configuration subpages (LanguagePage, FirstDayOfWeekPage, TransitsPage, etc.)
+follow a delayed save model:
+
+* The user may change radio buttons or options freely.
+* No confirmation dialog or database update occurs immediately.
+* When the user closes the page (via back arrow or close icon): If settings were changed (_currentSettingCode != _originalSettingCode), a confirmation dialog “Save changes?” is displayed.
+* If confirmed → new settings are saved, cache refreshed, and "SettingsChanged" is sent to ConfigurationPage.
+* If declined or no changes → page simply closes silently.
+
+This ensures consistency across all configuration pages and avoids redundant UI dialogs.
+
 ---
 
 #### 🧭 Sub-page behavior
