@@ -9,7 +9,7 @@
 
         <!-- Заголовок -->
         <Label x:Name="InstructionLabel"
-               FontSize="22"
+               FontSize="18"
                FontAttributes="Bold"
                TextColor="#222"
                HorizontalOptions="Center"
