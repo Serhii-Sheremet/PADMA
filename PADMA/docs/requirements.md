@@ -216,6 +216,8 @@ GetColors(), GetColorDescs()
 GetPlanets(), GetPlanetDescs()
 ```
 
+* Includes automatic database version synchronization via APP_META (see “Database Versioning & Auto-Refresh System”).
+
 ---
 
 #### 🔹 DataCache
@@ -374,6 +376,35 @@ SQLite  ⇄  DatabaseService  ⇄  DataCache
 * Uses only built-in .NET MAUI controls and SQLite-net.
 * Light theme (white background, dark text).
 * Extensible structure — future pages (ThemePage, NotificationPage, etc.) can reuse ConfigBasePage template.
+
+---
+
+### 🗃️ Database Versioning & Auto-Refresh System
+
+PADMA maintains synchronization between the embedded database (Resources/Raw/PADMADB.db3)
+and the runtime user copy stored in the local app folder.
+
+### ⚙ Version Control Mechanism
+
+Each database file contains an entry in the APP_META table:
+
+APP_META
+├── ID (int)
+├── KEY (string)
+└── VALUE (string)
+
+The version key is stored under KEY = 'DB_VERSION'.
+
+### 🔁 Auto-Update Logic
+
+During app startup, DatabaseService compares the value of DB_VERSION in:
+The resource database (Resources/Raw/PADMADB.db3)
+The active user database (FileSystem.AppDataDirectory/PADMADB.db3)
+
+* If the versions differ:
+* The local database file is deleted.
+* A new copy of the updated database is written from resources.
+* The new connection is initialized automatically.
 
 ---
 
