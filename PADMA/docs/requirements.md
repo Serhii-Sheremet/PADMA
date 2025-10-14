@@ -272,33 +272,6 @@ private async void OnCloseClicked(object sender, EventArgs e)
 
 ---
 
-### 🈸 **LanguagePage**
-
-| Feature     | Description                                                                               |
-| ----------- | ----------------------------------------------------------------------------------------- |
-| Purpose     | Select UI language                                                                        |
-| Languages   | English (en), Українська (uk), Polski (pl), Русский (ru)                                  |
-| Layout      | List with radio buttons, flag icons, language names                                       |
-| Behavior    | Updates `APPSETTING` (`LANGUAGE` group), refreshes `DataCache`, sends `"SettingsChanged"` |
-| Persistence | Language persists after restart                                                           |
-| Dialogs     | Localized confirmation (“Save changes?” / “Yes / No”)                                     |
-| Text        | Instruction label: “Choose application language:”                                         |
-
----
-
-### 📅 **FirstDayOfWeekPage**
-
-| Feature       | Description                            |
-| ------------- | -------------------------------------- |
-| Options       | Monday / Sunday                        |
-| Updates       | `APPSETTING` (`WEEK` group)            |
-| Confirmation  | “Save changes?” dialog                 |
-| On Change     | Updates DB + cache + notifies MainPage |
-| Localization  | All texts localized                    |
-| Current value | Read from DB on load                   |
-
----
-
 ### 🔲 **ConfigBasePage**
 
 Shared base layout for all configuration pages.
@@ -320,6 +293,60 @@ Provides:
 | Exit     | ExitPage          | Closes the app       |
 
 Menu items are localized and automatically close the fly-out upon selection.
+
+---
+
+### ⚙️ Configuration Pages
+
+All configuration pages in PADMA follow a unified design and behavior pattern.
+
+Each page:
+- Inherits from `ConfigBasePage` (located in `PADMA/UI/Templates`).
+- Contains:
+  - Localized **title** (shown on toolbar),
+  - **Instruction label** under the title,
+  - One or more **radio button groups** for choosing a setting,
+  - Standardized navigation via **close icon (X)** and **back arrow (←)**.
+- All text elements use the localization system:
+  `Localization.GetLocalizedText("...", DataCache.Instance.CurrentLanguageCode)`
+- All settings are persisted in the SQLite `APPSETTING` table and refreshed via `DataCache`.
+
+### Common Behavior
+
+| Action | Description |
+|--------|-------------|
+| Opening | Page loads current setting from DB (`DatabaseService.GetAppSettingsList()` or specific query). |
+| Changing option | Updates internal variable but **does not** immediately modify DB. |
+| Exiting (back or X) | If the user changed a setting → shows localized confirmation dialog: <br>`"Apply new settings for [page purpose]?"` |
+| Confirmation (Yes) | Calls `DatabaseService.SetAppSettingActive(group, settingCode)`, refreshes cache, and sends a `MessagingCenter` message `"SettingsChanged"`. |
+| No changes or cancel | Closes silently without any refresh. |
+
+---
+
+### Implemented Pages
+
+| Page | Group | Options | Title (EN) | Description |
+|------|--------|----------|-------------|--------------|
+| **LanguagePage** | `LANG` | English / Українська / Polski / Русский | *Language* | Select interface language |
+| **FirstDayOfWeekPage** | `WEEK` | Monday / Sunday | *First day of week* | Choose which day starts the week |
+| **TransitsPage** | `TRANZIT` | From natal Moon / From Lagna / From both Moon and Lagna | *Planetary transits* | Choose planetary transits display mode |
+| **NodesPage** | `NODE` | Mean / True | *Nodes (Rahu and Ketu)* | Choose node calculation method |
+
+---
+
+🧩 Notes
+
+- All configuration pages reuse shared styles:
+  - `PageTitleStyle` for titles  
+  - `InstructionLabelStyle` for instructions  
+  - `LabelTextStyle` for option labels  
+- The `ConfigurationPage` acts as a **hub**, linking to all configuration pages.
+- `MessagingCenter` is the central notification system used for all `"SettingsChanged"` events.
+- Adding a new configuration page only requires:
+  1. Creating a new `XAML`/`code-behind` pair inheriting from `ConfigBasePage`
+  2. Adding localized texts to `APP_TEXTS`
+  3. Defining new settings in `APPSETTING`
+  4. Adding a navigation button on `ConfigurationPage`
 
 ---
 
