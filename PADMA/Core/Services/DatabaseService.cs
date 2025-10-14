@@ -3,11 +3,14 @@ using PADMA.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using PADMA.Core.Models;
-
+using System;
 
 namespace PADMA.Core.Services
 {
+    /// <summary>
+    /// Centralized database service for all app data (settings, localization, reference tables).
+    /// Handles SQLite operations and ensures DB version consistency.
+    /// </summary>
     public class DatabaseService
     {
         private readonly string _dbPath;
@@ -16,60 +19,92 @@ namespace PADMA.Core.Services
         public DatabaseService()
         {
             _dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
-
-            // если файла нет, скопировать из ресурсов
-            var assetDb = Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "PADMADB.db3");
-            if (!File.Exists(_dbPath) && File.Exists(assetDb))
-                File.Copy(assetDb, _dbPath);
-
+            EnsureDatabaseExists();
             _connection = new SQLiteConnection(_dbPath);
         }
 
+        #region Initialization
+
+        /// <summary>
+        /// Ensures the database file exists in AppDataDirectory.
+        /// Copies from embedded resources if missing.
+        /// </summary>
+        private void EnsureDatabaseExists()
+        {
+            var assetDb = Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "PADMADB.db3");
+            if (!File.Exists(_dbPath) && File.Exists(assetDb))
+                File.Copy(assetDb, _dbPath);
+        }
+
+        /// <summary>
+        /// Returns raw SQLite connection (for debug/advanced cases).
+        /// </summary>
         public SQLiteConnection GetConnection() => _connection;
 
-        // --- Languages ---
+        #endregion
+
+
+        #region Languages
+
+        /// <summary>
+        /// Returns all available languages from LANGUAGE table.
+        /// </summary>
         public IReadOnlyList<Language> GetLanguages()
         {
-            const string sql = @"SELECT ID as Id, LANGUAGECODE as LanguageCode, CULTURECODE as CultureCode
-                                 FROM LANGUAGE";
+            const string sql = @"SELECT ID as Id, LANGUAGECODE as LanguageCode, CULTURECODE as CultureCode FROM LANGUAGE";
             return _connection.Query<Language>(sql);
         }
 
-        public IReadOnlyList<LanguageDesc> GetLanguageDescs()
+        /// <summary>
+        /// Reads currently active language (from APPSETTING group LANGUAGE).
+        /// </summary>
+        public Language GetCurrentLanguage()
         {
-            const string sql = @"SELECT ID as Id, LANUAGEID as LanguageId, NAME as Name, LANGUAGECODE as LanguageCode
-                                 FROM LANGUAGE_DESC";
-            return _connection.Query<LanguageDesc>(sql);
+            var settings = GetAppSettingsList();
+            var active = settings.FirstOrDefault(x => x.GroupCode == "LANGUAGE" && x.Active == 1);
+            var langCode = active?.SettingCode ?? "ENGLISH";
+
+            var languages = GetLanguages();
+            return languages.FirstOrDefault(l =>
+                string.Equals(l.LanguageCode, langCode, StringComparison.OrdinalIgnoreCase))
+                ?? new Language { Id = 1, LanguageCode = "ENGLISH", CultureCode = "en" };
         }
 
-        // --- Colors ---
-        public IReadOnlyList<ColorDef> GetColors()
+        /// <summary>
+        /// Returns active UI language code (e.g. "en", "uk", "pl", "ru").
+        /// </summary>
+        public string GetActiveLanguageCode()
         {
-            const string sql = @"SELECT ID as Id, CODE as Code, ARGBVALUE as ArgbValue FROM COLOR";
-            return _connection.Query<ColorDef>(sql);
+            var settings = GetAppSettingsList();
+            var activeLang = settings.FirstOrDefault(x => x.GroupCode == "LANGUAGE" && x.Active == 1);
+
+            return activeLang?.SettingCode switch
+            {
+                "ENGLISH" => "en",
+                "UKRAINIAN" => "uk",
+                "POLISH" => "pl",
+                "RUSSIAN" => "ru",
+                _ => "en"
+            };
         }
 
-        public IReadOnlyList<ColorDesc> GetColorDescs()
+        /// <summary>
+        /// Activates specified language by SettingCode ("ENGLISH", "UKRAINIAN", etc.).
+        /// </summary>
+        public void SetLanguage(string code)
         {
-            const string sql = @"SELECT ID as Id, COLORID as ColorId, NAME as Name, LANGUAGECODE as LanguageCode
-                                 FROM COLOR_DESC";
-            return _connection.Query<ColorDesc>(sql);
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "LANGUAGE");
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "LANGUAGE", code);
         }
 
-        // --- Planets ---
-        public IReadOnlyList<PlanetDef> GetPlanets()
-        {
-            const string sql = @"SELECT ID as Id, PLANETCODE as PlanetCode FROM PLANET";
-            return _connection.Query<PlanetDef>(sql);
-        }
+        #endregion
 
-        public IReadOnlyList<PlanetDesc> GetPlanetDescs()
-        {
-            const string sql = @"SELECT ID as Id, PLANETID as PlanetId, NAME as Name, LANGUAGECODE as LanguageCode
-                                 FROM PLANET_DESC";
-            return _connection.Query<PlanetDesc>(sql);
-        }
 
+        #region App Settings (Configuration)
+
+        /// <summary>
+        /// Returns full APPSETTING list.
+        /// </summary>
         public List<AppSettingList> GetAppSettingsList()
         {
             try
@@ -83,53 +118,9 @@ namespace PADMA.Core.Services
             }
         }
 
-        // Возвращает DayOfWeek на основе активной записи из группы WEEK
-        public DayOfWeek GetFirstDayOfWeekFromDb()
-        {
-            var settings = GetAppSettingsList();
-            var active = settings.FirstOrDefault(x => x.GroupCode == "WEEK" && x.Active == 1);
-
-            var code = active?.SettingCode ?? "WEEKMONDAY";
-            return code == "WEEKSUNDAY" ? DayOfWeek.Sunday : DayOfWeek.Monday;
-        }
-
-        // Сохраняет выбранный код (WEEKMONDAY или WEEKSUNDAY) в БД как активный
-        public void SetFirstDayOfWeek(string code)
-        {
-            // Два простых UPDATE-а над реальной таблицей
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "WEEK");
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "WEEK", code);
-        }
-
-        // Сохраняет выбранный код (LANGUAGECODE) в БД как активный
-        public void SetLanguage(string code)
-        {
-            // Два простых UPDATE-а над реальной таблицей
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "LANGUAGE");
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "LANGUAGE", code);
-        }
-
-        // Сохраняет выбранный код (TRANSITCODE) в БД как активный
-        public void SetTransitOption(string settingCode)
-        {
-            try
-            {
-                // Деактивируем все записи группы TRANSIT
-                _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "TRANSIT");
-
-                // Активируем выбранную
-                _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "TRANSIT", settingCode);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] DB update error in SetTransitOption: {ex.Message}");
-            }
-        }
-
-
-
-        // Опционально — массовый апдейт списка 
-
+        /// <summary>
+        /// Updates multiple APPSETTING records (mass update).
+        /// </summary>
         public void UpdateAppSettings(List<AppSettingList> settings)
         {
             try
@@ -143,18 +134,73 @@ namespace PADMA.Core.Services
             }
         }
 
+        /// <summary>
+        /// Gets current "First day of week" from DB (Sunday/Monday).
+        /// </summary>
+        public DayOfWeek GetFirstDayOfWeekFromDb()
+        {
+            var settings = GetAppSettingsList();
+            var active = settings.FirstOrDefault(x => x.GroupCode == "WEEK" && x.Active == 1);
+
+            var code = active?.SettingCode ?? "WEEKMONDAY";
+            return code == "WEEKSUNDAY" ? DayOfWeek.Sunday : DayOfWeek.Monday;
+        }
+
+        /// <summary>
+        /// Sets "First day of week" (WEEKSUNDAY or WEEKMONDAY).
+        /// </summary>
+        public void SetFirstDayOfWeek(string code)
+        {
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "WEEK");
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "WEEK", code);
+        }
+
+        /// <summary>
+        /// Sets selected planet transit display option.
+        /// </summary>
+        public void SetTransitOption(string settingCode)
+        {
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "TRANSIT");
+            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "TRANSIT", settingCode);
+        }
+
+        /// <summary>
+        /// Deactivates all records in a given APPSETTING group.
+        /// </summary>
         public void DeactivateGroup(string groupCode)
-        {
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", groupCode);
-        }
+            => _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", groupCode);
 
+        /// <summary>
+        /// Activates specific APPSETTING record by ID.
+        /// </summary>
         public void ActivateSetting(int id)
-        {
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE ID = ?", id);
-        }
+            => _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE ID = ?", id);
+
+        #endregion
 
 
+        #region Reference Data (Colors, Planets)
 
+        public IReadOnlyList<ColorDef> GetColors() =>
+            _connection.Query<ColorDef>("SELECT ID as Id, CODE as Code, ARGBVALUE as ArgbValue FROM COLOR");
+
+        public IReadOnlyList<ColorDesc> GetColorDescs() =>
+            _connection.Query<ColorDesc>("SELECT ID as Id, COLORID as ColorId, NAME as Name, LANGUAGECODE as LanguageCode FROM COLOR_DESC");
+
+        public IReadOnlyList<PlanetDef> GetPlanets() =>
+            _connection.Query<PlanetDef>("SELECT ID as Id, PLANETCODE as PlanetCode FROM PLANET");
+
+        public IReadOnlyList<PlanetDesc> GetPlanetDescs() =>
+            _connection.Query<PlanetDesc>("SELECT ID as Id, PLANETID as PlanetId, NAME as Name, LANGUAGECODE as LanguageCode FROM PLANET_DESC");
+
+        #endregion
+
+
+        #region Localization
+
+        /// <summary>
+        /// Loads localized UI texts (APP_TEXTS) for a given language.
+        /// </summary>
         public List<AppText> GetAppTextsList(string languageCode = null)
         {
             try
@@ -164,9 +210,7 @@ namespace PADMA.Core.Services
                 if (string.IsNullOrEmpty(languageCode))
                     return _connection.Table<AppText>().ToList();
 
-                return _connection.Table<AppText>()
-                    .Where(x => x.LanguageCode == languageCode)
-                    .ToList();
+                return _connection.Table<AppText>().Where(x => x.LanguageCode == languageCode).ToList();
             }
             catch (Exception ex)
             {
@@ -175,56 +219,6 @@ namespace PADMA.Core.Services
             }
         }
 
-        public string GetActiveLanguageCode()
-        {
-            var settings = GetAppSettingsList();
-            var activeLang = settings.FirstOrDefault(x => x.GroupCode == "LANGUAGE" && x.Active == 1);
-
-            return activeLang?.SettingCode switch
-            {
-                "ENGLISH" => "en",
-                "UKRAINIAN" => "uk",
-                "POLISH" => "pl",
-                "RUSSIAN" => "ru",
-                _ => "en" // по умолчанию — английский
-            };
-        }
-
-        // --- Culture support for CalendarViewModel ---
-        public Language GetCurrentLanguage()
-        {
-            try
-            {
-                var code = GetActiveLanguageCode();
-                string culture = code switch
-                {
-                    "en" => "en-US",
-                    "uk" => "uk-UA",
-                    "pl" => "pl-PL",
-                    "ru" => "ru-RU",
-                    _ => "en-US"
-                };
-
-                return new Language
-                {
-                    LanguageCode = code,
-                    CultureCode = culture
-                };
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] Language read error: {ex.Message}");
-                return new Language
-                {
-                    LanguageCode = "en",
-                    CultureCode = "en-US"
-                };
-            }
-        }
-
-
-
-
-
+        #endregion
     }
 }
