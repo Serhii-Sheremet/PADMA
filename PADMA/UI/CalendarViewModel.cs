@@ -61,21 +61,10 @@ namespace PADMA.UI
                 ? new CultureInfo(CultureCode)
                 : CultureInfo.CurrentUICulture;
 
-        // === Инициализация культуры из базы ===
+        // === Инициализация культуры ===
         public void InitializeCulture()
         {
-            try
-            {
-                var db = ServiceLocator.Services.GetService<DatabaseService>();
-                var lang = db.GetCurrentLanguage();
-                CultureCode = lang?.CultureCode ?? CultureInfo.CurrentUICulture.Name;
-            }
-            catch
-            {
-                CultureCode = CultureInfo.CurrentUICulture.Name;
-            }
-
-            OnPropertyChanged(nameof(CurrentCulture));
+            ReloadCultureAndRefresh();
         }
 
         public void ReloadCultureAndRefresh()
