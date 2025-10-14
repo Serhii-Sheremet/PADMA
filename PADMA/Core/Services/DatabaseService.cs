@@ -87,16 +87,7 @@ namespace PADMA.Core.Services
                 _ => "en"
             };
         }
-
-        /// <summary>
-        /// Activates specified language by SettingCode ("ENGLISH", "UKRAINIAN", etc.).
-        /// </summary>
-        public void SetLanguage(string code)
-        {
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "LANGUAGE");
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "LANGUAGE", code);
-        }
-
+        
         #endregion
 
 
@@ -145,24 +136,27 @@ namespace PADMA.Core.Services
             var code = active?.SettingCode ?? "WEEKMONDAY";
             return code == "WEEKSUNDAY" ? DayOfWeek.Sunday : DayOfWeek.Monday;
         }
-
+        
         /// <summary>
-        /// Sets "First day of week" (WEEKSUNDAY or WEEKMONDAY).
+        /// Activates the specified setting within a given group.
+        /// Automatically deactivates all other records in that group.
         /// </summary>
-        public void SetFirstDayOfWeek(string code)
+        public void SetAppSettingActive(string groupCode, string settingCode)
         {
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "WEEK");
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "WEEK", code);
+            try
+            {
+                // Сначала деактивируем все настройки этой группы
+                _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", groupCode);
+
+                // Активируем выбранную настройку
+                _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", groupCode, settingCode);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB SetAppSettingActive error: {ex.Message}");
+            }
         }
 
-        /// <summary>
-        /// Sets selected planet transit display option.
-        /// </summary>
-        public void SetTransitOption(string settingCode)
-        {
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 0 WHERE GROUPCODE = ?", "TRANSIT");
-            _connection.Execute("UPDATE APPSETTING SET ACTIVE = 1 WHERE GROUPCODE = ? AND SETTINGCODE = ?", "TRANSIT", settingCode);
-        }
 
         /// <summary>
         /// Deactivates all records in a given APPSETTING group.

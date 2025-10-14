@@ -349,10 +349,13 @@ Menu items are localized and automatically close the fly-out upon selection.
 
 **Key Methods**
 
+* Method: SetAppSettingActive(string groupCode, string settingCode)
+* Purpose: Deactivates all existing settings in a given group and activates the specified one.
+* Used by configuration pages (Language, FirstDayOfWeek, Transits, Nodes, etc.)
+
+**Other methods:**
 ```csharp
 GetAppSettingsList()
-SetFirstDayOfWeek(string code)
-SetLanguage(string code)
 GetFirstDayOfWeekFromDb()
 GetActiveLanguageCode()
 GetAppTextsList(string languageCode)

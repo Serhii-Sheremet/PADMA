@@ -102,7 +102,7 @@ namespace PADMA.Pages
                 if (await TrySaveChangesAsync("Save changes?", "Apply new language setting?"))
                 {
                     // сохраняем выбранный язык и обновляем кеш
-                    _db.SetLanguage(_currentLanguageCode);
+                    _db.SetAppSettingActive("LANGUAGE", _currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
                     //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
                     MessagingCenter.Send<object>(this, "SettingsChanged");
@@ -122,7 +122,7 @@ namespace PADMA.Pages
                 if (await TrySaveChangesAsync("Save changes?", "Apply new language setting?"))
                 {
                     // сохраняем выбранный язык и обновляем кеш
-                    _db.SetLanguage(_currentLanguageCode);
+                    _db.SetAppSettingActive("LANGUAGE", _currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
                     //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
                     MessagingCenter.Send<object>(this, "SettingsChanged");

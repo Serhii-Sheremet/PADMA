@@ -66,7 +66,7 @@ namespace PADMA.Pages
             {
                 if (await TrySaveChangesAsync("Save changes?", "Apply new setting for first day of week?"))
                 {
-                    _db.SetFirstDayOfWeek(_currentSettingCode);
+                    _db.SetAppSettingActive("WEEK", _currentSettingCode);
                     MessagingCenter.Send<object>(this, "SettingsChanged");
                 }
             }

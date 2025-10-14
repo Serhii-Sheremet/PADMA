@@ -104,7 +104,7 @@ namespace PADMA.Pages
                 }
 
                 // Сохраняем изменения в БД
-                _db.SetTransitOption(_currentSettingCode);
+                _db.SetAppSettingActive("TRANSIT", _currentSettingCode);
 
                 // Обновляем кэш
                 DataCache.Instance.Refresh(_db);
