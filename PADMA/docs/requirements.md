@@ -377,13 +377,37 @@ Central in-memory cache initialized at startup.
 
 ---
 
-#### 🔤 Localization System *(updated October 2025)*
+#### 🔹 ServiceLocator
+
+Simple DI container wrapper for accessing shared services globally:
+`ServiceLocator.Services.GetService<DatabaseService>()`
+
+---
+
+### 🧰 Project Utilities
+
+Folder: PADMA/Core/Utilities/
+Common reusable helpers shared across all modules of PADMA.
+Each class provides standalone functionality with no dependency on UI or database code.
+Used by pages, services, and future calculation modules.
+
+### 🈴 Localization
+
+File: Localization.cs
+Provides unified access to localized interface texts stored in the APP_TEXTS table.
+
+Features:
+Method	Description
+GetLocalizedText(string nativeText, string langCode)	
+Returns localized version of a given text. If translation is missing — returns nativeText.
+
+#### 🔤 Localization System 
 
 All user-facing texts in PADMA must support full multilingual localization across **four languages**:
 🇬🇧 English (`en`), 🇺🇦 Ukrainian (`uk`), 🇵🇱 Polish (`pl`), 🇷🇺 Russian (`ru`).
 Localized texts are stored in the `APP_TEXTS` table and can be dynamically refreshed from the database.
 
-🧱 Localization Data Management
+### 🧱 Localization Data Management
 
 Localized texts are added incrementally per feature or page, not globally.
 Before adding new texts to APP_TEXTS, always check for existing NATIVETEXT entries to avoid duplicates.
@@ -445,10 +469,23 @@ The current database damp file (for checking tables structure and content) is al
 
 ---
 
-#### 🔹 ServiceLocator
+### 🕒 DateTimeExtensions
 
-Simple DI container wrapper for accessing shared services globally:
-`ServiceLocator.Services.GetService<DatabaseService>()`
+File: DateTimeExtensions.cs
+Provides reusable helper methods for DateTime operations — range checks and timezone corrections.
+Used across future calculation modules (Sunrise, Muhurta, Transits).
+
+**Methods:**
+| Method                                                       | Description                                                |
+| ------------------------------------------------------------ | ---------------------------------------------------------- |
+| `Between(DateTime date, DateTime start, DateTime end)`       | Checks if `date` is within inclusive range `[start, end]`. |
+| `StrictBetween(DateTime date, DateTime start, DateTime end)` | Checks if `date` is within exclusive range `(start, end)`. |
+| `ShiftByUtcOffset(TimeSpan baseUtcOffset)`                   | Shifts `DateTime` by a given UTC offset.                   |
+| `ShiftByDaylightDelta(TimeZoneInfo.AdjustmentRule[] rules)`  | Adjusts date by daylight saving time delta.                |
+
+**Example:**
+```if (now.Between(sunrise, sunset))
+    Console.WriteLine("Daytime period");```
 
 ---
 
@@ -459,8 +496,8 @@ Simple DI container wrapper for accessing shared services globally:
 * Holds current year, month, culture, and collection of day items.
 * Generates a 6 × 7 grid of days respecting first-day-of-week setting.
 * Supports localization via `CultureCode` → `CultureInfo`.
-* Methods:
 
+** Methods:
   * `InitializeCulture()`
   * `ReloadCultureAndRefresh()`
   * `MoveMonth(int delta)`
