@@ -146,13 +146,29 @@ Acts as a hub for accessing all configuration pages.
   - `FirstDayOfWeekPage`
   - `TransitsPage`
   - `NodesPage`
-  - (future) Hora, Muhurta, MrityuBhaga, Sunrise
+  - `Hora`
+  - (future)  Muhurta, MrityuBhaga, Sunrise
 - Toolbar with close icon (returns to `MainPage`).
 
 **Behavior:**
 - Subscribes to `"SettingsChanged"` messages from all child pages.  
 - On receiving the event → refreshes cache and localized texts.  
 - If no changes occurred → closes silently.
+
+### 🔹 MessagingCenter — unified contract
+
+* Subscribers use a single subscription:
+```
+MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ => { ... });
+```
+
+* All child pages must send with TSender = object:
+```
+MessagingCenter.Send<object>(this, "SettingsChanged");
+```
+
+Rationale: Xamarin/MAUI MessagingCenter matches by generic sender type.
+Mismatched types (e.g., Send<NodesPage>, Subscribe<object>) won’t deliver the message.
 
 ---
 

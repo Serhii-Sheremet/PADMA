@@ -81,7 +81,7 @@ namespace PADMA.Pages
                 var db = ServiceLocator.Services.GetService<DatabaseService>();
                 db.SetAppSettingActive("HORA", _currentSettingCode);
                 DataCache.Instance.Refresh(db);
-                MessagingCenter.Send(this, "SettingsChanged");
+                MessagingCenter.Send<object>(this, "SettingsChanged");
             }
         }
     }

@@ -69,7 +69,7 @@ namespace PADMA.Pages
                 db.SetAppSettingActive("NODE", _currentSettingCode);
 
                 DataCache.Instance.Refresh(db);
-                MessagingCenter.Send(this, "SettingsChanged");
+                MessagingCenter.Send<object>(this, "SettingsChanged");
             }
         }
     }
