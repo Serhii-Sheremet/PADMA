@@ -104,7 +104,6 @@ namespace PADMA.Pages
                     // сохран€ем выбранный €зык и обновл€ем кеш
                     _db.SetAppSettingActive("LANGUAGE", _currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
-                    //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
                     MessagingCenter.Send<object>(this, "SettingsChanged");
                 }
             }
@@ -124,7 +123,6 @@ namespace PADMA.Pages
                     // сохран€ем выбранный €зык и обновл€ем кеш
                     _db.SetAppSettingActive("LANGUAGE", _currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
-                    //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode;
                     MessagingCenter.Send<object>(this, "SettingsChanged");
                 }
             }
@@ -132,40 +130,5 @@ namespace PADMA.Pages
             await Shell.Current.GoToAsync("..");
         }
 
-        private void ApplyLanguageChange()
-        {
-            var settings = _db.GetAppSettingsList();
-            var languageSettings = settings.Where(x => x.GroupCode == "LANGUAGE").ToList();
-
-            // сбрасываем все
-            foreach (var s in languageSettings)
-                s.Active = 0;
-
-            // активируем выбранный €зык
-            var selected = languageSettings.FirstOrDefault(x => x.SettingCode == _currentLanguageCode);
-            if (selected != null)
-                selected.Active = 1;
-
-            _db.UpdateAppSettings(languageSettings);
-
-            // обновл€ем кэш
-            var cached = _db.GetAppSettingsList().Where(x => x.GroupCode == "LANGUAGE").ToList();
-            foreach (var s in cached)
-                s.Active = s.SettingCode == _currentLanguageCode ? 1 : 0;
-
-            // мен€ем глобальный €зык в DataCache
-            //DataCache.Instance.CurrentLanguageCode = _currentLanguageCode 
-            SetCurrentLanguageCode(_currentLanguageCode);
-            //switch
-            //{
-            //    "UKRAINIAN" => "uk",
-            //    "POLISH" => "pl",
-            //    "RUSSIAN" => "ru",
-            //    _ => "en"
-            //};
-
-            // уведомл€ем систему
-            MessagingCenter.Send<object>(this, "SettingsChanged");
-        }
     }
 }

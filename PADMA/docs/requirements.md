@@ -103,6 +103,104 @@ Placeholder for future astrological details.
 
 ---
 
+### 🧩 UI Templates & Layout Standards
+
+PADMA UI follows a unified design system to ensure visual consistency, reusability, and straightforward localization across all pages.
+
+---
+
+### 🔹 ConfigBasePage
+
+**Purpose:**  
+Provides a common visual template for all configuration pages.
+
+**Features:**
+- Inherits from `ContentPage`.
+- Defines standard padding, margins, and font styles.
+- Includes toolbar with close icon (`close_icon.png`).
+- Title automatically localized via `Localization.GetLocalizedText()`.
+- Shared styles loaded from `Resources/Styles`.
+
+**Common Elements:**
+| Element | Style | Description |
+|----------|--------|-------------|
+| Page title | `PageTitleStyle` | Bold, centered, localized |
+| Instruction text | `InstructionLabelStyle` | Regular weight, medium size |
+| Option labels | `LabelTextStyle` | Used for radio button captions |
+| Radio buttons | Grouped logically per setting |
+
+All configuration pages (Language, FirstDayOfWeek, Transits, Nodes, etc.) inherit from this template.
+
+---
+
+### 🔹 ConfigurationPage
+
+**Purpose:**  
+Acts as a hub connecting all configuration pages.
+
+**Layout:**
+- Inherits from `ContentPage`.
+- Contains a localized title: `"Settings"`.
+- Displays a vertical list of buttons for navigating to each config page.
+- Uses localized button labels (via `Localization.GetLocalizedText()`).
+- Toolbar contains the close icon for returning to MainPage.
+
+**Behavior:**
+- Subscribes to `MessagingCenter` messages from child pages (`"SettingsChanged"`).
+- When receiving changes, refreshes cache and updates localized texts.
+- If no changes occurred — simply closes without refresh.
+- Fully localized, including confirmation dialogs and toolbar texts.
+
+---
+
+### 🔹 MainPage
+
+**Purpose:**  
+Primary calendar view of the application.
+
+**Layout:**
+- Toolbar: localized month title + navigation buttons (using `left_arrow.png`, `right_arrow.png`).
+- Header row: localized weekday abbreviations (Mon/Tue/…).
+- Main grid: 6 rows × 7 columns with bordered day cells.
+- Each day cell displays:
+  - Date number in top-left corner.
+  - 6 color bars below (transit placeholders).
+- Adaptive sizing — fits all screen sizes equally.
+
+**Behavior:**
+- Loads active language and first-day-of-week settings from cache.
+- Reacts to `"SettingsChanged"` messages (from any configuration page).
+- Rebuilds layout when:
+  - Language changes,
+  - Week start changes,
+  - Month navigation occurs.
+- Title capitalization handled automatically via `ToTitleCase()` for current culture.
+
+---
+
+### 🔹 Common Visual Standards
+
+| Element | Property | Value |
+|----------|-----------|-------|
+| Font | Default | *OpenSans* |
+| Font size | Page titles | 22sp |
+| Font size | Labels | 14–16sp |
+| Colors | Primary background | `#FFFFFF` |
+| Colors | Text color | `#333333` |
+| Colors | Grid borders | `#CCCCCC` |
+| Accent | Current day highlight | Light blue |
+| Layout spacing | Default padding | 16px |
+| Layout spacing | Default spacing | 12px |
+
+---
+
+### 🔹 Localization Consistency
+
+All visible UI elements (titles, labels, button texts, and dialogs) must use:
+```csharp
+Localization.GetLocalizedText("NativeText", DataCache.Instance.CurrentLanguageCode);```
+
+
 ### ⚙️ **ConfigurationPage** (Settings Hub)
 
 **Purpose:**
@@ -119,7 +217,12 @@ Contains navigation buttons to sub-pages:
 
 * **LanguagePage**
 * **FirstDayOfWeekPage**
-* *(future)* ThemePage, NotificationPage, TransitsPage, NodesPage, HoraPage, MuhurtaPage, MrityuBhagaPage, SunrisePage.
+* **TransitsPage** 
+* **NodesPage** 
+* **HoraPage** 
+* **MuhurtaPage** 
+* **MrityuBhagaPage** 
+* **SunrisePage**
 
 All configuration pages send a unified **`MessagingCenter.Send(this, "SettingsChanged")`** message after saving settings.
 MainPage listens once to this message and updates itself (title, culture, header grid).
