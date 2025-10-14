@@ -213,15 +213,6 @@ Main calendar view of the application.
 
 ---
 
-### 🔹 Localization Consistency  
-
-All visible UI elements (titles, labels, dialogs) must use:  
-```csharp
-Localization.GetLocalizedText("NativeText", DataCache.Instance.CurrentLanguageCode);
-```
-
----
-
 ### 🔹 Future Reuse  
 
 - All new configuration pages must inherit from `ConfigBasePage`.  
@@ -282,38 +273,92 @@ Each page includes:
 
 ---
 
-## 🧮 Project Utilities  
+## 🧩 Architecture Notes
 
-General helper classes used throughout the project.
-
-### 🔹 DateTimeExtensions  
-Located in `PADMA/Core/Utilities/Extensions.cs`
-
-**Purpose:**  
-Provides reusable date and time helper methods.
-
-**Available methods:**
-```csharp
-public static bool Between(this DateTime date, DateTime startDate, DateTime endDate)
-public static bool StrictBetween(this DateTime date, DateTime startDate, DateTime endDate)
-public static DateTime ShiftByUtcOffset(this DateTime date, TimeSpan baseUtcOffset)
-public static DateTime ShiftByDaylightDelta(this DateTime date, TimeZoneInfo.AdjustmentRule[] adjustmentRules)
-public static float ConvertHoursToPixels(float width, DateTime date)
-```
+This section summarizes key technical and behavioral conventions that define PADMA’s internal consistency across all MAUI components.
 
 ---
 
-## 🚀 Future Enhancements  
+### 🔹 Unified Messaging Contract  
+All configuration pages communicate updates using a single `MessagingCenter` event pattern:
 
-- Add “Today” button on MainPage to quickly return to current month.  
-- Implement new configuration pages:
-  - HoraPage  
-  - MuhurtaPage  
-  - MrityuBhagaPage  
-  - SunrisePage  
-- Add event management and astrological calculations for DayPage.  
-- Introduce light/dark theme switching via future `ThemePage`.  
-- Optimize database initialization and migration tracking.
+```csharp
+MessagingCenter.Send<object>(this, "SettingsChanged");
+MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ => { ... });
+```
+
+- Ensures consistent message delivery regardless of page type.  
+- Prevents common MAUI issues with mismatched sender types.  
+- Allows `ConfigurationPage` to listen universally to all child updates.
+
+---
+
+### 🔹 Config Pages Consistency  
+Every configuration page inherits from `ConfigBasePage` and adheres to a unified structure:
+
+- Localized **title** and **instruction label**.  
+- A group of `RadioButton` options linked to persistent settings in `APPSETTING`.  
+- Confirmation dialog on exit (only when changes are detected).  
+- Updates the database using  
+  ```csharp
+  DatabaseService.SetAppSettingActive(group, code);
+  ```  
+- Refreshes cache via  
+  ```csharp
+  DataCache.Instance.Refresh(db);
+  ```  
+- Notifies the main interface through  
+  ```csharp
+  MessagingCenter.Send<object>(this, "SettingsChanged");
+  ```
+
+---
+
+### 🔹 Centralized Cache Refresh  
+`DataCache.Instance.Refresh(db)` is invoked **only after confirmed configuration updates**.  
+This avoids unnecessary reloads and ensures the user immediately sees updated texts, settings, or localization changes.
+
+---
+
+### 🔹 Defensive UI Updates  
+`MainPage` and `ConfigurationPage` both use internal flags (e.g. `_hasConfigChanges`) to determine whether UI refreshes are required after returning from a configuration page.
+
+- If no settings were changed, navigation returns instantly without rebuilding the calendar.  
+- If changes exist, the calendar and localized interface are refreshed.  
+This optimization significantly improves perceived performance on all platforms.
+
+---
+
+### 🔹 Localization Flow  
+All text localization uses:
+```csharp
+Localization.GetLocalizedText("Native English Text", DataCache.Instance.CurrentLanguageCode);
+```
+
+- English text entries are **mandatory** in `APP_TEXTS` (as base keys).  
+- Each localized record must include English, Ukrainian, Polish, and Russian variants.  
+- Dynamic UI elements (titles, labels, buttons) must have `x:Name` assigned for runtime localization updates.
+
+---
+
+### 🔹 Database Versioning  
+The table `APP_META` stores database version info.  
+On app startup, `DatabaseService` compares the deployed and local DB versions and automatically replaces outdated copies from `/Resources/Raw/PADMADB.db3`.  
+This guarantees schema and localization updates propagate without manual intervention.
+
+---
+
+### 🔹 Extension Methods  
+Utility extensions defined in `PADMA/Core/Utilities/Extensions.cs` provide reusable helpers for date/time operations:
+
+```csharp
+date.Between(start, end);
+date.StrictBetween(start, end);
+date.ShiftByUtcOffset(offset);
+date.ShiftByDaylightDelta(adjustmentRules);
+```
+
+These methods standardize temporal logic across astronomical and calendar-related calculations.
 
 ---
 
