@@ -29,9 +29,8 @@ namespace PADMA.Pages
         private void LoadCurrentSetting()
         {
             var db = ServiceLocator.Services.GetService<DatabaseService>();
-            var settings = db.GetAppSettingsList();
-            var active = settings.FirstOrDefault(x => x.GroupCode == "NODE" && x.Active == 1);
-            _originalSettingCode = _currentSettingCode = active?.SettingCode ?? "MEAN";
+            _originalSettingCode = db.GetActiveSettingCode("NODE") ?? "MEAN";
+            _currentSettingCode = _originalSettingCode;
 
             MeanRadioButton.IsChecked = _currentSettingCode == "MEAN";
             TrueRadioButton.IsChecked = _currentSettingCode == "TRUE";

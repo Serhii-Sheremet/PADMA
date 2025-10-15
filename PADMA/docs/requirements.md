@@ -8,7 +8,7 @@
 
 ## 🗓️ Overview  
 
-**PADMA** — cross-platform application built with **.NET 8 (MAUI)** and **SQLite (sqlite-net-pcl)**.  
+**PADMA** — cross-platform application built with **.NET9 / MAUI ** and **SQLite (sqlite-net-pcl)**.  
 It displays a localized astrological calendar, user configuration pages, and other utilities.  
 All settings, interface texts, and reference data are stored in the embedded SQLite database  
 **`PADMADB.db3`**, which is cached in memory at runtime.

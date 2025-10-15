@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ui:ConfigBasePage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
+    x:Class="PADMA.Pages.MrityuBhagaPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
+
+            <!-- Заголовок страницы -->
+            <Label x:Name="HeaderLabel"
+                   Style="{StaticResource PageTitleStyle}"
+                   HorizontalOptions="Start" />
+
+            <!-- Радиокнопки -->
+            <Grid ColumnSpacing="12" RowSpacing="14"
+                  ColumnDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto,Auto,Auto">
+
+                <!-- Вариант 1 -->
+                <RadioButton x:Name="OptionNEQUAL"
+                             Grid.Row="0" Grid.Column="0"
+                             GroupName="MrityuBhaga"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="OptionNEQUALLabel"
+                       Grid.Row="0" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource LabelTextStyle}" />
+
+                <!-- Вариант 2 -->
+                <RadioButton x:Name="OptionNLESS"
+                             Grid.Row="1" Grid.Column="0"
+                             GroupName="MrityuBhaga"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="OptionNLESSLabel"
+                       Grid.Row="1" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource LabelTextStyle}" />
+
+                <!-- Вариант 3 -->
+                <RadioButton x:Name="OptionNMORE"
+                             Grid.Row="2" Grid.Column="0"
+                             GroupName="MrityuBhaga"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="OptionNMORELabel"
+                       Grid.Row="2" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource LabelTextStyle}" />
+
+                <!-- Вариант 4 -->
+                <RadioButton x:Name="OptionNERNST"
+                             Grid.Row="3" Grid.Column="0"
+                             GroupName="MrityuBhaga"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="OptionNERNSTLabel"
+                       Grid.Row="3" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource LabelTextStyle}" />
+            </Grid>
+
+            <!-- Примечание -->
+            <Label x:Name="NoteLabel"
+                   FontSize="13"
+                   TextColor="#666"
+                   Margin="0,10,0,0"
+                   Style="{StaticResource LabelTextStyle}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ui:ConfigBasePage>

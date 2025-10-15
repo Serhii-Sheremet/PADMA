@@ -109,6 +109,18 @@ namespace PADMA.Core.Services
             }
         }
 
+        public AppSettingList? GetActiveSetting(string groupCode)
+        {
+            var settings = GetAppSettingsList();
+            return settings.FirstOrDefault(x =>
+                string.Equals(x.GroupCode, groupCode, StringComparison.OrdinalIgnoreCase) && x.Active == 1);
+        }
+
+        public string? GetActiveSettingCode(string groupCode)
+        {
+            return GetActiveSetting(groupCode)?.SettingCode;
+        }
+
         /// <summary>
         /// Updates multiple APPSETTING records (mass update).
         /// </summary>

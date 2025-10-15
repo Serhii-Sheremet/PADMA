@@ -37,12 +37,9 @@ namespace PADMA.Pages
         private void LoadCurrentSetting()
         {
             var db = ServiceLocator.Services.GetService<DatabaseService>();
-            var settings = db.GetAppSettingsList();
-            var active = settings.FirstOrDefault(x => x.GroupCode == "HORA" && x.Active == 1);
-
-            _originalSettingCode = active?.SettingCode ?? "HORAEQUAL";
+            _originalSettingCode = db.GetActiveSettingCode("HORA") ?? "HORAEQUAL";
             _currentSettingCode = _originalSettingCode;
-
+                        
             DayNightRadioButton.IsChecked = _originalSettingCode == "HORADAYNIGHT";
             EqualRadioButton.IsChecked = _originalSettingCode == "HORAEQUAL";
             From6RadioButton.IsChecked = _originalSettingCode == "HORAFROM6";

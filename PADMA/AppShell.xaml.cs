@@ -20,7 +20,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(NodesPage), typeof(PADMA.Pages.NodesPage));
         Routing.RegisterRoute(nameof(HoraPage), typeof(PADMA.Pages.HoraPage));
         Routing.RegisterRoute(nameof(MuhurtasPage), typeof(PADMA.Pages.MuhurtasPage));
-        Routing.RegisterRoute(nameof(MrityuPage), typeof(PADMA.Pages.MrityuPage));
+        Routing.RegisterRoute(nameof(MrityuBhagaPage), typeof(PADMA.Pages.MrityuBhagaPage));
         Routing.RegisterRoute(nameof(SunrisePage), typeof(PADMA.Pages.SunrisePage));
     }
 
