@@ -51,6 +51,8 @@ Handles all database operations via SQLite.
 ```csharp
 GetAppSettingsList()
 GetAppTextsList(string languageCode)
+GetActiveSetting(string groupCode)
+GetActiveSettingCode(string groupCode)
 GetActiveLanguageCode()
 GetFirstDayOfWeekFromDb()
 SetLanguage(string code)
@@ -247,6 +249,10 @@ Each page includes:
 | FirstDayOfWeekPage | WEEK | MONDAY, SUNDAY | Sets first day of week |
 | TransitsPage | TRANSIT | MOON, LAGNA, MOONANDLAGNA | Selects planetary transits mode |
 | NodesPage | NODE | MEAN, TRUE | Chooses Rahu/Ketu calculation method |
+| HoraPage | HORA | HORADAYNIGHT, HORAEQUAL, HORAFROM6 | Chooses Hora calculation method |
+| MuhurtasPage |MUHURTAGHATI | MUHURTAGHATIDAYNIGHT, MUHURTAGHATIEQUAL, MUHURTAGHATIFROM6 | Chooses Muhurta & Ghati calculation method |
+| MrityuBhaga| MRITYUBHAGA | NEQUAL, NLESS, NMORE, NERNST | Chooses Mrityu Bhaga calculation method |
+| Sunrise | SUNRISE | TIP, CENTER | Chooses Sunrise calculation method |
 
 ---
 
@@ -361,6 +367,16 @@ date.ShiftByDaylightDelta(adjustmentRules);
 ```
 
 These methods standardize temporal logic across astronomical and calendar-related calculations.
+
+### 🔹 Planned work
+
+* Profile page
+- Purpose: Storing person's date of birth and GPS coordinates of place of Birth and current living location.
+
+### 🗺️ Nominatim (OpenStreetMap)
+
+To find GPS coordinates for locations it is planned to use Nominatim API
+🔗 https://nominatim.org/release-docs/latest/api/Search/
 
 ---
 
