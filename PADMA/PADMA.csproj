@@ -1,9 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">
-      $(TargetFrameworks);net8.0-windows10.0.19041.0
+    <!-- Обновлённые целевые фреймворки -->
+    <TargetFrameworks>
+      net9.0-android;
+      net9.0-ios;
+      net9.0-maccatalyst;
+      net9.0-windows10.0.19041.0
     </TargetFrameworks>
 
     <OutputType>Exe</OutputType>
@@ -22,49 +25,57 @@
     <!-- Windows -->
     <WindowsPackageType>None</WindowsPackageType>
 
-    <!-- Supported Platforms -->
+    <!-- Поддерживаемые платформы -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+
+    <!-- Убираем предупреждение о старых workload’ах -->
+    <NoWarn>$(NoWarn);NETSDK1202</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- App Icon -->
-    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
-	
+    <MauiIcon Include="Resources\AppIcon\appicon.svg"
+              ForegroundFile="Resources\AppIcon\appiconfg.svg"
+              Color="#512BD4" />
 
     <!-- Splash Screen -->
-    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg"
+                      Color="#512BD4"
+                      BaseSize="128,128" />
 
     <!-- Images -->
-	<MauiImage Include="Resources\Images\*.png" />
+    <MauiImage Include="Resources\Images\*.png" />
 
     <!-- Fonts -->
     <MauiFont Include="Resources\Fonts\*" />
 
     <!-- Raw Assets -->
-    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiAsset Include="Resources\Raw\**"
+               LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- MAUI 8 -->
-    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.60" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.60" />
+    <!-- Переход на MAUI 9 -->
+    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.0" />
 
     <!-- SQLite -->
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 
     <!-- Logging -->
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Встраиваемая база -->
+    <!-- Embedded database -->
     <MauiAsset Include="Resources\Raw\PADMADB.db3" LogicalName="PADMADB.db3" />
   </ItemGroup>
 
+  <!-- XAML Dependencies -->
   <ItemGroup>
     <Compile Update="Pages\ConfigurationPage.xaml.cs">
       <DependentUpon>ConfigurationPage.xaml</DependentUpon>
@@ -72,39 +83,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <MauiXaml Update="Pages\ConfigurationPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\DayPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\ExitPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\FirstDayOfWeekPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\HoraPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\LanguagePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\MrityuPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\MuhurtasPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\NodesPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\SunrisePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Pages\TransitsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
+    <MauiXaml Update="Pages\ConfigurationPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\DayPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\ExitPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\FirstDayOfWeekPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\HoraPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\LanguagePage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\MrityuPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\MuhurtasPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\NodesPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\SunrisePage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\TransitsPage.xaml" Generator="MSBuild:Compile" />
   </ItemGroup>
 
 </Project>

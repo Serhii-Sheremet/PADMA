@@ -147,7 +147,9 @@ Acts as a hub for accessing all configuration pages.
   - `TransitsPage`
   - `NodesPage`
   - `Hora`
-  - (future)  Muhurta, MrityuBhaga, Sunrise
+  - `Muhurtas`
+  - `MrityuBhaga` 
+  - `Sunrise`
 - Toolbar with close icon (returns to `MainPage`).
 
 **Behavior:**
