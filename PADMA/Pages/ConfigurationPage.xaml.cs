@@ -94,7 +94,7 @@ namespace PADMA.Pages
 
         private async void OnMuhurtasClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("MuhurtaPage");
+            await Shell.Current.GoToAsync("MuhurtasPage");
         }
 
         private async void OnMrityuBhagaClicked(object sender, EventArgs e)

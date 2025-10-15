@@ -1,16 +1,57 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="PADMA.Pages.MuhurtasPage"
-             Title="MuhurtasPage">
+<ui:ConfigBasePage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
+    x:Class="PADMA.Pages.MuhurtasPage">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✖" Priority="0" Order="Primary" Clicked="OnCloseClicked"/>
-    </ContentPage.ToolbarItems>
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
 
-    <VerticalStackLayout>
-        <Label Text="Muhurtas and Ghatis settings will be here."
-           HorizontalOptions="Center"
-           VerticalOptions="CenterAndExpand"/>
-    </VerticalStackLayout>
-</ContentPage>
+            <!-- Заголовок страницы -->
+            <Label x:Name="HeaderLabel"
+                   Style="{StaticResource PageTitleStyle}"
+                   HorizontalOptions="Start" />
+
+            <!-- Радиокнопки -->
+            <Grid ColumnSpacing="12" RowSpacing="16"
+                  ColumnDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto,Auto">
+
+                <!-- Option 1 -->
+                <RadioButton x:Name="DayNightRadioButton"
+                             Grid.Row="0" Grid.Column="0"
+                             GroupName="Muhurta"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="DayNightLabel"
+                       Grid.Row="0" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource LabelTextStyle}" />
+
+                <!-- Option 2 -->
+                <RadioButton x:Name="EqualRadioButton"
+                             Grid.Row="1" Grid.Column="0"
+                             GroupName="Muhurta"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="EqualLabel"
+                       Grid.Row="1" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource LabelTextStyle}" />
+
+                <!-- Option 3 -->
+                <RadioButton x:Name="From6RadioButton"
+                             Grid.Row="2" Grid.Column="0"
+                             GroupName="Muhurta"
+                             CheckedChanged="OnRadioButtonCheckedChanged" />
+
+                <Label x:Name="From6Label"
+                       Grid.Row="2" Grid.Column="1"
+                       VerticalOptions="Center"
+                       Style="{StaticResource LabelTextStyle}" />
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ui:ConfigBasePage>
