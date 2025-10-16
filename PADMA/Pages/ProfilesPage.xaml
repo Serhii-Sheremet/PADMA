@@ -1,13 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pages="clr-namespace:PADMA.Pages"
              x:Class="PADMA.Pages.ProfilesPage"
              Title="Profiles">
 
-    <VerticalStackLayout Padding="20">
-        <Label Text="Profiles feature is under development"
-               FontSize="16"
-               HorizontalOptions="Center"
-               VerticalOptions="CenterAndExpand" />
-    </VerticalStackLayout>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="close_icon.png"
+                     Priority="0"
+                     Order="Primary"
+                     Clicked="OnCloseClicked" />
+    </ContentPage.ToolbarItems>
 
+    <VerticalStackLayout Padding="20" Spacing="15">
+
+        <!-- Action Bar -->
+        <Button x:Name="btnAddProfile"
+                Text="Add new profile"
+                Clicked="OnAddProfileClicked"
+                HorizontalOptions="Center" />
+
+        <!-- Profiles List -->
+        <CollectionView x:Name="profilesList"
+                        ItemsSource="{Binding Profiles}"
+                        SelectionMode="None">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame BorderColor="{DynamicResource FrameBorderColor}"
+                           CornerRadius="10"
+                           Padding="10"
+                           Margin="5,2">
+
+                        <!-- TapGestureRecognizer -->
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type pages:ProfilesPage}}, Path=OpenProfileCommand}"
+                                CommandParameter="{Binding .}" />
+                        </Frame.GestureRecognizers>
+
+                        <Grid ColumnDefinitions="30, *" VerticalOptions="Center">
+                            <!-- Default marker -->
+                            <Image Source="star.png"
+                                   HeightRequest="20"
+                                   WidthRequest="20"
+                                   IsVisible="{Binding IsDefault}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+
+                            <!-- Profile name -->
+                            <Label Grid.Column="1"
+                                   Text="{Binding ProfileName}"
+                                   FontSize="18"
+                                   VerticalOptions="Center"
+                                   TextColor="{DynamicResource PrimaryTextColor}" />
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </VerticalStackLayout>
 </ContentPage>

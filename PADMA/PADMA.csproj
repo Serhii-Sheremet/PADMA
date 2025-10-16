@@ -38,14 +38,10 @@
 
   <ItemGroup>
     <!-- App Icon -->
-    <MauiIcon Include="Resources\AppIcon\appicon.svg"
-              ForegroundFile="Resources\AppIcon\appiconfg.svg"
-              Color="#512BD4" />
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
 
     <!-- Splash Screen -->
-    <MauiSplashScreen Include="Resources\Splash\splash.svg"
-                      Color="#512BD4"
-                      BaseSize="128,128" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
 
     <!-- Images -->
     <MauiImage Include="Resources\Images\*.png" />
@@ -54,8 +50,7 @@
     <MauiFont Include="Resources\Fonts\*" />
 
     <!-- Raw Assets -->
-    <MauiAsset Include="Resources\Raw\**"
-               LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -92,6 +87,9 @@
     <MauiXaml Update="Pages\MrityuPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\MuhurtasPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\NodesPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\ProfileDetailPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\SunrisePage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\TransitsPage.xaml" Generator="MSBuild:Compile" />
   </ItemGroup>
