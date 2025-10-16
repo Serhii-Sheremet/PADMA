@@ -9,6 +9,11 @@
         <ShellContent ContentTemplate="{DataTemplate pages:MainPage}" />
     </FlyoutItem>
 
+    <!-- Профили -->
+    <FlyoutItem Title="Profiles" Route="profiles">
+        <ShellContent ContentTemplate="{DataTemplate pages:ProfilesPage}" />
+    </FlyoutItem>
+
     <!-- Настройки -->
     <FlyoutItem Title="Settings" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />

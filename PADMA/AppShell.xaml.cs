@@ -10,6 +10,8 @@ public partial class AppShell : Shell
         InitializeComponent();
 
         // Регистрируем маршруты
+        Routing.RegisterRoute(nameof(ProfilesPage), typeof(PADMA.Pages.ProfilesPage));
+
         Routing.RegisterRoute("day", typeof(DayPage));
 
         // Регистрируем маршруты для всех страниц конфигурации
