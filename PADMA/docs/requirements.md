@@ -372,8 +372,6 @@ These methods standardize temporal logic across astronomical and calendar-relate
 
 ---
 
-## 🧩 Profiles — User Profiles Management  
-
 ### 🎯 Purpose  
 
 The **Profiles** feature stores personal data for individual users  
@@ -403,106 +401,152 @@ The route `Profiles` is registered in `AppShell.xaml.cs`.
 
 ---
 
-### 🗂️ Main Page — `ProfilesPage`  
+## 🧭 Profiles — Navigation & UI Behavior  
 
-**Purpose:**  
-Displays all stored profiles from the database table `PROFILE` and provides  
-basic management operations.  
+### 🧱 Overview  
 
-**Location:**  
-`PADMA/Pages/ProfilesPage.xaml`  
-
-**Layout behavior:**  
-- Vertical scrollable list of profiles (`CollectionView` or `ListView`).  
-- Each profile entry displays its **Profile name** (`PROFILENAME`).  
-- The **default** profile (where `CHECKED = 1`) is visually highlighted  
-  (for example, a small checkmark or icon in a narrow left column).  
-- At the top or fixed position (if technically feasible),  
-  the current default profile remains visible during scrolling.  
-
-**Actions available:**  
-| Action | Description |
-|---------|-------------|
-| ➕ Add new | Opens the profile editor page in "create" mode |
-| ✏️ Edit | Opens the profile editor with selected profile data |
-| 👁️ View details | Opens the same editor page in read-only mode |
-| ❌ Delete | Removes the selected profile |
+This section defines the navigation flow, toolbar layout, and user interaction logic  
+for all pages within the **Profiles** feature.  
+It ensures full consistency with the existing PADMA user interface conventions  
+used by **ConfigurationPage** and other modules.  
 
 ---
 
-### 🧾 Child Page — `ProfileDetailPage`  
+### 🏠 ProfilesPage — Main Hub  
 
-**Purpose:**  
-Displays and edits the detailed data of a single profile.  
-Used in three modes:  
-- New profile (all fields empty)  
-- View existing (read-only)  
-- Edit existing (editable fields pre-filled)  
-- 🌟 Set as default | Marks profile as active (`CHECKED = 1`) |
+**Toolbar layout:**  
+```
+☰  Profiles                              ❌
+```
 
-**Data fields:**  
-| Field | Source |
-|--------|--------|
-| Profile name | `PROFILE.PROFILENAME` |
-| Person name | `PROFILE.PERSONNAME` |
-| Person surname | `PROFILE.PERSONSURNAME` |
-| Date of birth | `PROFILE.DATEOFBIRTH` |
-| Place of birth | `PROFILE.PLACEOFBIRTHID` → `LOCATION.LOCALITY` |
-| Place of living | `PROFILE.PLACEOFLIVINGID` → `LOCATION.LOCALITY` |
-| Message / notes | `PROFILE.MESSAGE` |
+**Action Bar (below toolbar):**  
+```
+[➕ Add new profile]
+```
 
 **Behavior:**  
-- Pressing “Save” writes data to the database and returns to `ProfilesPage`.  
-- Tapping on a location field opens the **LocationPage** for selection.  
-- Default visual style and spacing follow global UI standards  
-  defined in `/Resources/Styles`.  
-- All textual labels, titles, and messages are localized in  
-  **English, Ukrainian, Polish, and Russian**,  
-  using the existing `APP_TEXTS` localization mechanism.  
+- Tap on a profile → opens `ProfileDetailPage` in **View mode**.  
+- Tap “Add new profile” → opens `ProfileDetailPage` in **Create mode**.  
+- ❌ Close → returns to **MainPage**.  
+- On return from a child page, the list refreshes to reflect changes.  
 
 ---
 
-### 🌍 Location Selection — `LocationPage`  
+### 👤 ProfileDetailPage — Profile Card  
+
+**Toolbar layout:**  
+```
+←  [Profile name / New profile]           ❌
+```
+
+**Action Bar (below toolbar):**  
+```
+[ 💾 Save ] [ ✏️ Edit ] [ 🌟 Set default ] [ 🗑 Delete ]
+```
+
+**Button order confirmed:** Save first.
+
+---
+
+#### 🔹 Modes of operation  
+
+| Mode | Description |
+|------|--------------|
+| **View** | All input fields are read-only. Only action buttons are active. |
+| **Edit** | All input fields become editable, including name, surname, date, and locations. |
+| **New** | Empty form, all fields editable, title = “New profile”. |
+
+---
+
+#### 🔹 Field structure  
+
+| Field | Description |
+|--------|-------------|
+| Profile name | Editable text field |
+| Person name | Editable text field |
+| Person surname | Editable text field |
+| Date of birth | Editable date picker |
+| Place of birth | Button → opens `LocationPage` |
+| Place of living | Button → opens `LocationPage` |
+| Message / notes | Multiline entry (optional) |
+
+---
+
+#### 🔹 Button behavior  
+
+| Button | Action | Confirmation |
+|---------|---------|---------------|
+| 💾 **Save** | Writes changes to `PROFILE` and new `LOCATION` entries if needed. Updates cache and returns to `ProfilesPage`. | ✅ “Save changes to profile?” |
+| ✏️ **Edit** | Enables editable mode for all fields. | — |
+| 🌟 **Set default** | Sets current profile as default (`CHECKED = 1`), unsets others. | — |
+| 🗑 **Delete** | Deletes current profile and returns to list. | ✅ “Delete this profile?” |
+
+---
+
+#### 🔹 Confirmation dialogs  
+
+| Event | Dialog |
+|--------|---------|
+| Save | “Save changes to profile [ProfileName]?” |
+| Delete | “Delete profile [ProfileName]?” |
+| Close without saving | “Discard unsaved changes?” |
+
+Dialogs follow the same visual and logical pattern as those used in `ConfigBasePage`.  
+
+---
+
+### 🌍 LocationPage — Location Lookup  
 
 **Purpose:**  
 Searches and selects geographic locations using **Nominatim API**.  
 
-**Behavior:**  
-- User can search a place name; results are returned from Nominatim.  
-- Selecting a result adds the entry into the local `LOCATION` table  
-  (if not already present).  
-- When returning to `ProfileDetailPage`, only the field `LOCALITY`  
-  (place name) is displayed.  
+**Toolbar layout:**  
+```
+←  Location search
+```
 
-**Data source:**  
-Location data structure is defined in  
-[`docs/sql/padma_tables.sql`](https://github.com/Serhii-Sheremet/PADMA/blob/main/PADMA/docs/sql/padma_tables.sql).  
+**Behavior:**  
+- User searches a place name (Nominatim API).  
+- Search results show locality, region, country, coordinates.  
+- Selecting a result returns to `ProfileDetailPage`,  
+  filling only the **LOCALITY** field in the form.  
+
+**Persistence logic:**  
+- Selected locations are **not immediately saved** into `LOCATION`.  
+- Database update occurs only after the entire profile is saved.  
+- Therefore, this page acts as a **lookup-only** component, not a data editor.  
 
 ---
 
-### 🧭 Navigation hierarchy  
+### 🧩 Navigation hierarchy  
 
 ```
 AppShell
  ├── MainPage (Calendar)
- ├── ProfilesPage
- │    └── ProfileDetailPage
- │         └── LocationPage
- ├── ConfigurationPage (Settings)
+ ├── ProfilesPage (burger + close)
+ │    └── ProfileDetailPage (back + close)
+ │         └── LocationPage (back only)
+ ├── ConfigurationPage (burger + close)
  └── ExitPage
 ```
 
 ---
 
-### ⚙️ Integration  
+### ⚙️ Integration rules  
 
+- Navigation consistency follows the same convention as configuration pages.  
+- Confirm dialogs are reused from existing shared logic.  
+- Changes in profiles may trigger `"ProfileChanged"` messaging events,  
+  to notify the Calendar or other pages of an active profile switch.  
+- Data saving logic ensures that new locations are committed only when  
+  a profile save operation is confirmed.  
 - On app startup, **DataCache** loads the current default profile  
   (`CHECKED = 1`) together with cached settings, texts, and references.  
-- Default profile data may later be used by **Calendar** or  
+- Default profile data will later be used by **Calendar** or  
   other computational modules.  
 - Changes in profiles do **not** send `"SettingsChanged"` messages,  
   unless language or calendar configuration are directly affected.  
-- In future development, a dedicated `"ProfileChanged"` event may be added.  
+- In future development, a dedicated `"ProfileChanged"` event may be added. 
 
 ---
 
@@ -520,24 +564,44 @@ with four translations: **English, Ukrainian, Polish, Russian**.
 
 ---
 
-### 🔗 Database  
+### 🎨 UX summary  
 
-Profile-related tables (`PROFILE`, `LOCATION`) are part of  
-[`docs/sql/padma_tables.sql`](https://github.com/Serhii-Sheremet/PADMA/blob/main/PADMA/docs/sql/padma_tables.sql).  
-They are automatically distributed and versioned  
-via the standard `APP_META` mechanism used by **DatabaseService**.  
+```
+╔════════════════════════════╗
+║ ☰ Profiles                ❌ ║
+╚════════════════════════════╝
+[ ➕ Add new profile ]
+───────────────
+• John Doe
+• Mary Smith
+───────────────
+      │
+      ▼
+╔════════════════════════════╗
+║ ← John Doe                ❌ ║
+╚════════════════════════════╝
+[ 💾 Save ] [ ✏️ Edit ] [ 🌟 Set default ] [ 🗑 Delete ]
+────────────────────────────────────
+| Profile name: John Doe            |
+| Date of birth: 12.05.1988         |
+| Place of birth: Kyiv ⯈           |
+| Place of living: Warsaw ⯈        |
+────────────────────────────────────
+      │
+      ▼
+╔════════════════════════════╗
+║ ← Location search           ║
+╚════════════════════════════╝
+| Search: [Kyiv] (🔍)         |
+| Results:                   |
+|  - Київ, Україна           |
+|  - Kyiv, Ukraine           |
+────────────────────────────────────
+```
 
----
-
-### 🚀 Future extensions  
-
-| Planned | Description |
-|----------|-------------|
-| 📍 Nominatim API integration | Online search for birth and living locations |
-| 🪶 Swiss Ephemeris integration | Birth chart and astrological calculations |
-| 🧭 Active profile binding | Use selected profile data in Calendar view |
-
----
+**Data source:**  
+Location data structure is defined in  
+[`docs/sql/padma_tables.sql`](https://github.com/Serhii-Sheremet/PADMA/blob/main/PADMA/docs/sql/padma_tables.sql). 
 
 ### 🗺️ Nominatim (OpenStreetMap)
 
