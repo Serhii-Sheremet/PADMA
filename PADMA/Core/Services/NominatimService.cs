@@ -20,53 +20,91 @@ public class NominatimService
 
     }
 
-    public async Task<List<AppLocation>> SearchAsync(string query, string languageCode = "en", int limit = 15)
+    public async Task<List<AppLocation>> SearchAsync(string query, string langCode)
     {
-        // format=jsonv2: современный формат
-        // addressdetails=1: чтобы достать город/регион/страну
-        var url = $"search?format=jsonv2&q={Uri.EscapeDataString(query)}&addressdetails=1&limit={limit}&accept-language={languageCode}";
+        var url =
+            $"https://nominatim.openstreetmap.org/search?q={Uri.EscapeDataString(query)}&format=json&addressdetails=1&accept-language={langCode}";
+        var response = await _http.GetAsync(url);
+        response.EnsureSuccessStatusCode();
 
-        using var resp = await _http.GetAsync(url);
-        resp.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        var results = JsonSerializer.Deserialize<List<JsonElement>>(json);
 
-        var json = await resp.Content.ReadAsStringAsync();
-        var items = JsonSerializer.Deserialize<List<NominatimResult>>(json, new JsonSerializerOptions
+        var list = new List<AppLocation>();
+
+        foreach (var item in results)
         {
-            PropertyNameCaseInsensitive = true
-        }) ?? new();
-
-        var result = new List<AppLocation>();
-        foreach (var it in items)
-        {
-            // выбираем удобные поля для UI/сохранения
-            var addr = it.Address ?? new Dictionary<string, string>();
-
-            string locality =
-                FirstNonEmpty(addr, "city", "town", "village", "hamlet", "municipality", "locality", "county") 
-                ?? it.DisplayName ?? "";
-
-            string region = FirstNonEmpty(addr, "region", "state_district", "county") ?? "";
-            string state = FirstNonEmpty(addr, "state") ?? "";
-            string country = FirstNonEmpty(addr, "country") ?? "";
-            string countryCode = FirstNonEmpty(addr, "country_code")?.ToUpperInvariant() ?? "";
-
-            result.Add(new AppLocation
+            try
             {
-                // Id = 0 (ещё нет в локальной БД)
-                Locality = locality,
-                Latitude = it.Lat ?? "",
-                Longitude = it.Lon ?? "",
-                Region = region,
-                State = state,
-                Country = country,
-                CountryCode = countryCode,
-                LanguageCode = languageCode
-            });
-        }
-        await Task.Delay(1000);
+                var clazz = item.TryGetProperty("class", out var cl) ? cl.GetString() ?? "" : "";
+                var type = item.TryGetProperty("type", out var tp) ? tp.GetString() ?? "" : "";
 
-        return result;
+                var address = item.GetProperty("address");
+
+                string locality =
+                    address.TryGetProperty("city", out var c1) ? c1.GetString() :
+                    address.TryGetProperty("town", out var c2) ? c2.GetString() :
+                    address.TryGetProperty("village", out var c3) ? c3.GetString() :
+                    address.TryGetProperty("hamlet", out var c4) ? c4.GetString() :
+                    address.TryGetProperty("municipality", out var c5) ? c5.GetString() :
+                    address.TryGetProperty("locality", out var c6) ? c6.GetString() :
+                    null;
+
+                // Пропускаем если вообще нет признаков населённого пункта
+                if (string.IsNullOrWhiteSpace(locality))
+                    continue;
+
+                // теперь берём регион и страну
+                string region =
+                    address.TryGetProperty("state", out var s1) ? s1.GetString() :
+                    address.TryGetProperty("region", out var s2) ? s2.GetString() :
+                    address.TryGetProperty("province", out var s3) ? s3.GetString() :
+                    address.TryGetProperty("county", out var s4) ? s4.GetString() :
+                    null;
+
+                string country =
+                    address.TryGetProperty("country", out var cn) ? cn.GetString() : "";
+
+                string countryCode =
+                    address.TryGetProperty("country_code", out var cc) ? cc.GetString()?.ToUpper() : "";
+
+                string lat = item.GetProperty("lat").GetString() ?? "0";
+                string lon = item.GetProperty("lon").GetString() ?? "0";
+
+                // --- формируем читаемое имя ---
+                var parts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(locality)) parts.Add(locality);
+                if (!string.IsNullOrWhiteSpace(region) && !parts.Contains(region)) parts.Add(region);
+                if (!string.IsNullOrWhiteSpace(country) && !parts.Contains(country)) parts.Add(country);
+                string displayName = string.Join(", ", parts);
+
+                // --- фильтрация дубликатов ---
+                if (list.Any(l =>
+                        string.Equals(l.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                list.Add(new AppLocation
+                {
+                    Locality = locality ?? "",
+                    Region = region,
+                    Country = country,
+                    CountryCode = countryCode,
+                    LanguageCode = langCode,
+                    Latitude = lat,
+                    Longitude = lon,
+                    DisplayName = displayName,
+                    CoordinatesString = $"Lat: {lat}, Lon: {lon}"
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] Nominatim parse error: {ex.Message}");
+            }
+        }
+
+        return list;
     }
+
 
     private static string? FirstNonEmpty(Dictionary<string, string> dict, params string[] keys)
     {

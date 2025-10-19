@@ -13,10 +13,11 @@
 
     <VerticalStackLayout Padding="20" Spacing="12">
 
-        <HorizontalStackLayout Spacing="10">
+        <HorizontalStackLayout Spacing="8">
             <Entry x:Name="entrySearch"
                    Placeholder="Enter city name"
-                   HorizontalOptions="FillAndExpand" />
+                   HorizontalOptions="FillAndExpand"
+                   Completed="OnSearchClicked" />
 
             <ImageButton Source="search_icon.png"
                          HeightRequest="32"
@@ -24,24 +25,44 @@
                          Clicked="OnSearchClicked"
                          BackgroundColor="Transparent"
                          ToolTipProperties.Text="Search" />
+
+            <Button x:Name="btnSelect"
+                    Text="Select"
+                    IsEnabled="False"
+                    Clicked="OnSelectClicked"
+                    VerticalOptions="Center"
+                    HorizontalOptions="End"
+                    WidthRequest="90"
+                    HeightRequest="36"
+                    FontSize="12" />
         </HorizontalStackLayout>
+
+        <ActivityIndicator x:Name="loadingIndicator"
+                           IsRunning="False"
+                           IsVisible="False"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"
+                           Color="Gray" />
 
         <CollectionView x:Name="listResults"
                         SelectionMode="Single"
-                        SelectionChanged="OnLocationSelected">
-
+                        SelectionChanged="OnLocationSelected"
+                        Margin="0,10,0,0">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Frame Padding="8" Margin="5,2">
+                    <Frame Padding="8"
+                           Margin="5,2"
+                           BorderColor="LightGray"
+                           CornerRadius="8">
                         <VerticalStackLayout>
-                            <Label Text="{Binding Locality}" FontSize="18" />
-                            <Label Text="{Binding Country}" FontSize="14" TextColor="Gray" />
+                            <Label Text="{Binding DisplayName}" FontSize="16" />
+                            <Label Text="{Binding CoordinatesString}"
+                                   FontSize="12"
+                                   TextColor="DarkGray" />
                         </VerticalStackLayout>
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
-
         </CollectionView>
-
     </VerticalStackLayout>
 </ContentPage>

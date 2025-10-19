@@ -14,42 +14,78 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="12">
 
-            <!-- Имя профиля -->
             <Entry x:Name="entryProfileName"
                    Placeholder="Profile name"
                    Text="{Binding ProfileName}" />
 
-            <!-- Имя человека -->
             <Entry x:Name="entryPersonName"
                    Placeholder="First name"
                    Text="{Binding PersonName}" />
 
-            <!-- Фамилия -->
             <Entry x:Name="entryPersonSurname"
                    Placeholder="Last name"
                    Text="{Binding PersonSurname}" />
 
-            <!-- Дата рождения -->
-            <DatePicker x:Name="dateOfBirth"
-                        Date="{Binding DateOfBirth}" />
+            <Label x:Name="lblDateTimeOfBirth"
+                   Text="Date and time of birth"
+                   FontAttributes="Bold" />
+
+            <HorizontalStackLayout Spacing="10">
+                <DatePicker x:Name="dateOfBirthDate"
+                            Date="{Binding DateOfBirth}" />
+                <TimePicker x:Name="timeOfBirthTime"
+                            Time="{Binding DateOfBirth, Converter={StaticResource DateTimeToTimeSpanConverter}}" />
+            </HorizontalStackLayout>
 
             <!-- Место рождения -->
-            <Button x:Name="btnPlaceOfBirth"
-                    Text="{Binding PlaceOfBirthLocality, Mode=OneWay}"
-                    Clicked="OnPlaceOfBirthClicked" />
+            <Label x:Name="lblPlaceOfBirth"
+                   Text="Place of birth"
+                   FontAttributes="Bold" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Label x:Name="lblPlaceOfBirthValue"
+                       Text="{Binding PlaceOfBirthLocality, Mode=OneWay, FallbackValue='Select location...'}"
+                       VerticalOptions="Center"
+                       TextColor="Black"
+                       FontAttributes="Italic"
+                       Padding="4,2" />
+                <ImageButton Source="search_icon.png"
+                             HeightRequest="22"
+                             WidthRequest="22"
+                             BackgroundColor="Transparent"
+                             BorderWidth="0"
+                             Clicked="OnPlaceOfBirthClicked"
+                             Grid.Column="1"
+                             HorizontalOptions="End"/>
+            </Grid>
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,8"/>
 
             <!-- Место проживания -->
-            <Button x:Name="btnPlaceOfLiving"
-                    Text="{Binding PlaceOfLivingLocality, Mode=OneWay}"
-                    Clicked="OnPlaceOfLivingClicked" />
+            <Label x:Name="lblPlaceOfLiving"
+                   Text="Place of living"
+                   FontAttributes="Bold" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Label x:Name="lblPlaceOfLivingValue"
+                       Text="{Binding PlaceOfLivingLocality, Mode=OneWay, FallbackValue='Select location...'}"
+                       VerticalOptions="Center"
+                       TextColor="Black"
+                       FontAttributes="Italic"
+                       Padding="4,2" />
+                <ImageButton Source="search_icon.png"
+                             HeightRequest="22"
+                             WidthRequest="22"
+                             BackgroundColor="Transparent"
+                             BorderWidth="0"
+                             Clicked="OnPlaceOfLivingClicked"
+                             Grid.Column="1"
+                             HorizontalOptions="End"/>
+            </Grid>
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,8"/>
 
-            <!-- Комментарий -->
             <Editor x:Name="entryMessage"
                     Placeholder="Notes"
                     Text="{Binding Message}"
                     AutoSize="TextChanges" />
 
-            <!-- Action Bar с иконками -->
             <HorizontalStackLayout HorizontalOptions="Center"
                                    Spacing="25"
                                    Margin="0,20,0,0">

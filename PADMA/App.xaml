@@ -15,6 +15,7 @@
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
             <converters:TodayBackgroundConverter x:Key="TodayBackgroundConverter" />
             <converters:HeightToCellHeightConverter x:Key="HeightToCellHeightConverter" />
+            <converters:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
