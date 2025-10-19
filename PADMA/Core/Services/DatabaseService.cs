@@ -417,7 +417,7 @@ namespace PADMA.Core.Services
         /// <summary>
         /// Returns location by ID.
         /// </summary>
-        public Location? GetLocationById(int id)
+        public AppLocation? GetLocationById(int id)
         {
             try
             {
@@ -432,7 +432,7 @@ namespace PADMA.Core.Services
                                             LANGUAGECODE as LanguageCode
                                      FROM LOCATION WHERE ID = ?";
 
-                return _connection.FindWithQuery<Location>(sql, id);
+                return _connection.FindWithQuery<AppLocation>(sql, id);
             }
             catch (Exception ex)
             {
@@ -440,6 +440,37 @@ namespace PADMA.Core.Services
                 return null;
             }
         }
+
+        public int AddLocationAndReturnId(AppLocation location)
+        {
+            try
+            {
+                const string sql = @"
+            INSERT INTO LOCATION 
+                (LOCALITY, LATITUDE, LONGITUDE, REGION, STATE, COUNTRY, COUNTRYCODE, LANGUAGECODE)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            SELECT last_insert_rowid();
+        ";
+
+                // sqlite-net-pcl: ExecuteScalar<T> доступен
+                return _connection.ExecuteScalar<int>(sql,
+                    location.Locality,
+                    location.Latitude,
+                    location.Longitude,
+                    location.Region,
+                    location.State,
+                    location.Country,
+                    location.CountryCode,
+                    location.LanguageCode
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] AddLocationAndReturnId error: {ex.Message}");
+                return 0;
+            }
+        }
+
 
         /// <summary>
         /// Adds a new location (used after Nominatim search).

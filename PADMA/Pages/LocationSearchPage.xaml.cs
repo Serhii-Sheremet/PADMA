@@ -1,10 +1,7 @@
-using CloudKit;
 using Microsoft.Maui.Controls;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
-using PADMA.Core.Utilities;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace PADMA.Pages;
 
@@ -12,26 +9,35 @@ namespace PADMA.Pages;
 public partial class LocationSearchPage : ContentPage
 {
     private readonly DatabaseService _database;
-    public string Mode { get; set; } = "";
-    private ObservableCollection<Location> _results = new();
+    private readonly NominatimService _nominatim;
 
-    public LocationSearchPage()
+    public string Mode { get; set; } = ""; // "birth" | "living"
+
+    private readonly ObservableCollection<AppLocation> _results = new();
+
+    // Получаем сервисы через DI (зарегистрированы в MauiProgram)
+    public LocationSearchPage(DatabaseService database, NominatimService nominatim)
     {
         InitializeComponent();
-        _database = db;
+        _database = database;
+        _nominatim = nominatim;
+
         listResults.ItemsSource = _results;
     }
 
     private async void OnSearchClicked(object sender, EventArgs e)
     {
-        string query = entrySearch.Text?.Trim() ?? "";
-        if (string.IsNullOrEmpty(query)) return;
+        var query = entrySearch.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(query))
+            return;
 
         _results.Clear();
 
-        // Заглушка — позже заменим вызовом Nominatim API
-        var locations = await _database.SearchLocationsAsync(query);
-        foreach (var loc in locations)
+        // используем выбранный язык из БД
+        var lang = _database.GetActiveLanguageCode(); // "en"/"uk"/"pl"/"ru"
+        var found = await _nominatim.SearchAsync(query, lang);
+
+        foreach (var loc in found)
             _results.Add(loc);
     }
 
@@ -40,21 +46,26 @@ public partial class LocationSearchPage : ContentPage
         if (e.CurrentSelection.FirstOrDefault() is not AppLocation selected)
             return;
 
-        bool confirm = await DisplayAlert("Use this location?",
-                                          $"Add '{selected.Locality}' to profile?",
-                                          "Yes", "Cancel");
-        if (confirm)
+        // Предлагаем добавить в локальную БД 
+        bool save = await DisplayAlert(
+            "Save location",
+            $"Add '{selected.Locality}' to saved locations?",
+            "Yes", "No");
+
+        if (save)
         {
-            // возвращаем выбранную локацию (через DataCache)
-            DataCache.Instance.SelectedLocation = selected;
-            await Shell.Current.GoToAsync("..", true);
+            var id = _database.AddLocationAndReturnId(selected);
+            selected.Id = id; // важный момент — теперь локация имеет ID в БД
         }
 
+        // Возвращаем выбранную локацию в ProfileDetailPage
+        // (используем MessagingCenter, чтобы не плодить статик-кэши)
+        MessagingCenter.Send(this, "LocationSelected", (Mode, selected));
+
         ((CollectionView)sender).SelectedItem = null;
+        await Shell.Current.GoToAsync("..", true);
     }
 
     private async void OnCloseClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("..", true);
-    }
+        => await Shell.Current.GoToAsync("..", true);
 }

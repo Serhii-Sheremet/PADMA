@@ -82,6 +82,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<ConfigurationPage>();
         builder.Services.AddSingleton<ExitPage>();
         builder.Services.AddSingleton<AppSettingsService>();
+        builder.Services.AddSingleton<NominatimService>();
+
 
         return builder.Build();
     }
