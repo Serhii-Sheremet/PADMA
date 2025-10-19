@@ -226,5 +226,250 @@ namespace PADMA.Core.Services
         }
 
         #endregion
+
+
+        #region Profiles & Locations
+
+        /// <summary>
+        /// Returns all profiles from PROFILE table.
+        /// </summary>
+        public List<Profile> GetProfiles()
+        {
+            try
+            {
+                const string sql = @"SELECT ID as Id, 
+                                            PROFILENAME as ProfileName, 
+                                            PERSONNAME as PersonName, 
+                                            PERSONSURNAME as PersonSurname, 
+                                            DATEOFBIRTH as DateOfBirth, 
+                                            PLACEOFBIRTHID as PlaceOfBirthId, 
+                                            PLACEOFLIVINGID as PlaceOfLivingId, 
+                                            MESSAGE as Message, 
+                                            CHECKED as Checked 
+                                     FROM PROFILE 
+                                     ORDER BY PROFILENAME COLLATE NOCASE";
+
+                return _connection.Query<Profile>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetProfiles error: {ex.Message}");
+                return new List<Profile>();
+            }
+        }
+
+        /// <summary>
+        /// Returns a single profile by ID.
+        /// </summary>
+        public Profile? GetProfileById(int id)
+        {
+            try
+            {
+                const string sql = @"SELECT ID as Id, 
+                                            PROFILENAME as ProfileName, 
+                                            PERSONNAME as PersonName, 
+                                            PERSONSURNAME as PersonSurname, 
+                                            DATEOFBIRTH as DateOfBirth, 
+                                            PLACEOFBIRTHID as PlaceOfBirthId, 
+                                            PLACEOFLIVINGID as PlaceOfLivingId, 
+                                            MESSAGE as Message, 
+                                            CHECKED as Checked 
+                                     FROM PROFILE 
+                                     WHERE ID = ?";
+
+                return _connection.FindWithQuery<Profile>(sql, id);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetProfileById error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Adds a new profile.
+        /// </summary>
+        public void AddProfile(Profile profile)
+        {
+            try
+            {
+                var sql = @"INSERT INTO PROFILE 
+                            (PROFILENAME, PERSONNAME, PERSONSURNAME, DATEOFBIRTH, 
+                             PLACEOFBIRTHID, PLACEOFLIVINGID, MESSAGE, CHECKED) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+                var dateText = profile.DateOfBirth.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+
+                _connection.Execute(sql,
+                    profile.ProfileName,
+                    profile.PersonName,
+                    profile.PersonSurname,
+                    dateText,
+                    profile.PlaceOfBirthId,
+                    profile.PlaceOfLivingId,
+                    profile.Message,
+                    profile.Checked ? 1 : 0);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] AddProfile error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing profile.
+        /// </summary>
+        public void UpdateProfile(Profile profile)
+        {
+            try
+            {
+                var sql = @"UPDATE PROFILE SET 
+                                PROFILENAME = ?, 
+                                PERSONNAME = ?, 
+                                PERSONSURNAME = ?, 
+                                DATEOFBIRTH = ?, 
+                                PLACEOFBIRTHID = ?, 
+                                PLACEOFLIVINGID = ?, 
+                                MESSAGE = ?, 
+                                CHECKED = ?
+                            WHERE ID = ?";
+
+                var dateText = profile.DateOfBirth.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+
+                _connection.Execute(sql,
+                    profile.ProfileName,
+                    profile.PersonName,
+                    profile.PersonSurname,
+                    dateText,
+                    profile.PlaceOfBirthId,
+                    profile.PlaceOfLivingId,
+                    profile.Message,
+                    profile.Checked ? 1 : 0,
+                    profile.Id);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] UpdateProfile error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Deletes a profile by ID.
+        /// </summary>
+        public void DeleteProfile(int id)
+        {
+            try
+            {
+                _connection.Execute("DELETE FROM PROFILE WHERE ID = ?", id);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DeleteProfile error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Sets one profile as default (CHECKED = 1), others = 0.
+        /// </summary>
+        public void SetDefaultProfile(int id)
+        {
+            try
+            {
+                _connection.Execute("UPDATE PROFILE SET CHECKED = 0");
+                _connection.Execute("UPDATE PROFILE SET CHECKED = 1 WHERE ID = ?", id);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] SetDefaultProfile error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Searches for locations by name (LOCALITY, REGION, STATE, COUNTRY).
+        /// </summary>
+        public List<Location> SearchLocations(string text)
+        {
+            try
+            {
+                const string sql = @"SELECT ID as Id, 
+                                            LOCALITY as Locality, 
+                                            LATITUDE as Latitude, 
+                                            LONGITUDE as Longitude, 
+                                            REGION as Region, 
+                                            STATE as State, 
+                                            COUNTRY as Country, 
+                                            COUNTRYCODE as CountryCode, 
+                                            LANGUAGECODE as LanguageCode
+                                     FROM LOCATION
+                                     WHERE LOCALITY LIKE ? OR REGION LIKE ? OR STATE LIKE ? OR COUNTRY LIKE ?
+                                     ORDER BY LOCALITY COLLATE NOCASE";
+
+                var pattern = $"%{text}%";
+                return _connection.Query<Location>(sql, pattern, pattern, pattern, pattern);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] SearchLocations error: {ex.Message}");
+                return new List<Location>();
+            }
+        }
+
+        /// <summary>
+        /// Returns location by ID.
+        /// </summary>
+        public Location? GetLocationById(int id)
+        {
+            try
+            {
+                const string sql = @"SELECT ID as Id, 
+                                            LOCALITY as Locality, 
+                                            LATITUDE as Latitude, 
+                                            LONGITUDE as Longitude, 
+                                            REGION as Region, 
+                                            STATE as State, 
+                                            COUNTRY as Country, 
+                                            COUNTRYCODE as CountryCode, 
+                                            LANGUAGECODE as LanguageCode
+                                     FROM LOCATION WHERE ID = ?";
+
+                return _connection.FindWithQuery<Location>(sql, id);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetLocationById error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Adds a new location (used after Nominatim search).
+        /// </summary>
+        public void AddLocation(AppLocation location)
+        {
+            try
+            {
+                const string sql = @"INSERT INTO LOCATION 
+                                     (LOCALITY, LATITUDE, LONGITUDE, REGION, STATE, COUNTRY, COUNTRYCODE, LANGUAGECODE)
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+                _connection.Execute(sql,
+                    location.Locality,
+                    location.Latitude,
+                    location.Longitude,
+                    location.Region,
+                    location.State,
+                    location.Country,
+                    location.CountryCode,
+                    location.LanguageCode);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] AddLocation error: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+
     }
 }

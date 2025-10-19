@@ -2,11 +2,88 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PADMA.Pages.ProfileDetailPage"
-             Title="ProfileDetailPage">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             Title="Profile">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="close_icon.png"
+                     Priority="0"
+                     Order="Primary"
+                     Clicked="OnCloseClicked" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12">
+
+            <!-- Имя профиля -->
+            <Entry x:Name="entryProfileName"
+                   Placeholder="Profile name"
+                   Text="{Binding ProfileName}" />
+
+            <!-- Имя человека -->
+            <Entry x:Name="entryPersonName"
+                   Placeholder="First name"
+                   Text="{Binding PersonName}" />
+
+            <!-- Фамилия -->
+            <Entry x:Name="entryPersonSurname"
+                   Placeholder="Last name"
+                   Text="{Binding PersonSurname}" />
+
+            <!-- Дата рождения -->
+            <DatePicker x:Name="dateOfBirth"
+                        Date="{Binding DateOfBirth}" />
+
+            <!-- Место рождения -->
+            <Button x:Name="btnPlaceOfBirth"
+                    Text="{Binding PlaceOfBirthLocality, Mode=OneWay}"
+                    Clicked="OnPlaceOfBirthClicked" />
+
+            <!-- Место проживания -->
+            <Button x:Name="btnPlaceOfLiving"
+                    Text="{Binding PlaceOfLivingLocality, Mode=OneWay}"
+                    Clicked="OnPlaceOfLivingClicked" />
+
+            <!-- Комментарий -->
+            <Editor x:Name="entryMessage"
+                    Placeholder="Notes"
+                    Text="{Binding Message}"
+                    AutoSize="TextChanges" />
+
+            <!-- Action Bar с иконками -->
+            <HorizontalStackLayout HorizontalOptions="Center"
+                                   Spacing="25"
+                                   Margin="0,20,0,0">
+
+                <ImageButton Source="save_icon.png"
+                             HeightRequest="32"
+                             WidthRequest="32"
+                             Clicked="OnSaveClicked"
+                             BackgroundColor="Transparent"
+                             ToolTipProperties.Text="Save" />
+
+                <ImageButton Source="edit_icon.png"
+                             HeightRequest="32"
+                             WidthRequest="32"
+                             Clicked="OnEditClicked"
+                             BackgroundColor="Transparent"
+                             ToolTipProperties.Text="Edit" />
+
+                <ImageButton Source="star_shine.png"
+                             HeightRequest="32"
+                             WidthRequest="32"
+                             Clicked="OnSetDefaultClicked"
+                             BackgroundColor="Transparent"
+                             ToolTipProperties.Text="Set as default" />
+
+                <ImageButton Source="delete_icon.png"
+                             HeightRequest="32"
+                             WidthRequest="32"
+                             Clicked="OnDeleteClicked"
+                             BackgroundColor="Transparent"
+                             ToolTipProperties.Text="Delete" />
+
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

@@ -1,41 +1,59 @@
 using Microsoft.Maui.Controls;
-using PADMA.Core.Models;
 using System.Collections.ObjectModel;
-using PADMA.Core.Services;
-using PADMA.Core.Utilities;
+using System.Threading.Tasks;
+using PADMA.Core.Services;   
+using PADMA.Core.Utilities;  
 
 namespace PADMA.Pages;
 
+
 public partial class ProfilesPage : ContentPage
 {
-    public ObservableCollection<ProfileViewItem> Profiles { get; set; }
-
-    // Добавляем команду для открытия профайла
+    private readonly DatabaseService _database;
+    public ObservableCollection<ProfileViewItem> Profiles { get; }
     public Command<ProfileViewItem> OpenProfileCommand { get; }
 
     public ProfilesPage()
     {
         InitializeComponent();
-        Profiles = new ObservableCollection<ProfileViewItem>();
 
-        // Инициализируем команду
-        OpenProfileCommand = new Command<ProfileViewItem>(async (item) => await OpenProfile(item));
+        //OpenProfileCommand = new Command<ProfileViewItem>(async p => await NavigateToProfile(p));
+                
 
-        BindingContext = this;
-
-        LoadDemoProfiles();
+        
+        // локализация заголовка и кнопки — по твоей схеме (если хочешь сразу)
+        Title = Localization.GetLocalizedText("Profiles", DataCache.Instance.CurrentLanguageCode);
+        btnAddProfile.Text = Localization.GetLocalizedText("Add new profile", DataCache.Instance.CurrentLanguageCode);
     }
 
-    private void LoadDemoProfiles()
+    public ProfilesPage(DatabaseService database)
     {
-        Profiles.Add(new ProfileViewItem { Id = 1, ProfileName = "John Doe", IsDefault = true });
-        Profiles.Add(new ProfileViewItem { Id = 2, ProfileName = "Mary Smith", IsDefault = false });
+        InitializeComponent();
+        _database = database;
+        Profiles = new ObservableCollection<ProfileViewItem>();
+        BindingContext = this;
+        LoadProfiles();
     }
 
-    private async Task OpenProfile(ProfileViewItem? profile)
+    private void LoadProfiles()
+    {
+        Profiles.Clear();
+        var profiles = _database.GetProfiles();
+
+        foreach (var p in profiles)
+            Profiles.Add(new ProfileViewItem
+            {
+                Id = p.Id,
+                ProfileName = p.ProfileName,
+                IsDefault = p.Checked
+            });
+    }
+
+
+    private async Task NavigateToProfile(ProfileViewItem? profile)
     {
         if (profile == null) return;
-        string route = $"{nameof(ProfileDetailPage)}?profileId={profile.Id}";
+        var route = $"{nameof(ProfileDetailPage)}?profileId={profile.Id}";
         await Shell.Current.GoToAsync(route, true);
     }
 
@@ -46,7 +64,6 @@ public partial class ProfilesPage : ContentPage
 
     private async void OnCloseClicked(object sender, EventArgs e)
     {
-        // Возврат к MainPage (аналогично ConfigurationPage)
         await Shell.Current.GoToAsync("//main", true);
     }
 }

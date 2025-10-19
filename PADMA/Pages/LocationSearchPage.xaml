@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PADMA.Pages.LocationSearchPage"
+             Title="Location search">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="close_icon.png"
+                     Priority="0"
+                     Order="Primary"
+                     Clicked="OnCloseClicked" />
+    </ContentPage.ToolbarItems>
+
+    <VerticalStackLayout Padding="20" Spacing="12">
+
+        <HorizontalStackLayout Spacing="10">
+            <Entry x:Name="entrySearch"
+                   Placeholder="Enter city name"
+                   HorizontalOptions="FillAndExpand" />
+
+            <ImageButton Source="search_icon.png"
+                         HeightRequest="32"
+                         WidthRequest="32"
+                         Clicked="OnSearchClicked"
+                         BackgroundColor="Transparent"
+                         ToolTipProperties.Text="Search" />
+        </HorizontalStackLayout>
+
+        <CollectionView x:Name="listResults"
+                        SelectionMode="Single"
+                        SelectionChanged="OnLocationSelected">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Padding="8" Margin="5,2">
+                        <VerticalStackLayout>
+                            <Label Text="{Binding Locality}" FontSize="18" />
+                            <Label Text="{Binding Country}" FontSize="14" TextColor="Gray" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+        </CollectionView>
+
+    </VerticalStackLayout>
+</ContentPage>

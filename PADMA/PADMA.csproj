@@ -84,6 +84,9 @@
     <MauiXaml Update="Pages\FirstDayOfWeekPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\HoraPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\LanguagePage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\LocationSearchPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\MrityuPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\MuhurtasPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\NodesPage.xaml" Generator="MSBuild:Compile" />
