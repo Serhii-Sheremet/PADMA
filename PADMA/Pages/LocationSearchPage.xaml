@@ -4,65 +4,100 @@
              x:Class="PADMA.Pages.LocationSearchPage"
              Title="Location search">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem IconImageSource="close_icon.png"
-                     Priority="0"
-                     Order="Primary"
-                     Clicked="OnCloseClicked" />
-    </ContentPage.ToolbarItems>
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="10">
 
-    <VerticalStackLayout Padding="20" Spacing="12">
+        <!-- Поисковая панель -->
+        <Frame Grid.Row="0"
+        CornerRadius="12"
+        BackgroundColor="#F0F0F0"
+        BorderColor="LightGray"
+        Padding="8"
+        Margin="0,0,0,10"
+        HasShadow="False">
 
-        <HorizontalStackLayout Spacing="8">
-            <Entry x:Name="entrySearch"
-                   Placeholder="Enter city name"
-                   HorizontalOptions="FillAndExpand"
-                   Completed="OnSearchClicked" />
+            <Grid ColumnDefinitions="*, Auto">
+                <!-- Поле ввода -->
+                <Entry x:Name="entrySearch"
+               Grid.Column="0"
+               Placeholder="Enter city name"
+               Completed="OnSearchClicked"
+               ClearButtonVisibility="WhileEditing"
+               HorizontalOptions="Fill"
+               VerticalOptions="Center"
+               BackgroundColor="Transparent"
+               Margin="0,0,8,0" />
 
-            <ImageButton Source="search_icon.png"
-                         HeightRequest="32"
-                         WidthRequest="32"
-                         Clicked="OnSearchClicked"
-                         BackgroundColor="Transparent"
-                         ToolTipProperties.Text="Search" />
+                <!-- Кнопка поиска -->
+                <ImageButton x:Name="btnSearch"
+                     Grid.Column="1"
+                     Source="search_icon.png"
+                     HeightRequest="28"
+                     WidthRequest="28"
+                     BackgroundColor="Transparent"
+                     Clicked="OnSearchClicked"
+                     ToolTipProperties.Text="Search"
+                     VerticalOptions="Center" />
+            </Grid>
+        </Frame>
 
-            <Button x:Name="btnSelect"
-                    Text="Select"
-                    IsEnabled="False"
-                    Clicked="OnSelectClicked"
-                    VerticalOptions="Center"
-                    HorizontalOptions="End"
-                    WidthRequest="90"
-                    HeightRequest="36"
-                    FontSize="12" />
-        </HorizontalStackLayout>
-
+        <!-- Индикатор загрузки -->
         <ActivityIndicator x:Name="loadingIndicator"
+                           Grid.Row="1"
                            IsRunning="False"
                            IsVisible="False"
                            VerticalOptions="Center"
                            HorizontalOptions="Center"
                            Color="Gray" />
 
+        <!-- Список результатов -->
         <CollectionView x:Name="listResults"
-                        SelectionMode="Single"
-                        SelectionChanged="OnLocationSelected"
-                        Margin="0,10,0,0">
+                        Grid.Row="1"
+                        SelectionMode="None"
+                        Margin="0,10,0,60">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame Padding="8"
                            Margin="5,2"
                            BorderColor="LightGray"
                            CornerRadius="8">
+
+                        <Frame.Triggers>
+                            <DataTrigger TargetType="Frame"
+                                         Binding="{Binding IsSelected}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor" Value="#FFF7D6" />
+                                <Setter Property="BorderColor" Value="#FFC107" />
+                            </DataTrigger>
+                        </Frame.Triggers>
+
                         <VerticalStackLayout>
                             <Label Text="{Binding DisplayName}" FontSize="16" />
                             <Label Text="{Binding CoordinatesString}"
                                    FontSize="12"
                                    TextColor="DarkGray" />
                         </VerticalStackLayout>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ItemTappedCommand}"
+                                                  CommandParameter="{Binding .}" />
+                        </Frame.GestureRecognizers>
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-    </VerticalStackLayout>
+
+        <!-- Кнопка "Выбрать" (фиксированная внизу) -->
+        <Grid Grid.Row="2" Padding="0,5,0,10">
+            <Button x:Name="btnSelect"
+                    Text="Select"
+                    IsEnabled="False"
+                    Clicked="OnSelectClicked"
+                    HeightRequest="44"
+                    FontAttributes="Bold"
+                    HorizontalOptions="FillAndExpand"
+                    BackgroundColor="#2196F3"
+                    TextColor="White"
+                    CornerRadius="10" />
+        </Grid>
+    </Grid>
 </ContentPage>

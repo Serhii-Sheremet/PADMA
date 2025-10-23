@@ -19,14 +19,16 @@ public partial class ProfileDetailPage : ContentPage
     {
         InitializeComponent();
         _database = database;
+
+        // Проверяем, подписаны ли уже
+        MessagingCenter.Unsubscribe<LocationSearchPage, (string, AppLocation)>(this, "LocationSelected");
+        MessagingCenter.Subscribe<LocationSearchPage, (string, AppLocation)>(
+            this, "LocationSelected", OnLocationSelected);
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
-
-        MessagingCenter.Subscribe<LocationSearchPage, (string Mode, AppLocation Loc)>(
-            this, "LocationSelected", OnLocationSelected);
 
         if (_tempProfile != null)
         {
@@ -55,6 +57,8 @@ public partial class ProfileDetailPage : ContentPage
 
         BindingContext = _profile;
 
+        RefreshLocationLabels();
+
         dateOfBirthDate.Date = _profile.DateOfBirth.Date;
         timeOfBirthTime.Time = _profile.DateOfBirth.TimeOfDay;
 
@@ -77,30 +81,55 @@ public partial class ProfileDetailPage : ContentPage
         entryMessage.Placeholder = Localization.GetLocalizedText("Notes", langCode);
     }
 
+    private void RefreshLocationLabels()
+    {
+        lblPlaceOfBirthValue.Text = string.IsNullOrWhiteSpace(_profile?.PlaceOfBirthLocality)
+            ? Localization.GetLocalizedText("Select location...", _database.GetActiveLanguageCode())
+            : _profile.PlaceOfBirthLocality;
+
+        lblPlaceOfLivingValue.Text = string.IsNullOrWhiteSpace(_profile?.PlaceOfLivingLocality)
+            ? Localization.GetLocalizedText("Select location...", _database.GetActiveLanguageCode())
+            : _profile.PlaceOfLivingLocality;
+    }
+
+
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        MessagingCenter.Unsubscribe<LocationSearchPage, (string, AppLocation)>(this, "LocationSelected");
+        // MessagingCenter.Unsubscribe<LocationSearchPage, (string, AppLocation)>(this, "LocationSelected");
     }
 
     private void OnLocationSelected(LocationSearchPage sender, (string Mode, AppLocation Loc) payload)
     {
-        if (_profile == null) return;
         var (mode, loc) = payload;
+
+        System.Diagnostics.Debug.WriteLine($"[ProfileDetail] LocationSelected: mode='{mode}', loc='{loc?.Locality}', id={loc?.Id}");
+
+        if (_profile == null) return;
 
         if (mode.Equals("birth", StringComparison.OrdinalIgnoreCase))
         {
             _profile.PlaceOfBirthId = loc.Id;
             _profile.PlaceOfBirthLocality = loc.Locality;
-            lblPlaceOfBirthValue.Text = loc.Locality;
         }
         else if (mode.Equals("living", StringComparison.OrdinalIgnoreCase))
         {
             _profile.PlaceOfLivingId = loc.Id;
             _profile.PlaceOfLivingLocality = loc.Locality;
-            lblPlaceOfLivingValue.Text = loc.Locality;
         }
+        else
+        {
+            // fallback: если Mode пустой или неизвестный
+            _profile.PlaceOfBirthId = loc.Id;
+            _profile.PlaceOfBirthLocality = loc.Locality;
+        }
+
+        _tempProfile = _profile;
+
+        MainThread.BeginInvokeOnMainThread(RefreshLocationLabels);
     }
+
+
 
     private async void OnCloseClicked(object sender, EventArgs e)
     {
@@ -118,14 +147,15 @@ public partial class ProfileDetailPage : ContentPage
     private async void OnPlaceOfBirthClicked(object sender, EventArgs e)
     {
         _tempProfile = _profile;
-        await Shell.Current.GoToAsync($"{nameof(LocationSearchPage)}?mode=birth", true);
+        await Shell.Current.GoToAsync($"{nameof(LocationSearchPage)}?Mode=birth", true);
     }
 
     private async void OnPlaceOfLivingClicked(object sender, EventArgs e)
     {
         _tempProfile = _profile;
-        await Shell.Current.GoToAsync($"{nameof(LocationSearchPage)}?mode=living", true);
+        await Shell.Current.GoToAsync($"{nameof(LocationSearchPage)}?Mode=living", true);
     }
+
 
     private void SetEditMode(bool isEdit)
     {

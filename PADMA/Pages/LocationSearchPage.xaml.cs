@@ -1,8 +1,9 @@
-using Microsoft.Maui.Controls;
+п»їusing Microsoft.Maui.Controls;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace PADMA.Pages;
 
@@ -16,11 +17,16 @@ public partial class LocationSearchPage : ContentPage
     private AppLocation? _selected;
     public string Mode { get; set; } = ""; // "birth" | "living"
 
+    public ICommand ItemTappedCommand { get; }
+
     public LocationSearchPage(DatabaseService database, NominatimService nominatim)
     {
         InitializeComponent();
         _database = database;
         _nominatim = nominatim;
+
+        ItemTappedCommand = new Command<AppLocation>(OnItemTapped);
+        BindingContext = this;
 
         listResults.ItemsSource = _results;
         ApplyLocalization();
@@ -34,8 +40,26 @@ public partial class LocationSearchPage : ContentPage
         btnSelect.Text = Localization.GetLocalizedText("Select", lang);
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РєСѓСЂСЃРѕСЂ РІ РїРѕР»Рµ РІРІРѕРґР°
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            await Task.Delay(200); // РЅРµР±РѕР»СЊС€РѕР№ Р»Р°Рі, С‡С‚РѕР±С‹ СЃС‚СЂР°РЅРёС†Р° СѓСЃРїРµР»Р° РѕС‚СЂРёСЃРѕРІР°С‚СЊСЃСЏ
+            entrySearch.CursorPosition = entrySearch.Text?.Length ?? 0;
+            entrySearch.SelectionLength = 0;
+            entrySearch.Unfocus(); // РѕСЃС‚Р°РІР»СЏРµРј Р±РµР· РєР»Р°РІРёР°С‚СѓСЂС‹
+        });
+    }
+
+
     private async void OnSearchClicked(object sender, EventArgs e)
     {
+        // РЎРїСЂСЏС‚Р°С‚СЊ РєР»Р°РІРёР°С‚СѓСЂСѓ, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°Р¶Р°Р» "РџРѕРёСЃРє"
+        KeyboardHelper.HideKeyboard();
+
         _results.Clear();
         btnSelect.IsEnabled = false;
         _selected = null;
@@ -49,54 +73,53 @@ public partial class LocationSearchPage : ContentPage
 
         var lang = _database.GetActiveLanguageCode();
 
-        // Сначала локальная БД
+        // РџСЂРѕРІРµСЂРєР° Р»РѕРєР°Р»СЊРЅРѕР№ Р±Р°Р·С‹
         var localResults = _database.SearchLocationByName(query);
         if (localResults.Count > 0)
         {
             foreach (var loc in localResults)
                 _results.Add(loc);
-
-            // Автоматически выделим первый результат
-            listResults.SelectedItem = _results.First();
-            _selected = _results.First();
-            btnSelect.IsEnabled = true;
-
-            loadingIndicator.IsRunning = false;
-            loadingIndicator.IsVisible = false;
-            return;
         }
-
-        // Если локально нет — идём в Nominatim
-        var found = await _nominatim.SearchAsync(query, lang);
-
-        // Дедупликация (по Locality + Country), и сразу формат в модель уже есть
-        var unique = found
-            .GroupBy(x => (x.Locality?.Trim().ToLowerInvariant() ?? "", x.Country?.Trim().ToLowerInvariant() ?? ""))
-            .Select(g => g.First())
-            .ToList();
-
-        foreach (var loc in unique)
-            _results.Add(loc);
-
-        // Если что-то нашли — авто-выделение первого
-        if (_results.Count > 0)
+        else
         {
-            listResults.SelectedItem = _results.First();
-            _selected = _results.First();
-            btnSelect.IsEnabled = true;
+            // Р•СЃР»Рё РЅРµС‚ вЂ” Р·Р°РїСЂРѕСЃ Рє Nominatim
+            var found = await _nominatim.SearchAsync(query, lang);
+            var unique = found
+                .GroupBy(x => (x.DisplayName?.Trim().ToLowerInvariant() ?? ""))
+                .Select(g => g.First())
+                .ToList();
+
+            foreach (var loc in unique)
+                _results.Add(loc);
         }
 
-        // Пауза по правилам Nominatim
-        await Task.Delay(1000);
+        await Task.Delay(1000); // Р·Р°РґРµСЂР¶РєР° РїРѕ РїРѕР»РёС‚РёРєРµ Nominatim
 
         loadingIndicator.IsRunning = false;
         loadingIndicator.IsVisible = false;
+
     }
+
+    private void OnItemTapped(AppLocation tapped)
+    {
+        if (tapped == null) return;
+
+        // РЎРєСЂС‹РІР°РµРј РєР»Р°РІРёР°С‚СѓСЂСѓ, РµСЃР»Рё РµС‰С‘ РѕС‚РєСЂС‹С‚Р°
+        KeyboardHelper.HideKeyboard();
+
+        // СЃРЅСЏС‚СЊ РІС‹РґРµР»РµРЅРёРµ СЃРѕ РІСЃРµС… Рё РІС‹РґРµР»РёС‚СЊ РѕРґРёРЅ
+        foreach (var loc in _results)
+            loc.IsSelected = (loc == tapped);
+
+        _selected = tapped;
+        btnSelect.IsEnabled = true;
+    }
+
 
     private void OnLocationSelected(object sender, SelectionChangedEventArgs e)
     {
-        _selected = e.CurrentSelection.FirstOrDefault() as AppLocation;
-        btnSelect.IsEnabled = _selected != null;
+        // РІС‹РєР»СЋС‡Р°РµРј Р°РІС‚РѕСЃРµР»РµРєС‚, РёСЃРїРѕР»СЊР·СѓРµРј Tap
+        ((CollectionView)sender).SelectedItem = null;
     }
 
     private async void OnSelectClicked(object sender, EventArgs e)
@@ -111,15 +134,6 @@ public partial class LocationSearchPage : ContentPage
             _selected.Id = _database.AddLocationAndReturnId(_selected);
 
         MessagingCenter.Send(this, "LocationSelected", (Mode, _selected));
-        await Shell.Current.GoToAsync("..", true);
-    }
-
-    private async void OnCloseClicked(object sender, EventArgs e)
-    {
-        // Если что-то выбрано — возвращаем, как и при Select
-        if (_selected != null)
-            MessagingCenter.Send(this, "LocationSelected", (Mode, _selected));
-
         await Shell.Current.GoToAsync("..", true);
     }
 }

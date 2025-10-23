@@ -38,48 +38,43 @@
             </HorizontalStackLayout>
 
             <!-- Место рождения -->
-            <Label x:Name="lblPlaceOfBirth"
-                   Text="Place of birth"
-                   FontAttributes="Bold" />
+            <Label x:Name="lblPlaceOfBirth" Text="Place of birth" FontAttributes="Bold" />
             <Grid ColumnDefinitions="*,Auto">
                 <Label x:Name="lblPlaceOfBirthValue"
-                       Text="{Binding PlaceOfBirthLocality, Mode=OneWay, FallbackValue='Select location...'}"
-                       VerticalOptions="Center"
-                       TextColor="Black"
-                       FontAttributes="Italic"
-                       Padding="4,2" />
+           VerticalOptions="Center"
+           TextColor="Black"
+           FontAttributes="Italic"
+           Padding="4,2" />
                 <ImageButton Source="search_icon.png"
-                             HeightRequest="22"
-                             WidthRequest="22"
-                             BackgroundColor="Transparent"
-                             BorderWidth="0"
-                             Clicked="OnPlaceOfBirthClicked"
-                             Grid.Column="1"
-                             HorizontalOptions="End"/>
+                 HeightRequest="22"
+                 WidthRequest="22"
+                 BackgroundColor="Transparent"
+                 BorderWidth="0"
+                 Clicked="OnPlaceOfBirthClicked"
+                 Grid.Column="1"
+                 HorizontalOptions="End"/>
             </Grid>
             <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,8"/>
 
             <!-- Место проживания -->
-            <Label x:Name="lblPlaceOfLiving"
-                   Text="Place of living"
-                   FontAttributes="Bold" />
+            <Label x:Name="lblPlaceOfLiving" Text="Place of living" FontAttributes="Bold" />
             <Grid ColumnDefinitions="*,Auto">
                 <Label x:Name="lblPlaceOfLivingValue"
-                       Text="{Binding PlaceOfLivingLocality, Mode=OneWay, FallbackValue='Select location...'}"
-                       VerticalOptions="Center"
-                       TextColor="Black"
-                       FontAttributes="Italic"
-                       Padding="4,2" />
+           VerticalOptions="Center"
+           TextColor="Black"
+           FontAttributes="Italic"
+           Padding="4,2" />
                 <ImageButton Source="search_icon.png"
-                             HeightRequest="22"
-                             WidthRequest="22"
-                             BackgroundColor="Transparent"
-                             BorderWidth="0"
-                             Clicked="OnPlaceOfLivingClicked"
-                             Grid.Column="1"
-                             HorizontalOptions="End"/>
+                 HeightRequest="22"
+                 WidthRequest="22"
+                 BackgroundColor="Transparent"
+                 BorderWidth="0"
+                 Clicked="OnPlaceOfLivingClicked"
+                 Grid.Column="1"
+                 HorizontalOptions="End"/>
             </Grid>
             <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,8"/>
+
 
             <Editor x:Name="entryMessage"
                     Placeholder="Notes"
