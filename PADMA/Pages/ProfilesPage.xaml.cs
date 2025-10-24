@@ -1,76 +1,74 @@
 using Microsoft.Maui.Controls;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using PADMA.Core.Services;   
-using PADMA.Core.Utilities;  
+using PADMA.Core.Services;
+using PADMA.Core.Utilities;
 
-namespace PADMA.Pages;
-
-
-public partial class ProfilesPage : ContentPage
+namespace PADMA.Pages
 {
-    private readonly DatabaseService _database;
-    public ObservableCollection<ProfileViewItem> Profiles { get; }
-    public Command<ProfileViewItem> OpenProfileCommand { get; }
-
-    public ProfilesPage()
+    public partial class ProfilesPage : ContentPage
     {
-        InitializeComponent();
+        private readonly DatabaseService _database;
+        public ObservableCollection<ProfileViewItem> Profiles { get; } = new();
+        public Command<ProfileViewItem> OpenProfileCommand { get; }
 
-        //OpenProfileCommand = new Command<ProfileViewItem>(async p => await NavigateToProfile(p));
-                
+        public ProfilesPage(DatabaseService database)
+        {
+            InitializeComponent();
+            _database = database;
+            BindingContext = this;
 
-        
-        // локализаци€ заголовка и кнопки Ч по твоей схеме (если хочешь сразу)
-        Title = Localization.GetLocalizedText("Profiles", DataCache.Instance.CurrentLanguageCode);
-        btnAddProfile.Text = Localization.GetLocalizedText("Add new profile", DataCache.Instance.CurrentLanguageCode);
-    }
+            OpenProfileCommand = new Command<ProfileViewItem>(async p => await NavigateToProfile(p));
 
-    public ProfilesPage(DatabaseService database)
-    {
-        InitializeComponent();
-        _database = database;
-        Profiles = new ObservableCollection<ProfileViewItem>();
-        BindingContext = this;
-        LoadProfiles();
-    }
+            // локализаци€ заголовка и кнопки
+            Title = Localization.GetLocalizedText("Profiles", _database.GetActiveLanguageCode());
+            btnAddProfile.Text = Localization.GetLocalizedText("Add new profile", _database.GetActiveLanguageCode());
+        }
 
-    private void LoadProfiles()
-    {
-        Profiles.Clear();
-        var profiles = _database.GetProfiles();
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            LoadProfiles();
+        }
 
-        foreach (var p in profiles)
-            Profiles.Add(new ProfileViewItem
+        private void LoadProfiles()
+        {
+            Profiles.Clear();
+            var profiles = _database.GetProfiles();
+
+            foreach (var p in profiles)
             {
-                Id = p.Id,
-                ProfileName = p.ProfileName,
-                IsDefault = p.Checked
-            });
+                Profiles.Add(new ProfileViewItem
+                {
+                    Id = p.Id,
+                    ProfileName = p.ProfileName,
+                    IsDefault = p.Checked
+                });
+            }
+        }
+
+        private async Task NavigateToProfile(ProfileViewItem? profile)
+        {
+            if (profile == null) return;
+            var route = $"{nameof(ProfileDetailPage)}?ProfileId={profile.Id}";
+            await Shell.Current.GoToAsync(route, true);
+        }
+
+        private async void OnAddProfileClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(ProfileDetailPage), true);
+        }
+
+        private async void OnCloseClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("//main", true);
+        }
     }
 
-
-    private async Task NavigateToProfile(ProfileViewItem? profile)
+    public class ProfileViewItem
     {
-        if (profile == null) return;
-        var route = $"{nameof(ProfileDetailPage)}?profileId={profile.Id}";
-        await Shell.Current.GoToAsync(route, true);
+        public int Id { get; set; }
+        public string ProfileName { get; set; } = string.Empty;
+        public bool IsDefault { get; set; }
     }
-
-    private async void OnAddProfileClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync(nameof(ProfileDetailPage), true);
-    }
-
-    private async void OnCloseClicked(object sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//main", true);
-    }
-}
-
-public class ProfileViewItem
-{
-    public int Id { get; set; }
-    public string ProfileName { get; set; } = string.Empty;
-    public bool IsDefault { get; set; }
 }

@@ -4,6 +4,7 @@ using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using System;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace PADMA.Pages;
 
@@ -15,20 +16,56 @@ public partial class ProfileDetailPage : ContentPage
     private static Profile? _tempProfile;
     public int ProfileId { get; set; }
 
+    private bool _isEditing = false;
+    private bool _hasChanges = false;
+    private bool _isInitializing = false;
+    private string? _snapshotJson;   // снимок состояния для проверки реальных изменений
+    private bool _isClosingByButton = false;
+
     public ProfileDetailPage(DatabaseService database)
     {
         InitializeComponent();
         _database = database;
 
-        // Проверяем, подписаны ли уже
+        // подписка на выбор локации
         MessagingCenter.Unsubscribe<LocationSearchPage, (string, AppLocation)>(this, "LocationSelected");
         MessagingCenter.Subscribe<LocationSearchPage, (string, AppLocation)>(
             this, "LocationSelected", OnLocationSelected);
+
+        // отслеживаем реальные изменения только после инициализации
+        entryProfileName.TextChanged += (_, _) => MarkChanged();
+        entryPersonName.TextChanged += (_, _) => MarkChanged();
+        entryPersonSurname.TextChanged += (_, _) => MarkChanged();
+        entryMessage.TextChanged += (_, _) => MarkChanged();
+        dateOfBirthDate.DateSelected += (_, _) => MarkChanged();
+        timeOfBirthTime.PropertyChanged += (_, _) => MarkChanged();
+    }
+
+    private void ApplyLocalization()
+    {
+        string langCode = _database.GetActiveLanguageCode();
+
+        Title = Localization.GetLocalizedText("Profile", langCode);
+        lblDateTimeOfBirth.Text = Localization.GetLocalizedText("Date and time of birth", langCode);
+        lblPlaceOfBirth.Text = Localization.GetLocalizedText("Place of birth", langCode);
+        lblPlaceOfLiving.Text = Localization.GetLocalizedText("Place of living", langCode);
+        entryProfileName.Placeholder = Localization.GetLocalizedText("Profile name", langCode);
+        entryPersonName.Placeholder = Localization.GetLocalizedText("First name", langCode);
+        entryPersonSurname.Placeholder = Localization.GetLocalizedText("Last name", langCode);
+        entryMessage.Placeholder = Localization.GetLocalizedText("Notes", langCode);
+    }
+
+    private void MarkChanged()
+    {
+        if (_isInitializing) return;
+        _hasChanges = true;
     }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        _isInitializing = true;
 
         if (_tempProfile != null)
         {
@@ -64,21 +101,14 @@ public partial class ProfileDetailPage : ContentPage
 
         ApplyLocalization();
 
-        SetEditMode(ProfileId == 0);
-    }
+        if (!_isEditing)
+            SetEditMode(ProfileId == 0);
 
-    private void ApplyLocalization()
-    {
-        string langCode = _database.GetActiveLanguageCode();
+        _isInitializing = false;
+        _hasChanges = false;
 
-        Title = Localization.GetLocalizedText("Profile", langCode);
-        lblDateTimeOfBirth.Text = Localization.GetLocalizedText("Date and time of birth", langCode);
-        lblPlaceOfBirth.Text = Localization.GetLocalizedText("Place of birth", langCode);
-        lblPlaceOfLiving.Text = Localization.GetLocalizedText("Place of living", langCode);
-        entryProfileName.Placeholder = Localization.GetLocalizedText("Profile name", langCode);
-        entryPersonName.Placeholder = Localization.GetLocalizedText("First name", langCode);
-        entryPersonSurname.Placeholder = Localization.GetLocalizedText("Last name", langCode);
-        entryMessage.Placeholder = Localization.GetLocalizedText("Notes", langCode);
+        // сохраняем "снимок" модели для последующего сравнения
+        _snapshotJson = System.Text.Json.JsonSerializer.Serialize(_profile);
     }
 
     private void RefreshLocationLabels()
@@ -92,11 +122,139 @@ public partial class ProfileDetailPage : ContentPage
             : _profile.PlaceOfLivingLocality;
     }
 
-
-    protected override void OnDisappearing()
+    // общий метод — показывает диалог Yes/No и обрабатывает всё
+    private async Task ConfirmExitAsync()
     {
-        base.OnDisappearing();
-        // MessagingCenter.Unsubscribe<LocationSearchPage, (string, AppLocation)>(this, "LocationSelected");
+        string lang = _database.GetActiveLanguageCode();
+
+        if (HasRealChanges()) // есть реальные изменения?
+        {
+            bool save = await DisplayAlert(
+                Localization.GetLocalizedText("Save changes", lang),
+                Localization.GetLocalizedText("Do you want to save changes before exit?", lang),
+                Localization.GetLocalizedText("Yes", lang),
+                Localization.GetLocalizedText("No", lang)
+            );
+
+            if (save)
+            {
+                bool saved = await SaveProfileAsync();
+                if (!saved)
+                {
+                    // валидация не прошла — остаёмся на странице
+                    return;
+                }
+            }
+            // если выбрал "No" — просто выходим
+        }
+
+        // нет изменений или успешно сохранили — выходим
+        await Shell.Current.GoToAsync("//profiles", true);
+    }
+
+    // обработка крестика — просто ставим флаг и вызываем ConfirmExitAsync()
+    private async void OnCloseClicked(object sender, EventArgs e)
+    {
+        _isClosingByButton = true;
+        await ConfirmExitAsync();
+    }
+
+    // обработка стрелки "Назад" (или свайпа) через OnNavigatingFrom
+    protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
+    {
+        base.OnNavigatingFrom(args);
+
+        // если выходим через крестик — уже обработано
+        if (_isClosingByButton)
+            return;
+
+        // проверяем изменения
+        if (HasRealChanges())
+        {
+            // "имитируем отмену" — возвращаем пользователя обратно на текущую страницу
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                // показываем тот же диалог
+                await ConfirmExitAsync();
+            });
+        }
+    }
+
+
+    // новая логика сравнения текущего состояния с сохранённым снимком
+    private bool HasRealChanges()
+    {
+        if (_profile == null) return false;
+        try
+        {
+            var current = System.Text.Json.JsonSerializer.Serialize(_profile);
+            return current != _snapshotJson;
+        }
+        catch { return _hasChanges; }
+    }
+
+    private async Task<bool> SaveProfileAsync()
+    {
+        if (_profile == null) return false;
+
+        string lang = _database.GetActiveLanguageCode();
+
+        // Проверка обязательных полей
+        if (string.IsNullOrWhiteSpace(entryProfileName.Text))
+        {
+            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Profile name is required.", lang), "OK");
+            return false;
+        }
+
+        if (_profile.DateOfBirth == default)
+        {
+            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Date of birth is required.", lang), "OK");
+            return false;
+        }
+
+        if (_profile.PlaceOfBirthId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfBirthLocality))
+        {
+            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Place of birth is required.", lang), "OK");
+            return false;
+        }
+
+        if (_profile.PlaceOfLivingId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfLivingLocality))
+        {
+            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Place of living is required.", lang), "OK");
+            return false;
+        }
+
+        _profile.DateOfBirth = dateOfBirthDate.Date + timeOfBirthTime.Time;
+
+        try
+        {
+            if (_profile.Id > 0)
+                _database.UpdateProfile(_profile);
+            else
+                _database.AddProfile(_profile);
+
+            _hasChanges = false;
+            _isEditing = false;
+            SetEditMode(false);
+
+            // обновляем снимок после сохранения
+            _snapshotJson = System.Text.Json.JsonSerializer.Serialize(_profile);
+
+            await DisplayAlert(Localization.GetLocalizedText("Saved", lang),
+                Localization.GetLocalizedText("Profile saved successfully.", lang), "OK");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PADMA] Save profile error: {ex.Message}");
+            await DisplayAlert(Localization.GetLocalizedText("Error", lang),
+                Localization.GetLocalizedText("Failed to save profile. Please try again.", lang), "OK");
+            return false;
+        }
     }
 
     private void OnLocationSelected(LocationSearchPage sender, (string Mode, AppLocation Loc) payload)
@@ -125,23 +283,28 @@ public partial class ProfileDetailPage : ContentPage
         }
 
         _tempProfile = _profile;
+        _hasChanges = true;
 
         MainThread.BeginInvokeOnMainThread(RefreshLocationLabels);
     }
 
-
-
-    private async void OnCloseClicked(object sender, EventArgs e)
+    private async void OnSaveClicked(object sender, EventArgs e)
     {
-        bool confirmExit = await DisplayAlert(
-            Localization.GetLocalizedText("Exit", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Discard unsaved changes and close?", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Yes", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("No", _database.GetActiveLanguageCode())
+        string lang = _database.GetActiveLanguageCode();
+
+        bool confirm = await DisplayAlert(
+            Localization.GetLocalizedText("Save", lang),
+            Localization.GetLocalizedText("Save changes to profile?", lang),
+            Localization.GetLocalizedText("Yes", lang),
+            Localization.GetLocalizedText("No", lang)
         );
 
-        if (!confirmExit) return;
-        await Shell.Current.GoToAsync("//profiles", true);
+        if (!confirm) return;
+
+        bool result = await SaveProfileAsync();
+
+        if (result)
+            await Shell.Current.GoToAsync("//profiles", true);
     }
 
     private async void OnPlaceOfBirthClicked(object sender, EventArgs e)
@@ -156,46 +319,20 @@ public partial class ProfileDetailPage : ContentPage
         await Shell.Current.GoToAsync($"{nameof(LocationSearchPage)}?Mode=living", true);
     }
 
-
     private void SetEditMode(bool isEdit)
     {
+        _isEditing = isEdit;
+
         entryProfileName.IsEnabled = isEdit;
         entryPersonName.IsEnabled = isEdit;
         entryPersonSurname.IsEnabled = isEdit;
         dateOfBirthDate.IsEnabled = isEdit;
         timeOfBirthTime.IsEnabled = isEdit;
         entryMessage.IsEnabled = isEdit;
-    }
 
-    private async void OnSaveClicked(object sender, EventArgs e)
-    {
-        if (_profile == null) return;
-
-        _profile.DateOfBirth = dateOfBirthDate.Date + timeOfBirthTime.Time;
-
-        string formattedDate = _profile.DateOfBirth.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-
-        bool confirm = await DisplayAlert(
-            Localization.GetLocalizedText("Save", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Save changes to profile?", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Yes", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("No", _database.GetActiveLanguageCode())
-        );
-
-        if (!confirm) return;
-
-        if (_profile.Id > 0)
-            _database.UpdateProfile(_profile);
-        else
-            _database.AddProfile(_profile);
-
-        await DisplayAlert(
-            Localization.GetLocalizedText("Saved", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Profile saved successfully.", _database.GetActiveLanguageCode()),
-            "OK"
-        );
-
-        await Shell.Current.GoToAsync("//profiles", true);
+        // блокируем выбор локаций при просмотре
+        btnPlaceOfBirth.IsEnabled = isEdit;
+        btnPlaceOfLiving.IsEnabled = isEdit;
     }
 
     private void OnEditClicked(object sender, EventArgs e)
@@ -253,4 +390,5 @@ public partial class ProfileDetailPage : ContentPage
         await DisplayAlert("Deleted", "Profile deleted.", "OK");
         await Shell.Current.GoToAsync("//profiles", true);
     }
+
 }

@@ -41,11 +41,12 @@
             <Label x:Name="lblPlaceOfBirth" Text="Place of birth" FontAttributes="Bold" />
             <Grid ColumnDefinitions="*,Auto">
                 <Label x:Name="lblPlaceOfBirthValue"
-           VerticalOptions="Center"
-           TextColor="Black"
-           FontAttributes="Italic"
-           Padding="4,2" />
-                <ImageButton Source="search_icon.png"
+                    VerticalOptions="Center"
+                    TextColor="Black"
+                    FontAttributes="Italic"
+                    Padding="4,2" />
+                <ImageButton x:Name="btnPlaceOfBirth"
+                 Source="search_icon.png"
                  HeightRequest="22"
                  WidthRequest="22"
                  BackgroundColor="Transparent"
@@ -60,11 +61,12 @@
             <Label x:Name="lblPlaceOfLiving" Text="Place of living" FontAttributes="Bold" />
             <Grid ColumnDefinitions="*,Auto">
                 <Label x:Name="lblPlaceOfLivingValue"
-           VerticalOptions="Center"
-           TextColor="Black"
-           FontAttributes="Italic"
-           Padding="4,2" />
-                <ImageButton Source="search_icon.png"
+                    VerticalOptions="Center"
+                    TextColor="Black"
+                    FontAttributes="Italic"
+                    Padding="4,2" />
+                <ImageButton x:Name="btnPlaceOfLiving"
+                 Source="search_icon.png"
                  HeightRequest="22"
                  WidthRequest="22"
                  BackgroundColor="Transparent"
@@ -74,7 +76,6 @@
                  HorizontalOptions="End"/>
             </Grid>
             <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,8"/>
-
 
             <Editor x:Name="entryMessage"
                     Placeholder="Notes"
