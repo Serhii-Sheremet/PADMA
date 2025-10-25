@@ -368,7 +368,7 @@ date.ShiftByDaylightDelta(adjustmentRules);
 
 These methods standardize temporal logic across astronomical and calendar-related calculations.
 
-### 🔹 Planned work
+### 👤 Profiles feature
 
 ---
 
@@ -481,15 +481,21 @@ used by **ConfigurationPage** and other modules.
 | 🌟 **Set default** | Sets current profile as default (`CHECKED = 1`), unsets others. | — |
 | 🗑 **Delete** | Deletes current profile and returns to list. | ✅ “Delete this profile?” |
 
+The **❌ Close** icon and **← Back arrow** both trigger the same method `HandleBackAsync()`.
+Both must show the same confirmation dialog sequence when unsaved changes exist.  
+If no changes exist, they immediately return to the profiles list without prompts. 
+
 ---
 
-#### 🔹 Confirmation dialogs  
+### 🔹 Confirmation Dialogs and Validation Rules
+| Event | Dialog | Conditions |
+|--------|---------|-------------|
+| Leaving the page with unsaved changes | “Do you want to save changes before exit?” | Triggered if `HasRealChanges()` returns true. |
+| Manual save via 💾 button | “Save changes to profile?” | Always displayed before database write. |
+| Successful save | “Profile saved successfully.” | Shown after profile insert or update succeeds. |
+| Save error | “Failed to save profile. Please try again.” | Shown when a database or validation exception occurs. |
+| Validation alerts | Localized messages per field | Required fields: **Profile Name**, **Date of Birth**, **Place of Birth**, **Place of Living** |
 
-| Event | Dialog |
-|--------|---------|
-| Save | “Save changes to profile [ProfileName]?” |
-| Delete | “Delete profile [ProfileName]?” |
-| Close without saving | “Discard unsaved changes?” |
 
 Dialogs follow the same visual and logical pattern as those used in `ConfigBasePage`.  
 
@@ -529,6 +535,28 @@ AppShell
  ├── ConfigurationPage (burger + close)
  └── ExitPage
 ```
+
+---
+
+### 🔹 Navigation and State Persistence
+- Navigating to `LocationSearchPage` **must not reset** or discard current profile form data.  
+- Temporary state of the current profile is stored in `_tempProfile`.  
+- When returning from the search page, all entered values remain intact.  
+- Page exit logic checks for actual modifications using `HasRealChanges()` which compares serialized state `_snapshotJson`.
+
+```csharp
+private static Profile? _tempProfile;  // Holds unsaved form data
+private string? _snapshotJson;         // Serialized snapshot of initial state
+private bool HasRealChanges() => JsonSerializer.Serialize(_profile) != _snapshotJson;
+```
+
+---
+
+### 🔹 Behavior When Returning from Location Search
+- `MessagingCenter` sends `"LocationSelected"` with `(Mode, AppLocation)` payload.  
+- The appropriate field (`Place of Birth` or `Place of Living`) updates immediately.  
+- `_snapshotJson` is **not refreshed** after location selection — this ensures the “unsaved changes” dialog remains functional.  
+- The `_skipSnapshotOnce` flag prevents snapshot regeneration upon re-entering the page.
 
 ---
 
@@ -605,7 +633,7 @@ Location data structure is defined in
 
 ### 🗺️ Nominatim (OpenStreetMap)
 
-To find GPS coordinates for locations it is planned to use Nominatim API
+To find GPS coordinates for locations the Nominatim API are used
 🔗 https://nominatim.org/release-docs/latest/api/Search/
 
 ---
