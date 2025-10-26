@@ -638,4 +638,17 @@ To find GPS coordinates for locations the Nominatim API are used
 
 ---
 
+###🔹Planned work
+
+* Add Swiss Ephemeris library to project
+* Make base calculation functions for:
+- Planet transits
+- Tithi
+- Mritya Bhaga 
+- Nitya Yoga
+- Solar and Moon Eclipce
+- Sunrise and Sunset
+
+---
+
 > _End of PADMA requirements document_
