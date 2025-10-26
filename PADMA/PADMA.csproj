@@ -63,7 +63,6 @@
 
     <!-- Logging -->
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
-    <PackageReference Include="SwissEphNet" Version="2.8.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -96,6 +95,10 @@
     </MauiXaml>
     <MauiXaml Update="Pages\SunrisePage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\TransitsPage.xaml" Generator="MSBuild:Compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Core\Native\" />
   </ItemGroup>
 
 </Project>
