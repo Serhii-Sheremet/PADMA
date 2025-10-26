@@ -727,16 +727,284 @@ To find GPS coordinates for locations the Nominatim API are used
 
 ---
 
-###🔹Planned work
+---
 
-* Add Swiss Ephemeris library to project
-* Make base calculation functions for:
-- Planet transits
-- Tithi
-- Mritya Bhaga 
-- Nitya Yoga
-- Solar and Moon Eclipce
-- Sunrise and Sunset
+## 🌠 SwissService — Swiss Ephemeris Integration
+
+**Purpose:**  
+Provides high-precision astronomical and astrological calculations using the **Swiss Ephemeris** library (`SwissEphNet` NuGet package).  
+All computations are executed in **UTC (GMT-0)** using the managed .NET API, ensuring cross-platform precision and consistency.
+
+---
+
+### 🧭 Core Principles
+
+- All calculations are performed relative to **UTC / GMT-0**.  
+- Input dates are converted to UTC before processing.  
+- Output values are returned in UTC and converted to local time only in the UI layer.  
+- DST (Daylight Saving Time) adjustments use .NET’s built-in `TimeZoneInfo` and `AdjustmentRules`.  
+- Default calculation flags:  
+  - `SEFLG_SWIEPH | SEFLG_SPEED | SEFLG_SIDEREAL`  
+  - `SE_SIDM_LAHIRI` for sidereal mode.  
+- Internal numeric precision follows Swiss Ephemeris defaults (double precision).  
+
+---
+
+### 🧩 Data Structures
+
+#### 🪐 `SwissParameters`
+Encapsulates all input parameters for Swiss Ephemeris calculations.
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `PlanetCode` | string | Internal planet code (matches `PLANET.PLANETCODE` in the database and the `EPlanet` enum). Used for computation and identification. |
+| `PlanetId` | int | Internal planet Id (matches `PLANET` in the database and the `EPlanet` enum). |
+| `Longitude` | double | Geographic longitude (East positive). |
+| `Latitude` | double | Geographic latitude (North positive). |
+| `Altitude` | double | Altitude above sea level (meters). |
+| `UtcDateTime` | DateTime | UTC timestamp used as the base reference for calculation. |
+
+*Note:* `PlanetCode` is not localized — localized names are stored in `PLANET_DESC` in the database.
+
+---
+
+#### 🧮 `SwissResult`
+Represents calculation results returned by SwissService methods.
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `CalculationValues` | double[] | Array of values returned by Swiss Ephemeris (`longitude`, `latitude`, `distance`, `speedLon`, `speedLat`, `speedDist`). |
+| `UtcSecondsOfDay` | int | Time of the calculation in seconds from the start of the UTC day. |
+| `Sign` | int | Zodiac sign number (1–12). |
+| `IsRetrograde` | bool | Indicates if the planet is retrograde. |
+| `IsCalculationFailed` | bool | True if the calculation returned invalid or missing data. |
+
+Used by:  
+- `GetPlanetPositions()`  
+- `GetTithiSequence()`  
+- `GetNityaYogaSequence()`  
+- `GetMrityuBhagaPeriods()`  
+
+---
+
+#### ⚰️ `MrityuBhagaParameters`
+Defines angular limits used to detect Mrityu Bhaga (critical degrees) periods for each planet.
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `PlanetLongitude` | double | Current ecliptic longitude of the planet being analyzed. |
+| `StartDegree` | double | Start of the critical sector (in degrees). |
+| `EndDegree` | double | End of the critical sector (in degrees). |
+| `IsForwardCalculation` | bool | Direction of calculation; if true, search starts from the lower boundary. |
+
+Used by:  
+- `GetMrityuBhagaPeriods()`  
+
+---
+
+#### 🌗 `NityaYogaTithiResults`
+Stores paired ephemeris data of the Sun and Moon for computing Tithi and Nitya Yoga transitions.
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `SunResults` | double[] | Swiss Ephemeris output for the Sun (`longitude`, `latitude`, `distance`, `speedLon`, `speedLat`, `speedDist`). |
+| `MoonResults` | double[] | Swiss Ephemeris output for the Moon (same format). |
+| `UtcSecondsOfDay` | int | UTC time in seconds from the start of the day corresponding to this calculation step. |
+
+Used by:  
+- `GetTithiSequence()`  
+- `GetNityaYogaSequence()`  
+
+---
+
+#### 🪩 `PlanetParameters`
+Stores calculated astrological parameters for a planet at a given moment.
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `CurrentSign` | int | Zodiac sign number (1–12). |
+| `CurrentNakshatra` | int | Nakshatra number (1–27) derived from the planet’s longitude. |
+| `CurrentPada` | int | Pada number (1–4) within the current Nakshatra. |
+| `RetrogradeStatus` | string | Retrograde motion state: `"R"` (retrograde), `"D"` (direct), `"S"` (stationary). |
+
+Used by:  
+- `GetPlanetPositions()`  
+- `GetMrityuBhagaPeriods()`  
+- `GetTithiSequence()`  
+
+---
+
+#### 🪙 `EPlanet` (Enum)
+Defines internal identifiers for celestial bodies used in PADMA.  
+Maps directly to the `PLANET` table in the database.
+
+| Enum | Code | Description |
+|-------|------|-------------|
+| `Sun` | `"SUN"` | The Sun |
+| `Moon` | `"MOON"` | The Moon |
+| `Mars` | `"MARS"` | Mars |
+| `Mercury` | `"MERCURY"` | Mercury |
+| `Jupiter` | `"JUPITER"` | Jupiter |
+| `Venus` | `"VENUS"` | Venus |
+| `Saturn` | `"SATURN"` | Saturn |
+| `Rahu` | `"RAHU"` | North Node |
+| `Ketu` | `"KETU"` | South Node |
+| ... | ... | (others as defined in DB) |
+
+
+### 🔧 Planet ID Mapping
+
+SwissService operates with two distinct but related identifiers for planets:
+
+1. **PlanetId** — Internal PADMA identifier  
+   - Matches IDs from the `EPlanet` enum and the `PLANET` table in the PADMA database.  
+   - Used throughout PADMA logic and data caching.  
+   - Represents the logical planet used in calculations and UI.  
+
+2. **SwissPlanetConst** — Swiss Ephemeris constant  
+   - Numeric identifier defined in the Swiss Ephemeris library (`SweConst` class).  
+   - Used only internally during Swiss Ephemeris calls.  
+   - Derived from `PlanetId` via a utility mapping.
+
+Before performing calculations, `PlanetId` is converted into its Swiss Ephemeris equivalent using:
+
+```csharp
+SwissUtility.GetPlanetSWEConstByPlanetId(int planetId)
+```
+
+Example implementation:
+```csharp
+public static int GetPlanetSWEConstByPlanetId(int planetId)
+{
+    return planetId switch
+    {
+        1 => SweConst.SE_SUN,
+        2 => SweConst.SE_MOON,
+        3 => SweConst.SE_MARS,
+        4 => SweConst.SE_MERCURY,
+        5 => SweConst.SE_JUPITER,
+        6 => SweConst.SE_VENUS,
+        7 => SweConst.SE_SATURN,
+        8 => SweConst.SE_MEAN_NODE,   // Rahu (Mean)
+        10 => SweConst.SE_TRUE_NODE,  // Rahu (True)
+        // 9 and 11 correspond to Ketu (Mean / True) — computed as 180° opposite of Rahu
+        _ => -1
+    };
+}
+```
+
+In cases where **Ketu** is required:
+```csharp
+public static double AdjustForKetu(double rahuLongitude)
+{
+    // Ketu = Rahu + 180°, normalized to 360°
+    double ketuLongitude = rahuLongitude + 180.0;
+    if (ketuLongitude >= 360.0)
+        ketuLongitude -= 360.0;
+    return ketuLongitude;
+}
+```
+
+---
+
+## 🪐 Mapping Table
+
+| EPlanet ID | Planet | Swiss Ephemeris Constant | Notes |
+|-------------|---------|--------------------------|--------|
+| 1 | Sun | `SE_SUN` |  |
+| 2 | Moon | `SE_MOON` |  |
+| 3 | Mars | `SE_MARS` |  |
+| 4 | Mercury | `SE_MERCURY` |  |
+| 5 | Jupiter | `SE_JUPITER` |  |
+| 6 | Venus | `SE_VENUS` |  |
+| 7 | Saturn | `SE_SATURN` |  |
+| 8 | Rahu (Mean Node) | `SE_MEAN_NODE` | Direct Swiss Ephemeris calculation |
+| 9 | Ketu (Mean Node) | — | Derived as Rahu + 180° |
+| 10 | Rahu (True Node) | `SE_TRUE_NODE` | Direct Swiss Ephemeris calculation |
+| 11 | Ketu (True Node) | — | Derived as Rahu + 180° |
+
+---
+
+**Notes:**  
+- `PlanetId` represents PADMA’s internal model and database linkage.  
+- `SwissPlanetConst` is generated dynamically and never stored in the database.  
+- Ketu (both Mean and True) is not directly computed — its position is derived geometrically as the opposite point of Rahu.  
+- This approach ensures consistent and efficient calculations, aligning with both **Jyotish tradition** and **Swiss Ephemeris standards**.
+
+---
+
+### ⚙️ Constants & Flags
+
+SwissService uses predefined constants from the SwissEphNet library (`SweConst`).  
+Typical defaults:
+
+| Constant | Description |
+|-----------|-------------|
+| `SEFLG_SWIEPH` | Use Swiss Ephemeris computation mode. |
+| `SEFLG_SPEED` | Include planet speed in results. |
+| `SEFLG_SIDEREAL` | Enable sidereal zodiac. |
+| `SE_SIDM_LAHIRI` | Use Lahiri ayanamsha. |
+| `SE_GREG_CAL` | Gregorian calendar mode. |
+
+Custom constants are not duplicated — the service uses SwissEphNet definitions directly.
+
+---
+
+### 🧮 Planned Functions (Implementation Phase 1)
+
+| Function | Description | Status |
+|-----------|--------------|--------|
+| `GetPlanetPositions()` | Returns planetary coordinates (longitude, latitude, speed, distance). | ✅ Planned |
+| `GetTithiSequence()` | Calculates lunar day (Tithi) transitions. | ✅ Planned |
+| `GetNityaYogaSequence()` | Calculates Nitya Yoga sequence for the given date range. | ✅ Planned |
+| `GetMrityuBhagaPeriods()` | Detects critical degree periods for each planet. | ✅ Planned |
+| `GetEclipses()` | Computes solar and lunar eclipses. | ⚙️ Planned |
+| `GetAscendant()` | Calculates ascendant and house cusps. | ✅ Planned |
+| `GetSunriseSunset()` | Calculates sunrise and sunset times (requires validation). | ⚠️ Under review |
+
+---
+
+### 🕒 Time Handling Policy
+
+- All internal calculations use **UTC (GMT-0)** as the base reference.  
+- Conversion to local time happens only in the UI layer.  
+- Time zone and DST adjustments use `.NET TimeZoneInfo` APIs.  
+- This ensures cross-platform accuracy and prevents offset drift errors.  
+
+---
+
+## 📘 Naming Recommendations
+
+To ensure clear, consistent English naming and cross-platform maintainability,  
+the following conventions apply to all `SwissService` structures and methods.
+
+| Old Name | New Name | Notes |
+|-----------|-----------|-------|
+| `EpheParameters` | `SwissParameters` | Unified calculation input model |
+| `EpheResults` | `SwissResult` | Standard calculation result model |
+| `CurrentZnak` | `CurrentSign` | "Sign" = Zodiac sign |
+| `CurrentRetro` | `RetrogradeStatus` | Textual retrograde status |
+| `Znak` | `Sign` | in result models |
+| `Degree` | `PlanetLongitude` | Explicit meaning |
+| `DegreeFrom` | `StartDegree` | Clarified naming |
+| `DegreeTo` | `EndDegree` | Clarified naming |
+| `IsCalcFrom` | `IsForwardCalculation` | Direction flag |
+| `DateInSeconds` | `UtcSecondsOfDay` | Time relative to UTC |
+| `DateTimeUtc` | `UtcDateTime` | C# idiomatic form |
+| `DateNotFound` | `IsCalculationFailed` | Boolean-friendly |
+| `RetrogradeStatus` | `IsRetrograde` (optional bool form) | For flags or visual indicators |
+| `CalcResults` | `CalculationValues` | Clearer and descriptive |
+
+**Method naming guidelines:**
+- Use PascalCase verbs (`Get`, `Calculate`, `Convert`).  
+- Avoid suffixes tied to location (e.g., `_London`).  
+- Example methods:
+  - `GetPlanetPositions(SwissParameters parameters)`
+  - `CalculateTithiSequence(DateTime startDateUtc, DateTime endDateUtc)`
+  - `GetMrityuBhagaPeriods(SwissParameters parameters)`
+  - `GetEclipses(DateTime startDateUtc, DateTime endDateUtc)`
+  - `GetAscendant(SwissParameters parameters)`
+  - `GetSunriseSunset(SwissParameters parameters)`
 
 ---
 
