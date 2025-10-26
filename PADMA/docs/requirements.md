@@ -60,6 +60,95 @@ SetFirstDayOfWeek(string code)
 SetAppSettingActive(string groupCode, string settingCode) // universal for any config page
 ```
 
+
+## ⚙️ AppSettingsService  
+
+**Purpose:**  
+Provides centralized logic for loading and managing all application settings from the database.  
+It acts as a higher-level abstraction over `DatabaseService`, offering grouped access to configuration options.
+
+**Responsibilities:**
+- Loads all configuration groups from the `APPSETTING` table.  
+- Retrieves currently active setting for each group.  
+- Activates specific settings and updates their state in the database.  
+- Notifies the system (via `MessagingCenter`) when a configuration change occurs.
+
+**Main methods:**
+```csharp
+LoadAllSettings()
+GetActiveSetting(string groupCode)
+ActivateSetting(string groupCode, string settingCode)
+```
+
+**Behavior:**
+- When a setting is activated, all others in the same group are automatically deactivated.  
+- Ensures data consistency between database and in-memory cache (`DataCache`).  
+- Often used by configuration pages derived from `ConfigBasePage`.  
+
+
+## 🧰 KeyboardHelper  
+
+**Purpose:**  
+Provides utility methods to control the virtual keyboard behavior on mobile devices.  
+Ensures a clean UI experience by automatically hiding the keyboard after certain actions (e.g. tapping a button, navigating away).
+
+**Methods:**
+```csharp
+HideKeyboard(Page page)
+HideKeyboard(View control)
+```
+
+**Behavior:**
+- Detects the current focused element and dismisses the soft keyboard.  
+- Typically invoked after text entry or form submission within `ProfileDetailPage` and similar pages.  
+- Supports both Android and iOS platforms.  
+
+
+## 🎨 XAML Converters  
+
+**Purpose:**  
+Provide reusable value converters for binding logic in XAML.  
+They translate application data into visual UI states such as colors, sizes, or visibility.
+
+**Defined converters:**
+
+| Converter | Description |
+|------------|--------------|
+| `BoolToColorConverter` | Returns a color depending on a boolean value (e.g. highlight selected items). |
+| `DateTimeToTimeSpanConverter` | Converts `DateTime` objects to `TimeSpan` or formatted time strings for display. |
+| `HeightToCellHeightConverter` | Dynamically adjusts element height based on grid layout size. |
+| `TodayBackgroundConverter` | Highlights the current day cell with accent color in the calendar grid. |
+
+**Usage Example (XAML):**
+```xml
+<Label Text="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}" />
+```
+
+All converters are declared as resources in XAML and shared across calendar and configuration pages.
+
+
+## ⏱️ DateTime Format and Precision
+
+**Purpose:**  
+To ensure consistent handling of dates and times across the application and database.
+
+**Standard Format:**  
+All date and time values use the standard .NET `DateTime` structure and are stored in SQLite in the format:
+
+```
+yyyy-MM-dd HH:mm:ss
+```
+
+**Rules:**
+- Precision is up to **seconds**.  
+- `System.Globalization.CultureInfo.InvariantCulture` is always used when converting to or from text.  
+- All data persisted to the database must follow this invariant format to ensure cross-platform consistency.  
+- Example (from `Profile` module):
+  ```csharp
+  var dateText = profile.DateOfBirth.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+  ```
+- This convention applies to all future modules, including ephemeris and time-based computations.
+
 ---
 
 ### 🔸 DataCache  
@@ -609,12 +698,12 @@ with four translations: **English, Ukrainian, Polish, Russian**.
 ║ ← John Doe                ❌ ║
 ╚════════════════════════════╝
 [ 💾 Save ] [ ✏️ Edit ] [ 🌟 Set default ] [ 🗑 Delete ]
-────────────────────────────────────
-| Profile name: John Doe            |
-| Date of birth: 12.05.1988         |
-| Place of birth: Kyiv ⯈           |
-| Place of living: Warsaw ⯈        |
-────────────────────────────────────
+────────────────────────────────────---------
+| Profile name: John Doe            		|
+| Date of birth: 12.05.1988 12:48:00        |
+| Place of birth: Kyiv ⯈           			|
+| Place of living: Warsaw ⯈        			|
+────────────────────────────────────---------
       │
       ▼
 ╔════════════════════════════╗
