@@ -22,12 +22,11 @@ internal static class SweConst
     public const int SE_TRUE_NODE = 11;  // Rahu (True)
 
     // === Флаги расчётов ===
-    public const int SEFLG_JPLEPH = 1;   // Use JPL ephemeris
-    public const int SEFLG_SWIEPH = 2;   // Use Swiss ephemeris
-    public const int SEFLG_MOSEPH = 4;   // Use Moshier ephemeris
-    public const int SEFLG_HELCTR = 8;   // Heliocentric position
-    public const int SEFLG_TRUEPOS = 16;  // True position, no light-time correction
-    public const int SEFLG_TOPOCTR = 32;  // Topocentric position
-    public const int SEFLG_SIDEREAL = 64; // Sidereal calculations
-    public const int SEFLG_SPEED = 256; // Return speed
+    public const int SEFLG_SWIEPH = 2;
+    public const int SEFLG_SPEED = 256;
+    public const int SEFLG_TOPOCTR = 32768;
+    public const int SEFLG_SIDEREAL = 65536;
+
+    public const int SE_SIDM_LAHIRI = 1;
+
 }

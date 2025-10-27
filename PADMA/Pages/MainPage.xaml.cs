@@ -40,6 +40,10 @@ namespace PADMA.Pages
         {
             base.OnAppearing();
 
+            var now = new DateTime(2025,10,29);
+            var sun = SwissService.GetPlanetPosition(now, 1);
+            Console.WriteLine($"☀ Sun longitude = {sun[0]:F4}°");
+
             try
             {
                 if (_needsRefreshAfterConfig)

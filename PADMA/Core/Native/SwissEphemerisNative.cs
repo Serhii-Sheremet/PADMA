@@ -15,6 +15,12 @@ internal static class SwissEphemerisNative
         double hour,
         int gregflag);
 
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_utc_to_jd(
+    int iyear, int imonth, int iday, int ihour, int imin, double dsec,
+    int gregflag, double[] dret, StringBuilder serr);
+
+
     // Обратное преобразование юлианской даты в календарную
     [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void swe_revjul(

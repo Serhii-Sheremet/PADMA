@@ -100,5 +100,9 @@
   <ItemGroup>
     <Folder Include="Core\Native\" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <AndroidNativeLibrary Include="Platforms\Android\libs\**\*.so" />
+  </ItemGroup>
 
 </Project>
