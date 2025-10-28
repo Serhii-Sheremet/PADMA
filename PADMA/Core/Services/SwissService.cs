@@ -18,43 +18,62 @@ namespace PADMA.Core.Services
         /// </summary>
         public static async Task InitializeEphemerisPathAsync()
         {
-            if (_initialized)
-                return;
+            if (_initialized) return;
 
-#if WINDOWS
-                string path = Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "ephe");
-                if (!Directory.Exists(path))
-                    throw new DirectoryNotFoundException($"Ephemeris folder not found: {path}");
-                SwissEphemerisNative.swe_set_ephe_path(path);
-#elif ANDROID
-            string targetDir = Path.Combine(FileSystem.AppDataDirectory, "ephe");
-            if (!Directory.Exists(targetDir))
-                Directory.CreateDirectory(targetDir);
-
-            if (Directory.GetFiles(targetDir).Length < 10)
-            {
-                using var stream = await FileSystem.OpenAppPackageFileAsync("ephe.zip");
-                if (stream == null)
-                    throw new Exception("Missing ephe.zip in Resources/Raw.");
-
-                string zipPath = Path.Combine(FileSystem.AppDataDirectory, "ephe.zip");
-                using (var file = File.Create(zipPath))
-                    await stream.CopyToAsync(file);
-
-                System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, targetDir, true);
-            }
-
-            SwissEphemerisNative.swe_set_ephe_path(targetDir);
-#else
+            #if WINDOWS
+                        string path = Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "ephe");
+                        if (!Directory.Exists(path))
+                            throw new DirectoryNotFoundException($"Ephemeris folder not found: {path}");
+                        SwissEphemerisNative.swe_set_ephe_path(path);
+            #elif ANDROID
+                try
+                {
+                    string targetDir = Path.Combine(FileSystem.AppDataDirectory, "ephe");
+                    if (!Directory.Exists(targetDir))
+                        Directory.CreateDirectory(targetDir);
+            
+                    // если уже распаковано (типичных файлов > 100), не трогаем
+                    if (Directory.Exists(targetDir) && Directory.GetFiles(targetDir, "*.se*").Length > 100)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[EPHE] Already extracted: {targetDir}");
+                    }
+                    else
+                    {
+                        string zipPath = Path.Combine(FileSystem.AppDataDirectory, "ephe.zip");
+                        // копируем из ресурсов в локальный файл
+                        await using (var stream = await FileSystem.OpenAppPackageFileAsync("ephe.zip"))
+                        await using (var file = File.Create(zipPath))
+                        {
+                            await stream.CopyToAsync(file);
+                        }
+            
+                        // распаковываем (перезапись разрешена)
+                        System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, targetDir, overwriteFiles: true);
+            
+                        // удал€ем временный zip, чтобы не висел в lock
+                        try { File.Delete(zipPath); } catch { /* ignore */ }
+                    }
+            
+                    SwissEphemerisNative.swe_set_ephe_path(targetDir);
+                }
+                catch (Exception ex)
+                {
+                    // лог + пробрасываем с контекстом
+                    System.Diagnostics.Debug.WriteLine("[EPHE][ERROR] " + ex);
+                    throw new InvalidOperationException("Failed to initialize ephemeris on Android. " +
+                        "Make sure Resources/Raw/ephe.zip exists and has Build Action = MauiAsset.", ex);
+                }
+            #else
                 string defaultPath = Path.Combine(AppContext.BaseDirectory, "Resources", "Raw", "ephe");
                 SwissEphemerisNative.swe_set_ephe_path(defaultPath);
-#endif
+            #endif
 
-            // [MOD] —разу устанавливаем сидерический режим по умолчанию (Ћахири)
+            // сидерика Ћахири по умолчанию
             SwissEphemerisNative.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0, 0);
 
             _initialized = true;
         }
+
 
         /// <summary>
         /// Gets planetary position (longitude, latitude, distance, speed) for a given UTC date and planet ID.
@@ -68,10 +87,10 @@ namespace PADMA.Core.Services
             if (!SwissUtility.IsSupportedPlanet(planetId))
                 throw new ArgumentException($"Unsupported planetId {planetId}. Ketu is handled separately.", nameof(planetId));
 
-            // 1) ∆Єстко к UTC
+            // ∆Єстко к UTC
             var utc = utcDate.Kind == DateTimeKind.Utc ? utcDate : utcDate.ToUniversalTime();
 
-            // 2) JD(UT) безопасно через swe_utc_to_jd
+            // JD(UT) безопасно через swe_utc_to_jd
             var dret = new double[2];
             var serr = new StringBuilder(256);
             int conv = SwissEphemerisNative.swe_utc_to_jd(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second,

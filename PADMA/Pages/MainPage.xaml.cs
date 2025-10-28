@@ -1,9 +1,12 @@
 ﻿using Microsoft.Maui.Controls;
+using PADMA.Core.Analysis;
+using PADMA.Core.Models;
+using PADMA.Core.Native;
+using PADMA.Core.Services;
+using PADMA.UI;
 using System;
 using System.Globalization;
 using System.Linq;
-using PADMA.UI;
-using PADMA.Core.Services;
 
 namespace PADMA.Pages
 {
@@ -36,13 +39,51 @@ namespace PADMA.Pages
             UpdateDaysHeader();
         }
 
+        public static async Task RunAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("=== Swiss Ephemeris Test: Moon states (Lahiri) ===");
+
+                await SwissService.InitializeEphemerisPathAsync();
+                SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+
+                // Быстрый smoke-test перед длинным расчётом
+                var jd0 = SwissEphemerisNative.swe_julday(2025, 10, 29, 0.0, SweConst.SE_GREG_CAL);
+                var xx = new double[6];
+                var serr = new System.Text.StringBuilder(256);
+                int rc = SwissEphemerisNative.swe_calc_ut(jd0, SweConst.SE_MOON,
+                           SweConst.SEFLG_SWIEPH | SweConst.SEFLG_SIDEREAL | SweConst.SEFLG_SPEED, xx, serr);
+                System.Diagnostics.Debug.WriteLine($"[SMOKE] rc={rc} lon={xx[0]:F4} err={serr}");
+
+                var list = SwissAnalysis.CalculatePlanetDataList_London(
+                    planetId: 2,
+                    startUtc: new DateTime(2025, 10, 27, 0, 0, 0, DateTimeKind.Utc),
+                    endUtc: new DateTime(2025, 11, 03, 0, 0, 0, DateTimeKind.Utc));
+
+                foreach (var d in list)
+                    System.Diagnostics.Debug.WriteLine(d.ToString());
+
+                System.Diagnostics.Debug.WriteLine($"[DONE] Total states: {list.Count}");
+
+                SwissService.Close();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[TEST][ERROR] " + ex.ToString());
+                // при желании: выводить в UI Alert/Label
+            }
+        }
+
+
+
         protected override void OnAppearing()
         {
             base.OnAppearing();
 
-            var now = new DateTime(2025,10,29);
-            var sun = SwissService.GetPlanetPosition(now, 1);
-            Console.WriteLine($"☀ Sun longitude = {sun[0]:F4}°");
+
+            _ = RunAsync();
+
 
             try
             {
