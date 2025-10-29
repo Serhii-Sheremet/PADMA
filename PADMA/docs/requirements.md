@@ -1114,6 +1114,42 @@ the following conventions apply to all `SwissService` structures and methods.
   - `GetAscendant(SwissParameters parameters)`
   - `GetSunriseSunset(SwissParameters parameters)`
 
+### 🧩 Future iOS Support (Planned)
+
+The Swiss Ephemeris integration is currently implemented for:
+- **Windows** — via `swedll64.dll`
+- **Android** — via `libswe.so` (custom-built from source)
+
+#### iOS version (pending)
+For iOS, a static library (`libswe.a`) will be required, since iOS does not permit dynamic linking of `.dll` or `.so` files.  
+This library can be built later using either:
+- **macOS + Xcode toolchain**, via `clang` and `ar`, or  
+- **GitHub Actions**, using a macOS build runner to produce `libswe.a` automatically.
+
+When ready, it will be added to:
+`Platforms/iOS/libs/libswe.a`
+
+
+and referenced in `PADMA.csproj` as:
+
+```xml
+<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
+  <NativeReference Include="Platforms/iOS/libs/libswe.a">
+    <Kind>Static</Kind>
+  </NativeReference>
+</ItemGroup>
+```
+
+Once integrated, the SwissService initialization logic will extend with a new conditional branch:
+```
+#elif IOS
+    string path = NSBundle.MainBundle.BundlePath + "/ephe";
+    SwissEphemerisNative.swe_set_ephe_path(path);
+```
+### ✅ Until then, the iOS build will reuse the same managed code,
+and only require addition of the native library at the final release stage.
+
+
 ---
 
 > _End of PADMA requirements document_
