@@ -39,8 +39,8 @@ namespace PADMA.Pages
             UpdateDaysHeader();
         }
 
-        // Test method for Swiss Ephemeris calculations
-        public static async Task RunAsync()
+        // Test method for Swiss Ephemeris PlanetData calculations
+        public static async Task RunPlanetTestAsync()
         {
             try
             {
@@ -76,6 +76,51 @@ namespace PADMA.Pages
             }
         }
 
+        /// <summary>
+        /// Simple debug test: calculates all Tithi changes for a given UTC range.
+        /// </summary>
+        public static async Task RunTithiTestAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("=== Swiss Ephemeris Test: Tithi states (Lahiri, London) ===");
+
+                await SwissService.InitializeEphemerisPathAsync();
+                SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+
+                // --- smoke-тест для проверки инициализации ---
+                var jd0 = SwissEphemerisNative.swe_julday(2025, 10, 29, 0.0, SweConst.SE_GREG_CAL);
+                var xx = new double[6];
+                var serr = new System.Text.StringBuilder(256);
+                int rc = SwissEphemerisNative.swe_calc_ut(
+                    jd0,
+                    SweConst.SE_MOON,
+                    SweConst.SEFLG_SWIEPH | SweConst.SEFLG_SIDEREAL | SweConst.SEFLG_SPEED,
+                    xx,
+                    serr);
+                System.Diagnostics.Debug.WriteLine($"[SMOKE] rc={rc} lon={xx[0]:F4} err={serr}");
+                // ---------------------------------------------
+
+                DateTime fromDate = new(2025, 10, 27, 0, 0, 0, DateTimeKind.Utc);
+                DateTime toDate = new(2025, 11, 3, 0, 0, 0, DateTimeKind.Utc);
+
+                var tithiDataList = SwissAnalysis.CalculateTithiDataList_London(fromDate, toDate);
+
+                foreach (var t in tithiDataList)
+                    System.Diagnostics.Debug.WriteLine(
+                        $"{t.DateTimeUtc:yyyy-MM-dd HH:mm:ss} | Δ={t.MoonSunDifference:F4}° | Tithi={t.TithiId}");
+
+                System.Diagnostics.Debug.WriteLine($"[DONE] Total tithis: {tithiDataList.Count}");
+
+                SwissService.Close();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[TEST][ERROR] " + ex);
+            }
+        }
+
+
 
 
         protected override void OnAppearing()
@@ -83,8 +128,8 @@ namespace PADMA.Pages
             base.OnAppearing();
 
 
-            // _ = RunAsync();
-
+            // _ = RunPlanetTestAsync();
+            // _ = RunTithiTestAsync();
 
             try
             {

@@ -1,8 +1,10 @@
-using System;
-using System.Collections.Generic;
 using PADMA.Core.Models;
+using PADMA.Core.Native;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.Core.Enums;
+using System;
+using System.Collections.Generic;
 
 namespace PADMA.Core.Analysis
 {
@@ -115,5 +117,113 @@ namespace PADMA.Core.Analysis
 
         private static DateTime EpochToDateTime(int epoch)
             => Epoch.AddSeconds(epoch);
+
+
+        /// <summary>
+        /// Calculates all Tithi change times within a UTC range.
+        /// Sidereal (Lahiri), geocentric, using London coordinates (GMT+0).
+        /// </summary>
+        public static List<TithiData> CalculateTithiDataList_London(DateTime fromUtc, DateTime toUtc)
+        {
+            if (toUtc <= fromUtc)
+                return new List<TithiData>();
+
+            // —идерический режим Ч Ћахири
+            SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+
+            var results = new List<TithiData>();
+
+            double msDiff0 = GetMoonSunDiff(fromUtc);
+            int currentTithi = GetCurrentTithi(msDiff0);
+
+            DateTime cursor = fromUtc;
+
+            while (cursor < toUtc)
+            {
+                // шаг 1 час Ч грубый поиск смены титхи
+                var (changed, rough) = ScanUntilTithiChange(cursor, toUtc, currentTithi, TimeSpan.FromHours(1));
+                if (!changed)
+                    break;
+
+                // уточнение бинарным поиском до секунды
+                DateTime exact = RefineChangeTimeToSecond(rough - TimeSpan.FromHours(1), rough, currentTithi);
+
+                double diffAtExact = GetMoonSunDiff(exact);
+                currentTithi = GetCurrentTithi(diffAtExact);
+
+                results.Add(new TithiData
+                {
+                    DateTimeUtc = exact,
+                    MoonSunDifference = diffAtExact,
+                    TithiId = currentTithi
+                });
+
+                cursor = exact.AddSeconds(1);
+            }
+
+            return results;
+        }
+
+        // --- internal Tithi helpers ---
+
+        private static (bool changed, DateTime when) ScanUntilTithiChange(
+            DateTime start, DateTime stop, int currentTithi, TimeSpan step)
+        {
+            var t = start;
+            while (t <= stop)
+            {
+                var diff = GetMoonSunDiff(t);
+                var tithi = GetCurrentTithi(diff);
+                if (tithi != currentTithi)
+                    return (true, t);
+                t = t.Add(step);
+            }
+            return (false, stop);
+        }
+
+        private static DateTime RefineChangeTimeToSecond(
+            DateTime lo, DateTime hi, int oldTithi)
+        {
+            while ((hi - lo).TotalSeconds > 1)
+            {
+                var mid = lo.AddSeconds((hi - lo).TotalSeconds / 2.0);
+                var diff = GetMoonSunDiff(mid);
+                var tithi = GetCurrentTithi(diff);
+                if (tithi != oldTithi)
+                    hi = mid;
+                else
+                    lo = mid;
+            }
+            return hi;
+        }
+
+        /// <summary>
+        /// Returns Moon-Sun longitude difference in sidereal Lahiri mode.
+        /// Uses SwissService.GetPlanetPosition() (already sidereal).
+        /// </summary>
+        private static double GetMoonSunDiff(DateTime utc)
+        {
+            // ¬ажно: GetPlanetPosition ожидает внутренний PlanetId (не SWE-константы!)
+            var sun = SwissService.GetPlanetPosition(utc, (int)EPlanet.SUN); // Sun
+            var moon = SwissService.GetPlanetPosition(utc, (int)EPlanet.MOON); // Moon
+
+            double diff = moon[0] - sun[0];
+            diff %= 360.0;
+            if (diff < 0) diff += 360.0;
+            return diff;
+        }
+
+        /// <summary>
+        /// 1..30 Ч each 12∞ of Moon-Sun angular separation.
+        /// </summary>
+        private static int GetCurrentTithi(double msDiff)
+        {
+            const double tithiPart = 360.0 / 30.0; // 12∞
+            double d = msDiff / tithiPart;
+            int i = (int)d;
+            return (d > i) ? i + 1 : i;
+        }
+
+
     }
 }
