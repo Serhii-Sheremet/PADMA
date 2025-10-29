@@ -74,7 +74,6 @@ public static class MauiProgram
         builder.Services.AddSingleton(db);
 
         var activeLang = db.GetActiveLanguageCode(); // "en" | "uk" | "pl" | "ru"
-        //DataCache.Instance.CurrentLanguageCode = activeLang;          
         DataCache.Instance.LoadAll(db, activeLang);
 
         builder.Services.AddSingleton<MainPage>();

@@ -732,8 +732,9 @@ To find GPS coordinates for locations the Nominatim API are used
 ## 🌠 SwissService — Swiss Ephemeris Integration
 
 **Purpose:**  
-Provides high-precision astronomical and astrological calculations using the **Swiss Ephemeris** library (`SwissEphNet` NuGet package).  
-All computations are executed in **UTC (GMT-0)** using the managed .NET API, ensuring cross-platform precision and consistency.
+Provides high-precision astronomical and astrological calculations using the **Swiss Ephemeris** native library  
+integrated directly (not via `SwissEphNet`). All computations are executed in **UTC (GMT-0)**  
+with the sidereal Lahiri mode by default.
 
 ---
 
@@ -741,12 +742,119 @@ All computations are executed in **UTC (GMT-0)** using the managed .NET API, ens
 
 - All calculations are performed relative to **UTC / GMT-0**.  
 - Input dates are converted to UTC before processing.  
-- Output values are returned in UTC and converted to local time only in the UI layer.  
-- DST (Daylight Saving Time) adjustments use .NET’s built-in `TimeZoneInfo` and `AdjustmentRules`.  
-- Default calculation flags:  
+- Output values remain in UTC and are only converted to local time in the UI layer.  
+- DST adjustments rely on .NET’s `TimeZoneInfo` and `AdjustmentRules`.  
+- Default flags:  
   - `SEFLG_SWIEPH | SEFLG_SPEED | SEFLG_SIDEREAL`  
-  - `SE_SIDM_LAHIRI` for sidereal mode.  
-- Internal numeric precision follows Swiss Ephemeris defaults (double precision).  
+  - `SE_SIDM_LAHIRI` (sidereal mode).  
+- Internal precision — double (native Swiss Ephemeris).
+
+---
+
+### 🧬 Implementation Overview
+
+#### 🦪 Architecture and File Layout
+| Component | Role |
+|------------|------|
+| `Core/Native/SwissEphemerisNative.cs` | P/Invoke bindings for native SWE methods (`swe_julday`, `swe_calc_ut`, `swe_set_ephe_path`, `swe_get_ayanamsa_ut`, `swe_set_sid_mode`, `swe_close`) |
+| `Core/Services/SwissService.cs` | Initializes path, sets sidereal mode, computes positions, handles ephe.zip unpacking |
+| `Core/Services/SwissAnalysis.cs` | Performs iterative analysis (e.g. for Moon states) and derives higher-level astrological data |
+| `Core/Utilities/SwissUtility.cs` | Provides helper conversions (planet mapping, zodiac, nakshatra, pada, navamsa) |
+| `Resources/Raw/ephe.zip` | Embedded archive with Swiss Ephemeris data files (`.se1`) — *flat archive, no subfolder* |
+
+---
+
+### ⚙️ Initialization Logic
+
+1. **`ephe.zip` unpacking**  
+   - On Android, the archive is extracted at startup to  
+     `FileSystem.AppDataDirectory/ephe/`.  
+   - Re-extraction is skipped if files already exist.  
+   - Proper disposal ensures no file-in-use errors.
+
+2. **Path setup and sidereal mode**  
+   ```csharp
+   await SwissService.InitializeEphemerisPathAsync();
+   SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+   ```
+
+3. **Verification test**  
+   A smoke test (`CalculatePlanetDataList_London`) prints a sequence of Moon positions,  
+   confirming valid ephemeris loading and sidereal mode activation.
+
+---
+
+### 🧱 Data and Cache Integration
+
+#### PADA table
+| Field | Type | Note |
+|--------|------|------|
+| `ID` | INTEGER | Primary key |
+| `ZODIAKID` | INTEGER | Zodiac reference |
+| `NAKSHATRAID` | INTEGER | Nakshatra reference |
+| `PADANUMBER` | INTEGER | Local pada (1–4) |
+| `DREKKANA` | INTEGER | Drekkana ID |
+| `SPECIALNAVAMSA` | TEXT | Additional attributes |
+| `NAVAMSA` | INTEGER | Navamsa zodiac ID (1–12) |
+| `COLORID` | INTEGER | Color mapping |
+
+**Corrections applied:**  
+- `NAVAMSHA` → `NAVAMSA`  
+- `SPECIALNAVAMSHA` → `SPECIALNAVAMSA`
+
+#### Cache loading
+```csharp
+Padas = db.GetPadas().ToList();
+Console.WriteLine($"[CACHE] Loaded {Padas.Count} Pada records");
+```
+
+#### Access helpers
+```csharp
+public static int GetPadaNumberByPadaId(int padaId)
+    => DataCache.Instance.Padas.FirstOrDefault(i => i.Id == padaId)?.PadaNumber ?? 0;
+
+public static int GetNavamsaByNakshatraAndPada(int nakshatraId, int padaNumber)
+    => DataCache.Instance.Padas.FirstOrDefault(i =>
+           i.NakshatraId == nakshatraId && i.PadaNumber == padaNumber)?.Navamsa ?? 0;
+```
+
+Used in `SwissAnalysis` during planet state construction:
+```csharp
+int navamsaId = Utility.GetNavamsaByNakshatraAndPada(nakshatraId, padaNumber);
+```
+
+---
+
+### 💫 Planet Calculation
+
+Each `PlanetData` record includes:
+```
+DateTimeUtc | Longitude | ZodiakId | NakshatraId | PadaId |
+NavamsaZodiakId | SpeedInLongitude | IsRetrograde
+```
+
+Example output (Moon, Lahiri):
+```
+2025-10-27 00:00:00 | L=249.3377° | Z=9 | N=19 | P=75 | Nav=3 | Speed=0.00835 | Retro=D
+```
+
+---
+
+### 🧮 Current Functions
+
+| Function | Description | Status |
+|-----------|--------------|--------|
+| `InitializeEphemerisPathAsync()` | Prepares and registers ephemeris path | ✅ Implemented |
+| `SetSiderealMode()` | Sets sidereal ayanamsha (default Lahiri) | ✅ Implemented |
+| `GetAyanamsa()` | Returns ayanamsha value for UTC date | ✅ Implemented |
+| `GetPlanetPosition()` | Returns position, speed, distance | ✅ Implemented |
+| `CalculatePlanetDataList_London()` | Generates sequence of planet states with transitions | ✅ Implemented |
+| `GetZodiakIdFromDegree()` / `GetNakshatraIdFromDegree()` / `GetPadaIdFromDegree()` | Degree mapping | ✅ Implemented |
+| `GetNavamsaByNakshatraAndPada()` | From DB cache | ✅ Implemented |
+| `GetSunriseSunset()` | Basic version exists — needs refinement | ⚠️ Under review |
+| `GetTithiSequence()` / `GetNityaYogaSequence()` / `GetMrityuBhagaPeriods()` | Lunar/solar relations | ⏸️ Planned (next phase) |
+| `GetEclipses()` | Solar/lunar eclipses | ⏸️ Planned |
+| `GetAscendant()` | Houses and ascendant | ⏸️ Planned |
 
 ---
 

@@ -39,6 +39,7 @@ namespace PADMA.Pages
             UpdateDaysHeader();
         }
 
+        // Test method for Swiss Ephemeris calculations
         public static async Task RunAsync()
         {
             try
@@ -82,7 +83,7 @@ namespace PADMA.Pages
             base.OnAppearing();
 
 
-            _ = RunAsync();
+            // _ = RunAsync();
 
 
             try

@@ -578,5 +578,38 @@ namespace PADMA.Core.Services
         #endregion
 
 
+        #region Reference Data (Padas)
+
+        /// <summary>
+        /// Returns all Pada records (108 entries total).
+        /// </summary>
+        public IReadOnlyList<Pada> GetPadas()
+        {
+            try
+            {
+                const string sql = @"SELECT 
+                                ID as Id,
+                                ZODIAKID as ZodiakId,
+                                NAKSHATRAID as NakshatraId,
+                                PADANUMBER as PadaNumber,
+                                DREKKANA as Drekkana,
+                                SPECIALNAVAMSA as SpecialNavamsa,
+                                NAVAMSA as Navamsa,
+                                COLORID as ColorId
+                             FROM PADA
+                             ORDER BY ID";
+                return _connection.Query<Pada>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetPadas error: {ex.Message}");
+                return new List<Pada>();
+            }
+        }
+
+        #endregion
+
+
+
     }
 }

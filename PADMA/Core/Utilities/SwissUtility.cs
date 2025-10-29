@@ -1,4 +1,5 @@
 using System;
+using PADMA.Core.Services;
 using PADMA.Core.Native;
 
 namespace PADMA.Core.Utilities
@@ -112,15 +113,21 @@ namespace PADMA.Core.Utilities
             return currentPada;
         }
 
+        public static int GetPadaNumberByPadaId(int padaId)
+        {
+            return DataCache.Instance.Padas
+                .FirstOrDefault(i => i.Id == padaId)?.PadaNumber ?? 0;
+        }
+
         /// <summary>
         /// Returns Navamsa Zodiac ID (1–12) based on Nakshatra and Pada.
         /// Placeholder until DB cache is connected.
         /// </summary>
-        public static int GetNavamsaZodiakId(int nakshatraId, int padaId)
+        public static int GetNavamsaByNakshatraAndPada(int nakshatraId, int padaNumber)
         {
-            // TODO: replace with CacheLoad._padaList lookup
-            if (padaId <= 0) return 0;
-            return ((padaId - 1) / 9) + 1; // Approximation: 108 padas / 12 signs = 9 per sign
+            return DataCache.Instance.Padas
+                .FirstOrDefault(p => p.NakshatraId == nakshatraId && p.PadaNumber == padaNumber)
+                ?.Navamsa ?? 0;
         }
     }
 }
