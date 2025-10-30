@@ -1,7 +1,6 @@
-// Core/Models/ColorDef.cs
 namespace PADMA.Core.Models
 {
-    public sealed class ColorDef
+    public sealed class AppColor
     {
         public int Id { get; set; }
         public string Code { get; set; } = "";   // e.g. "RED_PRIMARY"

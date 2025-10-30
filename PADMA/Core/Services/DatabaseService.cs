@@ -187,14 +187,14 @@ namespace PADMA.Core.Services
 
         #region Reference Data (Colors, Planets)
 
-        public IReadOnlyList<ColorDef> GetColors() =>
-            _connection.Query<ColorDef>("SELECT ID as Id, CODE as Code, ARGBVALUE as ArgbValue FROM COLOR");
+        public IReadOnlyList<Models.AppColor> GetColors() =>
+            _connection.Query<Models.AppColor>("SELECT ID as Id, CODE as Code, ARGBVALUE as ArgbValue FROM COLOR");
 
         public IReadOnlyList<ColorDesc> GetColorDescs() =>
             _connection.Query<ColorDesc>("SELECT ID as Id, COLORID as ColorId, NAME as Name, LANGUAGECODE as LanguageCode FROM COLOR_DESC");
 
-        public IReadOnlyList<PlanetDef> GetPlanets() =>
-            _connection.Query<PlanetDef>("SELECT ID as Id, PLANETCODE as PlanetCode FROM PLANET");
+        public IReadOnlyList<Planet> GetPlanets() =>
+            _connection.Query<Planet>("SELECT ID as Id, PLANETCODE as PlanetCode FROM PLANET");
 
         public IReadOnlyList<PlanetDesc> GetPlanetDescs() =>
             _connection.Query<PlanetDesc>("SELECT ID as Id, PLANETID as PlanetId, NAME as Name, LANGUAGECODE as LanguageCode FROM PLANET_DESC");

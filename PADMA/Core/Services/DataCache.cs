@@ -15,12 +15,10 @@ namespace PADMA.Core.Services
         private DataCache() { }
 
         // --- Core Cached Data ---
-
-        public IReadOnlyList<Pada> Padas { get; private set; } = new List<Pada>();
-
         public IReadOnlyList<Language> Languages { get; private set; } = Array.Empty<Language>();
-        public IReadOnlyList<ColorDef> Colors { get; private set; } = Array.Empty<ColorDef>();
-        public IReadOnlyList<PlanetDef> Planets { get; private set; } = Array.Empty<PlanetDef>();
+        public IReadOnlyList<AppColor> Colors { get; private set; } = Array.Empty<AppColor>();
+        public IReadOnlyList<Planet> Planets { get; private set; } = Array.Empty<Planet>();
+        public IReadOnlyList<Pada> Padas { get; private set; } = new List<Pada>();
 
         public IReadOnlyDictionary<int, string> ColorNameById { get; private set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> PlanetNameById { get; private set; } = new Dictionary<int, string>();
@@ -68,7 +66,6 @@ namespace PADMA.Core.Services
             // Пады 
             Padas = db.GetPadas().ToList();
 
-            
 
         }
 

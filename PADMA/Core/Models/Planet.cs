@@ -1,4 +1,3 @@
-// Core/Models/PlanetDef.cs
 namespace PADMA.Core.Models
 {
     /// <summary>
@@ -6,7 +5,7 @@ namespace PADMA.Core.Models
     /// PLANET: ID, PLANETCODE
     /// PLANET_DESC: PLANETID, NAME, LANGUAGECODE
     /// </summary>
-    public sealed class PlanetDef
+    public sealed class Planet
     {
         public int Id { get; set; }
         public string PlanetCode { get; set; } = ""; // e.g. "SUN","MOON","RAHU","KETU"
