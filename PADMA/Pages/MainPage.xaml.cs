@@ -3,10 +3,12 @@ using PADMA.Core.Analysis;
 using PADMA.Core.Models;
 using PADMA.Core.Native;
 using PADMA.Core.Services;
+using PADMA.Core.Enums;
 using PADMA.UI;
 using System;
 using System.Globalization;
 using System.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PADMA.Pages
 {
@@ -136,6 +138,14 @@ namespace PADMA.Pages
             var yogas = SwissAnalysis.CalculateNityaYogaDataList_London(from, to);
             foreach (var y in yogas)
                 Console.WriteLine(y);
+            */
+            /*
+            var from = new DateTime(2025, 10, 1, 0, 0, 0, DateTimeKind.Utc);
+            var to = from.AddDays(30);
+
+            var mercuryMb = SwissAnalysis.CalculateMrityuBhagaDataList_London((int)EPlanet.MOON, from, to);
+            foreach (var r in mercuryMb)
+                Console.WriteLine("[TEST] " + r);
             */
 
             try

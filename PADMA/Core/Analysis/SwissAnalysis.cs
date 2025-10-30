@@ -320,6 +320,130 @@ namespace PADMA.Core.Analysis
             return SwissService.NormalizeDegrees(raw);
         }
 
+        public static List<MrityuBhagaData> CalculateMrityuBhagaDataList_London(int planetId, DateTime fromUtc, DateTime toUtc)
+        {
+            var results = new List<MrityuBhagaData>();
+            if (toUtc <= fromUtc) return results;
+
+            SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+
+            // отримуємо таблицю градусів
+            var mbList = DataCache.Instance.MrityuBhagaList;
+
+            // активна конфігурація
+            var setting = DataCache.Instance.AppSettingsList
+                .FirstOrDefault(s => s.GroupCode == "MRITYUBHAGA" && s.Active == 1);
+
+            var mode = setting?.SettingCode ?? "NEQUAL";
+            double tol = mode switch
+            {
+                "NEQUAL" => 0.5,
+                "NLESS" => 1.0,
+                "NMORE" => 1.0,
+                "NERNST" => 1.0,
+                _ => 0.5
+            };
+            var appSettingEnum = (EAppSetting)(setting?.Id ?? (int)EAppSetting.MRITYUBHAGANEQUAL);
+
+            DateTime cur = fromUtc;
+            bool inZone = false;
+            MrityuBhagaData? current = null;
+
+            double lastLon = 0;
+            bool lastRetro = false;
+
+            while (cur <= toUtc)
+            {
+                // позиція планети
+                var planet = SwissService.GetPlanetPosition(cur, planetId);
+                double lon = SwissService.NormalizeDegrees(planet[0]);
+                bool retro = planet[3] < 0;
+                int zodId = SwissUtility.GetZodiakIdFromDegree(lon);
+
+                // шукаємо градус для цієї планети в цьому знаку
+                var mb = mbList.FirstOrDefault(x => x.PlanetId == planetId && x.ZodiakId == zodId);
+                if (mb == null) { cur = cur.AddHours(6); continue; }
+
+                // формуємо діапазон згідно з налаштуванням
+                double fromDeg = mb.Degree, toDeg = mb.Degree;
+                switch (mode)
+                {
+                    case "NEQUAL": fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
+                    case "NLESS": fromDeg = mb.Degree - tol; toDeg = mb.Degree; break;
+                    case "NMORE": fromDeg = mb.Degree; toDeg = mb.Degree + tol; break;
+                    case "NERNST": fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
+                }
+
+                fromDeg = SwissService.NormalizeDegrees(fromDeg);
+                toDeg = SwissService.NormalizeDegrees(toDeg);
+
+                // перевірка потрапляння у зону (враховує 0° переходи)
+                bool inside = IsWithinDegrees(lon, fromDeg, toDeg);
+
+                // --- вхід ---
+                if (inside && !inZone)
+                {
+                    inZone = true;
+                    current = new MrityuBhagaData
+                    {
+                        PlanetId = (int)planetId,
+                        ZodiakId = zodId,
+                        Degree = mb.Degree,
+                        MrityuBhagaSetting = appSettingEnum,
+                        LongitudeFrom = fromDeg,
+                        LongitudeTo = toDeg,
+                        DateFromUtc = cur
+                    };
+                }
+
+                // --- вихід ---
+                if (!inside && inZone && current != null)
+                {
+                    current.DateToUtc = cur;
+                    results.Add(current);
+                    inZone = false;
+                    current = null;
+                }
+
+                // --- зміна знака або ретроградності ---
+                if (SwissUtility.GetZodiakIdFromDegree(lastLon) != zodId || retro != lastRetro)
+                {
+                    if (inZone && current != null)
+                    {
+                        current.DateToUtc = cur;
+                        results.Add(current);
+                    }
+                    inZone = false;
+                    current = null;
+                }
+
+                lastLon = lon;
+                lastRetro = retro;
+
+                // адаптивний крок
+                cur = inZone ? cur.AddMinutes(1) : cur.AddHours(1);
+            }
+
+            // закриваємо відкритий інтервал
+            if (inZone && current != null)
+            {
+                current.DateToUtc = toUtc;
+                results.Add(current);
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Перевіряє, чи знаходиться поточна довгота у діапазоні з урахуванням переходу через 0°.
+        /// </summary>
+        private static bool IsWithinDegrees(double lon, double from, double to)
+        {
+            if (from <= to)
+                return lon >= from && lon <= to;
+            else // через 0°
+                return lon >= from || lon <= to;
+        }
 
 
 

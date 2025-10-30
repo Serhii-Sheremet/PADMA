@@ -1,4 +1,5 @@
-﻿using PADMA.Core.Models;
+﻿using PADMA.Core.Enums;
+using PADMA.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -19,6 +20,8 @@ namespace PADMA.Core.Services
         public IReadOnlyList<AppColor> Colors { get; private set; } = Array.Empty<AppColor>();
         public IReadOnlyList<Planet> Planets { get; private set; } = Array.Empty<Planet>();
         public IReadOnlyList<Pada> Padas { get; private set; } = new List<Pada>();
+        public IReadOnlyList<MrityuBhaga> MrityuBhagaList { get; private set; } = new List<MrityuBhaga>();
+
 
         public IReadOnlyDictionary<int, string> ColorNameById { get; private set; } = new Dictionary<int, string>();
         public IReadOnlyDictionary<int, string> PlanetNameById { get; private set; } = new Dictionary<int, string>();
@@ -65,6 +68,13 @@ namespace PADMA.Core.Services
 
             // Пады 
             Padas = db.GetPadas().ToList();
+
+            // Mrityu Bhaga (мёртвые градусы)
+            MrityuBhagaList = db.GetMrityuBhaga().ToList();
+
+
+            
+
 
 
         }

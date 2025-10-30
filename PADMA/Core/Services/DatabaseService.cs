@@ -610,6 +610,38 @@ namespace PADMA.Core.Services
         #endregion
 
 
+        #region Reference Data (MrityuBhaga)
+
+        /// <summary>
+        /// Возвращает список фиксированных "мёртвых" градусов (Mrityu Bhaga)
+        /// для каждой планеты и знака зодиака.
+        /// </summary>
+        public IReadOnlyList<MrityuBhaga> GetMrityuBhaga()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID        AS Id,
+                        PLANETID  AS PlanetId,
+                        ZODIAKID  AS ZodiakId,
+                        DEGREE    AS Degree
+                    FROM MRITYUBHAGA
+                    ORDER BY PLANETID, ZODIAKID";
+
+                return _connection.Query<MrityuBhaga>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetMrityuBhaga error: {ex.Message}");
+                return new List<MrityuBhaga>();
+            }
+        }
+
+        #endregion
+
+
+
 
     }
 }
