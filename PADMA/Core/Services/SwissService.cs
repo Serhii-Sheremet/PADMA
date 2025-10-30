@@ -161,5 +161,8 @@ namespace PADMA.Core.Services
         {
             SwissEphemerisNative.swe_close();
         }
+
+
+
     }
 }

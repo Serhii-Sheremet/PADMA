@@ -1,4 +1,4 @@
-using PADMA.Core.Models;
+﻿using PADMA.Core.Models;
 using PADMA.Core.Native;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
@@ -128,7 +128,7 @@ namespace PADMA.Core.Analysis
             if (toUtc <= fromUtc)
                 return new List<TithiData>();
 
-            // ������������ ����� � ������
+            // Сидерический режим — Лахири
             SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
 
             var results = new List<TithiData>();
@@ -140,12 +140,12 @@ namespace PADMA.Core.Analysis
 
             while (cursor < toUtc)
             {
-                // ��� 1 ��� � ������ ����� ����� �����
+                // шаг 1 час — грубый поиск смены титхи
                 var (changed, rough) = ScanUntilTithiChange(cursor, toUtc, currentTithi, TimeSpan.FromHours(1));
                 if (!changed)
                     break;
 
-                // ��������� �������� ������� �� �������
+                // уточнение бинарным поиском до секунды
                 DateTime exact = RefineChangeTimeToSecond(rough - TimeSpan.FromHours(1), rough, currentTithi);
 
                 double diffAtExact = GetMoonSunDiff(exact);
@@ -203,7 +203,7 @@ namespace PADMA.Core.Analysis
         /// </summary>
         private static double GetMoonSunDiff(DateTime utc)
         {
-            // �����: GetPlanetPosition ������� ���������� PlanetId (�� SWE-���������!)
+            // Важно: GetPlanetPosition ожидает внутренний PlanetId (не SWE-константы!)
             var sun = SwissService.GetPlanetPosition(utc, (int)EPlanet.SUN); // Sun
             var moon = SwissService.GetPlanetPosition(utc, (int)EPlanet.MOON); // Moon
 
@@ -214,15 +214,114 @@ namespace PADMA.Core.Analysis
         }
 
         /// <summary>
-        /// 1..30 � each 12� of Moon-Sun angular separation.
+        /// 1..30 — each 12° of Moon-Sun angular separation.
         /// </summary>
         private static int GetCurrentTithi(double msDiff)
         {
-            const double tithiPart = 360.0 / 30.0; // 12�
+            const double tithiPart = 360.0 / 30.0; // 12°
             double d = msDiff / tithiPart;
             int i = (int)d;
             return (d > i) ? i + 1 : i;
         }
+
+        public static List<NityaYogaData> CalculateNityaYogaDataList_London(DateTime fromUtc, DateTime toUtc)
+        {
+            if (toUtc <= fromUtc)
+                return new List<NityaYogaData>();
+
+            // включаем сидерический режим Lahiri
+            SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+
+            var results = new List<NityaYogaData>();
+
+            // начальные данные (на секунду раньше диапазона, чтобы корректно определить текущую йогу)
+            double[] sun0 = SwissService.GetPlanetPosition(fromUtc.AddSeconds(-1), (int)EPlanet.SUN);
+            double[] moon0 = SwissService.GetPlanetPosition(fromUtc.AddSeconds(-1), (int)EPlanet.MOON);
+
+            double yogaLon = GetYogaLongitude(sun0[0], moon0[0]);
+            int currentYogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+
+            DateTime cursor = fromUtc;
+            while (cursor < toUtc)
+            {
+                // грубый поиск смены йоги шагом 1 час
+                var (changed, rough) = ScanUntilYogaChange(cursor, toUtc, currentYogaId, TimeSpan.FromHours(1));
+                if (!changed)
+                    break;
+
+                // уточнение момента смены йоги до секунды
+                DateTime exact = RefineYogaChangeToSecond(rough - TimeSpan.FromHours(1), rough, currentYogaId);
+
+                // вычисляем положение Солнца и Луны в момент изменения
+                var sun = SwissService.GetPlanetPosition(exact, (int)EPlanet.SUN);
+                var moon = SwissService.GetPlanetPosition(exact, (int)EPlanet.MOON);
+                yogaLon = GetYogaLongitude(sun[0], moon[0]);
+                currentYogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+
+                results.Add(new NityaYogaData
+                {
+                    DateTimeUtc = exact,
+                    Longitude = yogaLon,
+                    YogaId = currentYogaId
+                });
+
+                cursor = exact.AddSeconds(1); // продолжаем после найденного перехода
+            }
+
+            return results;
+        }
+
+        // --- внутренние помощники ---
+
+        private static (bool changed, DateTime when) ScanUntilYogaChange(
+            DateTime start, DateTime stop, int currentYogaId, TimeSpan step)
+        {
+            var t = start;
+            while (t <= stop)
+            {
+                var sun = SwissService.GetPlanetPosition(t, (int)EPlanet.SUN);
+                var moon = SwissService.GetPlanetPosition(t, (int)EPlanet.MOON);
+                double yogaLon = GetYogaLongitude(sun[0], moon[0]);
+                int yogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+                if (yogaId != currentYogaId)
+                    return (true, t);
+                t = t.Add(step);
+            }
+            return (false, stop);
+        }
+
+        private static DateTime RefineYogaChangeToSecond(
+            DateTime lo, DateTime hi, int oldYogaId)
+        {
+            while ((hi - lo).TotalSeconds > 1)
+            {
+                var mid = lo.AddSeconds((hi - lo).TotalSeconds / 2.0);
+                var sun = SwissService.GetPlanetPosition(mid, (int)EPlanet.SUN);
+                var moon = SwissService.GetPlanetPosition(mid, (int)EPlanet.MOON);
+                double yogaLon = GetYogaLongitude(sun[0], moon[0]);
+                int yogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+
+                if (yogaId != oldYogaId)
+                    hi = mid;
+                else
+                    lo = mid;
+            }
+            return hi;
+        }
+
+        /// <summary>
+        /// Вычисляет долготу для Нитья Йоги: (SunLon + MoonLon + 7 * 360/27) % 360
+        /// с нормализацией через SwissService.NormalizeDegrees()
+        /// </summary>
+        private static double GetYogaLongitude(double sunLon, double moonLon)
+        {
+            const double NAK_PART = 360.0 / 27.0; // 13°20′
+            double raw = sunLon + moonLon + 7 * NAK_PART;
+            return SwissService.NormalizeDegrees(raw);
+        }
+
+
+
 
 
     }

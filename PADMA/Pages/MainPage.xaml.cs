@@ -130,6 +130,13 @@ namespace PADMA.Pages
 
             // _ = RunPlanetTestAsync();
             // _ = RunTithiTestAsync();
+            /*
+            var from = new DateTime(2025, 10, 30, 0, 0, 0, DateTimeKind.Utc);
+            var to = from.AddDays(1);
+            var yogas = SwissAnalysis.CalculateNityaYogaDataList_London(from, to);
+            foreach (var y in yogas)
+                Console.WriteLine(y);
+            */
 
             try
             {
