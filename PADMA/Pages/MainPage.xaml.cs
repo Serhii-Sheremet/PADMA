@@ -148,13 +148,13 @@ namespace PADMA.Pages
                 Console.WriteLine("[TEST] " + r);
             */
 
-            
-            var from = new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var to = new DateTime(2027, 12, 31, 0, 0, 0, DateTimeKind.Utc);
+            /*
+            var from = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var to = new DateTime(2025, 12, 31, 0, 0, 0, DateTimeKind.Utc);
             var eclipses = SwissAnalysis.CalculateEclipses_London(from, to);
             foreach (var e in eclipses)
                 Console.WriteLine($"{(EEclipse)e.EclipseId} | {e.Date:yyyy-MM-dd HH:mm}");
-            
+            */
 
 
             try

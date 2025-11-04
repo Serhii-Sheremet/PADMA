@@ -101,6 +101,15 @@ internal static class SwissEphemerisNative
         int backward,           // 0=вперёд, 1=назад
         StringBuilder serr);
 
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_lun_eclipse_how(
+        double tjd_ut,          // JD(UT) момента затмения (tret[0])
+        int ifl,                // SEFLG_SWIEPH и т.п.
+        double[] geopos,        // [lon, lat, alt] в градусах и метрах
+        double[] attr,          // длина >= 20, attr[0] = величина затмения
+        StringBuilder serr);    // буфер для ошибок (256 символов достаточно)
+
+
     // Установка сидерического режима
     [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void swe_set_sid_mode(

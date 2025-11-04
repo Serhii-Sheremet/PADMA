@@ -449,95 +449,139 @@ namespace PADMA.Core.Analysis
                 return lon >= from || lon <= to;
         }
 
-        static bool IsSolarTotalOrPartial(int rc) =>
-                (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL | SweConst.SE_ECL_ANNULAR | SweConst.SE_ECL_ANNULAR_TOTAL)) != 0;
+        // --- Фильтры типов ---
+        // CENTRAL=1, NONCENTRAL=2, TOTAL=4, ANNULAR=8, PARTIAL=16, ANNULAR_TOTAL(HYBRID)=32, PENUMBRAL=64
+        static bool IsLunarAllowed(int rc, bool includePenumbral)
+        {
+            bool totalOrPartial = (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL)) != 0;
+            if (totalOrPartial) return true;
+            return includePenumbral && ((rc & SweConst.SE_ECL_PENUMBRAL) != 0);
+        }
+        
+        // --- Слияние близких лунных событий: всегда оставляем более позднее ---
+        static List<EclipseData> MergeCloseLunarByMagnitude(List<EclipseData> lunar, int windowDays = 32)
+        {
+            if (lunar == null || lunar.Count <= 1)
+                return lunar ?? new List<EclipseData>();
 
-        static bool IsLunarTotalOrPartial(int rc) =>
-            (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL | SweConst.SE_ECL_CENTRAL | SweConst.SE_ECL_NONCENTRAL | SweConst.SE_ECL_ALLTYPES_LUNAR)) != 0;
+            // Сортируем по дате
+            var ordered = lunar.OrderBy(e => e.Date).ToList();
+            var kept = new List<EclipseData>();
 
+            foreach (var e in ordered)
+            {
+                // проверяем, есть ли в списке событие в пределах ±windowDays
+                var conflictIndex = kept.FindIndex(k =>
+                    k.EclipseId == (int)EEclipse.MOONECLIPSE &&
+                    Math.Abs((k.Date - e.Date).TotalDays) < windowDays);
+
+                if (conflictIndex < 0)
+                {
+                    kept.Add(e);
+                }
+                else
+                {
+                    // если нашли конфликт — просто заменяем на более позднее событие
+                    if (e.Date > kept[conflictIndex].Date)
+                    {
+                        kept[conflictIndex] = e;
+                    }
+                }
+            }
+
+            return kept;
+        }
+
+        // === ОСНОВНАЯ ФУНКЦИЯ ===
         public static List<EclipseData> CalculateEclipses_London(DateTime fromUtc, DateTime toUtc)
         {
-            var res = new List<EclipseData>();
-            if (toUtc <= fromUtc) return res;
+            var result = new List<EclipseData>();
+            if (toUtc <= fromUtc) return result;
 
             var sb = new StringBuilder(256);
             var tret = new double[10];
 
-            int iflag = 0;
-            int whicheph = SweConst.SEFLG_SWIEPH;
-            iflag |= SweConst.SEFLG_SIDEREAL;
-            SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
-            SwissService.SetTopo(LondonLongitude, LondonLatitude, 0);
-
-            iflag = (iflag & ~SEFLG_EPHMASK) | whicheph;
-            iflag |= SweConst.SEFLG_SPEED;
-            iflag |= SweConst.SE_ECL_ONE_TRY;
-            int ifltype = ~(SweConst.SE_ECL_CENTRAL | SweConst.SE_ECL_NONCENTRAL);
-
-            double jdFrom = SwissService.ToJulianDay(fromUtc);
-            double jdTo = SwissService.ToJulianDay(toUtc);
-
-            // --------- ЛУННЫЕ (глобальные) ----------
+            // --- ЛУННЫЕ (включаем penumbral, чтобы в "пустые" годы были всё равно 2 события) ---
+            var lunarRaw = new List<EclipseData>();
+            double jdLun = SwissService.ToJulianDay(fromUtc);
+            while (true)
             {
-                double jd = jdFrom - 40; // маленький «запас» до периода
-                for (int i = 0; i < 12; i++) // в году максимум 2 шт; 12 — с большим запасом
-                {
-                    Array.Clear(tret, 0, tret.Length);
-                    sb.Clear();
+                Array.Clear(tret, 0, tret.Length);
+                sb.Clear();
 
-                    int rc = SwissEphemerisNative.swe_lun_eclipse_when(
-                        jd, iflag, ifltype, tret, 0, sb);
+                int rc = SwissEphemerisNative.swe_lun_eclipse_when(
+                    jdLun,
+                    SweConst.SEFLG_SWIEPH,
+                    // просим "все" типы, фильтруем ниже
+                    SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL | SweConst.SE_ECL_PENUMBRAL,
+                    tret,
+                    0, // forward
+                    sb);
 
-                    if (rc < 0 || tret[0] <= 0) break;
+                if (rc <= 0 || tret[0] <= 0) break;
 
-                    var dt = SwissService.FromJulianDay(tret[0]);
-                    Debug.WriteLine($"[DEBUG][MOON_{ifltype}] rc={rc} jd={tret[0]} dt={dt}");
-                    
-                    if (dt > toUtc.AddDays(2)) break;          // вышли за верхнюю границу
-                    if (dt >= fromUtc && IsLunarTotalOrPartial(rc))
-                        res.Add(new EclipseData { Date = dt, EclipseId = (int)EEclipse.MOONECLIPSE });
+                var dt = SwissService.FromJulianDay(tret[0]);
+                if (dt > toUtc) break;
 
-                    // шаг от найденного максимума
-                    jd = tret[0] + 1.0;
-                }
+                // ВКЛЮЧАЕМ penumbral (чтобы гарантировать 2 события в годы без partial/total)
+                if (IsLunarAllowed(rc, includePenumbral: true))
+                    lunarRaw.Add(new EclipseData { Date = dt, EclipseId = (int)EEclipse.MOONECLIPSE });
+
+                // Шаг вперёд ~ один синодический цикл (чуть больше 1× чтобы не цеплять соседнее)
+                jdLun = SwissService.ToJulianDay(dt.AddDays(1));
             }
 
-            // --------- СОЛНЕЧНЫЕ (глобальные) ----------
+            // Сжимаем близкие лунные события (оставляем самый "сильный" в окне ~25 дней)
+            var lunarMerged = MergeCloseLunarByMagnitude(lunarRaw);
+
+            // --- СОЛНЕЧНЫЕ (исходная рабочая версия) ---
+            double jdSol1 = SwissService.ToJulianDay(fromUtc);
+            while (true)
             {
-                double jd = jdFrom - 40;
-                for (int i = 0; i < 12; i++)
-                {
-                    Array.Clear(tret, 0, tret.Length);
-                    sb.Clear();
+                Array.Clear(tret, 0, tret.Length);
+                sb.Clear();
 
-                    int rc = SwissEphemerisNative.swe_sol_eclipse_when_glob(
-                        jd,
-                        SweConst.SEFLG_SWIEPH,
-                        SweConst.SE_ECL_ALLTYPES_SOLAR,   // ищем все типы
-                        tret,
-                        0,
-                        sb);
+                int rc = SwissEphemerisNative.swe_sol_eclipse_when_glob(
+                    jdSol1,
+                    SweConst.SEFLG_SWIEPH,
+                    SweConst.SE_ECL_ALLTYPES_SOLAR,
+                    tret,
+                    0,
+                    sb);
 
-                    if (rc < 0 || tret[0] <= 0) break;
+                if (rc < 0 || tret[0] <= 0)
+                    break;
 
-                    var dt = SwissService.FromJulianDay(tret[0]);
-                    if (dt > toUtc.AddDays(2)) break;
+                var dt = SwissService.FromJulianDay(tret[0]);
+                if (dt > toUtc)
+                    break;
 
-                    if (dt >= fromUtc && IsSolarTotalOrPartial(rc))
-                        res.Add(new EclipseData { Date = dt, EclipseId = (int)EEclipse.SUNECLIPSE });
+                if ((rc & SweConst.SE_ECL_ALLTYPES_SOLAR) != 0)
+                    result.Add(new EclipseData
+                    {
+                        EclipseId = (int)EEclipse.SUNECLIPSE,
+                        Date = dt
+                    });
 
-                    jd = tret[0] + 1.0; // следующий поиск — после найденного максимума
-                }
+                // шаг вперёд ~ 32 дня, чтобы не поймать повтор
+                jdSol1 = SwissService.ToJulianDay(dt.AddDays(32));
             }
 
-            // Удалим редкие дубли (иногда два вызова дают один и тот же день)
-            return res
-                .GroupBy(x => new { x.EclipseId, Day = x.Date.Date })
-                .Select(g => g.OrderBy(e => e.Date).First())
+            result.AddRange(lunarMerged);
+
+            // --- Объединяем, фильтруем по диапазону, убираем редкие дубли по дню ---
+            result = result
+                .Where(e => e.Date >= fromUtc && e.Date <= toUtc)
                 .OrderBy(e => e.Date)
+                .GroupBy(e => new { e.EclipseId, Day = e.Date.Date })
+                .Select(g => g.First())
                 .ToList();
-        }
 
+            return result;
+        }
+        
+
+        
 
     }
 }
