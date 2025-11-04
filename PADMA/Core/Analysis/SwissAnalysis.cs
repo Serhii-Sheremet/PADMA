@@ -169,7 +169,6 @@ namespace PADMA.Core.Analysis
         }
 
         // --- internal Tithi helpers ---
-
         private static (bool changed, DateTime when) ScanUntilTithiChange(
             DateTime start, DateTime stop, int currentTithi, TimeSpan step)
         {
@@ -458,7 +457,9 @@ namespace PADMA.Core.Analysis
             return includePenumbral && ((rc & SweConst.SE_ECL_PENUMBRAL) != 0);
         }
         
-        // --- Слияние близких лунных событий: всегда оставляем более позднее ---
+        // --- Слияние близких лунных событий: оставляем более позднее ---
+        // -- пока так - в 2027 нужно было более позднее (после солнечного затмения) --
+        // -- но есть варианты когда лунное на пару недель раньше солнечного - хотя с этим пока по таким рассчетам проблем не было --
         static List<EclipseData> MergeCloseLunarByMagnitude(List<EclipseData> lunar, int windowDays = 32)
         {
             if (lunar == null || lunar.Count <= 1)
@@ -492,7 +493,7 @@ namespace PADMA.Core.Analysis
             return kept;
         }
 
-        // === ОСНОВНАЯ ФУНКЦИЯ ===
+        // === ОСНОВНАЯ ФУНКЦИЯ для рассчета пар затмений (лунное + солнечное) ===
         public static List<EclipseData> CalculateEclipses_London(DateTime fromUtc, DateTime toUtc)
         {
             var result = new List<EclipseData>();
@@ -527,11 +528,11 @@ namespace PADMA.Core.Analysis
                 if (IsLunarAllowed(rc, includePenumbral: true))
                     lunarRaw.Add(new EclipseData { Date = dt, EclipseId = (int)EEclipse.MOONECLIPSE });
 
-                // Шаг вперёд ~ один синодический цикл (чуть больше 1× чтобы не цеплять соседнее)
+                // Шаг вперёд на день, чтобы не поймать повтор
                 jdLun = SwissService.ToJulianDay(dt.AddDays(1));
             }
 
-            // Сжимаем близкие лунные события (оставляем самый "сильный" в окне ~25 дней)
+            // Сжимаем близкие лунные события (оставляем нужное в окне ~32 дней)
             var lunarMerged = MergeCloseLunarByMagnitude(lunarRaw);
 
             // --- СОЛНЕЧНЫЕ (исходная рабочая версия) ---
