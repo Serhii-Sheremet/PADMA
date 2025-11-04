@@ -1,10 +1,12 @@
-﻿using PADMA.Core.Models;
+﻿using PADMA.Core.Enums;
+using PADMA.Core.Models;
 using PADMA.Core.Native;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
-using PADMA.Core.Enums;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
 
 namespace PADMA.Core.Analysis
 {
@@ -445,7 +447,81 @@ namespace PADMA.Core.Analysis
                 return lon >= from || lon <= to;
         }
 
+        static bool IsSolarTotalOrPartial(int rc) =>
+                (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL | SweConst.SE_ECL_ANNULAR | SweConst.SE_ECL_ANNULAR_TOTAL)) != 0;
 
+        static bool IsLunarTotalOrPartial(int rc) =>
+            (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL)) != 0;
+
+        public static List<EclipseData> CalculateEclipses_London(DateTime fromUtc, DateTime toUtc)
+        {
+            var res = new List<EclipseData>();
+            if (toUtc <= fromUtc) return res;
+
+            var sb = new StringBuilder(256);
+            var tret = new double[10];
+
+            double jdFrom = SwissService.ToJulianDay(fromUtc);
+            double jdTo = SwissService.ToJulianDay(toUtc);
+
+            // --------- ЛУННЫЕ (глобальные) ----------
+            {
+                double jd = jdFrom - 40; // маленький «запас» до периода
+                for (int i = 0; i < 12; i++) // в году максимум 2 шт; 12 — с большим запасом
+                {
+                    Array.Clear(tret, 0, tret.Length);
+                    sb.Clear();
+
+                    int rc = SwissEphemerisNative.swe_lun_eclipse_when(
+                        jd, SweConst.SEFLG_SWIEPH, SweConst.SE_ECL_ALLTYPES_LUNAR, tret, 0, sb);
+
+                    if (rc < 0 || tret[0] <= 0) break;
+
+                    var dt = SwissService.FromJulianDay(tret[0]);
+                    if (dt > toUtc.AddDays(2)) break;          // вышли за верхнюю границу
+                    if (dt >= fromUtc && IsLunarTotalOrPartial(rc))
+                        res.Add(new EclipseData { Date = dt, EclipseId = (int)EEclipse.MOONECLIPSE });
+
+                    // шаг от найденного максимума
+                    jd = tret[0] + 1.0;
+                }
+            }
+
+            // --------- СОЛНЕЧНЫЕ (глобальные) ----------
+            {
+                double jd = jdFrom - 40;
+                for (int i = 0; i < 12; i++)
+                {
+                    Array.Clear(tret, 0, tret.Length);
+                    sb.Clear();
+
+                    int rc = SwissEphemerisNative.swe_sol_eclipse_when_glob(
+                        jd,
+                        SweConst.SEFLG_SWIEPH,
+                        SweConst.SE_ECL_ALLTYPES_SOLAR,   // ищем все типы
+                        tret,
+                        0,
+                        sb);
+
+                    if (rc < 0 || tret[0] <= 0) break;
+
+                    var dt = SwissService.FromJulianDay(tret[0]);
+                    if (dt > toUtc.AddDays(2)) break;
+
+                    if (dt >= fromUtc && IsSolarTotalOrPartial(rc))
+                        res.Add(new EclipseData { Date = dt, EclipseId = (int)EEclipse.SUNECLIPSE });
+
+                    jd = tret[0] + 1.0; // следующий поиск — после найденного максимума
+                }
+            }
+
+            // Удалим редкие дубли (иногда два вызова дают один и тот же день)
+            return res
+                .GroupBy(x => new { x.EclipseId, Day = x.Date.Date })
+                .Select(g => g.OrderBy(e => e.Date).First())
+                .OrderBy(e => e.Date)
+                .ToList();
+        }
 
 
     }

@@ -154,6 +154,28 @@ namespace PADMA.Core.Services
             return SwissEphemerisNative.swe_get_ayanamsa_ut(jd);
         }
 
+        public static double ToJulianDay(DateTime utc)
+        {
+            // utc — DateTimeKind.Utc
+            var dret = new double[2];
+            var sb = new StringBuilder(256);
+            SwissEphemerisNative.swe_utc_to_jd(
+                utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second,
+                /*gregflag*/ 1, dret, sb);
+            return dret[1]; // UT
+        }
+
+        public static DateTime FromJulianDay(double jd_ut)
+        {
+            SwissEphemerisNative.swe_revjul(jd_ut, /*gregflag*/ 1, out int y, out int m, out int d, out double hour);
+            int hh = (int)Math.Floor(hour);
+            int mm = (int)Math.Floor((hour - hh) * 60.0);
+            double ss_d = (hour - hh) * 3600.0 - mm * 60.0;
+            int ss = (int)Math.Round(ss_d);
+            return new DateTime(y, m, d, hh, mm, ss, DateTimeKind.Utc);
+        }
+
+
         /// <summary>
         /// Releases memory and closes Swiss Ephemeris session.
         /// </summary>

@@ -40,6 +40,67 @@ internal static class SwissEphemerisNative
         [Out] double[] xx,
         StringBuilder serr);
 
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_lun_eclipse_when_glob(
+        double tjd_start,          // JD(UT) — откуда искать
+        int ifl,                   // флаги, например SEFLG_SWIEPH
+        int ifltype,               // SE_ECL_ALLTYPES_LUNAR
+        [Out] double[] tret,       // массив длиной >= 10
+        int backward,              // 0 — вперёд, 1 — назад
+        StringBuilder serr);       // строка для ошибок
+
+    // --- Eclipse (global when) ---
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_lun_eclipse_when(
+        double tjd_start,          // JD(UT) start
+        int ifl,                   // SEFLG_SWIEPH etc.
+        int ifltype,               // SE_ECL_ALLTYPES_LUNAR
+        [Out] double[] tret,       // tret[0] = max (JD UT)
+        int backward,              // 0 forward, 1 backward
+        StringBuilder serr);
+    
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_sol_eclipse_when_glob(
+        double tjd_start,          // JD(UT) start
+        int ifl,                   // SEFLG_SWIEPH etc.
+        int ifltype,               // SE_ECL_ALLTYPES_SOLAR
+        [Out] double[] tret,       // tret[0] = max (JD UT)
+        int backward,              // 0 forward, 1 backward
+        StringBuilder serr);
+
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_lun_occult_when_glob(
+        double tjd_start,
+        int ipl,                  // SE_SUN для солнечных затмений, SE_MOON для лунных
+        IntPtr starname,          // null
+        int ifl,
+        int ifltype,
+        [Out] double[] tret,
+        int backward,
+        StringBuilder serr);
+
+    // ЛУННОЕ затмение: локальный поиск (требует geopos[3], tret[], attr[])
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_lun_eclipse_when_loc(
+        double tjd_start,
+        int ifl,
+        double[] geopos,        // [lon, lat, alt]
+        double[] tret,          // длина >= 10
+        double[] attr,          // длина >= 20
+        int backward,           // 0=вперёд, 1=назад
+        StringBuilder serr);
+
+    // СОЛНЕЧНОЕ затмение: локальный поиск (требует geopos[3], tret[], attr[])
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_sol_eclipse_when_loc(
+        double tjd_start,
+        int ifl,
+        double[] geopos,        // [lon, lat, alt]
+        double[] tret,          // длина >= 10
+        double[] attr,          // длина >= 20
+        int backward,           // 0=вперёд, 1=назад
+        StringBuilder serr);
+
     // Установка сидерического режима
     [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void swe_set_sid_mode(
