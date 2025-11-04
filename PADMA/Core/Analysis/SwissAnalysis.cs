@@ -20,6 +20,8 @@ namespace PADMA.Core.Analysis
         private const double LondonLongitude = -0.17;
         private const double LondonLatitude = 51.5;
 
+        private const int SEFLG_EPHMASK = (SweConst.SEFLG_JPLEPH | SweConst.SEFLG_SWIEPH | SweConst.SEFLG_MOSEPH);
+
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public static List<PlanetData> CalculatePlanetDataList_London(int planetId, DateTime startUtc, DateTime endUtc)
@@ -451,7 +453,7 @@ namespace PADMA.Core.Analysis
                 (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL | SweConst.SE_ECL_ANNULAR | SweConst.SE_ECL_ANNULAR_TOTAL)) != 0;
 
         static bool IsLunarTotalOrPartial(int rc) =>
-            (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL)) != 0;
+            (rc & (SweConst.SE_ECL_TOTAL | SweConst.SE_ECL_PARTIAL | SweConst.SE_ECL_CENTRAL | SweConst.SE_ECL_NONCENTRAL | SweConst.SE_ECL_ALLTYPES_LUNAR)) != 0;
 
         public static List<EclipseData> CalculateEclipses_London(DateTime fromUtc, DateTime toUtc)
         {
@@ -460,6 +462,17 @@ namespace PADMA.Core.Analysis
 
             var sb = new StringBuilder(256);
             var tret = new double[10];
+
+            int iflag = 0;
+            int whicheph = SweConst.SEFLG_SWIEPH;
+            iflag |= SweConst.SEFLG_SIDEREAL;
+            SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+            SwissService.SetTopo(LondonLongitude, LondonLatitude, 0);
+
+            iflag = (iflag & ~SEFLG_EPHMASK) | whicheph;
+            iflag |= SweConst.SEFLG_SPEED;
+            iflag |= SweConst.SE_ECL_ONE_TRY;
+            int ifltype = ~(SweConst.SE_ECL_CENTRAL | SweConst.SE_ECL_NONCENTRAL);
 
             double jdFrom = SwissService.ToJulianDay(fromUtc);
             double jdTo = SwissService.ToJulianDay(toUtc);
@@ -473,11 +486,13 @@ namespace PADMA.Core.Analysis
                     sb.Clear();
 
                     int rc = SwissEphemerisNative.swe_lun_eclipse_when(
-                        jd, SweConst.SEFLG_SWIEPH, SweConst.SE_ECL_ALLTYPES_LUNAR, tret, 0, sb);
+                        jd, iflag, ifltype, tret, 0, sb);
 
                     if (rc < 0 || tret[0] <= 0) break;
 
                     var dt = SwissService.FromJulianDay(tret[0]);
+                    Debug.WriteLine($"[DEBUG][MOON_{ifltype}] rc={rc} jd={tret[0]} dt={dt}");
+                    
                     if (dt > toUtc.AddDays(2)) break;          // вышли за верхнюю границу
                     if (dt >= fromUtc && IsLunarTotalOrPartial(rc))
                         res.Add(new EclipseData { Date = dt, EclipseId = (int)EEclipse.MOONECLIPSE });

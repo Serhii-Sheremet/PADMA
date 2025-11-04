@@ -107,6 +107,13 @@ internal static class SwissEphemerisNative
         int sid_mode,
         double t0,
         double ayan_t0);
+    
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void swe_set_topo(
+        double geolon, 
+        double geolat, 
+        double altitude);
+
 
     // Получение текущей айанамсы
     [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]

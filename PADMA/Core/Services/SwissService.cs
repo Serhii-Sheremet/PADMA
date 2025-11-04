@@ -139,6 +139,12 @@ namespace PADMA.Core.Services
             SwissEphemerisNative.swe_set_sid_mode(sidMode, 0, 0);
         }
 
+        public static void SetTopo(double geolon, double geolan, double geoalt)
+        {
+            SwissEphemerisNative.swe_set_topo(geolon, geolan, geoalt);
+        }
+
+
         /// <summary>
         /// Gets Ayanamsa (Lahiri) for the given UTC date.
         /// </summary>

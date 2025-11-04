@@ -31,6 +31,7 @@ internal static class SweConst
 
     public const int SE_SIDM_LAHIRI = 1;
 
+    /*
     // === Eclipse flags ===
     // Eclipses: type bits
     public const int SE_ECL_TOTAL = 0x0001; // 1
@@ -52,9 +53,36 @@ internal static class SweConst
 
     // Для совместимости c кодом:
     public const int SE_ECL_HYBRID = SE_ECL_ANNULAR_TOTAL;
+    */
 
+    /* defines for eclipse computations */
 
-
+    public const int SE_ECL_CENTRAL = 1;
+    public const int SE_ECL_NONCENTRAL = 2;
+    public const int SE_ECL_TOTAL = 4;
+    public const int SE_ECL_ANNULAR = 8;
+    public const int SE_ECL_PARTIAL = 16;
+    public const int SE_ECL_ANNULAR_TOTAL = 32;
+    public const int SE_ECL_PENUMBRAL = 64;
+    public const int SE_ECL_ALLTYPES_SOLAR = (SE_ECL_CENTRAL | SE_ECL_NONCENTRAL | SE_ECL_TOTAL | SE_ECL_ANNULAR | SE_ECL_PARTIAL | SE_ECL_ANNULAR_TOTAL);
+    public const int SE_ECL_ALLTYPES_LUNAR = (SE_ECL_TOTAL | SE_ECL_PARTIAL | SE_ECL_PENUMBRAL);
+    public const int SE_ECL_VISIBLE = 128;
+    public const int SE_ECL_MAX_VISIBLE = 256;
+    public const int SE_ECL_1ST_VISIBLE = 512;              /* begin of partial eclipse */
+    public const int SE_ECL_PARTBEG_VISIBLE = 512;          /* begin of partial eclipse */
+    public const int SE_ECL_2ND_VISIBLE = 1024;             /* begin of total eclipse */
+    public const int SE_ECL_TOTBEG_VISIBLE = 1024;          /* begin of total eclipse */
+    public const int SE_ECL_3RD_VISIBLE = 2048;             /* end of total eclipse */
+    public const int SE_ECL_TOTEND_VISIBLE = 2048;          /* end of total eclipse */
+    public const int SE_ECL_4TH_VISIBLE = 4096;             /* end of partial eclipse */
+    public const int SE_ECL_PARTEND_VISIBLE = 4096;         /* end of partial eclipse */
+    public const int SE_ECL_PENUMBBEG_VISIBLE = 8192;       /* begin of penumbral eclipse */
+    public const int SE_ECL_PENUMBEND_VISIBLE = 16384;      /* end of penumbral eclipse */
+    public const int SE_ECL_OCC_BEG_DAYLIGHT = 8192;        /* occultation begins during the day */
+    public const int SE_ECL_OCC_END_DAYLIGHT = 16384;       /* occultation ends during the day */
+    public const int SE_ECL_ONE_TRY = (32 * 1024);
+    /* check if the next conjunction of the moon with
+     * a planet is an occultation; don't search further */
 
 
 
