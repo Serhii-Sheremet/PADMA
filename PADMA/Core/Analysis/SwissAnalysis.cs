@@ -458,7 +458,7 @@ namespace PADMA.Core.Analysis
         }
         
         // --- Слияние близких лунных событий: оставляем более позднее ---
-        // -- пока так - в 2027 нужно было более позднее (после солнечного затмения) --
+        // -- пока так - в 2027 нужно было более позднее (после солнечного затмения). Под вопросом - может нужны все --
         // -- но есть варианты когда лунное на пару недель раньше солнечного - хотя с этим пока по таким рассчетам проблем не было --
         static List<EclipseData> MergeCloseLunarByMagnitude(List<EclipseData> lunar, int windowDays = 32)
         {
@@ -533,7 +533,8 @@ namespace PADMA.Core.Analysis
             }
 
             // Сжимаем близкие лунные события (оставляем нужное в окне ~32 дней)
-            var lunarMerged = MergeCloseLunarByMagnitude(lunarRaw);
+            // Наверное нужны все - в 2027 - 3 лунных и 2 солнечных, в 2029 - 3 солнечных и 2 лунных
+            //var lunarMerged = MergeCloseLunarByMagnitude(lunarRaw);
 
             // --- СОЛНЕЧНЫЕ (исходная рабочая версия) ---
             double jdSol1 = SwissService.ToJulianDay(fromUtc);
@@ -568,7 +569,8 @@ namespace PADMA.Core.Analysis
                 jdSol1 = SwissService.ToJulianDay(dt.AddDays(32));
             }
 
-            result.AddRange(lunarMerged);
+            //result.AddRange(lunarMerged); // -- пока включаем все --
+            result.AddRange(lunarRaw);
 
             // --- Объединяем, фильтруем по диапазону, убираем редкие дубли по дню ---
             result = result
