@@ -20,8 +20,6 @@ namespace PADMA.Core.Analysis
         private const double LondonLongitude = -0.17;
         private const double LondonLatitude = 51.5;
 
-        private const int SEFLG_EPHMASK = (SweConst.SEFLG_JPLEPH | SweConst.SEFLG_SWIEPH | SweConst.SEFLG_MOSEPH);
-
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public static List<PlanetData> CalculatePlanetDataList_London(int planetId, DateTime startUtc, DateTime endUtc)
