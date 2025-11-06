@@ -129,5 +129,42 @@ namespace PADMA.Core.Utilities
                 .FirstOrDefault(p => p.NakshatraId == nakshatraId && p.PadaNumber == padaNumber)
                 ?.Navamsa ?? 0;
         }
+
+        public static double CalculateAscendantWithTimeZone(
+            DateTime dateUtc, double latitude, double longitude, double altitude, char hsys = 'O')
+        {
+            double offset = TimeZoneService.GetUtcOffsetHours(dateUtc, latitude, longitude);
+            DateTime local = dateUtc.AddHours(offset);
+            return SwissService.CalculateAscendantForDate(local, latitude, longitude, altitude, hsys);
+        }
+
+        /// <summary>
+        /// Converts decimal degrees to formatted string "DD°MM′SS″".
+        /// </summary>
+        public static string FormatDegrees(double degrees)
+        {
+            degrees = SwissService.NormalizeDegrees(degrees);
+            int d = (int)Math.Floor(degrees);
+            double minPart = (degrees - d) * 60.0;
+            int m = (int)Math.Floor(minPart);
+            double secPart = (minPart - m) * 60.0;
+            int s = (int)Math.Round(secPart);
+
+            // корректируем возможное переполнение при округлении
+            if (s == 60)
+            {
+                s = 0;
+                m++;
+                if (m == 60)
+                {
+                    m = 0;
+                    d++;
+                }
+            }
+
+            return $"{d:00}°{m:00}′{s:00}″";
+        }
+
+
     }
 }

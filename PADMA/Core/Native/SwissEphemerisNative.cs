@@ -41,6 +41,16 @@ internal static class SwissEphemerisNative
         StringBuilder serr);
 
     [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_houses_ex(
+        double tjd_ut,
+        int iflag,
+        double geolat,
+        double geolon,
+        int hsys,
+        [Out] double[] cusps,
+        [Out] double[] ascmc);
+
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern int swe_lun_eclipse_when_glob(
         double tjd_start,          // JD(UT) — откуда искать
         int ifl,                   // флаги, например SEFLG_SWIEPH

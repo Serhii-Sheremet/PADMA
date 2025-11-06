@@ -978,3 +978,191 @@ Also defines IDs for:
 - Date/time strings stored in DB as `"yyyy-MM-dd HH:mm:ss"`.
 
 ---
+
+
+# 🌄 Ascendant Calculation — SwissService & SwissUtility
+
+## 📘 Overview
+
+The Ascendant (Lagna) calculation feature has been implemented using the Swiss Ephemeris engine integrated through the SwissService.  
+This module computes the **Ascendant longitude** for any date/time and geographic location, including proper handling of **historical time zones**.
+
+---
+
+## 🧭 Core Components
+
+| File | Description |
+|------|--------------|
+| `Core/Services/SwissService.cs` | Contains the low-level calculation `CalculateAscendantForDate` (core Ascendant computation in UTC). |
+| `Core/Utilities/SwissUtility.cs` | Provides `CalculateAscendantWithTimeZone` for high-level usage including local time zone conversion. |
+| `Core/Services/TimeZoneService.cs` | Handles historical timezone detection using GeoTimeZone, TimeZoneConverter, and NodaTime. |
+
+---
+
+## ⚙️ External Libraries
+
+| Package | Version | Purpose |
+|----------|----------|----------|
+| `GeoTimeZone` | 6.1.0 | Determines IANA timezone ID by latitude/longitude (offline). |
+| `TimeZoneConverter` | 7.2.0 | Converts between IANA and Windows (.NET) timezone formats. |
+| `NodaTime` | 3.2.2 | Provides historical timezone offsets and date-time conversions. |
+
+---
+
+## 🧩 Calculation Flow
+
+### ️⃣ Ascendant Core Calculation (SwissService)
+
+Method:  
+```csharp
+public static double CalculateAscendantForDate(
+    DateTime dateTimeUtc,
+    double latitude,
+    double longitude,
+    double altitude,
+    char hsys = 'O')
+```
+- Inputs are in **UTC**.
+- Performs conversion to Julian Day (`swe_julday`).
+- Activates sidereal Lahiri mode (`swe_set_sid_mode`).
+- Sets topocentric coordinates (`swe_set_topo`).
+- Calls Swiss Ephemeris native function `swe_houses_ex()`.
+
+Result:  
+- Returns **Ascendant ecliptic longitude** in degrees [0–360).
+- Default house system: **‘O’ (Placidus)**.
+
+---
+
+### ️⃣ Ascendant with TimeZone Adjustment (SwissUtility)
+
+Method:  
+```csharp
+public static double CalculateAscendantWithTimeZone(
+    DateTime dateUtc,
+    double latitude,
+    double longitude,
+    double altitude,
+    char hsys = 'O')
+```
+- Uses `TimeZoneService` to get historical UTC offset for the coordinates.
+- Converts to local time via NodaTime’s `DateTimeZoneProviders.Tzdb`.
+- Calls `CalculateAscendantForDate` with the corrected UTC time.
+- Returns Ascendant longitude (sidereal, Lahiri).
+
+---
+
+## 🕒 Historical Time Zone Logic
+
+### TimeZoneService Methods
+
+| Method | Description |
+|---------|--------------|
+| `GetIanaTimeZoneId(lat, lon)` | Returns IANA zone ID (e.g., "Europe/Kyiv"). |
+| `GetDotNetTimeZoneId(lat, lon)` | Returns equivalent Windows ID. |
+| `GetUtcOffsetHours(date, lat, lon)` | Returns UTC offset (historical) in hours using NodaTime tzdb. |
+
+---
+
+## 🔍 Notes
+- Calculation fully respects historical DST and UTC offsets.  
+- Works identically on Windows, Android, and iOS.  
+- Uses sidereal mode **Lahiri** by default.  
+- Returns absolute ecliptic longitude (0–360°), compatible with all PADMA models.  
+- Formatting into degrees/minutes/seconds handled in `FormatDegrees(double degrees)` function (`Core/Utilities/SwissUtility.cs`).
+
+---
+
+
+# 🌄 Ascendant Calculation — SwissService & SwissUtility
+
+## 📘 Overview
+
+The Ascendant (Lagna) calculation feature has been implemented using the Swiss Ephemeris engine integrated through the SwissService.  
+This module computes the **Ascendant longitude** for any date/time and geographic location, including proper handling of **historical time zones**.
+
+---
+
+## 🧭 Core Components
+
+| File | Description |
+|------|--------------|
+| `Core/Services/SwissService.cs` | Contains the low-level calculation `CalculateAscendantForDate` (core Ascendant computation in UTC). |
+| `Core/Utilities/SwissUtility.cs` | Provides `CalculateAscendantWithTimeZone` for high-level usage including local time zone conversion. |
+| `Core/Services/TimeZoneService.cs` | Handles historical timezone detection using GeoTimeZone, TimeZoneConverter, and NodaTime. |
+
+---
+
+## ⚙️ External Libraries
+
+| Package | Version | Purpose |
+|----------|----------|----------|
+| `GeoTimeZone` | 6.1.0 | Determines IANA timezone ID by latitude/longitude (offline). |
+| `TimeZoneConverter` | 7.2.0 | Converts between IANA and Windows (.NET) timezone formats. |
+| `NodaTime` | 3.2.2 | Provides historical timezone offsets and date-time conversions. |
+
+---
+
+## 🧩 Calculation Flow
+
+### ️⃣ Ascendant Core Calculation (SwissService)
+
+Method:  
+```csharp
+public static double CalculateAscendantForDate(
+    DateTime dateTimeUtc,
+    double latitude,
+    double longitude,
+    double altitude,
+    char hsys = 'O')
+```
+- Inputs are in **UTC**.
+- Performs conversion to Julian Day (`swe_julday`).
+- Activates sidereal Lahiri mode (`swe_set_sid_mode`).
+- Sets topocentric coordinates (`swe_set_topo`).
+- Calls Swiss Ephemeris native function `swe_houses_ex()`.
+
+Result:  
+- Returns **Ascendant ecliptic longitude** in degrees [0–360).
+- Default house system: **‘O’ (Placidus)**.
+
+---
+
+### ️⃣ Ascendant with TimeZone Adjustment (SwissUtility)
+
+Method:  
+```csharp
+public static double CalculateAscendantWithTimeZone(
+    DateTime dateUtc,
+    double latitude,
+    double longitude,
+    double altitude,
+    char hsys = 'O')
+```
+- Uses `TimeZoneService` to get historical UTC offset for the coordinates.
+- Converts to local time via NodaTime’s `DateTimeZoneProviders.Tzdb`.
+- Calls `CalculateAscendantForDate` with the corrected UTC time.
+- Returns Ascendant longitude (sidereal, Lahiri).
+
+---
+
+## 🕒 Historical Time Zone Logic
+
+### TimeZoneService Methods
+
+| Method | Description |
+|---------|--------------|
+| `GetIanaTimeZoneId(lat, lon)` | Returns IANA zone ID (e.g., "Europe/Kyiv"). |
+| `GetDotNetTimeZoneId(lat, lon)` | Returns equivalent Windows ID. |
+| `GetUtcOffsetHours(date, lat, lon)` | Returns UTC offset (historical) in hours using NodaTime tzdb. |
+
+---
+
+## 🔍 Notes
+- Calculation fully respects historical DST and UTC offsets.  
+- Works identically on Windows, Android, and iOS.  
+- Uses sidereal mode **Lahiri** by default.  
+- Returns absolute ecliptic longitude (0–360°), compatible with all PADMA models.  
+- Formatting into degrees/minutes/seconds handled in `FormatDegrees(double degrees)` function (`Core/Utilities/SwissUtility.cs`).
+
+---

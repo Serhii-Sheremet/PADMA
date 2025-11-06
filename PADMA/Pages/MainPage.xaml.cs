@@ -3,8 +3,11 @@ using PADMA.Core.Analysis;
 using PADMA.Core.Models;
 using PADMA.Core.Native;
 using PADMA.Core.Services;
+using PADMA.Core.Utilities;
 using PADMA.Core.Enums;
 using PADMA.UI;
+using GeoTimeZone;
+using NodaTime;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -122,16 +125,52 @@ namespace PADMA.Pages
             }
         }
 
+        async void TestAscendant()
+        {
+            // 1) Координаты Чёрный Остров, Украина
+            double lat = 49.506984;
+            double lon = 26.764657;
+            double alt = 0.0;
+            char hsys = 'O'; // Placidus (замени при необходимости)
 
+            // 2) Локальная дата рождения (БЕЗ смещения)
+            var localBirth = new LocalDateTime(1971, 12, 5, 0, 40, 0);
+
+            // 3) Исторический таймзон по координатам → IANA
+            string iana = TimeZoneLookup.GetTimeZone(lat, lon).Result; // напр. "Europe/Kyiv"
+            var zone = DateTimeZoneProviders.Tzdb[iana];
+
+            // 4) Локальное → UTC через NodaTime (учтёт исторический DST/офсеты)
+            var zoned = zone.AtLeniently(localBirth);
+            DateTime utcBirth = zoned.ToInstant().ToDateTimeUtc();
+
+            // (опционально) убедимся, что пути к эфемеридам и сидерика активны
+            await SwissService.InitializeEphemerisPathAsync();
+            SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+
+            // 5) Расчёт асцендента
+            double asc = SwissService.CalculateAscendantForDate(utcBirth, lat, lon, alt, hsys);
+
+            // 6) Знак и градус внутри знака
+            double ascNorm = SwissService.NormalizeDegrees(asc);
+            int sign = SwissUtility.GetZodiakIdFromDegree(ascNorm); // 1..12
+            double degInSign = ascNorm - (sign - 1) * 30.0;
+
+            // 7) Вывод
+            Console.WriteLine($"IANA: {iana}");
+            Console.WriteLine($"Local: {localBirth:yyyy-MM-dd HH:mm:ss}  →  UTC: {utcBirth:yyyy-MM-dd HH:mm:ss}Z");
+            Console.WriteLine($"Ascendant: {ascNorm:F6}°  |  Sign #{sign}  |  {degInSign:F2}° in sign");
+        }
 
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
 
-
             // _ = RunPlanetTestAsync();
             // _ = RunTithiTestAsync();
+            //TestAscendant();
+
             /*
             var from = new DateTime(2025, 10, 30, 0, 0, 0, DateTimeKind.Utc);
             var to = from.AddDays(1);

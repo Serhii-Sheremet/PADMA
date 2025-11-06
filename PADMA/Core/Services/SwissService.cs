@@ -3,6 +3,8 @@ using System.Text;
 using System.Threading.Tasks;
 using PADMA.Core.Native;
 using PADMA.Core.Utilities;
+using GeoTimeZone;
+using NodaTime;
 
 namespace PADMA.Core.Services
 {
@@ -179,6 +181,49 @@ namespace PADMA.Core.Services
             double ss_d = (hour - hh) * 3600.0 - mm * 60.0;
             int ss = (int)Math.Round(ss_d);
             return new DateTime(y, m, d, hh, mm, ss, DateTimeKind.Utc);
+        }
+
+        /// <summary>
+        /// Calculates Ascendant for given date, coordinates, and house system.
+        /// </summary>
+        /// <param name="dateTimeUtc">UTC time of calculation</param>
+        /// <param name="latitude">Latitude (degrees, North +)</param>
+        /// <param name="longitude">Longitude (degrees, East +)</param>
+        /// <param name="altitude">Altitude in meters</param>
+        /// <param name="hsys">House system (e.g. 'O' = Placidus, 'E' = Equal, etc.)</param>
+        /// <returns>Ascendant longitude in degrees</returns>
+        public static double CalculateAscendantForDate(
+            DateTime dateTimeUtc,
+            double latitude,
+            double longitude,
+            double altitude,
+            char hsys = 'O')
+        {
+            // Convert to Julian day
+            double jut = dateTimeUtc.Hour + dateTimeUtc.Minute / 60.0 + dateTimeUtc.Second / 3600.0;
+            double tjd_ut = SwissEphemerisNative.swe_julday(
+                dateTimeUtc.Year, dateTimeUtc.Month, dateTimeUtc.Day, jut, SweConst.SE_GREG_CAL);
+
+            // Apply sidereal Lahiri mode and topocentric coordinates
+            SwissEphemerisNative.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0, 0);
+            SwissEphemerisNative.swe_set_topo(longitude, latitude, altitude);
+
+            // Prepare result arrays
+            double[] cusps = new double[13];  // house cusps 1..12
+            double[] ascmc = new double[10];  // contains Ascendant, MC, ARMC, etc.
+
+            // Call Swiss Ephemeris
+            SwissEphemerisNative.swe_houses_ex(
+                tjd_ut,
+                SweConst.SEFLG_SIDEREAL,
+                latitude,
+                longitude,
+                hsys,
+                cusps,
+                ascmc);
+
+            // ascmc[0] is the Ascendant (in degrees)
+            return ascmc[0];
         }
 
 
