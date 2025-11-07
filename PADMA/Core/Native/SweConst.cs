@@ -31,32 +31,8 @@ internal static class SweConst
 
     public const int SE_SIDM_LAHIRI = 1;
 
-    /*
+    
     // === Eclipse flags ===
-    // Eclipses: type bits
-    public const int SE_ECL_TOTAL = 0x0001; // 1
-    public const int SE_ECL_ANNULAR = 0x0002; // 2
-    public const int SE_ECL_PARTIAL = 0x0004; // 4
-    public const int SE_ECL_ANNULAR_TOTAL = 0x0008; // 8 (hybrid)
-
-    // Geometry (centrality)
-    public const int SE_ECL_NONCENTRAL = 0x0010; // 16
-    public const int SE_ECL_CENTRAL = 0x0020; // 32
-
-    // Convenience masks
-    public const int SE_ECL_ALLTYPES_SOLAR =
-        SE_ECL_CENTRAL | SE_ECL_NONCENTRAL |
-        SE_ECL_TOTAL | SE_ECL_ANNULAR | SE_ECL_PARTIAL | SE_ECL_ANNULAR_TOTAL;
-
-    public const int SE_ECL_ALLTYPES_LUNAR =
-        SE_ECL_TOTAL | SE_ECL_PARTIAL; // (полутеневые мы отбрасываем)
-
-    // Для совместимости c кодом:
-    public const int SE_ECL_HYBRID = SE_ECL_ANNULAR_TOTAL;
-    */
-
-    /* defines for eclipse computations */
-
     public const int SE_ECL_CENTRAL = 1;
     public const int SE_ECL_NONCENTRAL = 2;
     public const int SE_ECL_TOTAL = 4;
@@ -84,7 +60,40 @@ internal static class SweConst
     /* check if the next conjunction of the moon with
      * a planet is an occultation; don't search further */
 
+    /* for swe_rise_transit() */
+    public const int SE_CALC_RISE = 1;
+    public const int SE_CALC_SET = 2;
+    public const int SE_CALC_MTRANSIT = 4;
+    public const int SE_CALC_ITRANSIT = 8;
+    public const int SE_BIT_DISC_CENTER = 256;         /* to be or'ed to SE_CALC_RISE/SET,
+				                                            * if rise or set of disc center is 
+				                                            * required*/
+    public const int SE_BIT_DISC_BOTTOM = 8192;        /* to be or'ed to SE_CALC_RISE/SET,
+                                                            * if rise or set of lower limb of
+                                                            * disc is requried*/
+    public const int SE_BIT_GEOCTR_NO_ECL_LAT = 128;   /* use geocentric rather than topocentric 
+                                                              position of object and
+                                                              ignore its ecliptic latitude */
+    public const int SE_BIT_NO_REFRACTION = 512;       /* to be or'ed to SE_CALC_RISE/SET, 
+				                                            * if refraction is to be ignored*/
+    public const int SE_BIT_CIVIL_TWILIGHT = 1024;     /* to be or'ed to SE_CALC_RISE/SET */
+    public const int SE_BIT_NAUTIC_TWILIGHT = 2048;    /* to be or'ed to SE_CALC_RISE/SET */
+    public const int SE_BIT_ASTRO_TWILIGHT = 4096;     /* to be or'ed to SE_CALC_RISE/SET */
+    public const int SE_BIT_FIXED_DISC_SIZE = 16384;   /* or'ed to SE_CALC_RISE/SET:
+                                                            * neglect the effect of distance on
+				                                            * disc size */
+    public const int SE_BIT_FORCE_SLOW_METHOD = 32768; /* This is only a Astrodienst in-house
+                                                            * test flag.It forces the usage
+                                                            * of the old, slow calculation of
+                                                            * risings and settings. */
+    public const int SE_BIT_HINDU_RISING = (SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION | SE_BIT_GEOCTR_NO_ECL_LAT);
 
+    //  ---- my custom sunrise const ----
+    public const int SE_SUNRISE_TIP = (SE_CALC_RISE | SE_BIT_DISC_BOTTOM | SE_BIT_GEOCTR_NO_ECL_LAT);
+    public const int SE_SUNRISE_CENTER = (SE_CALC_RISE | SE_BIT_DISC_CENTER | SE_BIT_GEOCTR_NO_ECL_LAT);
+    public const int SE_SUNSET_TIP = (SE_CALC_SET | SE_BIT_DISC_BOTTOM | SE_BIT_GEOCTR_NO_ECL_LAT);
+    public const int SE_SUNSET_CENTER = (SE_CALC_SET | SE_BIT_DISC_CENTER | SE_BIT_GEOCTR_NO_ECL_LAT);
+    //  ----------------------------------
 
 
 

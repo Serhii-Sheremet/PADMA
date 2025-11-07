@@ -162,6 +162,46 @@ namespace PADMA.Pages
             Console.WriteLine($"Ascendant: {ascNorm:F6}°  |  Sign #{sign}  |  {degInSign:F2}° in sign");
         }
 
+        async void TestSunriseSunsetUniversal()
+        {
+            // Координаты Варшавы
+            double lon = 21.0;
+            double lat = 52.25;
+            double alt = 0;
+
+            // Период — проверяем конец октября и ноябрь 2025
+            var from = new DateTime(2025, 10, 25, 0, 0, 0, DateTimeKind.Utc);
+            var to = new DateTime(2025, 11, 30, 0, 0, 0, DateTimeKind.Utc);
+
+            Console.WriteLine("=== Sunrise / Sunset for Warsaw (universal DST-safe test) ===");
+
+            for (var date = from; date <= to; date = date.AddDays(1))
+            {
+                // Берем середину суток — это стабилизирует расчёты Swiss Ephemeris
+                var dateMid = date.AddHours(12);
+
+                var srUtc = SwissService.CalculateSunriseForDateAndLocation(dateMid, lat, lon, alt);
+                var ssUtc = SwissService.CalculateSunsetForDateAndLocation(dateMid, lat, lon, alt);
+
+                if (srUtc is DateTime sru && ssUtc is DateTime ssu)
+                {
+                    // Наш новый универсальный метод конвертации UTC → Local
+                    var srLocal = TimeZoneService.ConvertUtcToLocalSmart(
+                        DateTime.SpecifyKind(sru, DateTimeKind.Utc), lat, lon);
+                    var ssLocal = TimeZoneService.ConvertUtcToLocalSmart(
+                        DateTime.SpecifyKind(ssu, DateTimeKind.Utc), lat, lon);
+
+                    Console.WriteLine($"{date:yyyy-MM-dd} | Sunrise: {srLocal:HH:mm} | Sunset: {ssLocal:HH:mm}");
+                }
+                else
+                {
+                    Console.WriteLine($"{date:yyyy-MM-dd} | No data");
+                }
+            }
+
+            Console.WriteLine("=== End of test ===");
+        }
+
 
         protected override void OnAppearing()
         {
@@ -170,6 +210,7 @@ namespace PADMA.Pages
             // _ = RunPlanetTestAsync();
             // _ = RunTithiTestAsync();
             //TestAscendant();
+            //TestSunriseSunsetUniversal();
 
             /*
             var from = new DateTime(2025, 10, 30, 0, 0, 0, DateTimeKind.Utc);

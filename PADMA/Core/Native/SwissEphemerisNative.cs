@@ -17,8 +17,8 @@ internal static class SwissEphemerisNative
 
     [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern int swe_utc_to_jd(
-    int iyear, int imonth, int iday, int ihour, int imin, double dsec,
-    int gregflag, double[] dret, StringBuilder serr);
+        int iyear, int imonth, int iday, int ihour, int imin, double dsec,
+        int gregflag, double[] dret, StringBuilder serr);
 
 
     // Обратное преобразование юлианской даты в календарную
@@ -119,6 +119,18 @@ internal static class SwissEphemerisNative
         double[] attr,          // длина >= 20, attr[0] = величина затмения
         StringBuilder serr);    // буфер для ошибок (256 символов достаточно)
 
+    [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int swe_rise_trans(
+        double tjd_ut,
+        int ipl,
+        string starname,
+        int iflag,
+        int rsmi,
+        double[] geopos,
+        double atpress,
+        double attemp,
+        double[] tret,
+        StringBuilder serr);
 
     // Установка сидерического режима
     [DllImport(NativeLibrary.LibName, CallingConvention = CallingConvention.Cdecl)]

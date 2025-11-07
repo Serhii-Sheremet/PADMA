@@ -1105,7 +1105,7 @@ This module computes the **Ascendant longitude** for any date/time and geographi
 
 ## 🧩 Calculation Flow
 
-### ️⃣ Ascendant Core Calculation (SwissService)
+### ️⃣  Ascendant Core Calculation (SwissService)
 
 Method:  
 ```csharp
@@ -1128,7 +1128,7 @@ Result:
 
 ---
 
-### ️⃣ Ascendant with TimeZone Adjustment (SwissUtility)
+### ️⃣  Ascendant with TimeZone Adjustment (SwissUtility)
 
 Method:  
 ```csharp
@@ -1164,5 +1164,67 @@ public static double CalculateAscendantWithTimeZone(
 - Uses sidereal mode **Lahiri** by default.  
 - Returns absolute ecliptic longitude (0–360°), compatible with all PADMA models.  
 - Formatting into degrees/minutes/seconds handled in `FormatDegrees(double degrees)` function (`Core/Utilities/SwissUtility.cs`).
+
+---
+
+### 🌅 Sunrise and Sunset Calculation
+
+#### **Purpose**
+This module calculates the sunrise and sunset times for a given geographic location and date, respecting user-defined configuration (calculation type: by disc edge or by disc center).
+
+---
+
+#### **Main Files**
+- `SwissService.cs` — functions to calculate sunrise and sunset times in UTC.
+- `SwissEphemerisNative.cs` — P/Invoke declaration for the `swe_rise_trans` function.
+- `SweConst.cs` — contains constant definitions used for rise/set calculations (`SE_SUNRISE_TIP`, `SE_SUNRISE_CENTER`, `SE_SUNSET_TIP`, `SE_SUNSET_CENTER`).
+- `TimeZoneService.cs` — universal time conversion service (UTC ↔ Local) based on `.NET TimeZoneInfo` and `AdjustmentRules`.
+
+---
+
+#### **SwissService Functions**
+
+** ️⃣  Sunrise Calculation:**
+```csharp
+public static DateTime CalculateSunriseForDateAndLocation(DateTime date, double latitude, double longitude, double altitude)
+```
+Calculates the UTC time of sunrise for a given date and coordinates.  
+The calculation type is determined by the active configuration:
+- `SUNRISETIP` — lower limb (disc edge),
+- `SUNRISECENTER` — disc center.
+
+** ️⃣  Sunset Calculation:**
+```csharp
+public static DateTime CalculateSunsetForDateAndLocation(DateTime date, double latitude, double longitude, double altitude)
+```
+Calculates the UTC time of sunset for a given date and coordinates.
+
+---
+
+#### **TimeZoneService and Time Conversion**
+
+For converting UTC results to local time, the following function is used:
+
+```csharp
+public static DateTime ConvertUtcToLocalSmart(DateTime utc, double latitude, double longitude)
+```
+
+This function:
+- Determines the .NET timezone based on coordinates (GeoTimeZone + TZConvert);
+- Applies the base `UtcOffset` and adjusts using `AdjustmentRules`;
+- Considers possible Daylight Saving Time (DST) transitions;
+- Works without external libraries and is applicable for any region.
+
+Additional helper functions in `TimeZoneService`:
+- `ShiftDateByDaylightDelta()` — applies DST offset when active;
+- `GetAdjustmentDate()` — computes actual transition dates for DST.
+
+---
+
+#### **Notes**
+- All Swiss Ephemeris calculations are performed in UTC.  
+- Conversion to local time is handled via `.NET TimeZoneInfo`, ensuring compatibility with system settings on all platforms.  
+- Minor discrepancies (up to ±1 day or even more) may occur for future years due to known limitations of the Windows time zone database.  
+- For historical calculations (e.g., natal charts), `NodaTime` is used — relying on the IANA time zone database for full historical accuracy.
 
 ---

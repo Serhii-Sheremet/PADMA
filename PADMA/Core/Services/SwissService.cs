@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using PADMA.Core.Native;
 using PADMA.Core.Utilities;
+using PADMA.Core.Enums;
 using GeoTimeZone;
 using NodaTime;
 
@@ -224,6 +225,147 @@ namespace PADMA.Core.Services
 
             // ascmc[0] is the Ascendant (in degrees)
             return ascmc[0];
+        }
+
+        /// <summary>
+        /// Calculates the sunrise UTC time for the given date and coordinates,
+        /// using the active configuration from AppSettings (Tip / Center).
+        /// </summary>
+        public static DateTime? CalculateSunriseForDateAndLocation(DateTime dateUtc, double latitude, double longitude, double altitude = 0)
+        {
+            try
+            {
+                int ipl = SweConst.SE_SUN;
+                int iflag = SweConst.SEFLG_SWIEPH | SweConst.SEFLG_SIDEREAL;
+
+                // --- Get current sunrise calculation setting from AppSettings ---
+                var setting = DataCache.Instance.AppSettingsList
+                    .FirstOrDefault(s => s.GroupCode == "SUNRISE" && s.Active == 1);
+
+                EAppSetting sunriseSetting = EAppSetting.SUNRISECENTER; // default
+                if (setting != null && Enum.IsDefined(typeof(EAppSetting), setting.Id))
+                    sunriseSetting = (EAppSetting)setting.Id;
+
+                int rsmi = sunriseSetting switch
+                {
+                    EAppSetting.SUNRISETIP => SweConst.SE_SUNRISE_TIP,
+                    EAppSetting.SUNRISECENTER => SweConst.SE_SUNRISE_CENTER,
+                    _ => SweConst.SE_SUNRISE_CENTER
+                };
+
+                // --- Convert to Julian day ---
+                double jut = dateUtc.Hour + dateUtc.Minute / 60.0 + dateUtc.Second / 3600.0;
+                double tjd_ut = SwissEphemerisNative.swe_julday(
+                    dateUtc.Year, dateUtc.Month, dateUtc.Day, jut, SweConst.SE_GREG_CAL);
+
+                double[] geopos = { longitude, latitude, altitude };
+                double[] tret = new double[1];
+                StringBuilder serr = new StringBuilder(256);
+
+                // --- Configure Swiss Ephemeris ---
+                SwissEphemerisNative.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0, 0);
+                SwissEphemerisNative.swe_set_topo(longitude, latitude, altitude);
+
+                // --- Perform sunrise calculation ---
+                int ret = SwissEphemerisNative.swe_rise_trans(
+                    tjd_ut,
+                    ipl,
+                    string.Empty,
+                    iflag,
+                    rsmi,
+                    geopos,
+                    0,      // pressure
+                    0,      // temperature
+                    tret,
+                    serr);
+
+                if (ret < 0 || tret[0] <= 0)
+                {
+                    Console.WriteLine($"[WARN] Sunrise not found for {dateUtc:yyyy-MM-dd} | {serr}");
+                    return null;
+                }
+
+                // --- Convert Julian Day to DateTime (UTC) ---
+                double jd = tret[0];
+                double dayFraction = jd - Math.Floor(jd);
+                DateTime sunriseUtc = new DateTime(4713, 1, 1).AddDays(jd - 1721425.5);
+                return sunriseUtc;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Sunrise calculation failed: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Calculates the sunset UTC time for the given date and coordinates,
+        /// using the active configuration from AppSettings (Tip / Center).
+        /// </summary>
+        public static DateTime? CalculateSunsetForDateAndLocation(DateTime dateUtc, double latitude, double longitude, double altitude = 0)
+        {
+            try
+            {
+                int ipl = SweConst.SE_SUN;
+                int iflag = SweConst.SEFLG_SWIEPH | SweConst.SEFLG_SIDEREAL;
+
+                // --- Get current sunrise/sunset calculation setting from AppSettings ---
+                var setting = DataCache.Instance.AppSettingsList
+                    .FirstOrDefault(s => s.GroupCode == "SUNRISE" && s.Active == 1);
+
+                EAppSetting sunsetSetting = EAppSetting.SUNRISECENTER; // default
+                if (setting != null && Enum.IsDefined(typeof(EAppSetting), setting.Id))
+                    sunsetSetting = (EAppSetting)setting.Id;
+
+                int rsmi = sunsetSetting switch
+                {
+                    EAppSetting.SUNRISETIP => SweConst.SE_SUNSET_TIP,
+                    EAppSetting.SUNRISECENTER => SweConst.SE_SUNSET_CENTER,
+                    _ => SweConst.SE_SUNSET_CENTER
+                };
+
+                // --- Convert to Julian day ---
+                double jut = dateUtc.Hour + dateUtc.Minute / 60.0 + dateUtc.Second / 3600.0;
+                double tjd_ut = SwissEphemerisNative.swe_julday(
+                    dateUtc.Year, dateUtc.Month, dateUtc.Day, jut, SweConst.SE_GREG_CAL);
+
+                double[] geopos = { longitude, latitude, altitude };
+                double[] tret = new double[1];
+                StringBuilder serr = new StringBuilder(256);
+
+                // --- Configure Swiss Ephemeris ---
+                SwissEphemerisNative.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0, 0);
+                SwissEphemerisNative.swe_set_topo(longitude, latitude, altitude);
+
+                // --- Perform sunset calculation ---
+                int ret = SwissEphemerisNative.swe_rise_trans(
+                    tjd_ut,
+                    ipl,
+                    string.Empty,
+                    iflag,
+                    rsmi,
+                    geopos,
+                    0,      // atpress
+                    0,      // attemp
+                    tret,
+                    serr);
+
+                if (ret < 0 || tret[0] <= 0)
+                {
+                    Console.WriteLine($"[WARN] Sunset not found for {dateUtc:yyyy-MM-dd} | {serr}");
+                    return null;
+                }
+
+                // --- Convert Julian Day to DateTime (UTC) ---
+                double jd = tret[0];
+                DateTime sunsetUtc = new DateTime(4713, 1, 1).AddDays(jd - 1721425.5);
+                return sunsetUtc;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Sunset calculation failed: {ex.Message}");
+                return null;
+            }
         }
 
 
