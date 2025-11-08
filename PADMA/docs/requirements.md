@@ -1259,19 +1259,26 @@ Instead of maintaining hundreds of separate lists, all transits are stored withi
 
 #### **Core Types**
 
+Enum location: `PADMA/Core/Enums/ETransitKind.cs`.
 ```csharp
-public enum TransitKind
+public enum ETransitKind
 {
-    Nakshatra,
-    Tithi,
-    Karana,
-    TaraBala,
-    NityaYoga,
-    MrityuBhaga,
-    Eclipse,
-    Planet,
-    Sunrise,
-    Sunset,
+    Unknown = 0,
+
+	// Core Swiss-based transits
+	ZodiakSign = 1,
+	Nakshatra = 2,
+	TaraBala = 3,
+	ChandraBalla = 4,
+	Tithi = 5,
+	Karana = 6,
+	NityaYoga = 7,
+	MrityuBhaga = 8,
+	Eclipse = 9,
+	
+	// Solar cycles
+	Sunrise = 10,
+	Sunset = 11,
     // Extendable with future features
 }
 ```
@@ -1280,7 +1287,7 @@ public enum TransitKind
 public sealed record CalendarSlice(
     DateTime StartUtc,
     DateTime EndUtc,
-    TransitKind Kind,
+    ETransitKind Kind,
     string Title,
     string? ColorId = null,
     string? PayloadKey = null // Reference to detailed entity if needed
@@ -1314,8 +1321,8 @@ The assembler collects data from multiple modules (SwissAnalysis, SwissService, 
 #### **Advantages of the New Structure**
 - ✅ **Unified access:** all transits live in a single `List<CalendarSlice>` instead of hundreds of typed lists.  
 - ⚡ **Performance:** fewer allocations, easier serialization, lower GC pressure.  
-- 🎨 **UI flexibility:** filtering by `TransitKind` allows building uniform calendar and daily detail views.  
-- 🧱 **Extendability:** new transit types can be added by extending the `TransitKind` enum — no schema changes needed.  
+- 🎨 **UI flexibility:** filtering by `ETransitKind` allows building uniform calendar and daily detail views.  
+- 🧱 **Extendability:** new transit types can be added by extending the `ETransitKind` enum — no schema changes needed.  
 - 🔁 **Consistency:** all Swiss calculations share a common projection format before being visualized.  
 - 💾 **Caching-ready:** results can be cached or serialized as `CalendarSlice` objects without re-computation.  
 
@@ -1328,7 +1335,7 @@ var assembler = new TransitAssembler();
 var timeline = assembler.Build(new DateOnly(2025, 11, 8), new GeoPoint(52.25, 21.0, 0), settings);
 
 // Filter and display Nakshatra events only
-var nakshatras = timeline.Items.Where(i => i.Kind == TransitKind.Nakshatra);
+var nakshatras = timeline.Items.Where(i => i.Kind == ETransitKind.Nakshatra);
 foreach (var e in nakshatras)
 {
     Console.WriteLine($"{e.Date}: {e.Title} ({e.StartUtc:HH:mm}–{e.EndUtc:HH:mm})");
@@ -1357,3 +1364,7 @@ foreach (var e in nakshatras)
 #### **Status**
 ✅ Concept approved and scheduled for implementation.  
 This structure will serve as the **core data model** of the PADMA project, ensuring unified representation and scalability for all astrological calculations.
+
+## Action Items
+1. Wire `TransitAssembler` to Swiss computations for 1–2 simple transits first (Sunrise/Sunset), then expand.
+2. Add unit tests for assembling a 46-day window (42 + 2 ± days) to validate pagination and DST handling.
