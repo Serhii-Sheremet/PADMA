@@ -945,7 +945,7 @@ Features:
 ## 🧰 Utilities
 
 `SwissUtility` provides:
-- `NormalizeDegrees(double)` — ensures [0,360)
+- `NormalizeDegrees(double)` — ensures [0,360]
 - `GetPlanetSWEConstByPlanetId(int)` — mapping PADMA → Swiss constants
 - `AdjustForKetu(double)` — adds 180°, wraps to 360°
 - `GetZodiakIdFromDegree()`, `GetNakshatraIdFromDegree()`, `GetPadaIdFromDegree()`
@@ -1029,7 +1029,7 @@ public static double CalculateAscendantForDate(
 - Calls Swiss Ephemeris native function `swe_houses_ex()`.
 
 Result:  
-- Returns **Ascendant ecliptic longitude** in degrees [0–360).
+- Returns **Ascendant ecliptic longitude** in degrees [0–360].
 - Default house system: **‘O’ (Placidus)**.
 
 ---
@@ -1123,7 +1123,7 @@ public static double CalculateAscendantForDate(
 - Calls Swiss Ephemeris native function `swe_houses_ex()`.
 
 Result:  
-- Returns **Ascendant ecliptic longitude** in degrees [0–360).
+- Returns **Ascendant ecliptic longitude** in degrees [0–360].
 - Default house system: **‘O’ (Placidus)**.
 
 ---
@@ -1228,3 +1228,132 @@ Additional helper functions in `TimeZoneService`:
 - For historical calculations (e.g., natal charts), `NodaTime` is used — relying on the IANA time zone database for full historical accuracy.
 
 ---
+
+### 🧩 Data Structure Concept (CalendarSlice & DayTimeline)
+
+#### **Purpose**
+This section defines the new unified data structure for handling all astrological events (transits) within PADMA.  
+The goal is to simplify, optimize, and standardize how all computed Swiss-based entities are stored and rendered in the calendar.
+
+---
+
+#### **Background**
+The legacy PAD project used a `Day` class containing ~200 lists of transit-specific calendar objects (e.g., `List<TithiCalendar>`, `List<KaranaCalendar>`, etc.).  
+While this approach provided structural clarity, it also caused:
+- High memory overhead (due to object duplication and list allocation);
+- Complex data binding for UI;
+- Inefficient cloning between derived and base calendar classes;
+- Difficult extension when adding new transit types.
+
+---
+
+#### **New Concept Overview**
+The new model introduces **a unified data structure** based on two main types:
+
+1. **CalendarSlice** — represents a single astrological event (transit) within a specific time range.  
+2. **DayTimeline** — aggregates all `CalendarSlice` items belonging to a given calendar day.
+
+Instead of maintaining hundreds of separate lists, all transits are stored within a single list, filtered dynamically by type or purpose when displayed.
+
+---
+
+#### **Core Types**
+
+```csharp
+public enum TransitKind
+{
+    Nakshatra,
+    Tithi,
+    Karana,
+    TaraBala,
+    NityaYoga,
+    MrityuBhaga,
+    Eclipse,
+    Planet,
+    Sunrise,
+    Sunset,
+    // Extendable with future features
+}
+```
+
+```csharp
+public sealed record CalendarSlice(
+    DateTime StartUtc,
+    DateTime EndUtc,
+    TransitKind Kind,
+    string Title,
+    string? ColorId = null,
+    string? PayloadKey = null // Reference to detailed entity if needed
+);
+```
+
+```csharp
+public sealed class DayTimeline
+{
+    public DateOnly Date { get; init; }
+    public List<CalendarSlice> Items { get; } = new();
+}
+```
+
+---
+
+#### **Data Assembly Layer**
+All Swiss-based calculations (planetary positions, eclipses, sunrise/sunset, etc.) feed their results into the **Transit Assembler** service.
+
+```csharp
+public interface ITransitAssembler
+{
+    DayTimeline Build(DateOnly date, GeoPoint where, AppSettings settings);
+}
+```
+
+The assembler collects data from multiple modules (SwissAnalysis, SwissService, SwissUtility, etc.) and produces a unified list of `CalendarSlice` items for each day.
+
+---
+
+#### **Advantages of the New Structure**
+- ✅ **Unified access:** all transits live in a single `List<CalendarSlice>` instead of hundreds of typed lists.  
+- ⚡ **Performance:** fewer allocations, easier serialization, lower GC pressure.  
+- 🎨 **UI flexibility:** filtering by `TransitKind` allows building uniform calendar and daily detail views.  
+- 🧱 **Extendability:** new transit types can be added by extending the `TransitKind` enum — no schema changes needed.  
+- 🔁 **Consistency:** all Swiss calculations share a common projection format before being visualized.  
+- 💾 **Caching-ready:** results can be cached or serialized as `CalendarSlice` objects without re-computation.  
+
+---
+
+#### **Usage Example**
+```csharp
+// Build daily data
+var assembler = new TransitAssembler();
+var timeline = assembler.Build(new DateOnly(2025, 11, 8), new GeoPoint(52.25, 21.0, 0), settings);
+
+// Filter and display Nakshatra events only
+var nakshatras = timeline.Items.Where(i => i.Kind == TransitKind.Nakshatra);
+foreach (var e in nakshatras)
+{
+    Console.WriteLine($"{e.Date}: {e.Title} ({e.StartUtc:HH:mm}–{e.EndUtc:HH:mm})");
+}
+```
+
+---
+
+#### **Implementation Notes**
+- Each Swiss calculation method (e.g., `CalculateTithiList`, `CalculateSunriseForDateAndLocation`) should project its results to a list of `CalendarSlice` objects.  
+- The assembler merges all sources by day, normalizing to UTC before converting to local time for the user interface.  
+- `PayloadKey` may reference a more detailed model (e.g., `TithiData`, `EclipseData`) stored in memory or DB cache for detailed views.  
+- `ColorId` links each slice to a semantic color token resolved by theme at runtime.  
+- The design supports future expansion — e.g., planetary aspects, yoga combinations, etc.
+
+---
+
+#### **Migration Strategy**
+1. Introduce `CalendarSlice` and `DayTimeline` alongside existing Day/Calendar models.  
+2. Migrate first simple transits — e.g., Sunrise/Sunset.  
+3. Gradually refactor other modules to feed into the assembler.  
+4. Once all transit types are covered, the old Day/Calendar model can be deprecated.  
+
+---
+
+#### **Status**
+✅ Concept approved and scheduled for implementation.  
+This structure will serve as the **core data model** of the PADMA project, ensuring unified representation and scalability for all astrological calculations.
