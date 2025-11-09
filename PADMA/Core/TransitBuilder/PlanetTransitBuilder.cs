@@ -96,10 +96,10 @@ namespace PADMA.Core.Services.TransitBuilder
             return (0, 0);
         }
 
-       
 
 
-        private static int CalculateHouseFrom(double planetLon, double baseLon) { /* ... */ return 0; } // TO DO
+        // TO DO
+        private static int CalculateHouseFrom(double planetLon, double baseLon) { /* ... */ return 0; } 
     }
 
     public static class PlanetSliceExtensions

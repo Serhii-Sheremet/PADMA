@@ -46,7 +46,7 @@ namespace PADMA.Core.Models.Calendar
         /// <summary>
         /// Tara Bala percentage (0–100). Derived metric.
         /// </summary>
-        public double TaraBalaPercent { get; set; }
+        public int TaraBalaPercent { get; set; }
 
         /// <summary>
         /// Zodiac sign ID for Navamsa (1–12), corresponds to EZodiac.
