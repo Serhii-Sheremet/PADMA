@@ -19,6 +19,9 @@ namespace PADMA.Core.Services.TransitBuilder
             if (list.Count == 0)
                 return result;
 
+            var swapped = SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
+            var taraMatrix = MakeTaraBalaMatrix(swapped);
+
             for (int i = 0; i < list.Count; i++)
             {
                 var d = list[i];
@@ -36,10 +39,7 @@ namespace PADMA.Core.Services.TransitBuilder
                     StartUtc = d.DateTimeUtc,
                     EndUtc = (i < list.Count - 1) ? list[i + 1].DateTimeUtc : d.DateTimeUtc
                 };
-
-                var swapped = SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
-                var taraMatrix = MakeTaraBalaMatrix(swapped);
-
+                
                 (var tbId, var tbPct) = ComputeTaraBalaFromMatrix(d.NakshatraId, taraMatrix);
                 slice.TaraBalaId = tbId;
                 slice.TaraBalaPercent = tbPct;
