@@ -9,19 +9,15 @@ namespace PADMA.Core.Enums
         Unknown = 0,
 
         // Core Swiss-based transits
-        ZodiakSign = 1,
-        Nakshatra = 2,
-		TaraBala = 3,
-		ChandraBalla = 4,
-		Tithi = 5,
-        Karana = 6,
-		NityaYoga = 7,
-        MrityuBhaga = 8,
-        Eclipse = 9,
+        Planet = 1,
+        Tithi = 2,
+		NityaYoga = 3,
+        MrityuBhaga = 4,
+        Eclipse = 5,
 
         // Solar cycles
-        Sunrise = 10,
-        Sunset = 11,
+        Sunrise = 20,
+        Sunset = 21,
 
         CustomUserTransit = 100
     }

@@ -185,23 +185,6 @@ namespace PADMA.Core.Services
         #endregion
 
 
-        #region Reference Data (Colors, Planets)
-
-        public IReadOnlyList<Models.AppColor> GetColors() =>
-            _connection.Query<Models.AppColor>("SELECT ID as Id, CODE as Code, ARGBVALUE as ArgbValue FROM COLOR");
-
-        public IReadOnlyList<ColorDesc> GetColorDescs() =>
-            _connection.Query<ColorDesc>("SELECT ID as Id, COLORID as ColorId, NAME as Name, LANGUAGECODE as LanguageCode FROM COLOR_DESC");
-
-        public IReadOnlyList<Planet> GetPlanets() =>
-            _connection.Query<Planet>("SELECT ID as Id, PLANETCODE as PlanetCode FROM PLANET");
-
-        public IReadOnlyList<PlanetDesc> GetPlanetDescs() =>
-            _connection.Query<PlanetDesc>("SELECT ID as Id, PLANETID as PlanetId, NAME as Name, LANGUAGECODE as LanguageCode FROM PLANET_DESC");
-
-        #endregion
-
-
         #region Localization
 
         /// <summary>
@@ -578,7 +561,98 @@ namespace PADMA.Core.Services
         #endregion
 
 
-        #region Reference Data (Padas)
+        #region Reference Data
+
+        /// <summary>
+        /// Return a list of Color Codes from COLOR table.
+        /// </summary>
+        public IReadOnlyList<AppColor> GetColors()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        CODE        AS Code,
+                        ARGBVALUE   AS ArgbValue
+                    FROM COLOR
+                    ORDER BY ID";
+
+                return _connection.Query<AppColor>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetColors error: {ex.Message}");
+                return new List<AppColor>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Color Descriptions from COLOR_DESC table.
+        /// </summary>
+        public IReadOnlyList<ColorDesc> GetColorDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        COLORID         AS ColorId,
+                        NAME            AS Name,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM COLOR_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<ColorDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetColorDescs error: {ex.Message}");
+                return new List<ColorDesc>();
+            }
+        }
+
+        public IReadOnlyList<Planet> GetPlanets()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        PLANETCODE  AS PlanetCode
+                    FROM PLANET
+                    ORDER BY ID";
+
+                return _connection.Query<Planet>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetPlanets error: {ex.Message}");
+                return new List<Planet>();
+            }
+        }
+
+        public IReadOnlyList<PlanetDesc> GetPlanetDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        PLANETID        AS PlanetId,
+                        NAME            AS Name,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM PLANET_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<PlanetDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetPlanetDescs error: {ex.Message}");
+                return new List<PlanetDesc>();
+            }
+        }
 
         /// <summary>
         /// Returns all Pada records (108 entries total).
@@ -588,14 +662,14 @@ namespace PADMA.Core.Services
             try
             {
                 const string sql = @"SELECT 
-                                ID as Id,
-                                ZODIAKID as ZodiakId,
-                                NAKSHATRAID as NakshatraId,
-                                PADANUMBER as PadaNumber,
-                                DREKKANA as Drekkana,
-                                SPECIALNAVAMSA as SpecialNavamsa,
-                                NAVAMSA as Navamsa,
-                                COLORID as ColorId
+                                ID              AS Id,
+                                ZODIAKID        AS ZodiakId,
+                                NAKSHATRAID     AS NakshatraId,
+                                PADANUMBER      AS PadaNumber,
+                                DREKKANA        AS Drekkana,
+                                SPECIALNAVAMSA  AS SpecialNavamsa,
+                                NAVAMSA         AS Navamsa,
+                                COLORID         AS ColorId
                              FROM PADA
                              ORDER BY ID";
                 return _connection.Query<Pada>(sql);
@@ -627,7 +701,7 @@ namespace PADMA.Core.Services
                         ZODIAKID  AS ZodiakId,
                         DEGREE    AS Degree
                     FROM MRITYUBHAGA
-                    ORDER BY PLANETID, ZODIAKID";
+                    ORDER BY ID";
 
                 return _connection.Query<MrityuBhaga>(sql);
             }
@@ -637,6 +711,56 @@ namespace PADMA.Core.Services
                 return new List<MrityuBhaga>();
             }
         }
+
+        /// <summary>
+        /// Return a list of Nakshatras from NAKSHATRA table.
+        /// </summary>
+        public IReadOnlyList<Nakshatra> GetNakshatras()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        NAKSHATRACODE   AS NakshatraCode,
+                        COLORID         AS ColorId
+                    FROM NAKSHATRA
+                    ORDER BY ID";
+
+                return _connection.Query<Nakshatra>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetNakshatras error: {ex.Message}");
+                return new List<Nakshatra>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of TaraBala from TARABALA table.
+        /// </summary>
+        public IReadOnlyList<TaraBala> GetTaraBalas()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID      AS Id,
+                        COLORID AS ColorId
+                    FROM TARABALA
+                    ORDER BY ID";
+
+                return _connection.Query<TaraBala>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetTaraBalas error: {ex.Message}");
+                return new List<TaraBala>();
+            }
+        }
+
+
+
 
         #endregion
 

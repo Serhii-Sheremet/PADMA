@@ -1,3 +1,5 @@
+using SQLite;
+
 namespace PADMA.Core.Models
 {
     /// <summary>
@@ -5,17 +7,25 @@ namespace PADMA.Core.Models
     /// PLANET: ID, PLANETCODE
     /// PLANET_DESC: PLANETID, NAME, LANGUAGECODE
     /// </summary>
-    public sealed class Planet
+    [Table("PLANET")]
+    public class Planet
     {
+        [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }
-        public string PlanetCode { get; set; } = ""; // e.g. "SUN","MOON","RAHU","KETU"
+        [Column("PLANETCODE")]
+        public string PlanetCode { get; set; } = string.Empty; // e.g. "SUN","MOON","RAHU","KETU"
     }
 
-    public sealed class PlanetDesc
+    [Table("PLANET_DESC")]
+    public class PlanetDesc
     {
+        [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }
+        [Column("PLANETID")]
         public int PlanetId { get; set; }
-        public string Name { get; set; } = "";       // локализованное имя
-        public string LanguageCode { get; set; } = "";
+        [Column("NAME")]
+        public string Name { get; set; } = string.Empty;       // локализованное имя
+        [Column("LANGUAGECODE")]
+        public string LanguageCode { get; set; } = string.Empty;
     }
 }

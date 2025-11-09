@@ -2,7 +2,6 @@
 {
     public enum ENakshatra
     {
-        NULL = 0,
         ASHWINI = 1,
         BHARANI = 2,
         KRITTIKA = 3,

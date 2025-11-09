@@ -16,11 +16,13 @@ namespace PADMA.Core.Services
         private DataCache() { }
 
         // --- Core Cached Data ---
-        public IReadOnlyList<Language> Languages { get; private set; } = Array.Empty<Language>();
-        public IReadOnlyList<AppColor> Colors { get; private set; } = Array.Empty<AppColor>();
-        public IReadOnlyList<Planet> Planets { get; private set; } = Array.Empty<Planet>();
+        public IReadOnlyList<Language> Languages { get; private set; } = new List<Language>();
+        public IReadOnlyList<AppColor> Colors { get; private set; } = new List<AppColor>();
+        public IReadOnlyList<Planet> Planets { get; private set; } = new List<Planet>();
         public IReadOnlyList<Pada> Padas { get; private set; } = new List<Pada>();
         public IReadOnlyList<MrityuBhaga> MrityuBhagaList { get; private set; } = new List<MrityuBhaga>();
+        public IReadOnlyList<Nakshatra> NakshatraList { get; private set; } = new List<Nakshatra>();
+        public IReadOnlyList<TaraBala> TaraBalaList { get; private set; } = new List<TaraBala>();
 
 
         public IReadOnlyDictionary<int, string> ColorNameById { get; private set; } = new Dictionary<int, string>();
@@ -44,6 +46,12 @@ namespace PADMA.Core.Services
             // Языки
             Languages = db.GetLanguages();
 
+            // Настройки приложения (APPSETTING)
+            AppSettingsList = db.GetAppSettingsList();
+
+            // Тексты интерфейса (APP_TEXTS)
+            AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
+
             // Цвета
             Colors = db.GetColors();
             var colorDescs = db.GetColorDescs();
@@ -60,20 +68,18 @@ namespace PADMA.Core.Services
                 .GroupBy(d => d.PlanetId)
                 .ToDictionary(g => g.Key, g => g.First().Name);
 
-            // Настройки приложения (APPSETTING)
-            AppSettingsList = db.GetAppSettingsList();
-
-            // Тексты интерфейса (APP_TEXTS)
-            AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
-
             // Пады 
             Padas = db.GetPadas().ToList();
 
             // Mrityu Bhaga (мёртвые градусы)
             MrityuBhagaList = db.GetMrityuBhaga().ToList();
 
+            // Накшатры
+            NakshatraList = db.GetNakshatras().ToList();
 
-            
+            // Тара Бала
+            TaraBalaList = db.GetTaraBalas().ToList();
+
 
 
 
