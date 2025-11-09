@@ -9,6 +9,7 @@ namespace PADMA.Core.Services.TransitBuilder
     {
         public static List<PlanetSlice> BuildPlanetSlices(
             List<PlanetData> list, 
+            int birthMoonNakshatraId,
             ENodeType nodeType,
             double natalMoonLongitude,
             double lagnaLongitude)
@@ -26,7 +27,7 @@ namespace PADMA.Core.Services.TransitBuilder
                 {
                     Kind = ETransitKind.Planet,
                     PlanetId = d.PlanetId,
-                    ZodiacId = d.ZodiakId,
+                    ZodiacId = d.ZodiacId,
                     NakshatraId = d.NakshatraId,
                     PadaId = d.PadaId,
                     IsRetrograde = d.IsRetrograde,
@@ -36,9 +37,15 @@ namespace PADMA.Core.Services.TransitBuilder
                     EndUtc = (i < list.Count - 1) ? list[i + 1].DateTimeUtc : d.DateTimeUtc
                 };
 
-                // Derived values:
-                slice.TaraBalaId = CalculateTaraBala(d, natalMoonLongitude);
-                slice.TaraBalaPercent = CalculateTaraBalaPercent(d, natalMoonLongitude);
+                var swapped = SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
+                var taraMatrix = MakeTaraBalaMatrix(swapped);
+
+                (var tbId, var tbPct) = ComputeTaraBalaFromMatrix(d.NakshatraId, taraMatrix);
+                slice.TaraBalaId = tbId;
+                slice.TaraBalaPercent = tbPct;
+
+                int padaNumber = SwissUtility.GetPadaNumberByPadaId(d.PadaId);
+                slice.NavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(d.NakshatraId, padaNumber);
 
                 slice.HouseFromMoon = CalculateHouseFrom(d.Longitude, natalMoonLongitude);
                 slice.HouseFromLagna = CalculateHouseFrom(d.Longitude, lagnaLongitude);
@@ -69,36 +76,30 @@ namespace PADMA.Core.Services.TransitBuilder
             return arr;
         }
 
-        public static int GetTaraBalaNumber(int[,] matrix, int nakshatraId)
+        /// <summary>
+        /// ¬озвращает (TaraBalaId 1..9, Percent 100/50/25) из уже предсобранной матрицы.
+        /// </summary>
+        private static (int taraBalaId, int percent) ComputeTaraBalaFromMatrix(int nakshatraId, int[,] matrix)
         {
             for (int row = 0; row < 9; row++)
+            {
                 for (int col = 0; col < 3; col++)
+                {
                     if (matrix[row, col] == nakshatraId)
-                        return row + 1;
-
-            return 0;
+                    {
+                        int id = row + 1;
+                        int pct = (col == 0) ? 100 : (col == 1 ? 50 : 25);
+                        return (id, pct);
+                    }
+                }
+            }
+            return (0, 0);
         }
 
-        public static int GetTaraBalaPercent(int[,] matrix, int nakshatraId)
-        {
-            for (int row = 0; row < 9; row++)
-                for (int col = 0; col < 3; col++)
-                    if (matrix[row, col] == nakshatraId)
-                        return col switch
-                        {
-                            0 => 100,
-                            1 => 50,
-                            _ => 25
-                        };
-
-            return 0;
-        }
+       
 
 
-        // TODO: insert your old functions here
-        private static int CalculateTaraBala(PlanetData d, double natalMoonLongitude) { /* ... */ return 0; }
-        private static double CalculateTaraBalaPercent(PlanetData d, double natalMoonLongitude) { /* ... */ return 0; }
-        private static int CalculateHouseFrom(double planetLon, double baseLon) { /* ... */ return 0; }
+        private static int CalculateHouseFrom(double planetLon, double baseLon) { /* ... */ return 0; } // TO DO
     }
 
     public static class PlanetSliceExtensions

@@ -55,7 +55,7 @@ namespace PADMA.Core.Analysis
 
         private static bool HasStateChanged(PlanetData a, PlanetData b)
         {
-            return a.ZodiakId != b.ZodiakId
+            return a.ZodiacId != b.ZodiacId
                 || a.NakshatraId != b.NakshatraId
                 || a.PadaId != b.PadaId
                 || a.IsRetrograde != b.IsRetrograde;
@@ -89,13 +89,13 @@ namespace PADMA.Core.Analysis
             if (speedLon < -180) speedLon += 360;
 
             // derive IDs
-            int zodiakId = SwissUtility.GetZodiakIdFromDegree(lon);
+            int zodiacId = SwissUtility.GetZodiakIdFromDegree(lon);
             int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(lon);
             int padaId = SwissUtility.GetPadaIdFromDegree(lon);
 
             // calculate Navamsa from cached PADA list
             int padaNumber = SwissUtility.GetPadaNumberByPadaId(padaId);
-            int navamsaZodiakId = SwissUtility.GetNavamsaByNakshatraAndPada(nakshatraId, padaNumber);
+            int navamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(nakshatraId, padaNumber);
 
             var data = new PlanetData
             {
@@ -104,10 +104,10 @@ namespace PADMA.Core.Analysis
                 Latitude = lat,
                 Distance = dist,
                 SpeedInLongitude = speedLon,
-                ZodiakId = zodiakId,
+                ZodiacId = zodiacId,
                 NakshatraId = nakshatraId,
                 PadaId = padaId,
-                NavamsaZodiakId = navamsaZodiakId,
+                NavamsaZodiacId = navamsaZodiacId,
                 IsRetrograde = speedLon < 0
             };
 

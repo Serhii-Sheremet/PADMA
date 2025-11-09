@@ -13,18 +13,18 @@ namespace PADMA.Core.Models
         public double Latitude { get; set; }
         public double Distance { get; set; }
         public double SpeedInLongitude { get; set; }
-        public int ZodiakId { get; set; }
+        public int ZodiacId { get; set; }
         public int NakshatraId { get; set; }
         public int PadaId { get; set; }
-        public int NavamsaZodiakId { get; set; }  // 🔹 добавлено
+        public int NavamsaZodiacId { get; set; }  
         public bool IsRetrograde { get; set; }
         public double SiderealLongitude { get; set; }
         public double Ayanamsa { get; set; }
 
         public override string ToString()
         {
-            return $"{DateTimeUtc:yyyy-MM-dd HH:mm:ss} | L={Longitude:F4}° | Z={ZodiakId} | N={NakshatraId} | P={PadaId} | " +
-                   $"Nav={NavamsaZodiakId} | Speed={SpeedInLongitude:F5} | Retro={(IsRetrograde ? "R" : "D")}";
+            return $"{DateTimeUtc:yyyy-MM-dd HH:mm:ss} | L={Longitude:F4}° | Z={ZodiacId} | N={NakshatraId} | P={PadaId} | " +
+                   $"Nav={NavamsaZodiacId} | Speed={SpeedInLongitude:F5} | Retro={(IsRetrograde ? "R" : "D")}";
         }
     }
 }

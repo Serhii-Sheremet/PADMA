@@ -49,6 +49,11 @@ namespace PADMA.Core.Models.Calendar
         public double TaraBalaPercent { get; set; }
 
         /// <summary>
+        /// Zodiac sign ID for Navamsa (1–12), corresponds to EZodiac.
+        /// </summary>
+        public int NavamsaZodiacId { get; set; }
+
+        /// <summary>
         /// House number (1–12) from natal Moon (Chandra Lagna).
         /// </summary>
         public int HouseFromMoon { get; set; }
