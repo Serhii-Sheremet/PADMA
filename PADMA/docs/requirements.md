@@ -1229,7 +1229,7 @@ Additional helper functions in `TimeZoneService`:
 
 ---
 
-### 🧩 Data Structure Concept (CalendarSlice & DayTimeline)
+### 🧩 Transit Engine Architecture (PADMA)
 
 #### **Purpose**
 This section defines the new unified data structure for handling all astrological events (transits) within PADMA.  
@@ -1247,124 +1247,234 @@ While this approach provided structural clarity, it also caused:
 
 ---
 
-#### **New Concept Overview**
-The new model introduces **a unified data structure** based on two main types:
+## 1. Overview
 
-1. **CalendarSlice** — represents a single astrological event (transit) within a specific time range.  
-2. **DayTimeline** — aggregates all `CalendarSlice` items belonging to a given calendar day.
+The Transit Engine is the core analytical layer of PADMA responsible for transforming raw Swiss Ephemeris calculations into structured, chronologically ordered, semantically rich astrological intervals (“Slices”).  
+This architecture replaces legacy patterns with a unified slice-based timeline model.
 
-Instead of maintaining hundreds of separate lists, all transits are stored within a single list, filtered dynamically by type or purpose when displayed.
+The Engine supports all major Vedic astrological domains:
+- Planetary transits (including nodes, retrograde, nakshatra, pada, navamsa, tara bala, houses)
+- Tithi
+- NityaYoga
+- MrityuBhaga
+- Eclipses
+- Sunrise / Sunset cycles
 
----
-
-#### **Core Types**
-
-Enum location: `PADMA/Core/Enums/ETransitKind.cs`.
-```csharp
-public enum ETransitKind
-{
-    Unknown = 0,
-
-	// Core Swiss-based transits
-	ZodiakSign = 1,
-	Nakshatra = 2,
-	TaraBala = 3,
-	ChandraBalla = 4,
-	Tithi = 5,
-	Karana = 6,
-	NityaYoga = 7,
-	MrityuBhaga = 8,
-	Eclipse = 9,
-	
-	// Solar cycles
-	Sunrise = 10,
-	Sunset = 11,
-    // Extendable with future features
-}
-```
-
-```csharp
-public sealed record CalendarSlice(
-    DateTime StartUtc,
-    DateTime EndUtc,
-    ETransitKind Kind,
-    string Title,
-    string? ColorId = null,
-    string? PayloadKey = null // Reference to detailed entity if needed
-);
-```
-
-```csharp
-public sealed class DayTimeline
-{
-    public DateOnly Date { get; init; }
-    public List<CalendarSlice> Items { get; } = new();
-}
-```
+All output slices are:
+- Time bounded (`StartUtc`, `EndUtc`)
+- Typed (`ETransitKind`)
+- Normalized through a unified interface for use in calendar views (Day, Month, Timeline)
 
 ---
 
-#### **Data Assembly Layer**
-All Swiss-based calculations (planetary positions, eclipses, sunrise/sunset, etc.) feed their results into the **Transit Assembler** service.
+## 2. Core Concepts
 
-```csharp
-public interface ITransitAssembler
-{
-    DayTimeline Build(DateOnly date, GeoPoint where, AppSettings settings);
-}
-```
+### 2.1 Slice Architecture
+Every astrological phenomenon is represented as a **Slice**:
+- It has a beginning and an end.
+- It contains metadata specific to its type.
+- It can span minutes, hours, days, or weeks.
+- It is type-identifiable via `ETransitKind`.
 
-The assembler collects data from multiple modules (SwissAnalysis, SwissService, SwissUtility, etc.) and produces a unified list of `CalendarSlice` items for each day.
+Slices are stored in `Timeline` structures which represent the full computed period (e.g., 46 days).
 
----
+### 2.2 Types of Transits (`ETransitKind`)
+- **Planet**  
+- **Tithi**  
+- **NityaYoga**  
+- **MrityuBhaga**  
+- **Eclipse**  
+- **Sunrise / Sunset**  
+- **CustomUserTransit**
 
-#### **Advantages of the New Structure**
-- ✅ **Unified access:** all transits live in a single `List<CalendarSlice>` instead of hundreds of typed lists.  
-- ⚡ **Performance:** fewer allocations, easier serialization, lower GC pressure.  
-- 🎨 **UI flexibility:** filtering by `ETransitKind` allows building uniform calendar and daily detail views.  
-- 🧱 **Extendability:** new transit types can be added by extending the `ETransitKind` enum — no schema changes needed.  
-- 🔁 **Consistency:** all Swiss calculations share a common projection format before being visualized.  
-- 💾 **Caching-ready:** results can be cached or serialized as `CalendarSlice` objects without re-computation.  
+This keeps the system extensible.
 
----
-
-#### **Usage Example**
-```csharp
-// Build daily data
-var assembler = new TransitAssembler();
-var timeline = assembler.Build(new DateOnly(2025, 11, 8), new GeoPoint(52.25, 21.0, 0), settings);
-
-// Filter and display Nakshatra events only
-var nakshatras = timeline.Items.Where(i => i.Kind == ETransitKind.Nakshatra);
-foreach (var e in nakshatras)
-{
-    Console.WriteLine($"{e.Date}: {e.Title} ({e.StartUtc:HH:mm}–{e.EndUtc:HH:mm})");
-}
-```
+### 2.3 Data Sources
+The Transit Engine uses:
+- Swiss ephemeris raw calculations (`SwissAnalysis`)
+- Cached domain dictionaries (`DataCache`)
+- User profile information (birth nakshatra, node mode, location)
+- Local sunset/sunrise rules (TimeZoneInfo)
 
 ---
 
-#### **Implementation Notes**
-- Each Swiss calculation method (e.g., `CalculateTithiList`, `CalculateSunriseForDateAndLocation`) should project its results to a list of `CalendarSlice` objects.  
-- The assembler merges all sources by day, normalizing to UTC before converting to local time for the user interface.  
-- `PayloadKey` may reference a more detailed model (e.g., `TithiData`, `EclipseData`) stored in memory or DB cache for detailed views.  
-- `ColorId` links each slice to a semantic color token resolved by theme at runtime.  
-- The design supports future expansion — e.g., planetary aspects, yoga combinations, etc.
+## 3. Planet Transit Builder
+
+### 3.1 Input
+- PlanetData list for a given planet generated by SwissAnalysis
+- PlanetId (internal)
+- BirthMoonNakshatraId (from profile)
+
+### 3.2 Change Detection
+Slices are created whenever one of these fields changes:
+- ZodiacId  
+- NakshatraId  
+- PadaId  
+- IsRetrograde
+
+Algorithm: reuse `SwissAnalysis.HasStateChanged(a,b)`.
+
+### 3.3 Slice Contents
+Each PlanetSlice contains:
+- `StartUtc`, `EndUtc`
+- `PlanetId`
+- `ZodiacId`
+- `NakshatraId`
+- `PadaId`
+- `NavamsaId` (computed)
+- `IsRetrograde`
+- `TaraBalaId`, `TaraBalaPercent`
+- Houses (moon and lagna) — *added later*
+
+### 3.4 Tara Bala Logic
+Dependent on:
+- BirthMoonNakshatraId
+- Swapped nakshatra list (relative to birth)
+- 9×3 TaraBala matrix
+
+Each nakshatra falls into:
+- Column 0 → 100% (favorable)  
+- Column 1 → 50%  
+- Column 2 → 25%  
+
+TaraBalaId = rowNumber + 1.
+
+### 3.5 Navamsa Logic
+Navamsa = lookup from cached Pada table:
+`GetNavamsaByNakshatraAndPada(nakshatraId, padaNumber)`
+
+### 3.6 Output
+List\<PlanetSlice> chronologically ordered.
 
 ---
 
-#### **Migration Strategy**
-1. Introduce `CalendarSlice` and `DayTimeline` alongside existing Day/Calendar models.  
-2. Migrate first simple transits — e.g., Sunrise/Sunset.  
-3. Gradually refactor other modules to feed into the assembler.  
-4. Once all transit types are covered, the old Day/Calendar model can be deprecated.  
+## 4. Tithi Builder
+
+### 4.1 Input
+`List<TithiData>` generated by SwissAnalysis.
+
+### 4.2 Slice Creation
+Tithi changes occur exactly at boundary moments detected by Swiss.
+
+### 4.3 Slice Contents
+- TithiId (1–30)
+- KaranaId (two per tithi)
+- StartUtc, EndUtc
+
+### 4.4 Output
+List\<TithiSlice>
 
 ---
 
-#### **Status**
-✅ Concept approved and scheduled for implementation.  
-This structure will serve as the **core data model** of the PADMA project, ensuring unified representation and scalability for all astrological calculations.
+## 5. NityaYoga Builder
 
-## Action Items
-1. Wire `TransitAssembler` to Swiss computations for 1–2 simple transits first (Sunrise/Sunset), then expand.
-2. Add unit tests for assembling a 46-day window (42 + 2 ± days) to validate pagination and DST handling.
+### 5.1 Input
+`List<NityaYogaData>`
+
+### 5.2 Slice Creation
+Similar to tithi; yoga boundary events define slice edges.
+
+### 5.3 Output
+List\<NityaYogaSlice>
+
+---
+
+## 6. MrityuBhaga Builder
+
+### 6.1 Input
+`List<MrityuBhagaData>`
+
+### 6.2 Slice Structure
+These are “point events” but represented as slices:
+- StartUtc = event moment  
+- EndUtc = event moment + small epsilon (e.g., 1 second)
+
+### 6.3 Output
+List\<MrityuBhagaSlice>
+
+---
+
+## 7. Eclipse Builder
+
+### 7.1 Input
+`List<EclipseData>`
+
+### 7.2 Slice
+Eclipses behave like events:
+- StartUtc = moment
+- EndUtc = moment
+
+### 7.3 Output
+List\<EclipseSlice>
+
+---
+
+## 8. Sunrise / Sunset Builder
+
+### 8.1 Input
+Location (lat, lon), timezone offset, Swiss rise/trans functions.
+
+### 8.2 Slice Generation
+For each day:
+- SunriseUtc
+- SunsetUtc
+
+Two slices per day:
+- `ETransitKind.Sunrise`
+- `ETransitKind.Sunset`
+
+### 8.3 Output
+List\<SunCycleSlice>
+
+---
+
+## 9. Unified Transit Engine Flow
+
+### 9.1 Steps
+1. **SwissAnalysis** generates raw chronological lists:
+   - PlanetData x 11
+   - TithiData
+   - YogaData
+   - MrityuBhagaData
+   - EclipseData
+   - Sunrise/Sunset
+
+2. **TransitBuilders** convert raw data into typed slices.
+
+3. **TimelineAssembler** merges all slices:
+   - Sorted by StartUtc
+   - Grouped by ETransitKind if needed
+
+4. **CalendarLayer** (42+2 day grid) filters slices by day.
+
+5. **DayPage & MainPage** consume filtered slices.
+
+---
+
+## 10. Why Slices?
+
+### Benefits:
+- Unified rendering pipeline
+- No explosion of Day properties
+- Easy filtering in UI
+- Infinite extensibility
+- Clean decoupling of “calculation” vs “interpretation”
+
+---
+
+## 11. Integration With PADMA
+
+- All domain tables (`Nakshatra`, `Pada`, `TaraBala`, `Zodiac`, etc.) are loaded into `DataCache` at startup.
+- Transit Engine reads only Ids (never names).
+- All formatting (names, localized strings) happens at the UI/ViewModel layer.
+
+---
+
+## 12. Conclusion
+
+The Transit Engine provides:
+- A consistent and powerful method to compute all Vedic astrological timelines.
+- A unified format for consumption in UI.
+- Clear separation between Swiss calculations, business logic, cached dictionary data, and interface rendering.
+
+---

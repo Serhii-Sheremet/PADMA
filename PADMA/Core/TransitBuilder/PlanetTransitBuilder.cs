@@ -99,16 +99,8 @@ namespace PADMA.Core.Services.TransitBuilder
 
 
         // TO DO
-        private static int CalculateHouseFrom(double planetLon, double baseLon) { /* ... */ return 0; } 
+        private static int CalculateHouseFrom(double planetLon, double baseLon) { /* ... */ return 0; }
+        
+
     }
-
-    public static class PlanetSliceExtensions
-    {
-        public static int GetPadaNumber(this PlanetSlice slice)
-            => SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
-
-        public static int GetNavamsaId(this PlanetSlice slice)
-            => SwissUtility.GetNavamsaByNakshatraAndPada(slice.NakshatraId, slice.GetPadaNumber());
-    }
-
 }
