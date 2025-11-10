@@ -612,6 +612,9 @@ namespace PADMA.Core.Services
             }
         }
 
+        /// <summary>
+        /// Return a list of Planet Codes from PLANET table.
+        /// </summary>
         public IReadOnlyList<Planet> GetPlanets()
         {
             try
@@ -632,6 +635,9 @@ namespace PADMA.Core.Services
             }
         }
 
+        /// <summary>
+        /// Return a list of Planet Descriptions from PLANET_DESC table.
+        /// </summary>
         public IReadOnlyList<PlanetDesc> GetPlanetDescs()
         {
             try
@@ -663,7 +669,7 @@ namespace PADMA.Core.Services
             {
                 const string sql = @"SELECT 
                                 ID              AS Id,
-                                ZODIAKID        AS ZodiakId,
+                                ZODIAKID        AS ZodiacId,
                                 NAKSHATRAID     AS NakshatraId,
                                 PADANUMBER      AS PadaNumber,
                                 DREKKANA        AS Drekkana,
@@ -680,11 +686,6 @@ namespace PADMA.Core.Services
                 return new List<Pada>();
             }
         }
-
-        #endregion
-
-
-        #region Reference Data (MrityuBhaga)
 
         /// <summary>
         /// Возвращает список фиксированных "мёртвых" градусов (Mrityu Bhaga)
@@ -713,6 +714,108 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
+        /// Returns a list of Nitya Yoga Codes from NITYAYOGA table..
+        /// </summary>
+        public IReadOnlyList<NityaYoga> GetNityaYogas()
+        {
+            try
+            {
+                const string sql = @"SELECT 
+                                ID              AS Id,
+                                NYCODE          AS Code,
+                                COLORID         AS ColorId,
+                                NAKSHATRAID     AS NakshatraId,
+                                YOGIPLANETID    AS YogiPlanetId,
+                                AVAYOGIPLANETID AS AvaYogiPlanetId
+                             FROM NITYAYOGA
+                             ORDER BY ID";
+                return _connection.Query<NityaYoga>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetNityaYogas error: {ex.Message}");
+                return new List<NityaYoga>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Nitya Yoga Descriptions from NITYAYOGA_DESC table.
+        /// </summary>
+        public IReadOnlyList<NityaYogaDesc> GetNityaYogaDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        NITYAYOGAID     AS NityaYogaId,
+                        NAME            AS Name,
+                        DEITY           AS Deity,
+                        MEANING         AS Meaning,
+                        DESCRIPTION     AS Description,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM NITYAYOGA_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<NityaYogaDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetNityaYogaDescs error: {ex.Message}");
+                return new List<NityaYogaDesc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Eclipse Codes from ECLIPSE table.
+        /// </summary>
+        public IReadOnlyList<Eclipse> GetEclipses()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        ECLIPSECODE AS EclipseCode
+                    FROM ECLIPSE
+                    ORDER BY ID";
+
+                return _connection.Query<Eclipse>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetEclipses error: {ex.Message}");
+                return new List<Eclipse>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Eclipse Descriptions from ECLIPSE_DESC table.
+        /// </summary>
+        public IReadOnlyList<EclipseDesc> GetEclipseDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        ECLIPSEID       AS EclipseId,
+                        NAME            AS Name,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM ECLIPSE_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<EclipseDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetEclipseDescs error: {ex.Message}");
+                return new List<EclipseDesc>();
+            }
+        }
+
+
+        /// <summary>
         /// Return a list of Nakshatras from NAKSHATRA table.
         /// </summary>
         public IReadOnlyList<Nakshatra> GetNakshatras()
@@ -733,6 +836,37 @@ namespace PADMA.Core.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[PADMA] GetNakshatras error: {ex.Message}");
                 return new List<Nakshatra>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Nakshatra Descriptions from NAKSHATRA_DESC table.
+        /// </summary>
+        public IReadOnlyList<NakshatraDesc> GetNakshatraDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        NAKSHATRAID     AS NakshatraId,
+                        NAME            AS Name,
+                        SHORTNAME       AS ShortName,
+                        UPRAVITEL       AS Upravitel,
+                        NATURE          AS Nature,
+                        DESCRIPTION     AS Description,
+                        GOODFOR         AS GoodFor,
+                        BADFOR          AS BadFor,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM NAKSHATRA_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<NakshatraDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetNakshatraDescs error: {ex.Message}");
+                return new List<NakshatraDesc>();
             }
         }
 
@@ -758,6 +892,360 @@ namespace PADMA.Core.Services
                 return new List<TaraBala>();
             }
         }
+
+        /// <summary>
+        /// Return a list of TaraBala Descriptions from TARABALA_DESC table.
+        /// </summary>
+        public IReadOnlyList<TaraBalaDesc> GetTaraBalaDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        TARABALAID      AS TaraBalaId,
+                        NAME            AS Name,
+                        SHORTNAME       AS ShortName,
+                        DESCRIPTION     AS Description,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM TARABALA_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<TaraBalaDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetTaraBalaDescs error: {ex.Message}");
+                return new List<TaraBalaDesc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Tithi from TITHI table.
+        /// </summary>
+        public IReadOnlyList<Tithi> GetTithis()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        COLORID         AS ColorId
+                    FROM TITHI
+                    ORDER BY ID";
+
+                return _connection.Query<Tithi>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetTithis error: {ex.Message}");
+                return new List<Tithi>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Tithi Descriptions from TITHI_DESC table.
+        /// </summary>
+        public IReadOnlyList<TithiDesc> GetTithiDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        TITHIID         AS TithiId,
+                        NAME            AS Name,
+                        SHORTNAME       AS ShortName,
+                        UPRAVITEL       AS Upravitel,
+                        TYPE            AS Type,
+                        GOODFOR         AS GoodFor,
+                        BADFOR          AS BadFor,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM TITHI_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<TithiDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetTithiDescs error: {ex.Message}");
+                return new List<TithiDesc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Karana from KARANA table.
+        /// </summary>
+        public IReadOnlyList<Karana> GetKaranas()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        TITHIID         AS TithiId,
+                        POSITION        AS Position,
+                        COLORID         AS ColorId
+                    FROM TITHI
+                    ORDER BY ID";
+
+                return _connection.Query<Karana>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetKaranas error: {ex.Message}");
+                return new List<Karana>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Karana Descriptions from TITHI_DESC table.
+        /// </summary>
+        public IReadOnlyList<KaranaDesc> GetKaranaDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        KARANAID        AS KaranaId,
+                        NAME            AS Name,
+                        UPRAVITEL       AS Upravitel,
+                        GOODFOR         AS GoodFor,
+                        BADFOR          AS BadFor,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM TITHI_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<KaranaDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetKaranaDescs error: {ex.Message}");
+                return new List<KaranaDesc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Muhurta from MUHURTA table.
+        /// </summary>
+        public IReadOnlyList<Muhurta> GetMuhurtas()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        MUHURTACODE AS MuhurtaCode,
+                        COLORID     AS ColorId
+                    FROM MUHURTA
+                    ORDER BY ID";
+
+                return _connection.Query<Muhurta>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetMuhurtas error: {ex.Message}");
+                return new List<Muhurta>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Muhurta Descriptions from MUHURTA_DESC table.
+        /// </summary>
+        public IReadOnlyList<MuhurtaDesc> GetMuhurtaDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        MUHURTAID       AS MuhurtaId,
+                        NAME            AS Name,
+                        SHORTNAME       AS ShortName,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM MUHURTA_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<MuhurtaDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetMuhurtaDescs error: {ex.Message}");
+                return new List<MuhurtaDesc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Muhurta30 from MUHURTA30 table.
+        /// </summary>
+        public IReadOnlyList<Muhurta30> GetMuhurta30s()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        MUHURTA30CODE   AS Muhurta30Code,
+                        COLORID         AS ColorId
+                    FROM MUHURTA30
+                    ORDER BY ID";
+
+                return _connection.Query<Muhurta30>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetMuhurta30s error: {ex.Message}");
+                return new List<Muhurta30>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Muhurta30 Descriptions from MUHURTA_DESC table.
+        /// </summary>
+        public IReadOnlyList<Muhurta30Desc> GetMuhurta30Descs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        MUHURTA30ID     AS Muhurta30Id,
+                        NAME            AS Name,
+                        SHORTNAME       AS ShortName,
+                        DESCRIPTION     AS Description,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM MUHURTA30_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<Muhurta30Desc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetMuhurta30Descs error: {ex.Message}");
+                return new List<Muhurta30Desc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Ghati60 from GHATI60 table.
+        /// </summary>
+        public IReadOnlyList<Ghati60> GetGhati60s()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        GHATI60CODE AS Ghati60Code,
+                        POSITION    AS Position,
+                        COLORID     AS ColorId
+                    FROM GHATI60
+                    ORDER BY ID";
+
+                return _connection.Query<Ghati60>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetGhati60s error: {ex.Message}");
+                return new List<Ghati60>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Ghati60 Descriptions from GHATI60_DESC table.
+        /// </summary>
+        public IReadOnlyList<Ghati60Desc> GetGhati60Descs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        GHATI60ID       AS Ghati60Id,
+                        NAME            AS Name,
+                        SHORTNAME       AS ShortName,
+                        DESCRIPTION     AS Description,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM GHATI60_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<Ghati60Desc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetGhati60Descs error: {ex.Message}");
+                return new List<Ghati60Desc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Masa from MASA table.
+        /// </summary>
+        public IReadOnlyList<Masa> GetMasas()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        ZODIAKID        AS ZodiacId,
+                        SHUNYANAKSHATRA AS ShunyaNakshatra,
+                        SHUNYATITHI     AS ShunyaTithi
+                    FROM MASA
+                    ORDER BY ID";
+
+                var masas = _connection.Query<Masa>(sql);
+                foreach (var masa in masas)
+                {
+                    masa.ShunyaNakshatraIdArray = MakeIdsArrayFromString(masa.ShunyaNakshatra);
+                    masa.ShunyaTithiIdArray = MakeIdsArrayFromString(masa.ShunyaTithi);
+                }
+                return masas;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetMasas error: {ex.Message}");
+                return new List<Masa>();
+            }
+        }
+
+        private int[] MakeIdsArrayFromString(string str)
+        {
+            var row = str.Split(new char[] { ',' });
+            int[] array = new int[row.Length];
+            for (int i = 0; i < row.Length; i++)
+            {
+                array[i] = Convert.ToInt32(row[i]);
+            }
+            return array;
+        }
+
+        /// <summary>
+        /// Return a list of Masa Descriptions from MASA_DESC table.
+        /// </summary>
+        public IReadOnlyList<MasaDesc> GetMasaDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        MASAID          AS MasaId,
+                        NAME            AS Name,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM MASA_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<MasaDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetMasaDescs error: {ex.Message}");
+                return new List<MasaDesc>();
+            }
+        }
+
 
 
 

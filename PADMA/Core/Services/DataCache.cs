@@ -16,17 +16,24 @@ namespace PADMA.Core.Services
         private DataCache() { }
 
         // --- Core Cached Data ---
-        public IReadOnlyList<Language> Languages { get; private set; } = new List<Language>();
-        public IReadOnlyList<AppColor> Colors { get; private set; } = new List<AppColor>();
-        public IReadOnlyList<Planet> Planets { get; private set; } = new List<Planet>();
-        public IReadOnlyList<Pada> Padas { get; private set; } = new List<Pada>();
+        public IReadOnlyList<Language> LanguageList { get; private set; } = new List<Language>();
+        public IReadOnlyList<AppColor> ColorList { get; private set; } = new List<AppColor>();
+        public IReadOnlyList<Planet> PlanetList { get; private set; } = new List<Planet>();
+        public IReadOnlyList<Pada> PadaList { get; private set; } = new List<Pada>();
         public IReadOnlyList<MrityuBhaga> MrityuBhagaList { get; private set; } = new List<MrityuBhaga>();
+        public IReadOnlyList<NityaYoga> NityaYogaList { get; private set; } = new List<NityaYoga>();
+        public IReadOnlyList<Eclipse> EclipseList { get; private set; } = new List<Eclipse>();
         public IReadOnlyList<Nakshatra> NakshatraList { get; private set; } = new List<Nakshatra>();
         public IReadOnlyList<TaraBala> TaraBalaList { get; private set; } = new List<TaraBala>();
+        public IReadOnlyList<Tithi> TithiList { get; private set; } = new List<Tithi>();
+        public IReadOnlyList<Karana> KaranaList { get; private set; } = new List<Karana>();
+        public IReadOnlyList<Muhurta> MuhurtaList { get; private set; } = new List<Muhurta>();
+        public IReadOnlyList<Muhurta30> Muhurta30List { get; private set; } = new List<Muhurta30>();
+        public IReadOnlyList<Ghati60> Ghati60List { get; private set; } = new List<Ghati60>();
+        
 
 
-        public IReadOnlyDictionary<int, string> ColorNameById { get; private set; } = new Dictionary<int, string>();
-        public IReadOnlyDictionary<int, string> PlanetNameById { get; private set; } = new Dictionary<int, string>();
+
 
         // --- App Settings and Texts ---
         public List<AppSettingList> AppSettingsList { get; private set; } = new();
@@ -44,7 +51,7 @@ namespace PADMA.Core.Services
             CurrentLanguageCode = preferredUiLang ?? db.GetActiveLanguageCode();
 
             // Языки
-            Languages = db.GetLanguages();
+            LanguageList = db.GetLanguages();
 
             // Настройки приложения (APPSETTING)
             AppSettingsList = db.GetAppSettingsList();
@@ -53,32 +60,40 @@ namespace PADMA.Core.Services
             AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
 
             // Цвета
-            Colors = db.GetColors();
-            var colorDescs = db.GetColorDescs();
-            ColorNameById = colorDescs
-                .Where(d => string.Equals(d.LanguageCode, CurrentLanguageCode, StringComparison.OrdinalIgnoreCase))
-                .GroupBy(d => d.ColorId)
-                .ToDictionary(g => g.Key, g => g.First().Name);
+            ColorList = db.GetColors();
 
             // Планеты
-            Planets = db.GetPlanets();
-            var planetDescs = db.GetPlanetDescs();
-            PlanetNameById = planetDescs
-                .Where(d => string.Equals(d.LanguageCode, CurrentLanguageCode, StringComparison.OrdinalIgnoreCase))
-                .GroupBy(d => d.PlanetId)
-                .ToDictionary(g => g.Key, g => g.First().Name);
+            PlanetList = db.GetPlanets();
 
             // Пады 
-            Padas = db.GetPadas().ToList();
+            PadaList = db.GetPadas().ToList();
 
             // Mrityu Bhaga (мёртвые градусы)
             MrityuBhagaList = db.GetMrityuBhaga().ToList();
+
+            // Nitya Yogas
+            NityaYogaList = db.GetNityaYogas().ToList();
+            
+            // Затмения
+            EclipseList = db.GetEclipses().ToList();
 
             // Накшатры
             NakshatraList = db.GetNakshatras().ToList();
 
             // Тара Бала
             TaraBalaList = db.GetTaraBalas().ToList();
+            
+            // Титхи
+            TithiList = db.GetTithis().ToList();
+            
+            // Караны
+            KaranaList = db.GetKaranas().ToList();
+            
+            // Мухурты
+            MuhurtaList = db.GetMuhurtas().ToList();
+            Muhurta30List = db.GetMuhurta30s().ToList();
+            Ghati60List = db.GetGhati60s().ToList();
+
 
 
 

@@ -12,7 +12,7 @@ namespace PADMA.Core.Models
         public int Id { get; set; }
 
         [Column("ZODIAKID")]
-        public int ZodiakId { get; set; }
+        public int ZodiacId { get; set; }
 
         [Column("NAKSHATRAID")]
         public int NakshatraId { get; set; }

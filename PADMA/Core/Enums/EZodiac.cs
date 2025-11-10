@@ -1,6 +1,6 @@
 ﻿namespace PADMA.Core.Enums
 {
-    public enum EZodiak
+    public enum EZodiac
     {
         ARI = 1,
         TAU = 2,

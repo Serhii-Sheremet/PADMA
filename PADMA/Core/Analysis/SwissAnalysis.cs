@@ -362,7 +362,7 @@ namespace PADMA.Core.Analysis
                 int zodId = SwissUtility.GetZodiakIdFromDegree(lon);
 
                 // шукаємо градус для цієї планети в цьому знаку
-                var mb = mbList.FirstOrDefault(x => x.PlanetId == planetId && x.ZodiakId == zodId);
+                var mb = mbList.FirstOrDefault(x => x.PlanetId == planetId && x.ZodiacId == zodId);
                 if (mb == null) { cur = cur.AddHours(6); continue; }
 
                 // формуємо діапазон згідно з налаштуванням
@@ -388,7 +388,7 @@ namespace PADMA.Core.Analysis
                     current = new MrityuBhagaData
                     {
                         PlanetId = (int)planetId,
-                        ZodiakId = zodId,
+                        ZodiacId = zodId,
                         Degree = mb.Degree,
                         MrityuBhagaSetting = appSettingEnum,
                         LongitudeFrom = fromDeg,

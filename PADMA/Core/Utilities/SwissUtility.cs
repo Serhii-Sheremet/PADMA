@@ -115,7 +115,7 @@ namespace PADMA.Core.Utilities
 
         public static int GetPadaNumberByPadaId(int padaId)
         {
-            return DataCache.Instance.Padas
+            return DataCache.Instance.PadaList
                 .FirstOrDefault(i => i.Id == padaId)?.PadaNumber ?? 0;
         }
 
@@ -125,7 +125,7 @@ namespace PADMA.Core.Utilities
         /// </summary>
         public static int GetNavamsaByNakshatraAndPada(int nakshatraId, int padaNumber)
         {
-            return DataCache.Instance.Padas
+            return DataCache.Instance.PadaList
                 .FirstOrDefault(p => p.NakshatraId == nakshatraId && p.PadaNumber == padaNumber)
                 ?.Navamsa ?? 0;
         }

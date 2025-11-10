@@ -12,7 +12,7 @@ namespace PADMA.Core.Models
         public int PlanetId { get; set; }
 
         [Indexed]
-        public int ZodiakId { get; set; }
+        public int ZodiacId { get; set; }
 
         // В БД INTEGER — читаем как double, чтобы не терять точность в дальнейших сравнениях
         public double Degree { get; set; } // absolute sidereal longitude (0–360)
