@@ -661,7 +661,7 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
-        /// Return a list of Transits from TRANZIT table.
+        /// Return a list of Transits from TRANSIT table.
         /// </summary>
         public IReadOnlyList<Transit> GetTransits()
         {
@@ -670,11 +670,11 @@ namespace PADMA.Core.Services
                 const string sql = @"
                     SELECT 
                         ID          AS Id,
-                        PLANETID  AS PlanetId,
-                        DOM         AS Dom,
+                        PLANETID    AS PlanetId,
+                        HOUSE       AS House,
                         COLORID     AS ColorId,
                         VEDHA       AS Vedha
-                    FROM TRANZIT
+                    FROM TRANSIT
                     ORDER BY ID";
 
                 return _connection.Query<Transit>(sql);
@@ -687,7 +687,7 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
-        /// Return a list of Transit Descriptions from TRANZIT_DESC table.
+        /// Return a list of Transit Descriptions from TRANSIT_DESC table.
         /// </summary>
         public IReadOnlyList<TransitDesc> GetTransitDescs()
         {
@@ -696,10 +696,10 @@ namespace PADMA.Core.Services
                 const string sql = @"
                     SELECT 
                         ID              AS Id,
-                        TRANZITID       AS TransitId,
+                        TRANSITID       AS TransitId,
                         DESCRIPTION     AS Description,
                         LANGUAGECODE    AS LanguageCode
-                    FROM TRANZIT_DESC
+                    FROM TRANSIT_DESC
                     ORDER BY ID";
 
                 return _connection.Query<TransitDesc>(sql);
@@ -712,7 +712,7 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
-        /// Return a list of Zodiac Codes from ZODIAK table.
+        /// Return a list of Zodiac Codes from ZODIAC table.
         /// </summary>
         public IReadOnlyList<Zodiac> GetZodiacs()
         {
@@ -721,8 +721,8 @@ namespace PADMA.Core.Services
                 const string sql = @"
                     SELECT 
                         ID          AS Id,
-                        ZODIAKCODE  AS ZodiacCode
-                    FROM ZODIAK
+                        ZODIACCODE  AS ZodiacCode
+                    FROM ZODIAC
                     ORDER BY ID";
 
                 return _connection.Query<Zodiac>(sql);
@@ -735,7 +735,7 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
-        /// Return a list of Zodiac Descriptions from ZODIAK_DESC table.
+        /// Return a list of Zodiac Descriptions from ZODIAC_DESC table.
         /// </summary>
         public IReadOnlyList<ZodiacDesc> GetZodiacDescs()
         {
@@ -744,10 +744,10 @@ namespace PADMA.Core.Services
                 const string sql = @"
                     SELECT 
                         ID              AS Id,
-                        ZODIAKID        AS ZodiacId,
+                        ZODIACID        AS ZodiacId,
                         NAME            AS Name,
                         LANGUAGECODE    AS LanguageCode
-                    FROM ZODIAK_DESC
+                    FROM ZODIAC_DESC
                     ORDER BY ID";
 
                 return _connection.Query<ZodiacDesc>(sql);
@@ -768,7 +768,7 @@ namespace PADMA.Core.Services
             {
                 const string sql = @"SELECT 
                                 ID              AS Id,
-                                ZODIAKID        AS ZodiacId,
+                                ZODIACID        AS ZodiacId,
                                 NAKSHATRAID     AS NakshatraId,
                                 PADANUMBER      AS PadaNumber,
                                 DREKKANA        AS Drekkana,
@@ -798,7 +798,7 @@ namespace PADMA.Core.Services
                     SELECT 
                         ID        AS Id,
                         PLANETID  AS PlanetId,
-                        ZODIAKID  AS ZodiakId,
+                        ZODIACID  AS ZodiacId,
                         DEGREE    AS Degree
                     FROM MRITYUBHAGA
                     ORDER BY ID";
@@ -951,7 +951,7 @@ namespace PADMA.Core.Services
                         NAKSHATRAID     AS NakshatraId,
                         NAME            AS Name,
                         SHORTNAME       AS ShortName,
-                        UPRAVITEL       AS Upravitel,
+                        RULER           AS Ruler,
                         NATURE          AS Nature,
                         DESCRIPTION     AS Description,
                         GOODFOR         AS GoodFor,

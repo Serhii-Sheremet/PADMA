@@ -2,27 +2,27 @@
 
 namespace PADMA.Core.Models
 {
-    [Table("TRANZIT")]
+    [Table("TRANSIT")]
     public class Transit
     {
         [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }
         [Column("PLANETID")]
         public int PlanetId { get; set; }
-        [Column("DOM")]
-        public int Dom { get; set; }
+        [Column("HOUSE")]
+        public int House { get; set; }
         [Column("COLORID")]
         public int ColorId { get; set; }
         [Column("VEDHA")]
         public string Vedha { get; set; } = string.Empty;
     }
 
-    [Table("TRANZIT_DESC")]
+    [Table("TRANSIT_DESC")]
     public class TransitDesc
     {
         [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }
-        [Column("TRANZITID")]
+        [Column("TRANSITID")]
         public int TransitId { get; set; }
         [Column("DESCRIPTION")]
         public string Description { get; set; } = string.Empty;

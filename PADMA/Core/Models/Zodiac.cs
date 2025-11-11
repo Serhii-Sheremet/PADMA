@@ -5,21 +5,21 @@ namespace PADMA.Core.Models
     /// <summary>
     /// Class describing Zodiac entity (12 entities)
     /// </summary>
-    [Table("ZODIAK")]
+    [Table("ZODIAC")]
     public class Zodiac
     {
         [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }
-        [Column("ZODIAKCODE")]
+        [Column("ZODIACCODE")]
         public string ZodiacCode { get; set; } = string.Empty;
     }
 
-    [Table("ZODIAK_DESC")]
+    [Table("ZODIAC_DESC")]
     public class ZodiacDesc
     {
         [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }
-        [Column("ZODIAKID")]
+        [Column("ZODIACID")]
         public int ZodiacId { get; set; }
         [Column("NAME")]
         public string Name { get; set; } = string.Empty;
