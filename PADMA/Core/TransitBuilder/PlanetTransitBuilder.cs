@@ -10,17 +10,20 @@ namespace PADMA.Core.Services.TransitBuilder
         public static List<PlanetSlice> BuildPlanetSlices(
             List<PlanetData> list, 
             int birthMoonNakshatraId,
-            ENodeType nodeType,
-            double natalMoonLongitude,
-            double lagnaLongitude)
+            int birthZodiacMoonId,
+            int birthLagnaId,
+            ENodeType nodeType)
         {
             var result = new List<PlanetSlice>();
 
             if (list.Count == 0)
                 return result;
 
-            var swapped = SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
-            var taraMatrix = MakeTaraBalaMatrix(swapped);
+            var swappedZodiacLagna = SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthLagnaId);
+            var swappedZodiacMoon = SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthZodiacMoonId);
+
+            var swappedNakshatras = SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
+            var taraMatrix = MakeTaraBalaMatrix(swappedNakshatras);
 
             for (int i = 0; i < list.Count; i++)
             {
@@ -47,8 +50,11 @@ namespace PADMA.Core.Services.TransitBuilder
                 int padaNumber = SwissUtility.GetPadaNumberByPadaId(d.PadaId);
                 slice.NavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(d.NakshatraId, padaNumber);
 
-                slice.HouseFromMoon = CalculateHouseFrom(d.Longitude, natalMoonLongitude);
-                slice.HouseFromLagna = CalculateHouseFrom(d.Longitude, lagnaLongitude);
+                slice.HouseFromMoon = CalculateHouse(swappedZodiacMoon, birthZodiacMoonId);
+                slice.MoonColorCode = (EColor)GetPlanetColorCode((EPlanet)slice.PlanetId, slice.HouseFromMoon);  
+
+                slice.HouseFromLagna = CalculateHouse(swappedZodiacMoon, birthLagnaId);
+                slice.LagnaColorCode = (EColor)GetPlanetColorCode((EPlanet)slice.PlanetId, slice.HouseFromLagna);
 
                 result.Add(slice);
             }
@@ -61,6 +67,14 @@ namespace PADMA.Core.Services.TransitBuilder
             return nList
                 .Where(n => n.Id >= birthNakshatraId)
                 .Concat(nList.Where(n => n.Id < birthNakshatraId))
+                .ToList();
+        }
+
+        public static List<Zodiac> SwapZodiacs(List<Zodiac> zList, int id)
+        {
+            return zList
+                .Where(z => z.Id >= id)
+                .Concat(zList.Where(z => z.Id < id))
                 .ToList();
         }
 
@@ -96,11 +110,20 @@ namespace PADMA.Core.Services.TransitBuilder
             return (0, 0);
         }
 
+        private static int CalculateHouse(List<Zodiac> zList, int zodiacId) 
+        {
+            return (zList.FindIndex(i => i.Id == zodiacId) + 1);
+        }
 
+        private static int GetPlanetColorCode(EPlanet pCode, int pHouse)
+        {
+            if (pCode == EPlanet.RAHUTRUE)
+                pCode = EPlanet.RAHUMEAN;
+            if (pCode == EPlanet.KETUTRUE)
+                pCode = EPlanet.KETUMEAN;
+            return DataCache.Instance.TransitList.Where(i => i.PlanetId == (int)pCode && i.Dom == pHouse).FirstOrDefault()?.ColorId ?? 0;
+        }
 
-        // TO DO
-        private static int CalculateHouseFrom(double planetLon, double baseLon) { /* ... */ return 0; }
-        
 
     }
 }

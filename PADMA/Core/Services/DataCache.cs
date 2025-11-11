@@ -19,6 +19,8 @@ namespace PADMA.Core.Services
         public IReadOnlyList<Language> LanguageList { get; private set; } = new List<Language>();
         public IReadOnlyList<AppColor> ColorList { get; private set; } = new List<AppColor>();
         public IReadOnlyList<Planet> PlanetList { get; private set; } = new List<Planet>();
+        public IReadOnlyList<Transit> TransitList { get; private set; } = new List<Transit>();
+        public IReadOnlyList<Zodiac> ZodiacList { get; private set; } = new List<Zodiac>();
         public IReadOnlyList<Pada> PadaList { get; private set; } = new List<Pada>();
         public IReadOnlyList<MrityuBhaga> MrityuBhagaList { get; private set; } = new List<MrityuBhaga>();
         public IReadOnlyList<NityaYoga> NityaYogaList { get; private set; } = new List<NityaYoga>();
@@ -64,6 +66,12 @@ namespace PADMA.Core.Services
 
             // Планеты
             PlanetList = db.GetPlanets();
+            
+            // Транзиты
+            TransitList = db.GetTransits();
+
+            // Зодиаки
+            ZodiacList = db.GetZodiacs().ToList();
 
             // Пады 
             PadaList = db.GetPadas().ToList();

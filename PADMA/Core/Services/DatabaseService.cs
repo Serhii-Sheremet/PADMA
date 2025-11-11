@@ -661,6 +661,105 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
+        /// Return a list of Transits from TRANZIT table.
+        /// </summary>
+        public IReadOnlyList<Transit> GetTransits()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        PLANETID  AS PlanetId,
+                        DOM         AS Dom,
+                        COLORID     AS ColorId,
+                        VEDHA       AS Vedha
+                    FROM TRANZIT
+                    ORDER BY ID";
+
+                return _connection.Query<Transit>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetTransits error: {ex.Message}");
+                return new List<Transit>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Transit Descriptions from TRANZIT_DESC table.
+        /// </summary>
+        public IReadOnlyList<TransitDesc> GetTransitDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        TRANZITID       AS TransitId,
+                        DESCRIPTION     AS Description,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM TRANZIT_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<TransitDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetTransitDescs error: {ex.Message}");
+                return new List<TransitDesc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Zodiac Codes from ZODIAK table.
+        /// </summary>
+        public IReadOnlyList<Zodiac> GetZodiacs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        ZODIAKCODE  AS ZodiacCode
+                    FROM ZODIAK
+                    ORDER BY ID";
+
+                return _connection.Query<Zodiac>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetZodiacs error: {ex.Message}");
+                return new List<Zodiac>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Zodiac Descriptions from ZODIAK_DESC table.
+        /// </summary>
+        public IReadOnlyList<ZodiacDesc> GetZodiacDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        ZODIAKID        AS ZodiacId,
+                        NAME            AS Name,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM ZODIAK_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<ZodiacDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetZodiacDescs error: {ex.Message}");
+                return new List<ZodiacDesc>();
+            }
+        }
+
+        /// <summary>
         /// Returns all Pada records (108 entries total).
         /// </summary>
         public IReadOnlyList<Pada> GetPadas()

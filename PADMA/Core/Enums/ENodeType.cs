@@ -7,8 +7,8 @@ namespace PADMA.Core.Enums
     /// </summary>
     public enum ENodeType
     {
-        None = 0,
-        Mean = 1,
-        True = 2
+        NONE = 0,
+        MEAN = 1,
+        TRUE = 2
     }
 }

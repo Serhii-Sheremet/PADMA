@@ -1324,7 +1324,8 @@ Each PlanetSlice contains:
 - `NavamsaId` (computed)
 - `IsRetrograde`
 - `TaraBalaId`, `TaraBalaPercent`
-- Houses (moon and lagna) — *added later*
+- `Houses (moon and lagna)`
+- `Planet Color (moon and lagna)`
 
 ### 3.4 Tara Bala Logic
 Dependent on:
@@ -1343,7 +1344,13 @@ TaraBalaId = rowNumber + 1.
 Navamsa = lookup from cached Pada table:
 `GetNavamsaByNakshatraAndPada(nakshatraId, padaNumber)`
 
-### 3.6 Output
+### 3.6 House and Planet Color Logic
+Depend on:
+- BirthZodiacId
+- BirthLagnaId
+- Swapped Zodiac list (both - relative to birth Natal Moon and Lagna)
+
+### 3.7 Output
 List\<PlanetSlice> chronologically ordered.
 
 ---
@@ -1445,7 +1452,7 @@ List\<SunCycleSlice>
    - Sorted by StartUtc
    - Grouped by ETransitKind if needed
 
-4. **CalendarLayer** (42+2 day grid) filters slices by day.
+4. **CalendarLayer** (-2+42+2 = 46 day grid) filters slices by day.
 
 5. **DayPage & MainPage** consume filtered slices.
 

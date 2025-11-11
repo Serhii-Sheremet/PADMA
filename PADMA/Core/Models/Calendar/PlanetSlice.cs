@@ -16,7 +16,7 @@ namespace PADMA.Core.Models.Calendar
         /// <summary>
         /// For Rahu/Ketu we must know whether slice refers to MEAN or TRUE mode.
         /// </summary>
-        public ENodeType NodeType { get; set; } = ENodeType.None;
+        public ENodeType NodeType { get; set; } = ENodeType.NONE;
 
         /// <summary>
         /// Zodiac sign ID (1–12), corresponds to EZodiac.
@@ -62,6 +62,16 @@ namespace PADMA.Core.Models.Calendar
         /// House number (1–12) from Lagna (Ascendant).
         /// </summary>
         public int HouseFromLagna { get; set; }
+
+        /// <summary>
+        /// Color code for this planet slice from Natal Moon.
+        /// </summary>
+        public EColor MoonColorCode { get; set; } = EColor.NOCOLOR;
+
+        /// <summary>
+        /// Color code for this planet slice from Lagna.
+        /// </summary>
+        public EColor LagnaColorCode { get; set; } = EColor.NOCOLOR;
 
         public PlanetSlice()
         {
