@@ -27,8 +27,8 @@ namespace PADMA.Core.Models
         public int KaranaId { get; set; }
         [Column("NAME")]
         public string Name { get; set; } = string.Empty;
-        [Column("UPRAVITEL")]
-        public string Upravitel { get; set; } = string.Empty;
+        [Column("RULER")]
+        public string Ruler { get; set; } = string.Empty;
         [Column("GOODFOR")]
         public string GoodFor { get; set; } = string.Empty;
         [Column("BADFOR")]

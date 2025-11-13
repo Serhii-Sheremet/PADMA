@@ -1055,7 +1055,7 @@ namespace PADMA.Core.Services
                         TITHIID         AS TithiId,
                         NAME            AS Name,
                         SHORTNAME       AS ShortName,
-                        UPRAVITEL       AS Upravitel,
+                        RULER           AS Ruler,
                         TYPE            AS Type,
                         GOODFOR         AS GoodFor,
                         BADFOR          AS BadFor,
@@ -1085,7 +1085,7 @@ namespace PADMA.Core.Services
                         TITHIID         AS TithiId,
                         POSITION        AS Position,
                         COLORID         AS ColorId
-                    FROM TITHI
+                    FROM KARANA
                     ORDER BY ID";
 
                 return _connection.Query<Karana>(sql);
@@ -1109,11 +1109,11 @@ namespace PADMA.Core.Services
                         ID              AS Id,
                         KARANAID        AS KaranaId,
                         NAME            AS Name,
-                        UPRAVITEL       AS Upravitel,
+                        RULER           AS Ruler,
                         GOODFOR         AS GoodFor,
                         BADFOR          AS BadFor,
                         LANGUAGECODE    AS LanguageCode
-                    FROM TITHI_DESC
+                    FROM KARANA_DESC
                     ORDER BY ID";
 
                 return _connection.Query<KaranaDesc>(sql);

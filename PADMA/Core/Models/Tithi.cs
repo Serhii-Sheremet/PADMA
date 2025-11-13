@@ -25,8 +25,8 @@ namespace PADMA.Core.Models
         public string Name { get; set; } = string.Empty;
         [Column("SHORTNAME")]
         public string ShortName { get; set; } = string.Empty;
-        [Column("UPRAVITEL")]
-        public string Upravitel { get; set; } = string.Empty;
+        [Column("RULER")]
+        public string Ruler { get; set; } = string.Empty;
         [Column("TYPE")]
         public string Type { get; set; } = string.Empty;
         [Column("GOODFOR")]
