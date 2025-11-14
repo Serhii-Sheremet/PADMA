@@ -14,7 +14,7 @@ namespace PADMA.Core.Models
     }
 
     [Table("COLOR_DESC")]
-    public class ColorDesc
+    public class AppColorDesc
     {
         [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }

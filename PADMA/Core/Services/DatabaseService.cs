@@ -590,7 +590,7 @@ namespace PADMA.Core.Services
         /// <summary>
         /// Return a list of Color Descriptions from COLOR_DESC table.
         /// </summary>
-        public IReadOnlyList<ColorDesc> GetColorDescs()
+        public IReadOnlyList<AppColorDesc> GetColorDescs()
         {
             try
             {
@@ -603,12 +603,12 @@ namespace PADMA.Core.Services
                     FROM COLOR_DESC
                     ORDER BY ID";
 
-                return _connection.Query<ColorDesc>(sql);
+                return _connection.Query<AppColorDesc>(sql);
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[PADMA] GetColorDescs error: {ex.Message}");
-                return new List<ColorDesc>();
+                return new List<AppColorDesc>();
             }
         }
 
@@ -1288,7 +1288,7 @@ namespace PADMA.Core.Services
                 const string sql = @"
                     SELECT 
                         ID              AS Id,
-                        ZODIAKID        AS ZodiacId,
+                        ZODIACID        AS ZodiacId,
                         SHUNYANAKSHATRA AS ShunyaNakshatra,
                         SHUNYATITHI     AS ShunyaTithi
                     FROM MASA
@@ -1344,6 +1344,83 @@ namespace PADMA.Core.Services
                 return new List<MasaDesc>();
             }
         }
+
+        /// <summary>
+        /// Return a list of Special Navamsa from SPECIALNAVAMSA_DESC table.
+        /// </summary>
+        public IReadOnlyList<SpecialNavamsaDesc> GetSpecialNavamsaDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID                  AS Id,
+                        SPECIALNAVAMSAID    AS SpecialNavamsaId,
+                        NAME                AS Name,
+                        LANGUAGECODE        AS LanguageCode
+                    FROM SPECIALNAVAMSA_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<SpecialNavamsaDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetSpecialNavamsaDescs error: {ex.Message}");
+                return new List<SpecialNavamsaDesc>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Yogi from YOGA table.
+        /// </summary>
+        public IReadOnlyList<Yoga> GetYogas()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID          AS Id,
+                        YOGACODE    AS YogaCode,
+                        COLORID     AS ColorId
+                    FROM YOGA
+                    ORDER BY ID";
+
+                return _connection.Query<Yoga>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetYogas error: {ex.Message}");
+                return new List<Yoga>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of Yogi Descriptions from YOGA_DESC table.
+        /// </summary>
+        public IReadOnlyList<YogaDesc> GetYogaDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        YOGAID          AS YogaId,
+                        NAME            AS Name,
+                        SHORTNAME       AS ShortName,
+                        DESCRIPTION     AS Description,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM YOGA_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<YogaDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetYogaDescs error: {ex.Message}");
+                return new List<YogaDesc>();
+            }
+        }
+
 
 
 

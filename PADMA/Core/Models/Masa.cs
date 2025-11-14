@@ -10,7 +10,7 @@ namespace PADMA.Core.Models
     {
         [PrimaryKey, AutoIncrement, Column("ID")]
         public int Id { get; set; }
-        [Column("ZODIAKID")]
+        [Column("ZODIACID")]
         public int ZodiacId { get; set; }
         [Column("SHUNYANAKSHATRA")]
         public string ShunyaNakshatra { get; set; } = string.Empty;
