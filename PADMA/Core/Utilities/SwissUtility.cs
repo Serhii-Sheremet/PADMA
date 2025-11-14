@@ -59,7 +59,7 @@ namespace PADMA.Core.Utilities
         /// <summary>
         /// Returns Zodiac sign ID (1–12) from longitude.
         /// </summary>
-        public static int GetZodiakIdFromDegree(double longitude)
+        public static int GetZodiacIdFromDegree(double longitude)
         {
             double znakPart = 360.0 / 12.0;
             double currentDZnak = longitude / znakPart;

@@ -89,7 +89,7 @@ namespace PADMA.Core.Analysis
             if (speedLon < -180) speedLon += 360;
 
             // derive IDs
-            int zodiacId = SwissUtility.GetZodiakIdFromDegree(lon);
+            int zodiacId = SwissUtility.GetZodiacIdFromDegree(lon);
             int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(lon);
             int padaId = SwissUtility.GetPadaIdFromDegree(lon);
 
@@ -359,7 +359,7 @@ namespace PADMA.Core.Analysis
                 var planet = SwissService.GetPlanetPosition(cur, planetId);
                 double lon = SwissService.NormalizeDegrees(planet[0]);
                 bool retro = planet[3] < 0;
-                int zodId = SwissUtility.GetZodiakIdFromDegree(lon);
+                int zodId = SwissUtility.GetZodiacIdFromDegree(lon);
 
                 // шукаємо градус для цієї планети в цьому знаку
                 var mb = mbList.FirstOrDefault(x => x.PlanetId == planetId && x.ZodiacId == zodId);
@@ -407,7 +407,7 @@ namespace PADMA.Core.Analysis
                 }
 
                 // --- зміна знака або ретроградності ---
-                if (SwissUtility.GetZodiakIdFromDegree(lastLon) != zodId || retro != lastRetro)
+                if (SwissUtility.GetZodiacIdFromDegree(lastLon) != zodId || retro != lastRetro)
                 {
                     if (inZone && current != null)
                     {
