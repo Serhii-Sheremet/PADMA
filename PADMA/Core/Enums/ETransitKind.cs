@@ -10,10 +10,11 @@ namespace PADMA.Core.Enums
 
         // Core Swiss-based transits
         Planet = 1,
-        Tithi = 2,
-		NityaYoga = 3,
-        MrityuBhaga = 4,
-        Eclipse = 5,
+        Nakshatra = 2,
+        Tithi = 3,
+		NityaYoga = 4,
+        MrityuBhaga = 5,
+        Eclipse = 6,
 
         // Solar cycles
         Sunrise = 20,

@@ -1357,15 +1357,96 @@ List\<PlanetSlice> chronologically ordered.
 
 ---
 
-### 4. Tithi Slice — Transit Engine Specification (PADMA)
+## 4. Nakshatra Slice — Transit Engine Specification (PADMA)
 
 ### 4.1. Overview
+
+NakshatraSlice represents the interval during which the Moon remains inside a specific
+nakshatra sector (13°20'). It is derived from SwissAnalysis → PlanetData (Moon only).
+Slices are built by detecting changes in NakshatraId over time.
+
+This slice carries only identifiers. Descriptive text and attributes are resolved from
+NAKSHATRA_DESC via DataCache.
+
+### 4.2. Input Data (SwissAnalysis → PlanetData for Moon)
+
+Relevant PlanetData fields:
+
+- DateTimeUtc
+- NakshatraId (1..27)
+
+SwissAnalysis provides a chronological list for the Moon with exact transition moments.
+
+### 4.3. DataCache Tables Used
+
+### NAKSHATRA
+- ID (1..27)
+- NAKSHATRACODE (string/enum-friendly)
+- COLORID (FK → COLOR)
+
+### NAKSHATRA_DESC
+Localized descriptive fields:
+NAME, SHORTNAME, RULER, NATURE, DESCRIPTION, GOODFOR, BADFOR, LANGUAGECODE.
+
+The slice does not store this – UI retrieves text through DataCache.
+
+### 4.4. NakshatraSlice Model
+
+public class NakshatraSlice : CalendarSlice
+{
+    public int NakshatraId { get; set; }
+    public int ColorId { get; set; }
+    public ENakshatra NakshatraCode { get; set; }
+
+    public NakshatraSlice()
+    {
+        Kind = ETransitKind.Nakshatra;
+    }
+
+    internal static int GetNakshatraColorId(int nakshatraId)
+    {
+        return DataCache.Instance.NakshatraList
+            .FirstOrDefault(n => n.Id == nakshatraId)?
+            .ColorId ?? 0;
+    }
+}
+
+Notes:
+- NakshatraCode is (ENakshatra)NakshatraId.
+- ColorId is resolved from NAKSHATRA table.
+
+### 4.5. NakshatraTransitBuilder
+
+public static class NakshatraTransitBuilder
+
+Logic Summary:
+- Input list must be the Moon-only PlanetData sequence.
+- A new slice is created whenever NakshatraId changes.
+- EndUtc is defined as next transition (or +1 day fallback).
+- Color and enum code are resolved from DataCache.
+
+### 4.6. UI Interaction
+
+UI retrieves descriptions via:
+cache.GetNakshatraDesc(nakshatraId)
+NakshatraSlice remains minimal and computation-oriented.
+
+### 4.7 Output
+List\<NakshatraSlice>
+
+### 4.8. Status: Completed
+
+---
+
+### 5. Tithi Slice — Transit Engine Specification (PADMA)
+
+### 5.1. Overview
 
 TithiSlice represents the lunar day interval determined by the angular separation
 between the Moon and the Sun. PADMA computes all Tithi transitions using Swiss
 Ephemeris via SwissAnalysis and converts them into chronologically ordered slices.
 
-### 4.2. Input Data (SwissAnalysis → TithiData)
+### 5.2. Input Data (SwissAnalysis → TithiData)
 
 public class TithiData {
     public DateTime DateTimeUtc { get; set; }
@@ -1373,7 +1454,7 @@ public class TithiData {
     public int TithiId { get; set; }
 }
 
-### 4.3. DataCache Tables Used
+### 5.3. DataCache Tables Used
 
 ### TITHI
 - ID (1..30)
@@ -1383,7 +1464,7 @@ public class TithiData {
 Localized UI text fields:
 NAME, SHORTNAME, RULER, TYPE, GOODFOR, BADFOR, LANGUAGECODE.
 
-### 4.4. TithiSlice Model
+### 5.4. TithiSlice Model
 
 public class TithiSlice : CalendarSlice {
     public int TithiId { get; set; }
@@ -1400,7 +1481,7 @@ public class TithiSlice : CalendarSlice {
     }
 }
 
-### 4.5. TithiTransitBuilder
+### 5.5. TithiTransitBuilder
 
 public static List<TithiSlice> BuildTithiSlices(List<TithiData> list)
 
@@ -1408,14 +1489,14 @@ public static List<TithiSlice> BuildTithiSlices(List<TithiData> list)
 - EndUtc = next Tithi start (or +1 day fallback)
 - Color fetched via GetTithiColorId
 
-### 4.6. UI Interaction
+### 5.6. UI Interaction
 
 UI uses DataCache.Instance.GetTithiDesc(tithiId) for localized text.
 
-### 4.5 Output
+### 5.7 Output
 List\<TithiSlice>
 
-### 4.6. Status: Completed
+### 5.8. Status: Completed
 
 ---
 
