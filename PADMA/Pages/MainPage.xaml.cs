@@ -153,7 +153,7 @@ namespace PADMA.Pages
 
             // 6) Знак и градус внутри знака
             double ascNorm = SwissService.NormalizeDegrees(asc);
-            int sign = SwissUtility.GetZodiakIdFromDegree(ascNorm); // 1..12
+            int sign = SwissUtility.GetZodiacIdFromDegree(ascNorm); // 1..12
             double degInSign = ascNorm - (sign - 1) * 30.0;
 
             // 7) Вывод
