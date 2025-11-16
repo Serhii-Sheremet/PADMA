@@ -1735,3 +1735,75 @@ List<NityaYogaSlice> chronologically ordered.
 ### 12.7. Status: Completed
 
 ---
+
+## 13. Chandra Bala Slice — Transit Engine Specification (PADMA)
+
+### 13.1. Overview
+
+Chandra Bala reflects in which **house from the natal Moon** the *transiting Moon* is located.  
+It evaluates the Moon’s current zodiac position relative to the natal Moon zodiac.
+
+A ChandraBalaSlice corresponds to each Moon PlanetSlice interval.  
+Start/End come directly from PlanetSlice.
+
+Color rules:
+- RED  → Houses **6, 8, 12**  
+- RED  → If Moon is in **Scorpio**  
+- GREEN → All other houses  
+
+Slice stores only computational values (house/zodiac/color).  
+UI handles all text.
+
+### 13.2. Input Data
+
+#### 13.2.1 Moon PlanetSlice list  
+Each Moon PlanetSlice provides:
+- StartUtc / EndUtc  
+- ZodiacId (1..12)  
+- ZodiacCode (enum EZodiac)
+
+#### 13.2.2 Birth Moon zodiac  
+`birthZodiacMoonId` — obtained from the profile or natal chart.  
+Used to rotate zodiac list so that natal Moon becomes “house 1”.
+
+#### 13.2.3 TransitBuilderUtility  
+Provides a helper:
+```
+SwapZodiacs(List<Zodiac> zList, int birthZodiacMoonId)
+```
+Returns a list of 12 elements with the order cyclically rotated.
+
+### 13.3. ChandraBalaSlice Model
+
+public class ChandraBalaSlice : CalendarSlice
+
+Notes:
+- Slice stores only minimal required data.
+- No DB lookup needed for Chandra Bala.
+
+### 13.4. ChandraBalaTransitBuilder
+
+public static class ChandraBalaTransitBuilder
+
+Summary:
+- Rotate zodiac list so natal Moon becomes position 1.
+- Compute house number by index.
+- Apply house-based and sign-based color rules.
+- Use PlanetSlice timing unchanged.
+
+### 13.5. UI Interaction
+
+UI may use:
+- HouseNumber  
+- ZodiacCode  
+- ColorId (segment coloring)  
+- Optional localization (“Moon in X house”)
+
+Slice is strictly computational.
+
+### 13.6 Output
+List<ChandraBalaSlice> chronologically ordered.
+
+### 13.7. Status: Completed
+
+---
