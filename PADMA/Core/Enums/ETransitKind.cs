@@ -15,8 +15,9 @@ namespace PADMA.Core.Enums
         Tithi = 4,
         Karana = 5,
         NityaYoga = 6,
-        MrityuBhaga = 7,
-        Eclipse = 8,
+        ChandraBala = 7,
+        MrityuBhaga = 8,
+        Eclipse = 9,
 
         // Solar cycles
         Sunrise = 20,

@@ -263,7 +263,7 @@ namespace PADMA.Core.Analysis
                 {
                     DateTimeUtc = exact,
                     Longitude = yogaLon,
-                    YogaId = currentYogaId
+                    NityaYogaId = currentYogaId
                 });
 
                 cursor = exact.AddSeconds(1); // продолжаем после найденного перехода

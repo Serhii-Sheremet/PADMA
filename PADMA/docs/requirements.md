@@ -1665,4 +1665,73 @@ List<KaranaSlice> chronologically ordered.
 
 ---
 
+## 12. Nitya Yoga Slice — Transit Engine Specification (PADMA)
 
+### 12.1. Overview
+
+NityaYogaSlice represents the transitions of the 27 Nitya Yogas based on the Moon+Sun
+combined longitude.  
+SwissAnalysis already provides a list of **NityaYogaData** points where each Yoga
+begins.  
+A Slice is created for each Yoga interval:
+
+- Start = current Yoga start time  
+- End = next Yoga start  
+- NityaYogaId = 1..27  
+- ColorId is resolved from the NITYAYOGA table via DataCache  
+
+All textual and descriptive information is taken from NITYAYOGA_DESC.
+
+### 12.2. Input Data
+
+#### 12.2.1 NityaYogaData list  
+Each entry contains:
+- DateTimeUtc — start moment of the Yoga  
+- NityaYogaId — enum-compatible yoga id (1..27)
+
+#### 12.2.2 DataCache fields
+
+```
+IReadOnlyList<NityaYoga>      NityaYogaList
+IReadOnlyList<NityaYogaDesc>  NityaYogaDescList
+```
+
+`NITYAYOGA` table provides:
+- COLORID  
+- NAKSHATRAID  
+- YOGIPLANETID  
+- AVAYOGIPLANETID  
+
+Slice stores only ID + Color.  
+All extended attributes are resolved by UI via DataCache.
+
+### 12.3. NityaYogaSlice Model
+
+public class NityaYogaSlice : CalendarSlice
+
+Notes:  
+- Minimal slice: only IDs and computed intervals.  
+- Text and detailed attributes come from NityaYogaDescList.
+
+### 12.4. NityaYogaTransitBuilder
+
+public static class NityaYogaTransitBuilder
+
+Logic Summary:  
+- Directly converts NityaYogaData list into continuous slices.  
+- Computation model identical to Tithi and Nakshatra slices.  
+- ColorId resolved through DataCache.  
+- Descriptions fetched later from NityaYogaDescList.
+
+### 12.5. UI Interaction
+
+UI retrieves localized text via:
+cache.NityaYogaDescList.FirstOrDefault(d => d.NityaYogaId == slice.NityaYogaId)
+Slice remains minimal and computational.
+
+### 12.6 Output
+List<NityaYogaSlice> chronologically ordered.
+
+### 12.7. Status: Completed
+
+---
