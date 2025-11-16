@@ -1597,6 +1597,72 @@ List<TithiSlice> chronologically ordered.
 
 ---
 
+## 11. Karana Slice — Transit Engine Specification (PADMA)
 
+### 11.1. Overview
+
+KaranaSlice represents half-segments of each TithiSlice.  
+Every Tithi is divided into **exactly two equal Karana slices**, matching the PAD logic and the PADMA database schema:
+- 30 Tithis → 60 Karanas  
+- Karana identity and color are taken from the KARANA and KARANA_DESC tables.
+
+KaranaSlice stores only identifiers and computed intervals.  
+All descriptive text (name, good/bad, ruler) is retrieved via DataCache from KARANA_DESC.
+
+### 11.2. Input Data
+
+#### 11.2.1 TithiSlice list  
+Each TithiSlice provides:
+- StartUtc / EndUtc
+- TithiId (1..30)
+
+#### 11.2.2 Karana definitions from database
+`KARANA` table contains:
+- ID (primary key)
+- TITHIID (FK → Tithi)
+- POSITION (1 or 2)
+- COLORID
+
+`POSITION` defines:
+- 1 → first half of tithi  
+- 2 → second half of tithi  
+
+#### 11.2.3 DataCache fields
+
+```
+IReadOnlyList<Karana> KaranaList
+IReadOnlyList<KaranaDesc> KaranaDescList
+```
+
+### 11.3. KaranaSlice Model
+
+public class KaranaSlice : CalendarSlice
+
+Notes:  
+- Slice stores only IDs and essential values.  
+- Text descriptions are loaded via KaranaDescList at UI level.
+
+### 11.4. KaranaTransitBuilder
+
+public static class KaranaTransitBuilder
+
+Logic Summary:
+- Each TithiSlice is divided into two equal halves.  
+- For each half, a corresponding Karana entry (POSITION=1 or POSITION=2) is selected.  
+- ColorId is resolved from the KARANA table.  
+- Descriptions resolved later from KARANA_DESC.
+
+## 11.5. UI Interaction
+
+UI retrieves localized text using:
+cache.KaranaDescList.FirstOrDefault(d => d.KaranaId == slice.KaranaId)
+Slice remains purely computational and minimal.
+
+### 11.6 Output
+List<KaranaSlice> chronologically ordered.
+
+## 11.7. Status: Completed
+
+---
 
 

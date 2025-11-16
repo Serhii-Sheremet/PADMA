@@ -13,9 +13,10 @@ namespace PADMA.Core.Enums
         Nakshatra = 2,
         TaraBala = 3,
         Tithi = 4,
-		NityaYoga = 5,
-        MrityuBhaga = 6,
-        Eclipse = 7,
+        Karana = 5,
+        NityaYoga = 6,
+        MrityuBhaga = 7,
+        Eclipse = 8,
 
         // Solar cycles
         Sunrise = 20,
