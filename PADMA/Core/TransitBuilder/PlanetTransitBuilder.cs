@@ -19,11 +19,11 @@ namespace PADMA.Core.Services.TransitBuilder
             if (list.Count == 0)
                 return result;
 
-            var swappedZodiacLagna = SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthLagnaId);
-            var swappedZodiacMoon = SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthZodiacMoonId);
+            var swappedZodiacLagna = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthLagnaId);
+            var swappedZodiacMoon = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthZodiacMoonId);
 
-            var swappedNakshatras = SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
-            var taraMatrix = MakeTaraBalaMatrix(swappedNakshatras);
+            var swappedNakshatras = TransitBuilderUtility.SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
+            var taraMatrix = TransitBuilderUtility.MakeTaraBalaMatrix(swappedNakshatras);
 
             for (int i = 0; i < list.Count; i++)
             {
@@ -43,7 +43,7 @@ namespace PADMA.Core.Services.TransitBuilder
                     EndUtc = (i < list.Count - 1) ? list[i + 1].DateTimeUtc : d.DateTimeUtc
                 };
                 
-                (var tbId, var tbPct) = ComputeTaraBalaFromMatrix(d.NakshatraId, taraMatrix);
+                (var tbId, var tbPct) = TransitBuilderUtility.ComputeTaraBalaFromMatrix(d.NakshatraId, taraMatrix);
                 slice.TaraBalaId = tbId;
                 slice.TaraBalaPercent = tbPct;
 
@@ -60,54 +60,6 @@ namespace PADMA.Core.Services.TransitBuilder
             }
 
             return result;
-        }
-
-        public static List<Nakshatra> SwapNakshatras(List<Nakshatra> nList, int birthNakshatraId)
-        {
-            return nList
-                .Where(n => n.Id >= birthNakshatraId)
-                .Concat(nList.Where(n => n.Id < birthNakshatraId))
-                .ToList();
-        }
-
-        public static List<Zodiac> SwapZodiacs(List<Zodiac> zList, int id)
-        {
-            return zList
-                .Where(z => z.Id >= id)
-                .Concat(zList.Where(z => z.Id < id))
-                .ToList();
-        }
-
-        public static int[,] MakeTaraBalaMatrix(List<Nakshatra> swapped)
-        {
-            int[,] arr = new int[9, 3];
-            int index = 0;
-
-            for (int col = 0; col < 3; col++)
-                for (int row = 0; row < 9; row++)
-                    arr[row, col] = swapped[index++].Id;
-
-            return arr;
-        }
-
-        /// <summary>
-        /// ¬озвращает (TaraBalaId 1..9, Percent 100/50/25) из уже предсобранной матрицы.
-        /// </summary>
-        private static (int taraBalaId, int percent) ComputeTaraBalaFromMatrix(int nakshatraId, int[,] matrix)
-        {
-            for (int row = 0; row < 9; row++)
-            {
-                for (int col = 0; col < 3; col++)
-                {
-                    if (matrix[row, col] == nakshatraId)
-                    {
-                        int id = row + 1;
-                        int pct = (col == 0) ? 100 : (col == 1 ? 50 : 25);
-                        return (id, pct);
-                    }
-                }
-            }
-            return (0, 0);
         }
 
         private static int CalculateHouse(List<Zodiac> zList, int zodiacId) 
