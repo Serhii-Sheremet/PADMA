@@ -56,5 +56,21 @@ namespace PADMA.Core.Utilities
             return (0, 0);
         }
 
+        public static bool Overlap(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd)
+        {
+            return aStart < bEnd && bStart < aEnd;
+        }
+
+        public static DateTime Max(DateTime a, DateTime b)
+        {
+            return a > b ? a : b;
+        }
+
+        public static DateTime Min(DateTime a, DateTime b)
+        {
+            return a < b ? a : b;
+        }
+
+
     }
 }

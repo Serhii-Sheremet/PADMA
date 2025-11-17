@@ -63,7 +63,7 @@ namespace PADMA.Core.Services
         public IReadOnlyList<Masa> MasaList { get; private set; } = new List<Masa>();
         public IReadOnlyList<MasaDesc> MasaDescList { get; private set; } = new List<MasaDesc>();
 
-        public IReadOnlyList<SpecialNavamsaDesc> SpecNavamsaDescList { get; private set; } = new List<SpecialNavamsaDesc>();
+        public IReadOnlyList<SpecialNavamsaDesc> SpecialNavamsaDescList { get; private set; } = new List<SpecialNavamsaDesc>();
         
         public IReadOnlyList<Yoga> YogaList { get; private set; } = new List<Yoga>();
         public IReadOnlyList<YogaDesc> YogaDescList { get; private set; } = new List<YogaDesc>();
@@ -154,7 +154,7 @@ namespace PADMA.Core.Services
             MasaDescList = db.GetMasaDescs().ToList();
 
             // Описания специальных навамш
-            SpecNavamsaDescList = db.GetSpecialNavamsaDescs().ToList();
+            SpecialNavamsaDescList = db.GetSpecialNavamsaDescs().ToList();
             
             // Йоги
             YogaList = db.GetYogas().ToList();
