@@ -1807,3 +1807,92 @@ List<ChandraBalaSlice> chronologically ordered.
 ### 13.7. Status: Completed
 
 ---
+
+## 14. YogaSlice Requirements
+
+### 14.1. Overview
+This document summarizes the architecture and approach used to implement Yoga calculations within the PADMA Transit Engine.
+
+### 14.2. YogaSlice Structure
+A YogaSlice represents a continuous time interval during which a specific Yoga is active. It includes:
+
+- `YogaId`: Numeric ID from YOGA table
+- `YogaCode`: Enum `EYoga`
+- `StartUtc` / `EndUtc`: Interval boundaries
+- `Vara`: Day of the week
+- `NakshatraCode`: ENakshatra or 0 when not applicable
+- `TithiId`: Tithi number or 0 if not used
+- `ColorId`: Color from DB via YOGA table
+
+### 14.3. YogaTransitBuilder
+YogaTransitBuilder constructs YogaSlices for a given day using:
+- NakshatraSlices
+- TithiSlices
+- Vara (DayOfWeek)
+- periodStartUtc / periodEndUtc (day boundaries)
+
+It routes each YogaCode to appropriate builder:
+- Generic rule-based: Dvipushkar, Tripushkar
+- Specialized: Amritasiddha, Sarvartha, Siddha (basic), Siddha (large)
+
+### 14.4. YogaRules
+Contains definitions for:
+- Vara
+- Allowed Nakshatras
+- Allowed Tithis
+- Multi-result allowed flag
+- Large Siddha specific combined rules
+
+### 14.5. Implemented Yogas
+
+#### 14.5.1. Dwipushkar
+- Vara: Monday, Wednesday, Thursday
+- Tithis: {2,7,12,17,22,27}
+- Nakshatras: MRIGASHIRA, CHITRA, DHANISHTA
+- Generic rule-based
+
+#### 14.5.2. Tripushkar
+- Vara: Tuesday, Saturday, Sunday
+- Same Tithis: {2,7,12,17,22,27}
+- Nakshatras: KRITTIKA, PUNARVASU, UTTARAPHALGUNI, VISAKHA, UTTARAASHADHA, PURVABHADRAPADA
+- Generic rule-based
+
+#### 14.5.3. Amritasiddha
+- Each Vara has:
+  - 1 required Nakshatra
+  - 2 forbidden Tithis
+- Yoga occurs on interval intersection
+- Uses dedicated builder
+
+#### 14.5.4. Sarvartha Siddha
+- Pure Nakshatra logic
+- Vara-specific lists of allowed Nakshatras
+- Dedicated builder
+
+#### 14.5.5. Siddha (basic)
+- Tithi-only Yoga
+- Vara-dependent groups of allowed Tithis
+- Built via `BuildSiddha`
+
+#### 14.5.6. Siddha (large)
+- Vara determines:
+  - allowed Nakshatras
+  - allowed Tithis
+- Tuesday: Nakshatra-only
+- Other days: Intersection of Nakshatra+Tithi intervals
+- Interval clipped to day boundaries
+- Built via `BuildLargeSiddha`
+
+### 14.6. Not finished yet
+- Mrityu Yoga
+- Adham Yoga
+- Yamaghata Yoga
+- Dagdha Yoga
+- Unfarobale Yoga
+
+### 14.7. Output
+YogaTransitBuilder returns all YogaSlices sorted by StartUtc.
+
+### 14.8. Status: In progress
+
+---
