@@ -50,6 +50,61 @@ namespace PADMA.Core.TransitBuilder
             }
 
             // ---------------------------------------------------------
+            // MRITYU — простая титхи-йога по дням недели
+            // ---------------------------------------------------------
+            if (yogaCode == EYoga.MRITYU)
+                return BuildMrityu(
+                    periodStartUtc,
+                    periodEndUtc,
+                    vara,
+                    tithiSlices
+                );
+
+            // ---------------------------------------------------------
+            // ADHAM — простая титхи-йога по дням недели
+            // ---------------------------------------------------------
+            if (yogaCode == EYoga.ADHAM)
+                return BuildAdham(
+                    periodStartUtc,
+                    periodEndUtc,
+                    vara,
+                    tithiSlices
+                );
+
+            // ---------------------------------------------------------
+            // YAMAGHATA — накшатра-йога по дням недели
+            // ---------------------------------------------------------
+            if (yogaCode == EYoga.YAMAGHATA)
+                return BuildYamaghata(
+                    periodStartUtc,
+                    periodEndUtc,
+                    vara,
+                    nakshatraSlices
+                );
+
+            // ---------------------------------------------------------
+            // DAGDHA — накшатра-йога по дням недели
+            // ---------------------------------------------------------
+            if (yogaCode == EYoga.DAGDHA)
+                return BuildDagdha(
+                    periodStartUtc,
+                    periodEndUtc,
+                    vara,
+                    nakshatraSlices
+                );
+
+            // ---------------------------------------------------------
+            // UNFAVORABLE — титхи-йога по дням недели
+            // ---------------------------------------------------------
+            if (yogaCode == EYoga.UNFAVORABLE)
+                return BuildUnfavorable(
+                    periodStartUtc,
+                    periodEndUtc,
+                    vara,
+                    tithiSlices
+                );
+
+            // ---------------------------------------------------------
             // ПРОСТЫЕ ЙОГИ (Dwipushkar, Tripushkar)
             // ---------------------------------------------------------
             var result = new List<YogaSlice>();
@@ -447,8 +502,256 @@ namespace PADMA.Core.TransitBuilder
             return result;
         }
 
+        // ======================================================================
+        //                       MRITYU — титхи-йога
+        // ======================================================================
+        private static List<YogaSlice> BuildMrityu(
+            DateTime periodStartUtc,
+            DateTime periodEndUtc,
+            DayOfWeek vara,
+            List<TithiSlice> tithiSlices)
+        {
+            var result = new List<YogaSlice>();
 
+            // ---------------------------------------------------------------------
+            // 1. Берём список разрешённых титхи для этого дня недели
+            // ---------------------------------------------------------------------
+            if (!YogaRules.MrityuTithisByVara.TryGetValue(vara, out var allowedTithis))
+                return result;
 
+            // ---------------------------------------------------------------------
+            // 2. Фильтрация титхи по списку MRITYU
+            // ---------------------------------------------------------------------
+            var tithiFiltered =
+                tithiSlices
+                .Where(t => allowedTithis.Contains(t.TithiId))
+                .ToList();
+
+            if (tithiFiltered.Count == 0)
+                return result;
+
+            // ---------------------------------------------------------------------
+            // 3. Формируем йогу на весь титхи-интервал внутри суток
+            // ---------------------------------------------------------------------
+            foreach (var t in tithiFiltered)
+            {
+                DateTime start = t.StartUtc > periodStartUtc ? t.StartUtc : periodStartUtc;
+                DateTime end = t.EndUtc < periodEndUtc ? t.EndUtc : periodEndUtc;
+
+                if (start >= end)
+                    continue;
+
+                result.Add(new YogaSlice
+                {
+                    YogaId = (int)EYoga.MRITYU,
+                    YogaCode = EYoga.MRITYU,
+                    Vara = vara,
+                    StartUtc = start,
+                    EndUtc = end,
+                    TithiId = t.TithiId, // MRITYU зависит только от титхи
+                    NakshatraCode = ENakshatra.NULL,
+                    ColorId = YogaSlice.GetYogaColorId((int)EYoga.MRITYU)
+                });
+            }
+
+            return result;
+        }
+
+        // ======================================================================
+        //                       ADHAM — титхи-йога
+        // ======================================================================
+        private static List<YogaSlice> BuildAdham(
+            DateTime periodStartUtc,
+            DateTime periodEndUtc,
+            DayOfWeek vara,
+            List<TithiSlice> tithiSlices)
+        {
+            var result = new List<YogaSlice>();
+
+            // 1. Берём разрешённые титхи для этого дня недели
+            if (!YogaRules.AdhamTithisByVara.TryGetValue(vara, out var allowedTithis))
+                return result;
+
+            // 2. Фильтруем tithi
+            var tithiFiltered =
+                tithiSlices
+                .Where(t => allowedTithis.Contains(t.TithiId))
+                .ToList();
+
+            if (tithiFiltered.Count == 0)
+                return result;
+
+            // 3. Формируем йогу
+            foreach (var t in tithiFiltered)
+            {
+                DateTime start = t.StartUtc > periodStartUtc ? t.StartUtc : periodStartUtc;
+                DateTime end = t.EndUtc < periodEndUtc ? t.EndUtc : periodEndUtc;
+
+                if (start >= end)
+                    continue;
+
+                result.Add(new YogaSlice
+                {
+                    YogaId = (int)EYoga.ADHAM,
+                    YogaCode = EYoga.ADHAM,
+                    Vara = vara,
+                    StartUtc = start,
+                    EndUtc = end,
+                    TithiId = t.TithiId, // Adham зависит только от титхи
+                    NakshatraCode = ENakshatra.NULL,
+                    ColorId = YogaSlice.GetYogaColorId((int)EYoga.ADHAM)
+                });
+            }
+
+            return result;
+        }
+
+        // ======================================================================
+        //                    YAMAGHATA — накшатра-йога
+        // ======================================================================
+        private static List<YogaSlice> BuildYamaghata(
+            DateTime periodStartUtc,
+            DateTime periodEndUtc,
+            DayOfWeek vara,
+            List<NakshatraSlice> nakshatraSlices)
+        {
+            var result = new List<YogaSlice>();
+
+            // 1. Накшатра для дня недели
+            if (!YogaRules.YamaghataNakshatraByVara.TryGetValue(vara, out var targetNak))
+                return result;
+
+            // 2. Находим все соответствующие накшатра-слайсы
+            var nakFiltered =
+                nakshatraSlices
+                .Where(n => (ENakshatra)n.NakshatraId == targetNak)
+                .ToList();
+
+            if (nakFiltered.Count == 0)
+                return result;
+
+            // 3. Формируем итоговый Slice
+            foreach (var n in nakFiltered)
+            {
+                DateTime start = n.StartUtc > periodStartUtc ? n.StartUtc : periodStartUtc;
+                DateTime end = n.EndUtc < periodEndUtc ? n.EndUtc : periodEndUtc;
+
+                if (start >= end)
+                    continue;
+
+                result.Add(new YogaSlice
+                {
+                    YogaId = (int)EYoga.YAMAGHATA,
+                    YogaCode = EYoga.YAMAGHATA,
+                    Vara = vara,
+                    StartUtc = start,
+                    EndUtc = end,
+                    NakshatraCode = targetNak,
+                    TithiId = 0,   
+                    ColorId = YogaSlice.GetYogaColorId((int)EYoga.YAMAGHATA)
+                });
+            }
+
+            return result;
+        }
+
+        // ======================================================================
+        //                    DAGDHA — накшатра-йога
+        // ======================================================================
+        private static List<YogaSlice> BuildDagdha(
+            DateTime periodStartUtc,
+            DateTime periodEndUtc,
+            DayOfWeek vara,
+            List<NakshatraSlice> nakshatraSlices)
+        {
+            var result = new List<YogaSlice>();
+
+            // 1. Накшатра для дня недели
+            if (!YogaRules.DagdhaNakshatraByVara.TryGetValue(vara, out var targetNak))
+                return result;
+
+            // 2. Находим совпадающие накшатры
+            var nakFiltered =
+                nakshatraSlices
+                .Where(n => (ENakshatra)n.NakshatraId == targetNak)
+                .ToList();
+
+            if (nakFiltered.Count == 0)
+                return result;
+
+            // 3. Генерируем Dagdha Yoga
+            foreach (var n in nakFiltered)
+            {
+                DateTime start = n.StartUtc > periodStartUtc ? n.StartUtc : periodStartUtc;
+                DateTime end = n.EndUtc < periodEndUtc ? n.EndUtc : periodEndUtc;
+
+                if (start >= end)
+                    continue;
+
+                result.Add(new YogaSlice
+                {
+                    YogaId = (int)EYoga.DAGDHA,
+                    YogaCode = EYoga.DAGDHA,
+                    Vara = vara,
+                    StartUtc = start,
+                    EndUtc = end,
+                    NakshatraCode = targetNak,
+                    TithiId = 0,
+                    ColorId = YogaSlice.GetYogaColorId((int)EYoga.DAGDHA)
+                });
+            }
+
+            return result;
+        }
+
+        // ======================================================================
+        //                    UNFAVORABLE — титхи-йога
+        // ======================================================================
+        private static List<YogaSlice> BuildUnfavorable(
+            DateTime periodStartUtc,
+            DateTime periodEndUtc,
+            DayOfWeek vara,
+            List<TithiSlice> tithiSlices)
+        {
+            var result = new List<YogaSlice>();
+
+            // 1. Получаем разрешённые титхи
+            if (!YogaRules.UnfavorableTithisByVara.TryGetValue(vara, out var allowedTithis))
+                return result;
+
+            // 2. Фильтруем
+            var tithiFiltered =
+                tithiSlices
+                .Where(t => allowedTithis.Contains(t.TithiId))
+                .ToList();
+
+            if (tithiFiltered.Count == 0)
+                return result;
+
+            // 3. Создаём йога-интервалы
+            foreach (var t in tithiFiltered)
+            {
+                DateTime start = t.StartUtc > periodStartUtc ? t.StartUtc : periodStartUtc;
+                DateTime end = t.EndUtc < periodEndUtc ? t.EndUtc : periodEndUtc;
+
+                if (start >= end)
+                    continue;
+
+                result.Add(new YogaSlice
+                {
+                    YogaId = (int)EYoga.UNFAVORABLE,
+                    YogaCode = EYoga.UNFAVORABLE,
+                    Vara = vara,
+                    StartUtc = start,
+                    EndUtc = end,
+                    TithiId = t.TithiId,
+                    NakshatraCode = ENakshatra.NULL,
+                    ColorId = YogaSlice.GetYogaColorId((int)EYoga.UNFAVORABLE)
+                });
+            }
+
+            return result;
+        }
 
 
 

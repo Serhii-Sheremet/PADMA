@@ -2,7 +2,6 @@
 > Always load this file first in a new session to resume context.
 
 # 🪶 PADMA — Project Requirements & Current Implementation  
-> _Version: October 2025_  
 
 ---
 
@@ -1883,16 +1882,90 @@ Contains definitions for:
 - Interval clipped to day boundaries
 - Built via `BuildLargeSiddha`
 
-### 14.6. Not finished yet
-- Mrityu Yoga
-- Adham Yoga
-- Yamaghata Yoga
-- Dagdha Yoga
-- Unfarobale Yoga
+#### 14.5.7. MRITYU Yoga  
+**Type:** Tithi-based, day-of-week dependent.  
+For each Vara (DayOfWeek), MRITYU activates on specific **TithiIds**:
+
+| Vara | TithiIds |
+|------|----------|
+| Monday | 2, 7, 12, 17, 22, 27 |
+| Tuesday | 1, 6, 11, 16, 21, 26 |
+| Wednesday | 3, 8, 13, 18, 23, 28 |
+| Thursday | 4, 9, 14, 19, 24, 29 |
+| Friday | 2, 7, 12, 17, 22, 27 |
+| Saturday | 5, 10, 15, 20, 25, 30 |
+| Sunday | 1, 6, 11, 16, 21, 26 |
+
+- No Nakshatra involvement  
+- Slice = intersection of TithiSlice and daily period  
+
+#### 14.5.8. ADHAM Yoga  
+**Type:** Tithi-based, day-of-week dependent.  
+
+| Vara | TithiIds |
+|------|----------|
+| Monday | 11, 21 |
+| Tuesday | 10, 25 |
+| Wednesday | 1, 9, 16, 24 |
+| Thursday | 8, 23 |
+| Friday | 7, 22 |
+| Saturday | 6, 21 |
+| Sunday | 7, 12, 22, 27 |
+
+- No Nakshatra involvement  
+- Slice = TithiSlice intersect daily period  
+
+#### 14.5.9. YAMAGHATA Yoga  
+**Type:** Nakshatra-based, day-of-week dependent.  
+
+| Vara | Nakshatra |
+|------|-----------|
+| Monday | VISAKHA |
+| Tuesday | ARDRA |
+| Wednesday | MULA |
+| Thursday | KRITTIKA |
+| Friday | ROHINI |
+| Saturday | HASTA |
+| Sunday | MAGHA |
+
+- Tithi does not matter  
+- Slice = NakshatraSlice intersect daily period  
+
+#### 14.5.10. DAGDHA Yoga  
+**Type:** Nakshatra-based, day-of-week dependent.  
+
+| Vara | Nakshatra |
+|------|-----------|
+| Monday | CHITRA |
+| Tuesday | UTTARAASHADHA |
+| Wednesday | DHANISHTA |
+| Thursday | UTTARAPHALGUNI |
+| Friday | JYESHTHA |
+| Saturday | REVATI |
+| Sunday | BHARANI |
+ 
+- Tithi does not matter  
+- Slice = NakshatraSlice intersect daily period  
+
+#### 14.5.11. UNFAVORABLE Yoga  
+**Type:** Tithi-based, day-of-week dependent.  
+
+| Vara | TithiIds |
+|------|----------|
+| Monday | 6, 26 |
+| Tuesday | 5, 7, 20, 22 |
+| Wednesday | 3, 8, 18, 23 |
+| Thursday | 6, 9, 21, 24 |
+| Friday | 8, 9, 10, 23, 24, 25 |
+| Saturday | 7, 9, 11, 22, 24, 26 |
+| Sunday | 4, 9 |
+
+- No Nakshatra  
+- Slice = TithiSlice intersect daily period  
 
 ### 14.7. Output
 YogaTransitBuilder returns all YogaSlices sorted by StartUtc.
 
-### 14.8. Status: In progress
+### 14.8. Status: Completed
 
 ---

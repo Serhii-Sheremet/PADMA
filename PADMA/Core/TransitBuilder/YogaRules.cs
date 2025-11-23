@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using PADMA.Core.Enums;
 
@@ -66,7 +66,7 @@ namespace PADMA.Core.TransitBuilder
                             DayOfWeek.Saturday,
                             DayOfWeek.Sunday
                         },
-                        // ������ ������ � �������
+                        // Особая логика в билдере
                         ForbiddenTithis = null,
                         TithiIds = null,
                         Nakshatra = null
@@ -88,11 +88,10 @@ namespace PADMA.Core.TransitBuilder
                             DayOfWeek.Sunday
                         },
 
-                        // ������ ������� � BuildSarvartha()
+                        // Логика целиком в BuildSarvartha()
                         TithiIds = null,
                         ForbiddenTithis = null,
                         Nakshatra = null,
-
                         MultiResultAllowed = true,
                         NeedsOverlap = false
                     }
@@ -111,18 +110,125 @@ namespace PADMA.Core.TransitBuilder
                             DayOfWeek.Saturday
                         },
                 
-                        // ������ � �������
+                        // Логика в билдере
                         TithiIds = null,
                         ForbiddenTithis = null,
                         Nakshatra = null,
+                        MultiResultAllowed = true
+                    }
+                },
+
+                {
+                    EYoga.MRITYU,
+                    new YogaRule
+                    {
+                        // Йога может формироваться в любой день недели,
+                        // а конкретные титьи задаём в отдельной таблице MrityuTithisByVara.
+                        Vara = new[]
+                        {
+                            DayOfWeek.Monday,
+                            DayOfWeek.Tuesday,
+                            DayOfWeek.Wednesday,
+                            DayOfWeek.Thursday,
+                            DayOfWeek.Friday,
+                            DayOfWeek.Saturday,
+                            DayOfWeek.Sunday
+                        },
+
+                        TithiIds = null,          
+                        ForbiddenTithis = null,
+                        Nakshatra = null,
+                        MultiResultAllowed = true
+                    }
+                },
+
+                {
+                    EYoga.ADHAM,
+                    new YogaRule
+                    {
+                        Vara = new[]
+                        {
+                            DayOfWeek.Monday,
+                            DayOfWeek.Tuesday,
+                            DayOfWeek.Wednesday,
+                            DayOfWeek.Thursday,
+                            DayOfWeek.Friday,
+                            DayOfWeek.Saturday,
+                            DayOfWeek.Sunday
+                        },
                 
+                        TithiIds = null,
+                        ForbiddenTithis = null,
+                        Nakshatra = null,
+                        MultiResultAllowed = true
+                    }
+                },
+
+                {
+                    EYoga.YAMAGHATA,
+                    new YogaRule
+                    {
+                        Vara = new[]
+                        {
+                            DayOfWeek.Monday,
+                            DayOfWeek.Tuesday,
+                            DayOfWeek.Wednesday,
+                            DayOfWeek.Thursday,
+                            DayOfWeek.Friday,
+                            DayOfWeek.Saturday,
+                            DayOfWeek.Sunday
+                        },
+                        
+                        TithiIds = null, // TITTHI не участвуют
+                        ForbiddenTithis = null,
+                        Nakshatra = null,  // Накшатра зависит от дня недели
+                        MultiResultAllowed = true
+                    }
+                },
+
+                {
+                    EYoga.DAGDHA,
+                    new YogaRule
+                    {
+                        Vara = new[]
+                        {
+                            DayOfWeek.Monday,
+                            DayOfWeek.Tuesday,
+                            DayOfWeek.Wednesday,
+                            DayOfWeek.Thursday,
+                            DayOfWeek.Friday,
+                            DayOfWeek.Saturday,
+                            DayOfWeek.Sunday
+                        },
+                
+                        TithiIds = null,           // TITTHI не участвуют
+                        ForbiddenTithis = null,
+                        Nakshatra = null,          // накшатра зависит от дня недели
+                        MultiResultAllowed = true
+                    }
+                },
+
+                {
+                    EYoga.UNFAVORABLE,
+                    new YogaRule
+                    {
+                        Vara = new[]
+                        {
+                            DayOfWeek.Monday,
+                            DayOfWeek.Tuesday,
+                            DayOfWeek.Wednesday,
+                            DayOfWeek.Thursday,
+                            DayOfWeek.Friday,
+                            DayOfWeek.Saturday,
+                            DayOfWeek.Sunday
+                        },
+                
+                        TithiIds = null,           // титхи выбираются из таблицы
+                        ForbiddenTithis = null,
+                        Nakshatra = null,          // накшатра не участвует
                         MultiResultAllowed = true
                     }
                 }
-
-
-
-
 
             };
     }
@@ -136,7 +242,7 @@ namespace PADMA.Core.TransitBuilder
         }
 
         /// <summary>
-        /// ������� Large Siddha �� ���� ������
+        /// Правила Large Siddha по дням недели
         /// </summary>
         public static readonly Dictionary<DayOfWeek, YogaLargeRule> LargeSiddha =
             new Dictionary<DayOfWeek, YogaLargeRule>
@@ -288,8 +394,79 @@ namespace PADMA.Core.TransitBuilder
                 }
             };
 
+        /// <summary>
+        /// Mrityu-yoga: разрешённые титхи по дням недели.
+        /// </summary>
+        public static readonly Dictionary<DayOfWeek, HashSet<int>> MrityuTithisByVara =
+            new()
+            {
+                { DayOfWeek.Monday,    new HashSet<int> { 2, 7, 12, 17, 22, 27 } },
+                { DayOfWeek.Tuesday,   new HashSet<int> { 1, 6, 11, 16, 21, 26 } },
+                { DayOfWeek.Wednesday, new HashSet<int> { 3, 8, 13, 18, 23, 28 } },
+                { DayOfWeek.Thursday,  new HashSet<int> { 4, 9, 14, 19, 24, 29 } },
+                { DayOfWeek.Friday,    new HashSet<int> { 2, 7, 12, 17, 22, 27 } },
+                { DayOfWeek.Saturday,  new HashSet<int> { 5, 10, 15, 20, 25, 30 } },
+                { DayOfWeek.Sunday,    new HashSet<int> { 1, 6, 11, 16, 21, 26 } }
+            };
 
+        /// <summary>
+        /// ADHAM-yoga: разрешённые тихти по дням недели.
+        /// </summary>
+        public static readonly Dictionary<DayOfWeek, HashSet<int>> AdhamTithisByVara =
+            new()
+            {
+                { DayOfWeek.Monday,    new HashSet<int> { 11, 21 } },
+                { DayOfWeek.Tuesday,   new HashSet<int> { 10, 25 } },
+                { DayOfWeek.Wednesday, new HashSet<int> { 1,  9, 16, 24 } },
+                { DayOfWeek.Thursday,  new HashSet<int> { 8, 23 } },
+                { DayOfWeek.Friday,    new HashSet<int> { 7, 22 } },
+                { DayOfWeek.Saturday,  new HashSet<int> { 6, 21 } },
+                { DayOfWeek.Sunday,    new HashSet<int> { 7, 12, 22, 27 } }
+            };
 
+        /// <summary>
+        /// YAMAGHATA-yoga: разрешённые накшатры по дням недели.
+        /// </summary>
+        public static readonly Dictionary<DayOfWeek, ENakshatra> YamaghataNakshatraByVara =
+            new()
+            {
+                { DayOfWeek.Monday,    ENakshatra.VISAKHA },
+                { DayOfWeek.Tuesday,   ENakshatra.ARDRA },
+                { DayOfWeek.Wednesday, ENakshatra.MULA },
+                { DayOfWeek.Thursday,  ENakshatra.KRITTIKA },
+                { DayOfWeek.Friday,    ENakshatra.ROHINI },
+                { DayOfWeek.Saturday,  ENakshatra.HASTA },
+                { DayOfWeek.Sunday,    ENakshatra.MAGHA }
+            };
 
+        /// <summary>
+        /// DAGDHA-yoga: разрешённые накшатры по дням недели.
+        /// </summary>
+        public static readonly Dictionary<DayOfWeek, ENakshatra> DagdhaNakshatraByVara =
+            new()
+            {
+                { DayOfWeek.Monday,    ENakshatra.CHITRA },
+                { DayOfWeek.Tuesday,   ENakshatra.UTTARAASHADHA },
+                { DayOfWeek.Wednesday, ENakshatra.DHANISHTA },
+                { DayOfWeek.Thursday,  ENakshatra.UTTARAPHALGUNI },
+                { DayOfWeek.Friday,    ENakshatra.JYESHTHA },
+                { DayOfWeek.Saturday,  ENakshatra.REVATI },
+                { DayOfWeek.Sunday,    ENakshatra.BHARANI }
+            };
+
+        /// <summary>
+        /// UNFAVORABLE-yoga: разрешённые титхи по дням недели.
+        /// </summary>
+        public static readonly Dictionary<DayOfWeek, HashSet<int>> UnfavorableTithisByVara =
+            new()
+            {
+                { DayOfWeek.Monday,    new HashSet<int> { 6, 26 } },
+                { DayOfWeek.Tuesday,   new HashSet<int> { 5, 7, 20, 22 } },
+                { DayOfWeek.Wednesday, new HashSet<int> { 3, 8, 18, 23 } },
+                { DayOfWeek.Thursday,  new HashSet<int> { 6, 9, 21, 24 } },
+                { DayOfWeek.Friday,    new HashSet<int> { 8, 9, 10, 23, 24, 25 } },
+                { DayOfWeek.Saturday,  new HashSet<int> { 7, 9, 11, 22, 24, 26 } },
+                { DayOfWeek.Sunday,    new HashSet<int> { 4, 9 } }
+            };
     }
 }
