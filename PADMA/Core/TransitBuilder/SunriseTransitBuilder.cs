@@ -1,5 +1,7 @@
 using PADMA.Core.Services;
-using System.Collections.Generic;
+using PADMA.Core.Enums;
+using PADMA.Core.Models;
+using PADMA.Core.Models.Calendar;
 
 namespace PADMA.Core.TransitBuilder
 {

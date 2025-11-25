@@ -1,25 +1,19 @@
-namespace PADMA.Core.TransitBuilder
+using PADMA.Core.Services;
+using PADMA.Core.Enums;
+
+namespace PADMA.Core.Models.Calendar
 {
-    public class SunriseSlice
+    public class SunriseSlice : CalendarSlice
     {
-        /// <summary>
-        /// Восход предыдущего дня (UTC)
-        /// </summary>
         public DateTime PreviousSunriseUtc { get; set; }
-
-        /// <summary>
-        /// Восход текущего дня (UTC)
-        /// </summary>
         public DateTime SunriseUtc { get; set; }
-
-        /// <summary>
-        /// Закат текущего дня (UTC)
-        /// </summary>
         public DateTime SunsetUtc { get; set; }
-
-        /// <summary>
-        /// Восход следующего дня (UTC)
-        /// </summary>
         public DateTime NextSunriseUtc { get; set; }
+
+        public SunriseSlice()
+        {
+            Kind = ETransitKind.Sunrise;
+        }
     }
+
 }

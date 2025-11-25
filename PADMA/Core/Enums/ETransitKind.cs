@@ -16,13 +16,13 @@ namespace PADMA.Core.Enums
         Karana = 5,
         NityaYoga = 6,
         ChandraBala = 7,
-        Yoga = 8,
-        MrityuBhaga = 9,
-        Eclipse = 10,
+        MrityuBhaga = 8,
+        Eclipse = 9,
 
         // Solar cycles
         Sunrise = 20,
-        Sunset = 21,
+        Yoga = 21,
+        Muhurta = 22,
 
         CustomUserTransit = 100
     }

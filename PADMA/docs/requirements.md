@@ -1970,7 +1970,7 @@ YogaTransitBuilder returns all YogaSlices sorted by StartUtc.
 
 ---
 
-# 15. SunriseTransitBuilder — Requirements Update
+# 15. SunriseSlice Requirements
 
 This section extends PADMA Transit Engine requirements with the Sunrise/Sunset subsystem used by Yoga, Muhurta, etc.
 
@@ -2044,3 +2044,114 @@ SunriseTransitBuilder returns all SunriseSlices sorted by SunriseUtc (sunrise of
 ## 15.8. Status: Completed
 
 ---
+
+# 16. MuhurtaSlice Requirements
+
+This section extends PADMA Transit Engine requirements with the **five classical Muhurtas**:
+- Abhijit
+- Rahu Kala
+- Gulika Kala
+- Yamaganda
+- Brahma Muhurta
+
+All Muhurta calculations are based on **Sunrise/Sunset** times obtained from Swiss Ephemeris.
+
+## 16.1.  MuhurtaSlice
+
+All muhurtas are represented by a unified slice model.
+
+```
+MuhurtaSlice : CalendarSlice
+{
+    EMuhurta MuhurtaCode
+    EMuhurta OverlappedMuhurtaCode
+    int MuhurtaId        // (int)MuhurtaCode
+    int ColorId          // from DataCache.MuhurtaList
+}
+```
+
+### Notes
+- `Kind = ETransitKind.Muhurta` is set in the constructor.
+- Colors are resolved through DataCache → MUHURTA table.
+- `OverlappedMuhurtaCode` is preserved for UI overlay handling.
+- Time interval fields (`StartUtc`, `EndUtc`) are inherited from CalendarSlice.
+
+## 16.2. MuhurtaTransitBuilder
+
+The builder constructs all five muhurtas for a given range of days, using **SunriseSlice** as input.
+
+## 16.3. Methods
+
+### `List<MuhurtaSlice> BuildRange(List<SunriseSlice> sunriseSlices)`
+Builds a flat sorted list of all muhurtas for the entire date range.
+
+Internally for each SunriseSlice:
+- sunrise = SunriseUtc  
+- previous sunrise = PreviousSunriseUtc  
+- sunset = SunsetUtc  
+- daytime = sunset - sunrise  
+
+Then the five muhurtas are computed.
+
+## 16.4. Muhurta Rules
+
+### 16.4.1. Abhijit (except Wednesday)
+- Day is divided into **15 equal parts**
+- Abhijit = part 7  
+- Start = sunrise + 7 * part  
+- End = start + part  
+- Skipped on Wednesdays
+
+### 16.4.2. Rahu Kala
+Day is divided into **8 equal parts**.
+
+Fixed part index by day:
+```
+Mon=1 Tue=6 Wed=4 Thu=5 Fri=3 Sat=2 Sun=7
+```
+
+### 16.4.3. Gulika Kala
+Day divided into **8 parts**.
+
+Part index:
+```
+Mon=5 Tue=6 Wed=4 Thu=3 Fri=2 Sat=1 Sun=7
+```
+
+### 16.4.4. Yamaganda
+Day divided into **8 parts**.
+
+Part index:
+```
+Mon=7 Tue=5 Wed=6 Thu=4 Fri=2 Sat=3 Sun=1
+```
+
+### 16.4.5. Brahma Muhurta
+Uses the interval **previousSunrise → sunrise**.
+
+- This night section is divided into **30 parts**
+- Brahma Muhurta = part 28  
+- Start = previousSunrise + 28 * part  
+- End = start + part  
+
+## 16.5. Output Behavior
+
+- Returns a **flat list** of MuhurtaSlice.
+- Sorted by StartUtc.
+- TransitEngine will later group muhurtas per calendar day.
+- All times are stored strictly in UTC.
+
+## 16.6. Dependencies
+
+- Requires SunriseSlice (PreviousSunriseUtc, SunriseUtc, SunsetUtc).
+- Uses EMuhurta enum.
+- Uses MUHURTA table for color resolution.
+- Integrated into the same TransitBuilder architecture as:
+  - PlanetTransitBuilder  
+  - YogaTransitBuilder  
+  - NakshatraTransitBuilder  
+
+## 16.7. Status: Completed
+
+---
+
