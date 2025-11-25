@@ -1969,3 +1969,78 @@ YogaTransitBuilder returns all YogaSlices sorted by StartUtc.
 ### 14.8. Status: Completed
 
 ---
+
+# 15. SunriseTransitBuilder — Requirements Update
+
+This section extends PADMA Transit Engine requirements with the Sunrise/Sunset subsystem used by Yoga, Muhurta, etc.
+
+## 15.1. SunriseSlice
+
+A SunriseSlice represents all key solar transition points for a specific UTC date.
+
+### 15.2. Model
+
+```
+SunriseSlice
+{
+    DateTime PreviousSunriseUtc   // sunrise of previous day
+    DateTime SunriseUtc           // sunrise of current day
+    DateTime SunsetUtc            // sunset of current day
+    DateTime NextSunriseUtc       // sunrise of next day
+}
+```
+
+#### Notes
+- All values are UTC.
+- Values are produced using Swiss Ephemeris functions swe_rise_trans.
+- Sunset is stored as part of the same slice and is **not** a separate slice type.
+
+## 15.3. SunriseTransitBuilder
+
+SunriseTransitBuilder constructs SunriseSlice objects for arbitrary time ranges.
+
+### 15.4. Methods
+
+#### `Build(DateTime dateUtc, double lat, double lon, double alt = 0)`
+Builds a SunriseSlice for a specific day.
+
+Internally:
+- PreviousSunriseUtc = sunrise(dateUtc - 1 day)
+- SunriseUtc = sunrise(dateUtc)
+- SunsetUtc = sunset(dateUtc)
+- NextSunriseUtc = sunrise(dateUtc + 1 day)
+
+Sunset fallback: if sunset is null, use `SunriseUtc + 12 hours`.
+
+#### `BuildRange(DateTime startUtc, DateTime endUtc, double lat, double lon, double alt = 0)`
+Constructs slices for all UTC calendar days from `startUtc` to `endUtc` inclusive.
+Iteration is done day-by-day.
+
+## 15.5. Purpose in Transit Engine
+
+Sunrise slices are foundational for:
+
+### ✓ YogaTransitBuilder  
+PeriodStart = SunriseUtc  
+PeriodEnd   = NextSunriseUtc  
+
+### ✓ MuhurtaTransitBuilder  
+- Rahu Kala: sunrise → sunset  
+- Yama Ghanda: sunrise → sunset  
+- Gulika: sunrise → sunset  
+- Abhijit: midpoint(sunrise, sunset)  
+- Brahma Muhurta: previous sunrise → sunrise
+
+## 15.6. Behavior Summary
+
+- Always calculated in UTC.
+- Handles long ranges (e.g., yearly transit generation).
+- Supports buffer days (e.g., -2 / +2 days) for timezone & DST shifts.
+- Fully compatible with existing TransitBuilder architecture.
+
+## 15.7. Output
+SunriseTransitBuilder returns all SunriseSlices sorted by SunriseUtc (sunrise of current day).
+
+## 15.8. Status: Completed
+
+---
