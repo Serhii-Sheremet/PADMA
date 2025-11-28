@@ -69,7 +69,7 @@ namespace PADMA.Core.Services
         public IReadOnlyList<YogaDesc> YogaDescList { get; private set; } = new List<YogaDesc>();
 
 
-
+        public IReadOnlyList<Profile> ProfileList { get; private set; } = new List<Profile>();
 
         // --- App Settings and Texts ---
         public List<AppSettingList> AppSettingsList { get; private set; } = new();
@@ -160,7 +160,7 @@ namespace PADMA.Core.Services
             YogaList = db.GetYogas().ToList();
             YogaDescList = db.GetYogaDescs().ToList();
 
-
+            ProfileList = db.GetProfiles();
 
 
 
@@ -176,6 +176,35 @@ namespace PADMA.Core.Services
             AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
         }
 
-        
+        public Color GetColor(EColor color)
+        {
+            var id = (int)color;
+
+            var c = ColorList.FirstOrDefault(x => x.Id == id);
+            if (c != null)
+            {
+                // Предполагаем, что c.ARGBVALUE — это int в формате 0xAARRGGBB
+                return Color.FromUint(unchecked((uint)c.ArgbValue));
+            }
+
+            return Colors.Black; // fallback, если цвета нет в базе
+        }
+
+        public Profile? GetActiveProfile()
+        {
+            var active = ProfileList.FirstOrDefault(p => p.Checked);
+            if (active != null)
+                return active;
+
+            return ProfileList.FirstOrDefault(); // может вернуть null — это ок
+        }
+
+        public IReadOnlyList<Profile> GetProfiles()
+        {
+            return ProfileList;
+        }
+
+
+
     }
 }
