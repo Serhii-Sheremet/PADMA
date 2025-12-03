@@ -34,7 +34,7 @@ public partial class LocationSearchPage : ContentPage
 
     private void ApplyLocalization()
     {
-        string lang = _database.GetActiveLanguageCode();
+        string lang = DataCache.Instance.CurrentLanguageCode;
         Title = Localization.GetLocalizedText("Location search", lang);
         entrySearch.Placeholder = Localization.GetLocalizedText("Enter city name", lang);
         btnSelect.Text = Localization.GetLocalizedText("Select", lang);

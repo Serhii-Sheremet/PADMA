@@ -21,8 +21,9 @@ namespace PADMA.Pages
             OpenProfileCommand = new Command<ProfileViewItem>(async p => await NavigateToProfile(p));
 
             // локализация заголовка и кнопки
-            Title = Localization.GetLocalizedText("Profiles", _database.GetActiveLanguageCode());
-            btnAddProfile.Text = Localization.GetLocalizedText("Add new profile", _database.GetActiveLanguageCode());
+            string langCode = DataCache.Instance.CurrentLanguageCode;
+            Title = Localization.GetLocalizedText("Profiles", langCode);
+            btnAddProfile.Text = Localization.GetLocalizedText("Add new profile", langCode);
         }
 
         protected override void OnAppearing()

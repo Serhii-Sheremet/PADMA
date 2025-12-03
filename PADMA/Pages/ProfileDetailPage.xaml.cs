@@ -109,7 +109,7 @@ public partial class ProfileDetailPage : ContentPage
 
     private void ApplyLocalization()
     {
-        string langCode = _database.GetActiveLanguageCode();
+        string langCode = DataCache.Instance.CurrentLanguageCode;
         Title = Localization.GetLocalizedText("Profile", langCode);
         lblDateTimeOfBirth.Text = Localization.GetLocalizedText("Date and time of birth", langCode);
         lblPlaceOfBirth.Text = Localization.GetLocalizedText("Place of birth", langCode);
@@ -162,7 +162,7 @@ public partial class ProfileDetailPage : ContentPage
 
     private async Task HandleBackAsync()
     {
-        string lang = _database.GetActiveLanguageCode();
+        string lang = DataCache.Instance.CurrentLanguageCode;
 
         if (!HasRealChanges())
         {
@@ -210,7 +210,7 @@ public partial class ProfileDetailPage : ContentPage
     {
         if (_profile == null) return false;
 
-        string lang = _database.GetActiveLanguageCode();
+        string lang = DataCache.Instance.CurrentLanguageCode;
 
         // синхронизуем UI -> модель
         _profile.DateOfBirth = dateOfBirthDate.Date + timeOfBirthTime.Time;
@@ -218,30 +218,42 @@ public partial class ProfileDetailPage : ContentPage
         // проверки
         if (string.IsNullOrWhiteSpace(entryProfileName.Text))
         {
-            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
-                Localization.GetLocalizedText("Profile name is required.", lang), "OK");
+            await DisplayAlert(
+                Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Profile name is required.", lang), 
+                Localization.GetLocalizedText("OK", lang)
+            );
             return false;
         }
 
         // требуем явного выбора даты (а не «сегодня по умолчанию»)
         if (_profile.DateOfBirth.Date == DateTime.Now.Date)
         {
-            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
-                Localization.GetLocalizedText("Date of birth is required.", lang), "OK");
+            await DisplayAlert(
+                Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Date of birth is required.", lang), 
+                Localization.GetLocalizedText("OK", lang)
+            );
             return false;
         }
 
         if (_profile.PlaceOfBirthId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfBirthLocality))
         {
-            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
-                Localization.GetLocalizedText("Place of birth is required.", lang), "OK");
+            await DisplayAlert(
+                Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Place of birth is required.", lang), 
+                Localization.GetLocalizedText("OK", lang)
+            );
             return false;
         }
 
         if (_profile.PlaceOfLivingId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfLivingLocality))
         {
-            await DisplayAlert(Localization.GetLocalizedText("Validation", lang),
-                Localization.GetLocalizedText("Place of living is required.", lang), "OK");
+            await DisplayAlert(
+                Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Place of living is required.", lang), 
+                Localization.GetLocalizedText("OK", lang)
+            );
             return false;
         }
 
@@ -260,15 +272,21 @@ public partial class ProfileDetailPage : ContentPage
             _snapshotJson = System.Text.Json.JsonSerializer.Serialize(_profile);
             _tempProfile = null;
 
-            await DisplayAlert(Localization.GetLocalizedText("Saved", lang),
-                Localization.GetLocalizedText("Profile saved successfully.", lang), "OK");
+            await DisplayAlert(
+                Localization.GetLocalizedText("Saved", lang),
+                Localization.GetLocalizedText("Profile saved successfully.", lang), 
+                Localization.GetLocalizedText("OK", lang)
+            );
             return true;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PADMA] Save profile error: {ex.Message}");
-            await DisplayAlert(Localization.GetLocalizedText("Error", lang),
-                Localization.GetLocalizedText("Failed to save profile. Please try again.", lang), "OK");
+            await DisplayAlert(
+                Localization.GetLocalizedText("Error", lang),
+                Localization.GetLocalizedText("Failed to save profile. Please try again.", lang), 
+                Localization.GetLocalizedText("OK", lang)
+            );
             return false;
         }
     }
@@ -319,12 +337,14 @@ public partial class ProfileDetailPage : ContentPage
 
     private void RefreshLocationLabels()
     {
+        string lang = DataCache.Instance.CurrentLanguageCode;
+
         lblPlaceOfBirthValue.Text = string.IsNullOrWhiteSpace(_profile?.PlaceOfBirthLocality)
-            ? Localization.GetLocalizedText("Select location...", _database.GetActiveLanguageCode())
+            ? Localization.GetLocalizedText("Select location...", lang)
             : _profile!.PlaceOfBirthLocality;
 
         lblPlaceOfLivingValue.Text = string.IsNullOrWhiteSpace(_profile?.PlaceOfLivingLocality)
-            ? Localization.GetLocalizedText("Select location...", _database.GetActiveLanguageCode())
+            ? Localization.GetLocalizedText("Select location...", lang)
             : _profile!.PlaceOfLivingLocality;
     }
 
@@ -344,7 +364,7 @@ public partial class ProfileDetailPage : ContentPage
 
     private async void OnSaveClicked(object sender, EventArgs e)
     {
-        string lang = _database.GetActiveLanguageCode();
+        string lang = DataCache.Instance.CurrentLanguageCode;
 
         bool confirm = await DisplayAlert(
             Localization.GetLocalizedText("Save", lang),
@@ -364,46 +384,54 @@ public partial class ProfileDetailPage : ContentPage
 
     private async void OnSetDefaultClicked(object sender, EventArgs e)
     {
+        string lang = DataCache.Instance.CurrentLanguageCode;
+
         if (_profile == null || _profile.Id <= 0)
         {
             await DisplayAlert(
-                Localization.GetLocalizedText("Default profile", _database.GetActiveLanguageCode()),
-                Localization.GetLocalizedText("Save profile first.", _database.GetActiveLanguageCode()),
-                "OK"
+                Localization.GetLocalizedText("Default profile", lang),
+                Localization.GetLocalizedText("Save profile first.", lang),
+                Localization.GetLocalizedText("OK", lang)
             );
             return;
         }
 
         bool confirm = await DisplayAlert(
-            Localization.GetLocalizedText("Default profile", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Set this profile as default?", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Yes", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("No", _database.GetActiveLanguageCode())
+            Localization.GetLocalizedText("Default profile", lang),
+            Localization.GetLocalizedText("Set this profile as default?", lang),
+            Localization.GetLocalizedText("Yes", lang),
+            Localization.GetLocalizedText("No", lang)
         );
 
         if (!confirm) return;
 
         _database.SetDefaultProfile(_profile.Id);
         await DisplayAlert(
-            Localization.GetLocalizedText("Done", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Profile marked as default.", _database.GetActiveLanguageCode()),
-            "OK"
+            Localization.GetLocalizedText("Done", lang),
+            Localization.GetLocalizedText("Profile marked as default.", lang),
+            Localization.GetLocalizedText("OK", lang)
         );
     }
 
     private async void OnDeleteClicked(object sender, EventArgs e)
     {
+        string lang = DataCache.Instance.CurrentLanguageCode;
+
         if (_profile == null || _profile.Id <= 0)
         {
-            await DisplayAlert("Delete", "Nothing to delete.", "OK");
+            await DisplayAlert(
+                Localization.GetLocalizedText("Delete", lang),
+                Localization.GetLocalizedText("Nothing to delete.", lang),
+                Localization.GetLocalizedText("OK", lang)
+            );
             return;
         }
 
         bool confirm = await DisplayAlert(
-            Localization.GetLocalizedText("Delete", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Delete this profile?", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Yes", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("No", _database.GetActiveLanguageCode())
+            Localization.GetLocalizedText("Delete", lang),
+            Localization.GetLocalizedText("Delete this profile?", lang),
+            Localization.GetLocalizedText("Yes", lang),
+            Localization.GetLocalizedText("No", lang)
         );
 
         if (!confirm) return;
@@ -411,9 +439,9 @@ public partial class ProfileDetailPage : ContentPage
         _database.DeleteProfile(_profile.Id);
 
         await DisplayAlert(
-            Localization.GetLocalizedText("Deleted", _database.GetActiveLanguageCode()),
-            Localization.GetLocalizedText("Profile deleted.", _database.GetActiveLanguageCode()),
-            "OK"
+            Localization.GetLocalizedText("Deleted", lang),
+            Localization.GetLocalizedText("Profile deleted.", lang),
+            Localization.GetLocalizedText("OK", lang)
         );
 
         await GoBackAsync();
