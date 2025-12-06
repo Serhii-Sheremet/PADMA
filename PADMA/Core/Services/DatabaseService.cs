@@ -425,29 +425,19 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
-        /// Adds a new location (used after Nominatim search).
+        /// Adds a new location (used after Nominatim search) and return its Id.
         /// </summary>
-        public void AddLocation(AppLocation location)
+        public int AddLocation(AppLocation location)
         {
             try
             {
-                const string sql = @"INSERT INTO LOCATION 
-                                     (LOCALITY, LATITUDE, LONGITUDE, REGION, STATE, COUNTRY, COUNTRYCODE, LANGUAGECODE)
-                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-                _connection.Execute(sql,
-                    location.Locality,
-                    location.Latitude,
-                    location.Longitude,
-                    location.Region,
-                    location.State,
-                    location.Country,
-                    location.CountryCode,
-                    location.LanguageCode);
+                _connection.Insert(location);
+                return location.Id;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[PADMA] AddLocation error: {ex.Message}");
+                return 0;
             }
         }
 

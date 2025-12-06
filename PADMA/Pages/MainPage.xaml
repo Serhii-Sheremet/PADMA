@@ -84,12 +84,38 @@
                                   HorizontalOptions="FillAndExpand"
                                   RowSpacing="1"
                                   Padding="0,2,0,2">
-                                <BoxView Grid.Row="0" BackgroundColor="Red" />
+
+                                <ui:PanchangaBar Grid.Row="0"
+                                    DayDate="{Binding Date}"
+                                    Segments="{Binding NakshatraSegments}" />
+
+                                <ui:PanchangaBar Grid.Row="1"
+                                    DayDate="{Binding Date}"
+                                    Segments="{Binding TaraBalaSegments}" />
+
+                                <ui:PanchangaBar Grid.Row="2"
+                                    DayDate="{Binding Date}"
+                                    Segments="{Binding TithiSegments}" />
+
+                                <ui:PanchangaBar Grid.Row="3"
+                                    DayDate="{Binding Date}"
+                                    Segments="{Binding KaranaSegments}" />
+
+                                <ui:PanchangaBar Grid.Row="4"
+                                    DayDate="{Binding Date}"
+                                    Segments="{Binding NityaYogaSegments}" />
+
+                                <ui:PanchangaBar Grid.Row="5"
+                                    DayDate="{Binding Date}"
+                                    Segments="{Binding ChandraBalaSegments}" />
+
+
+                                <!--<BoxView Grid.Row="0" BackgroundColor="Red" />
                                 <BoxView Grid.Row="1" BackgroundColor="Orange" />
                                 <BoxView Grid.Row="2" BackgroundColor="Yellow" />
                                 <BoxView Grid.Row="3" BackgroundColor="Green" />
                                 <BoxView Grid.Row="4" BackgroundColor="Blue" />
-                                <BoxView Grid.Row="5" BackgroundColor="Purple" />
+                                <BoxView Grid.Row="5" BackgroundColor="Purple" />-->
                             </Grid>
                         </Grid>
                     </Border>

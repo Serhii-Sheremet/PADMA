@@ -1,10 +1,12 @@
-﻿using System;
+﻿using PADMA.Core.Models;
+using PADMA.Core.Services;
+using System;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using PADMA.Core.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PADMA.UI
 {
@@ -152,7 +154,7 @@ namespace PADMA.UI
             Year = newDate.Year;
             Month = newDate.Month;
             GenerateDays(Year, Month);
-            UpdateMonthTitle(); // ★ добавлено, чтобы заголовок обновлялся по культуре
+            UpdateMonthTitle(); // добавлено, чтобы заголовок обновлялся по культуре
         }
 
         /// <summary>
@@ -162,11 +164,8 @@ namespace PADMA.UI
         {
             Days.Clear();
 
-            var db = ServiceLocator.Services.GetService<DatabaseService>();
-            var firstDay = db.GetFirstDayOfWeekFromDb(); // Sunday или Monday
-
             var firstOfMonth = new DateTime(Year, Month, 1);
-            int shift = ((7 + (int)firstOfMonth.DayOfWeek - (int)firstDay) % 7);
+            int shift = ((7 + (int)firstOfMonth.DayOfWeek - (int)DataCache.Instance.DayOfWeek) % 7);
             var startDate = firstOfMonth.AddDays(-shift);
 
             for (int i = 0; i < 42; i++)
@@ -182,6 +181,65 @@ namespace PADMA.UI
                     IsCurrentMonth = isCurrentMonth,
                     IsToday = isToday
                 });
+
+                Profile? aProfile = DataCache.Instance.ActiveProfile;
+                if (aProfile != null)
+                {
+                    
+                    //// 1. определяем таймзону по месту проживания профиля
+                    //var tz = TimeZoneService.GetTimeZoneInfoFromCoordinates(
+                    //    aProfile.LivingLatitude,
+                    //    aProfile.LivingLongitude);
+                    //
+                    //// 2. получаем окно видимости + буфер (локальное время)
+                    //var (visibleStartLocal, visibleEndLocal,
+                    //     bufferStartLocal, bufferEndLocal,
+                    //     visibleDays) = CalendarWindowService.GetVisibleWindow(
+                    //                        year, month, _firstDayOfWeek, tz);
+                    //
+                    //// 3. переводим буфер в UTC
+                    //var bufferStartUtc = bufferStartLocal.UtcDateTime;
+                    //var bufferEndUtc = bufferEndLocal.UtcDateTime;
+                    //
+                    //// 4. здесь ты вызываешь свою связку SwissAnalysis + TithiTransitBuilder
+                    ////    Ниже просто схематично!
+                    //List<TithiData> tithiData = _swissAnalysis.BuildTithiData(bufferStartUtc, bufferEndUtc /*, profile, tz, ... */);
+                    //List<TithiSlice> tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
+                    //
+                    //
+                    //foreach (var day in Days) // Days — твоя ObservableCollection<DayItem> для 42 дней
+                    //{
+                    //    // тут важно: day.Date — это локальная дата
+                    //    day.TithiSegments = PanchangaHelper.BuildSegmentsForDay(
+                    //        tithiSlices,            // все слайсы Tithi в UTC
+                    //        day.Date,               // дата дня в локальном времени
+                    //        tz,                     // таймзона профиля
+                    //        _cache,                 // для GetColor
+                    //        slice => slice.ColorCode // здесь подставь реальное поле у TithiSlice/CalendarSlice
+                    //    );
+                    //}
+                    
+                }
+
+                /*
+                // Example: add dummy Panchanga segments for demonstration
+                if (Days[i].Date.Day == 15 && Days[i].IsCurrentMonth)
+                {
+                    Days[i].TithiSegments.Add(new PanchangaSegment
+                    {
+                        Start = Days[i].Date.AddHours(0),
+                        End = Days[i].Date.AddHours(12),
+                        Color = Colors.Red
+                    });
+
+                    Days[i].TithiSegments.Add(new PanchangaSegment
+                    {
+                        Start = Days[i].Date.AddHours(12),
+                        End = Days[i].Date.AddHours(24),
+                        Color = Colors.Blue
+                    });
+                }*/
+
             }
 
             OnPropertyChanged(nameof(Days));

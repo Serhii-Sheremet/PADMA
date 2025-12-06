@@ -70,9 +70,11 @@ namespace PADMA.Core.Services
 
 
         public IReadOnlyList<Profile> ProfileList { get; private set; } = new List<Profile>();
+        public Profile? ActiveProfile { get; set; }
 
         // --- App Settings and Texts ---
         public List<AppSettingList> AppSettingsList { get; private set; } = new();
+        public DayOfWeek DayOfWeek { get; private set; } = DayOfWeek.Monday;
         public List<AppText> AppTextsList { get; private set; } = new();
 
         // --- Current Language ---
@@ -91,6 +93,9 @@ namespace PADMA.Core.Services
 
             // Настройки приложения (APPSETTING)
             AppSettingsList = db.GetAppSettingsList();
+
+            // Первый день недели
+            DayOfWeek = db.GetFirstDayOfWeekFromDb();
 
             // Тексты интерфейса (APP_TEXTS)
             AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
@@ -160,8 +165,9 @@ namespace PADMA.Core.Services
             YogaList = db.GetYogas().ToList();
             YogaDescList = db.GetYogaDescs().ToList();
 
+            // Профили
             ProfileList = db.GetProfiles();
-
+            ActiveProfile = GetActiveProfile();
 
 
         }

@@ -15,6 +15,9 @@ public partial class ProfileDetailPage : ContentPage
     private static Profile? _tempProfile;
     public int ProfileId { get; set; }
 
+    private AppLocation? _birthLocation;
+    private AppLocation? _livingLocation;
+
     private bool _isEditing = false;
     private bool _hasChanges = false;
     private bool _isInitializing = false;
@@ -63,10 +66,20 @@ public partial class ProfileDetailPage : ContentPage
         else if (ProfileId > 0)
         {
             _profile = _database.GetProfileById(ProfileId);
+
             if (_profile?.PlaceOfBirthId is int pbId)
-                _profile.PlaceOfBirthLocality = _database.GetLocationById(pbId)?.Locality ?? "";
+            {
+                var loc = _database.GetLocationById(pbId);
+                _birthLocation = loc;
+                _profile.PlaceOfBirthLocality = loc?.Locality ?? "";
+            }
+
             if (_profile?.PlaceOfLivingId is int plId)
-                _profile.PlaceOfLivingLocality = _database.GetLocationById(plId)?.Locality ?? "";
+            {
+                var loc = _database.GetLocationById(plId);
+                _livingLocation = loc;
+                _profile.PlaceOfLivingLocality = loc?.Locality ?? "";
+            }
         }
         else
         {
@@ -237,7 +250,8 @@ public partial class ProfileDetailPage : ContentPage
             return false;
         }
 
-        if (_profile.PlaceOfBirthId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfBirthLocality))
+        if (_birthLocation == null)
+        //if (_profile.PlaceOfBirthId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfBirthLocality))
         {
             await DisplayAlert(
                 Localization.GetLocalizedText("Validation", lang),
@@ -247,7 +261,8 @@ public partial class ProfileDetailPage : ContentPage
             return false;
         }
 
-        if (_profile.PlaceOfLivingId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfLivingLocality))
+        if (_livingLocation == null)
+        //f (_profile.PlaceOfLivingId <= 0 || string.IsNullOrWhiteSpace(_profile.PlaceOfLivingLocality))
         {
             await DisplayAlert(
                 Localization.GetLocalizedText("Validation", lang),
@@ -259,10 +274,33 @@ public partial class ProfileDetailPage : ContentPage
 
         try
         {
-            if (_profile.Id > 0)
-                _database.UpdateProfile(_profile);
-            else
+            // Сохраняем место рождения, если оно новое
+            if (_birthLocation.Id == 0)
+            {
+                var newId = _database.AddLocation(_birthLocation);
+                if (newId > 0)
+                    _birthLocation.Id = newId;
+            }
+
+            // Сохраняем место проживания, если оно новое
+            if (_livingLocation.Id == 0)
+            {
+                var newId = _database.AddLocation(_livingLocation);
+                if (newId > 0)
+                    _livingLocation.Id = newId;
+            }
+
+            // Присваиваем Id-шники в профиль
+            _profile.PlaceOfBirthId = _birthLocation.Id;
+            _profile.PlaceOfBirthLocality = _birthLocation.Locality;
+
+            _profile.PlaceOfLivingId = _livingLocation.Id;
+            _profile.PlaceOfLivingLocality = _livingLocation.Locality;
+
+            if (_profile.Id == 0)
                 _database.AddProfile(_profile);
+            else
+                _database.UpdateProfile(_profile);
 
             _hasChanges = false;
             _isEditing = false;
@@ -298,11 +336,13 @@ public partial class ProfileDetailPage : ContentPage
 
         if (mode.Equals("birth", StringComparison.OrdinalIgnoreCase))
         {
+            _birthLocation = loc;
             _profile.PlaceOfBirthId = loc.Id;
             _profile.PlaceOfBirthLocality = loc.Locality;
         }
         else if (mode.Equals("living", StringComparison.OrdinalIgnoreCase))
         {
+            _livingLocation = loc;
             _profile.PlaceOfLivingId = loc.Id;
             _profile.PlaceOfLivingLocality = loc.Locality;
         }

@@ -71,7 +71,7 @@ public partial class LocationSearchPage : ContentPage
         loadingIndicator.IsRunning = true;
         loadingIndicator.IsVisible = true;
 
-        var lang = _database.GetActiveLanguageCode();
+        var lang = DataCache.Instance.CurrentLanguageCode; //_database.GetActiveLanguageCode();
 
         // Проверка локальной базы
         var localResults = _database.SearchLocationByName(query);

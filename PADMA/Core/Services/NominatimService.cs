@@ -105,7 +105,6 @@ public class NominatimService
         return list;
     }
 
-
     private static string? FirstNonEmpty(Dictionary<string, string> dict, params string[] keys)
     {
         foreach (var k in keys)
