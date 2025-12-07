@@ -1,43 +1,35 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
-using Microsoft.Maui.Layouts;
-using PADMA.Core.Utilities;
 
 namespace PADMA.UI
 {
     public class PanchangaBar : ContentView
     {
-        private readonly AbsoluteLayout _layout;
+        private readonly GraphicsView _graphicsView;
+        private readonly PanchangaBarDrawable _drawable;
 
         public PanchangaBar()
         {
-            _layout = new AbsoluteLayout
+            _drawable = new PanchangaBarDrawable();
+            _graphicsView = new GraphicsView
             {
+                Drawable = _drawable,
                 HorizontalOptions = LayoutOptions.Fill,
                 VerticalOptions = LayoutOptions.Fill
             };
 
-            Content = _layout;
-
-            // высоту пока зафиксируем, позже можем вынести в XAML
-            HeightRequest = 4;
-
-            SizeChanged += (_, __) => Redraw();
+            Content = _graphicsView;
         }
 
-        #region Bindable properties
-
-        // Дата дня, для которого рисуем полоску
         public static readonly BindableProperty DayDateProperty =
             BindableProperty.Create(
                 nameof(DayDate),
                 typeof(DateTime),
                 typeof(PanchangaBar),
                 default(DateTime),
-                propertyChanged: OnBarPropertyChanged);
+                propertyChanged: OnDayDateChanged);
 
         public DateTime DayDate
         {
@@ -45,14 +37,20 @@ namespace PADMA.UI
             set => SetValue(DayDateProperty, value);
         }
 
-        // Список сегментов
+        private static void OnDayDateChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            var bar = (PanchangaBar)bindable;
+            bar._drawable.DayDate = (DateTime)newValue;
+            bar._graphicsView.Invalidate(); // перерисовать
+        }
+
         public static readonly BindableProperty SegmentsProperty =
             BindableProperty.Create(
                 nameof(Segments),
                 typeof(IList<PanchangaSegment>),
                 typeof(PanchangaBar),
                 default(IList<PanchangaSegment>),
-                propertyChanged: OnBarPropertyChanged);
+                propertyChanged: OnSegmentsChanged);
 
         public IList<PanchangaSegment> Segments
         {
@@ -60,65 +58,11 @@ namespace PADMA.UI
             set => SetValue(SegmentsProperty, value);
         }
 
-        private static void OnBarPropertyChanged(BindableObject bindable, object oldValue, object newValue)
+        private static void OnSegmentsChanged(BindableObject bindable, object oldValue, object newValue)
         {
-            if (bindable is PanchangaBar bar)
-            {
-                bar.Redraw();
-            }
-        }
-
-        #endregion
-
-        private void Redraw()
-        {
-            _layout.Children.Clear();
-
-            if (Width <= 0 || Height <= 0)
-                return;
-
-            if (Segments == null || Segments.Count == 0)
-                return;
-
-            var dayStart = DayDate.Date;
-            var dayEnd = dayStart.AddDays(1);
-            double width = Width;
-            double height = Height;
-
-            foreach (var segment in Segments)
-            {
-                // ограничиваем сегмент рамками суток
-                var start = segment.Start < dayStart ? dayStart : segment.Start;
-                var end = segment.End > dayEnd ? dayEnd : segment.End;
-
-                if (end <= start)
-                    continue;
-
-                double x1 = CalendarDrawingHelper.ConvertTimeToPixels(width, start, dayStart);
-                double x2 = CalendarDrawingHelper.ConvertTimeToPixels(width, end, dayStart);
-                double segWidth = Math.Max(1, x2 - x1);
-
-                // сам цветной сегмент
-                var box = new BoxView
-                {
-                    Color = segment.Color
-                };
-
-                AbsoluteLayout.SetLayoutBounds(box, new Rect(x1, 0, segWidth, height));
-                AbsoluteLayout.SetLayoutFlags(box, AbsoluteLayoutFlags.None);
-                _layout.Children.Add(box);
-
-                // тонкая вертикальная линия на границе сегмента (кроме последнего пикселя справа)
-                var line = new BoxView
-                {
-                    Color = Colors.Black,
-                    WidthRequest = 1
-                };
-
-                AbsoluteLayout.SetLayoutBounds(line, new Rect(x2 - 0.5, 0, 1, height));
-                AbsoluteLayout.SetLayoutFlags(line, AbsoluteLayoutFlags.None);
-                _layout.Children.Add(line);
-            }
+            var bar = (PanchangaBar)bindable;
+            bar._drawable.Segments = newValue as IList<PanchangaSegment>;
+            bar._graphicsView.Invalidate();
         }
     }
 }

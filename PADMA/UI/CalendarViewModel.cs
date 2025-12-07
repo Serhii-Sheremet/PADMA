@@ -1,10 +1,17 @@
-﻿using PADMA.Core.Models;
+﻿using Microsoft.VisualBasic;
+using PADMA.Core.Analysis;
+using PADMA.Core.Enums;
+using PADMA.Core.Models;
+using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
+using PADMA.Core.TransitBuilder;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -42,7 +49,7 @@ namespace PADMA.UI
             }
         }
 
-        // === ★ Добавлено: поддержка CultureCode ===
+        // === Добавлено: поддержка CultureCode ===
         private string _cultureCode;
         public string CultureCode
         {
@@ -91,7 +98,7 @@ namespace PADMA.UI
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] ReloadCultureAndRefresh failed: {ex.Message}");
+                //System.Diagnostics.Debug.WriteLine($"[PADMA] ReloadCultureAndRefresh failed: {ex.Message}");
                 CultureCode = CultureInfo.CurrentUICulture.Name;
                 OnPropertyChanged(nameof(CurrentCulture));
             }
@@ -160,94 +167,163 @@ namespace PADMA.UI
         /// <summary>
         /// Core: build a 6x7 grid (42 days) based on the selected first day of week.
         /// </summary>
+
         private void GenerateDays(int year, int month)
         {
             Days.Clear();
 
-            var firstOfMonth = new DateTime(Year, Month, 1);
-            int shift = ((7 + (int)firstOfMonth.DayOfWeek - (int)DataCache.Instance.DayOfWeek) % 7);
-            var startDate = firstOfMonth.AddDays(-shift);
+            TimeZoneInfo? tzInfo = null;
+            List<TithiSlice>? tithiSlices = null;
+            Profile? profile = DataCache.Instance.ActiveProfile;
 
-            for (int i = 0; i < 42; i++)
+            // 1. Если профиля нет — просто строим календарь по датам, без полосок
+            AppLocation? livingLocation = null;
+            if (profile != null)
             {
-                DateTime date = startDate.AddDays(i);
+                livingLocation = DataCache.Instance.LocationList
+                    .FirstOrDefault(l => l.Id == profile.PlaceOfLivingId);
+            }
+
+            // 2. Считаем окно календаря (если есть таймзона)
+            DateTimeOffset visibleStart, visibleEnd, bufferStart, bufferEnd;
+            IReadOnlyList<DateOnly> visibleDays;
+
+            if (livingLocation != null &&
+                double.TryParse(livingLocation.Latitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var lat) &&
+                double.TryParse(livingLocation.Longitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var lon))
+            {
+                var tzId = TimeZoneService.GetDotNetTimeZoneId(lat, lon);
+                tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+
+                (visibleStart, visibleEnd, bufferStart, bufferEnd, visibleDays) =
+                    CalendarWindowService.BuildWindow(year, month, DataCache.Instance.DayOfWeek, tzInfo);
+
+                // 3. Swiss + Tithi — только если есть профиль и таймзона
+                var bufferStartUtc = bufferStart.UtcDateTime;
+                var bufferEndUtc = bufferEnd.UtcDateTime;
+
+                var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc);
+                tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
+            }
+            else
+            {
+                // если профиля/локации/таймзоны нет — строим видимые дни по старой логике
+                var firstOfMonth = new DateTime(year, month, 1);
+                int shift = ((7 + (int)firstOfMonth.DayOfWeek - (int)DataCache.Instance.DayOfWeek) % 7);
+                var startDate = firstOfMonth.AddDays(-shift);
+
+                var tmp = new List<DateOnly>();
+                for (int i = 0; i < 42; i++)
+                    tmp.Add(DateOnly.FromDateTime(startDate.AddDays(i)));
+
+                visibleDays = tmp;
+            }
+
+            // 4. Создаём 42 DayItem строго по visibleDays
+            foreach (var d in visibleDays)
+            {
+                var date = d.ToDateTime(TimeOnly.MinValue);
                 bool isCurrentMonth = (date.Month == month && date.Year == year);
                 bool isToday = date.Date == DateTime.Today;
+
+                IList<PanchangaSegment> tithiSegments = new List<PanchangaSegment>();
+
+                if (profile != null && tzInfo != null && tithiSlices != null)
+                {
+                    tithiSegments = BuildTithiSegmentsForDay(
+                        tithiSlices,
+                        date,
+                        tzInfo,
+                        DataCache.Instance);
+                }
 
                 Days.Add(new DayItem
                 {
                     Date = date,
                     DayNumber = date.Day,
                     IsCurrentMonth = isCurrentMonth,
-                    IsToday = isToday
+                    IsToday = isToday,
+                    TithiSegments = tithiSegments
                 });
-
-                Profile? aProfile = DataCache.Instance.ActiveProfile;
-                if (aProfile != null)
-                {
-                    
-                    //// 1. определяем таймзону по месту проживания профиля
-                    //var tz = TimeZoneService.GetTimeZoneInfoFromCoordinates(
-                    //    aProfile.LivingLatitude,
-                    //    aProfile.LivingLongitude);
-                    //
-                    //// 2. получаем окно видимости + буфер (локальное время)
-                    //var (visibleStartLocal, visibleEndLocal,
-                    //     bufferStartLocal, bufferEndLocal,
-                    //     visibleDays) = CalendarWindowService.GetVisibleWindow(
-                    //                        year, month, _firstDayOfWeek, tz);
-                    //
-                    //// 3. переводим буфер в UTC
-                    //var bufferStartUtc = bufferStartLocal.UtcDateTime;
-                    //var bufferEndUtc = bufferEndLocal.UtcDateTime;
-                    //
-                    //// 4. здесь ты вызываешь свою связку SwissAnalysis + TithiTransitBuilder
-                    ////    Ниже просто схематично!
-                    //List<TithiData> tithiData = _swissAnalysis.BuildTithiData(bufferStartUtc, bufferEndUtc /*, profile, tz, ... */);
-                    //List<TithiSlice> tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
-                    //
-                    //
-                    //foreach (var day in Days) // Days — твоя ObservableCollection<DayItem> для 42 дней
-                    //{
-                    //    // тут важно: day.Date — это локальная дата
-                    //    day.TithiSegments = PanchangaHelper.BuildSegmentsForDay(
-                    //        tithiSlices,            // все слайсы Tithi в UTC
-                    //        day.Date,               // дата дня в локальном времени
-                    //        tz,                     // таймзона профиля
-                    //        _cache,                 // для GetColor
-                    //        slice => slice.ColorCode // здесь подставь реальное поле у TithiSlice/CalendarSlice
-                    //    );
-                    //}
-                    
-                }
-
-                /*
-                // Example: add dummy Panchanga segments for demonstration
-                if (Days[i].Date.Day == 15 && Days[i].IsCurrentMonth)
-                {
-                    Days[i].TithiSegments.Add(new PanchangaSegment
-                    {
-                        Start = Days[i].Date.AddHours(0),
-                        End = Days[i].Date.AddHours(12),
-                        Color = Colors.Red
-                    });
-
-                    Days[i].TithiSegments.Add(new PanchangaSegment
-                    {
-                        Start = Days[i].Date.AddHours(12),
-                        End = Days[i].Date.AddHours(24),
-                        Color = Colors.Blue
-                    });
-                }*/
-
             }
-
+            /*
+            // 5. Если есть профиль, таймзона и слайсы — заполняем TithiSegments
+            if (profile != null && tzInfo != null && tithiSlices != null)
+            {
+                foreach (var day in Days)
+                {
+                    day.TithiSegments = BuildTithiSegmentsForDay(
+                        tithiSlices,
+                        day.Date,
+                        tzInfo,
+                        DataCache.Instance);
+                }
+            }*/
+            /*
+            #if DEBUG
+            foreach (var day in Days)
+            {
+                var count = day.TithiSegments?.Count ?? 0;
+                System.Diagnostics.Debug.WriteLine(
+                    $"[TITHI] {day.Date:yyyy-MM-dd} ({day.Date:ddd}) -> {count} segments");
+            }
+            #endif
+            */
             OnPropertyChanged(nameof(Days));
         }
+
+        private IList<PanchangaSegment> BuildTithiSegmentsForDay(
+            IEnumerable<TithiSlice> tithiSlicesUtc,
+            DateTime dayLocal,
+            TimeZoneInfo tz,
+            DataCache cache)
+        {
+            var result = new List<PanchangaSegment>();
+
+            // границы дня в локальном времени
+            var offset = tz.GetUtcOffset(dayLocal);
+            var dayStartLocal = new DateTimeOffset(dayLocal.Date, offset);
+            var dayEndLocal = dayStartLocal.AddDays(1);
+
+            foreach (var slice in tithiSlicesUtc)
+            {
+                // слайс в локальном времени
+                var sliceStartLocal = new DateTimeOffset(slice.StartUtc, TimeSpan.Zero).ToOffset(offset);
+                var sliceEndLocal = new DateTimeOffset(slice.EndUtc, TimeSpan.Zero).ToOffset(offset);
+
+                // пересекаем с сутками
+                var effStart = sliceStartLocal > dayStartLocal ? sliceStartLocal : dayStartLocal;
+                var effEnd = sliceEndLocal < dayEndLocal ? sliceEndLocal : dayEndLocal;
+
+                if (effEnd <= effStart)
+                    continue;
+
+                var colorCode = (EColor)slice.ColorId;
+                var color = cache.GetColor(colorCode);
+
+                result.Add(new PanchangaSegment
+                {
+                    Start = effStart.LocalDateTime,
+                    End = effEnd.LocalDateTime,
+                    Color = color
+                });
+            }
+
+            return result
+                .OrderBy(s => s.Start)
+                .ToList();
+        }
+
+
+
+
+
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void OnPropertyChanged(string propertyName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+
     }
 }

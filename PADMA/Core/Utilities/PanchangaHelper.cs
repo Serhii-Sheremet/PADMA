@@ -39,7 +39,7 @@ namespace PADMA.Core.Utilities
                     continue;
 
                 var colorCode = getColorCode(slice);
-                var color = cache.GetColor(colorCode); // тот самый метод с ARGB → Color
+                var color = cache.GetColor(colorCode); 
 
                 result.Add(new PanchangaSegment
                 {

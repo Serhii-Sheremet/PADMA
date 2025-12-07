@@ -51,7 +51,7 @@ public static class MauiProgram
             if (localVersion == null || localVersion != newVersion)
             {
                 needReplace = true;
-                System.Diagnostics.Debug.WriteLine($"[DB] Updating local DB from version {localVersion ?? "none"} to {newVersion}");
+                //System.Diagnostics.Debug.WriteLine($"[DB] Updating local DB from version {localVersion ?? "none"} to {newVersion}");
             }
         }
         catch (Exception ex)

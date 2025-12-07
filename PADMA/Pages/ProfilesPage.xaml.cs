@@ -35,7 +35,7 @@ namespace PADMA.Pages
         private void LoadProfiles()
         {
             Profiles.Clear();
-            var profiles = DataCache.Instance.GetProfiles();
+            var profiles = DataCache.Instance.GetProfiles(_database);
 
             foreach (var p in profiles)
             {

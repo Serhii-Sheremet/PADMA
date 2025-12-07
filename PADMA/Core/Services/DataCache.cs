@@ -210,9 +210,9 @@ namespace PADMA.Core.Services
             return ProfileList.FirstOrDefault(); // может вернуть null — это ок
         }
 
-        public IReadOnlyList<Profile> GetProfiles()
+        public IReadOnlyList<Profile> GetProfiles(DatabaseService db)
         {
-            return ProfileList;
+            return db.GetProfiles().ToList();
         }
 
         public AppLocation? GetLocationById(int id)

@@ -323,7 +323,7 @@ public partial class ProfileDetailPage : ContentPage
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[PADMA] Save profile error: {ex.Message}");
+            //System.Diagnostics.Debug.WriteLine($"[PADMA] Save profile error: {ex.Message}");
             await DisplayAlert(
                 Localization.GetLocalizedText("Error", lang),
                 Localization.GetLocalizedText("Failed to save profile. Please try again.", lang), 
