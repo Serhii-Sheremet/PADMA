@@ -441,6 +441,76 @@ namespace PADMA.Core.Services
             }
         }
 
+        public int GetOrCreateLocation(AppLocation location)
+        {
+            try
+            {
+                // 1. Если ID уже есть — значит это существующая запись
+                if (location.Id > 0)
+                    return location.Id;
+
+                // 2. Ищем в базе аналогичную локацию
+                var existing = FindExistingLocation(location);
+                if (existing != null)
+                {
+                    location.Id = existing.Id;
+                    return location.Id;
+                }
+
+                // 3. Ничего не нашли — создаём новую запись
+                _connection.Insert(location);   // sqlite-net заполнит location.Id
+                return location.Id;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetOrCreateLocation error: {ex.Message}");
+                return 0;
+            }
+        }
+
+        private AppLocation? FindExistingLocation(AppLocation loc)
+        {
+            if (string.IsNullOrWhiteSpace(loc.Locality) ||
+                string.IsNullOrWhiteSpace(loc.Country))
+                return null;
+
+            string locality = loc.Locality.Trim().ToUpperInvariant();
+            string country = (loc.CountryCode ?? loc.Country).Trim().ToUpperInvariant();
+
+            // Region и State — опциональны; хотя бы что-то одно может быть
+            string? region = loc.Region?.Trim().ToUpperInvariant();
+            string? state = loc.State?.Trim().ToUpperInvariant();
+
+            // Вариант 1: совпадает LOCALITY + COUNTRY + REGION
+            const string sqlRegion = @"
+                SELECT * FROM LOCATION
+                 WHERE UPPER(LOCALITY) = ?
+                   AND UPPER(COUNTRY) = ?
+                   AND (
+                         (REGION IS NOT NULL AND UPPER(REGION) = ?)
+                      OR (STATE  IS NOT NULL AND UPPER(STATE)  = ?)
+                   )
+                 LIMIT 1";
+
+            var matchByRegion = _connection.Query<AppLocation>(
+                sqlRegion, locality, country, region, state
+            ).FirstOrDefault();
+
+            if (matchByRegion != null)
+                return matchByRegion;
+
+            // Вариант 2: совпадает LOCALITY + COUNTRY (region/state могут быть null)
+            const string sqlSimple = @"
+                SELECT * FROM LOCATION
+                 WHERE UPPER(LOCALITY) = ?
+                   AND UPPER(COUNTRY) = ?
+                 LIMIT 1";
+
+            return _connection.Query<AppLocation>(sqlSimple, locality, country)
+                              .FirstOrDefault();
+        }
+
+
         /// <summary>
         /// Поиск локаций в таблице LOCATION по частичному совпадению имени.
         /// </summary>
@@ -511,39 +581,30 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
-        /// Добавляет новую локацию в LOCATION, если такой ещё нет.
-        /// Возвращает ID добавленной или уже существующей записи.
+        /// Возвращает полный список локаций из таблицы LOCATION.
         /// </summary>
-        public int AddLocationAndReturnId(AppLocation loc)
+        public List<AppLocation> GetLocations()
         {
             try
             {
-                var existing = FindLocationByLocality(loc.Locality, loc.Region, loc.Country);
-                if (existing != null)
-                    return existing.Id;
+                const string sql = @"SELECT ID as Id, 
+                                            LOCALITY as Locality, 
+                                            REGION as Region, 
+                                            STATE as State, 
+                                            COUNTRY as Country, 
+                                            COUNTRYCODE as CountryCode, 
+                                            LANGUAGECODE as LanguageCode, 
+                                            LATITUDE as Latitude, 
+                                            LONGITUDE as Longitude 
+                                     FROM LOCATION 
+                                     ORDER BY ID";
 
-                const string sql = @"
-            INSERT INTO LOCATION
-                (LOCALITY, REGION, STATE, COUNTRY, COUNTRYCODE, LANGUAGECODE, LATITUDE, LONGITUDE)
-            VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?)";
-
-                _connection.Execute(sql,
-                    loc.Locality,
-                    loc.Region,
-                    loc.State,
-                    loc.Country,
-                    loc.CountryCode,
-                    loc.LanguageCode,
-                    loc.Latitude,
-                    loc.Longitude);
-
-                return _connection.ExecuteScalar<int>("SELECT last_insert_rowid()");
+                return _connection.Query<AppLocation>(sql);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] AddLocationAndReturnId error: {ex.Message}");
-                return 0;
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetLocations error: {ex.Message}");
+                return new List<AppLocation>();
             }
         }
 

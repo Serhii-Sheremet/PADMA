@@ -72,6 +72,9 @@ namespace PADMA.Core.Services
         public IReadOnlyList<Profile> ProfileList { get; private set; } = new List<Profile>();
         public Profile? ActiveProfile { get; set; }
 
+        public IReadOnlyList<AppLocation> LocationList { get; private set; } = new List<AppLocation>();
+
+
         // --- App Settings and Texts ---
         public List<AppSettingList> AppSettingsList { get; private set; } = new();
         public DayOfWeek DayOfWeek { get; private set; } = DayOfWeek.Monday;
@@ -166,9 +169,11 @@ namespace PADMA.Core.Services
             YogaDescList = db.GetYogaDescs().ToList();
 
             // Профили
-            ProfileList = db.GetProfiles();
+            ProfileList = db.GetProfiles().ToList();
             ActiveProfile = GetActiveProfile();
 
+            // Локации
+            LocationList = db.GetLocations().ToList();
 
         }
 
@@ -210,7 +215,15 @@ namespace PADMA.Core.Services
             return ProfileList;
         }
 
+        public AppLocation? GetLocationById(int id)
+        {
+            return LocationList.FirstOrDefault(l => l.Id == id);
+        }
 
+        public IReadOnlyList<AppLocation> ReloadLocations(DatabaseService db)
+        { 
+            return db.GetLocations().ToList(); ;
+        }
 
     }
 }

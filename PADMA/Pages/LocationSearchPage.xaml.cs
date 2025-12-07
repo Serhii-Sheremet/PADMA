@@ -127,12 +127,9 @@ public partial class LocationSearchPage : ContentPage
         if (_selected == null)
             return;
 
-        var existing = _database.FindLocationByLocality(_selected.Locality);
-        if (existing != null)
-            _selected.Id = existing.Id;
-        else
-            _selected.Id = _database.AddLocationAndReturnId(_selected);
+        // НИЧЕГО НЕ СОХРАНЯЕМ В БАЗУ ЗДЕСЬ
 
+        // Просто отправляем выбранное AppLocation наверх
         MessagingCenter.Send(this, "LocationSelected", (Mode, _selected));
         await Shell.Current.GoToAsync("..", true);
     }

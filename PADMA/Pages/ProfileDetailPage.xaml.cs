@@ -277,17 +277,21 @@ public partial class ProfileDetailPage : ContentPage
             // Сохраняем место рождения, если оно новое
             if (_birthLocation.Id == 0)
             {
-                var newId = _database.AddLocation(_birthLocation);
+                var newId = _database.GetOrCreateLocation(_birthLocation);
                 if (newId > 0)
                     _birthLocation.Id = newId;
+
+                DataCache.Instance.ReloadLocations(_database);
             }
 
             // Сохраняем место проживания, если оно новое
             if (_livingLocation.Id == 0)
             {
-                var newId = _database.AddLocation(_livingLocation);
+                var newId = _database.GetOrCreateLocation(_livingLocation);
                 if (newId > 0)
                     _livingLocation.Id = newId;
+
+                DataCache.Instance.ReloadLocations(_database);
             }
 
             // Присваиваем Id-шники в профиль
