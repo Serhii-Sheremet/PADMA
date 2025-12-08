@@ -2320,8 +2320,6 @@ This is essential for rendering continuous bars across day boundaries.
 # 6. Future Extensions
 
 - Add remaining Panchanga stripes:
-	- Nakshatra
-	- Tara Bala
 	- Nitya Yoga
 	- Karana
 	- Chandra Bala

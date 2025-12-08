@@ -36,7 +36,7 @@ namespace PADMA.Core.TransitBuilder
                     EndUtc = ns.EndUtc,
                     TaraBalaId = tbId,
                     TaraBalaPercent = tbPct,
-                    ColorId = TaraBalaSlice.GetTaraBalaColorId(tbId)
+                    ColorId = TaraBalaSlice.GetTaraBalaColorId(tbId, tbPct)
                 };
 
                 result.Add(slice);

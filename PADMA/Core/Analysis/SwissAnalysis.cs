@@ -1,4 +1,7 @@
-﻿using PADMA.Core.Enums;
+﻿using Microsoft.Maui.Controls;
+using NodaTime;
+using NodaTime.Extensions;
+using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Native;
 using PADMA.Core.Services;
@@ -99,6 +102,7 @@ namespace PADMA.Core.Analysis
 
             var data = new PlanetData
             {
+                PlanetId = planetId,
                 DateTimeUtc = utcDate,
                 Longitude = lon,
                 Latitude = lat,
@@ -120,6 +124,73 @@ namespace PADMA.Core.Analysis
         private static DateTime EpochToDateTime(int epoch)
             => Epoch.AddSeconds(epoch);
 
+
+        public static List<PlanetData> CalculatePlanetsPositionForDate(DateTime date, double latitude, double longitude)
+        {
+            List<PlanetData> pdList = new List<PlanetData>();
+
+            PlanetData moonData = CalculatePlanetData((int)EPlanet.MOON, date);
+            pdList.Add(moonData);
+            PlanetData sunData = CalculatePlanetData((int)EPlanet.SUN, date);
+            pdList.Add(sunData);
+            PlanetData mercuryData = CalculatePlanetData((int)EPlanet.MERCURY, date);
+            pdList.Add(mercuryData);
+            PlanetData venusData = CalculatePlanetData((int)EPlanet.VENUS, date);
+            pdList.Add(venusData);
+            PlanetData marsData = CalculatePlanetData((int)EPlanet.MARS, date);
+            pdList.Add(marsData);
+            PlanetData jupiterData = CalculatePlanetData((int)EPlanet.JUPITER, date);
+            pdList.Add(jupiterData);
+            PlanetData saturnData = CalculatePlanetData((int)EPlanet.SATURN, date);
+            pdList.Add(saturnData);
+            PlanetData rahuMeanData = CalculatePlanetData((int)EPlanet.RAHUMEAN, date);
+            pdList.Add(rahuMeanData);
+            PlanetData rahuTrueData = CalculatePlanetData((int)EPlanet.RAHUTRUE, date);
+            pdList.Add(rahuTrueData);
+            PlanetData ketuMeanData = CalculateKetuData(rahuMeanData);
+            pdList.Add(ketuMeanData);
+            PlanetData ketuTrueData = CalculateKetuData(rahuTrueData);
+            pdList.Add(ketuTrueData);
+
+            return pdList;
+        }
+
+        private static PlanetData CalculateKetuData(PlanetData rahuData)
+        {
+            double kLongitude = SwissUtility.AdjustForKetu(rahuData.Longitude);
+            int planetId = 0;
+            if (rahuData.PlanetId == 8)
+            {
+                planetId = 9;
+            }
+            if (rahuData.PlanetId == 10)
+            {
+                planetId = 11;
+            }
+            int zodiakId = SwissUtility.GetZodiacIdFromDegree(kLongitude);
+            int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(kLongitude);
+            int padaId = SwissUtility.GetPadaIdFromDegree(kLongitude);
+
+            // calculate Navamsa from cached PADA list
+            int padaNumber = SwissUtility.GetPadaNumberByPadaId(padaId);
+            int navamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(nakshatraId, padaNumber);
+
+            var pdData = new PlanetData
+            {
+                PlanetId = planetId,
+                DateTimeUtc = rahuData.DateTimeUtc,
+                Longitude = kLongitude,
+                Latitude = rahuData.Latitude,
+                Distance = rahuData.Distance,
+                SpeedInLongitude = rahuData.SpeedInLongitude,
+                ZodiacId = zodiakId,
+                NakshatraId = nakshatraId,
+                PadaId = padaId,
+                NavamsaZodiacId = navamsaZodiacId,
+                IsRetrograde = rahuData.SpeedInLongitude < 0
+            };
+            return pdData;
+        }
 
         /// <summary>
         /// Calculates all Tithi change times within a UTC range.

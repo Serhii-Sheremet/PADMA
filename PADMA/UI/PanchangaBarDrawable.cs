@@ -51,6 +51,16 @@ namespace PADMA.UI
                     canvas.FillRectangle(x2 - 0.5f, 0, 1, height);
                 }
             }
+            
+            // --- ГОРИЗОНТАЛЬНЫЙ БОРДЕР по верхней и нижней границе полоски ---
+            canvas.StrokeColor = Colors.Black;
+            canvas.StrokeSize = 1;
+
+            // Верхняя граница
+            canvas.DrawLine(0, 0, width, 0);
+
+            // Нижняя граница
+            canvas.DrawLine(0, height - 1, width, height - 1);
         }
     }
 }

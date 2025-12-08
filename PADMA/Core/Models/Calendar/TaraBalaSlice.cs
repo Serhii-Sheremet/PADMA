@@ -14,11 +14,16 @@ namespace PADMA.Core.Models.Calendar
             Kind = ETransitKind.TaraBala;
         }
 
-        internal static int GetTaraBalaColorId(int taraBalaId)
+        internal static int GetTaraBalaColorId(int taraBalaId, int percent)
         {
-            return DataCache.Instance.TaraBalaList
+            int colorId = DataCache.Instance.TaraBalaList
                 .FirstOrDefault(t => t.Id == taraBalaId)?
                 .ColorId ?? 0;
+
+            if (percent == 25 && (EColor)colorId == EColor.RED)
+                colorId = (int)EColor.PINK;
+            
+            return colorId;
         }
     }
 }

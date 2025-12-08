@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
@@ -16,29 +16,49 @@ namespace PADMA.Core.TransitBuilder
             if (mList == null || mList.Count == 0)
                 return result;
 
-            for (int i = 0; i < mList.Count; i++)
+            // стартуем с первой точки
+            int currentNakId = mList[0].NakshatraId;
+            DateTime currentStartUtc = mList[0].DateTimeUtc;
+
+            for (int i = 1; i < mList.Count; i++)
             {
-                var current = mList[i];
-                var nextStart = (i < mList.Count - 1)
-                    ? mList[i + 1].DateTimeUtc
-                    : current.DateTimeUtc.AddDays(1);
+                var item = mList[i];
+                var nid = item.NakshatraId;
 
-                var nid = current.NakshatraId;
-                var nCode = (ENakshatra)nid;
-
-                var slice = new NakshatraSlice
+                // накшатра поменялась - закрываем предыдущий интервал
+                if (nid != currentNakId)
                 {
-                    StartUtc = current.DateTimeUtc,
-                    EndUtc = nextStart,
-                    NakshatraId = nid,
-                    ColorId = NakshatraSlice.GetNakshatraColorId(nid),
-                    NakshatraCode = nCode
-                };
+                    var slice = new NakshatraSlice
+                    {
+                        StartUtc = currentStartUtc,
+                        EndUtc = item.DateTimeUtc, // до момента смены
+                        NakshatraId = currentNakId,
+                        ColorId = NakshatraSlice.GetNakshatraColorId(currentNakId),
+                        NakshatraCode = (ENakshatra)currentNakId
+                    };
 
-                result.Add(slice);
+                    result.Add(slice);
+
+                    // начинаем новый интервал
+                    currentNakId = nid;
+                    currentStartUtc = item.DateTimeUtc;
+                }
             }
+
+            // закрываем последнюю накшатру до последней точки ряда
+            var last = mList[mList.Count - 1];
+            var lastSlice = new NakshatraSlice
+            {
+                StartUtc = currentStartUtc,
+                EndUtc = last.DateTimeUtc,
+                NakshatraId = currentNakId,
+                ColorId = NakshatraSlice.GetNakshatraColorId(currentNakId),
+                NakshatraCode = (ENakshatra)currentNakId
+            };
+            result.Add(lastSlice);
 
             return result;
         }
+
     }
 }
