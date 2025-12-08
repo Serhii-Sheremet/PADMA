@@ -2153,5 +2153,188 @@ Uses the interval **previousSunrise → sunrise**.
 
 ## 16.7. Status: Completed
 
+ TBD: Here will be the continuation for TransitBuilders that are not ready yet
+
+----------------
+----------------
+
+# PADMA Transit Rendering – PanchangaBar & CalendarViewModel Integration
+
+## Overview
+This document describes the architecture and implementation of the Panchanga rendering system in the PADMA application, focusing on:
+
+- **PanchangaBar** — the lightweight graphical control for rendering Panchanga segments using `GraphicsView`.
+- **CalendarViewModel pipeline** — how daily slices (Tithi for now) are calculated and bound to UI.
+- **Segment ↔ UI mapping** — how SwissEphemeris outputs, transit slices, and Panchanga bars interact.
+- **Performance principles** ensuring smooth rendering across all 42 calendar cells.
+
+This document expands the official project requirements with the functionality implemented as of the latest development session.
+
 ---
+
+# 1. Data Flow Overview
+
+SwissAnalysis → TransitBuilder → DayItem.TithiSegments → PanchangaBar → GraphicsView
+
+## 1.1. **SwissAnalysis**  
+   Produces raw astronomical event lists in UTC (London baseline).
+
+## 1.2. **Transit Builders (e.g., TithiTransitBuilder)**  
+   Converts Swiss events into continuous interval slices (TithiSlice), each with:
+   - StartUtc, EndUtc,
+   - SliceKind / Value,
+   - Assigned EColor → AppColor.
+
+## 1.3. **CalendarWindowService**  
+   Produces:
+   - visibleDays (42 days shown on calendar),  
+   - bufferStart / bufferEnd for Swiss calculations  
+     (slightly extended range to avoid gaps),
+   - visibleStart / visibleEnd for UI region.
+
+## 1.4. **CalendarViewModel.GenerateDays**  
+   For each DateOnly in visibleDays:
+   - Convert to local timezone of active profile.
+   - Build Tithi segments via BuildTithiSegmentsForDay(...).
+   - Attach resulting IList<PanchangaSegment> to the DayItem.
+
+## 1.5. **PanchangaBar**  
+   - Receives Segments + DayDate via bindings.
+   - Renders segments in a GraphicsView using single-pass drawing.
+
+---
+
+# 2. CalendarViewModel Implementation Summary
+
+## 2.1 Responsibilities
+- Construct correct visible calendar window (42 cells).
+- Retrieve active profile and associated timezone.
+- Request Swiss slices for expanded buffer window.
+- Build daily Panchanga segments (currently Tithi).
+- Attach segments to DayItem before UI binding.
+- Ensure no asynchronous updates after UI virtualization.
+
+## 2.2 Key Architectural Points
+
+### A. Visible Day Grid Alignment
+All days in the calendar are built from:
+```
+(visibleStart, visibleEnd, bufferStart, bufferEnd, visibleDays)
+= CalendarWindowService.BuildWindow(...)
+```
+
+This ensures UI dates and Swiss calculation dates are always in the same coordinate system, preventing earlier issues where entire weekday columns failed to render.
+
+### B. Segment Creation Before UI Binding
+Each DayItem receives its TithiSegments before being added to the ObservableCollection:
+
+```csharp
+var segments = BuildTithiSegmentsForDay(tithiSlices, date, tzInfo, DataCache.Instance);
+
+Days.Add(new DayItem {
+    Date = date,
+    DayNumber = date.Day,
+    IsCurrentMonth = isCurrentMonth,
+    IsToday = isToday,
+    TithiSegments = segments
+});
+```
+This avoids the need for INotifyPropertyChanged inside DayItem and ensures virtualization does not suppress segment redraws.
+
+### C. Timezone Alignment
+
+Swiss data is UTC-based. Each slice is mapped to local time of the active profile:
+```
+var sliceStartLocal = new DateTimeOffset(slice.StartUtc, TimeSpan.Zero).ToOffset(offset);
+var sliceEndLocal   = new DateTimeOffset(slice.EndUtc,   TimeSpan.Zero).ToOffset(offset);
+```
+Next, segments are trimmed to:
+```
+(dayLocalStart; dayLocalEnd)
+```
+to produce exact per-day segment lists.
+
+# 3. PanchangaBar – Graphics-Based Rendering
+## 3.1 Why GraphicsView
+
+The initial approach (multiple BoxView per segment) caused:
+- Heavy MAUI layout calculations,
+- UI freezes,
+- Missing columns due to virtualization timing.
+Switching to a single GraphicsView per PanchangaBar eliminated all performance problems.
+
+The bar now:
+- Does NOT create child controls,
+- Does NOT use AbsoluteLayout,
+- Draws everything in one GPU-accelerated pass.
+
+## 3.2 Structure
+
+PanchangaBar
+  └── GraphicsView
+        └── PanchangaBarDrawable (IDrawable)
+
+Key Properties:
+- DayDate — date of the calendar cell.
+- Segments — list of PanchangaSegment:
+	- Start (local DateTime)
+	- End (local DateTime)
+	- Color (MAUI Color)
+
+## 3.3 Rendering Logic
+
+Inside Draw(ICanvas canvas, RectF rect):
+- Normalize segment bounds to the current day.
+- Compute minute offset → pixel offset mapping.
+- Fill colored rectangles for each segment.
+- Draw thin black separator lines.
+
+Redrawing happens only when:
+- The bar receives a final size,
+- DayDate or Segments change.
+This results in instant UI response even with hundreds of segments.
+
+# 4. Segment Model – PanchangaSegment
+```
+class PanchangaSegment {
+    public DateTime Start;  // local time
+    public DateTime End;    // local time
+    public Color Color;     // segment color from AppColor
+}
+```
+Segments define time intervals, not values.
+This is essential for rendering continuous bars across day boundaries.
+
+#5. Performance Considerations
+✔ One GraphicsView per row
+	Removes thousands of MAUI view elements.
+✔ No child controls
+	Avoids excessive layout calculations.
+✔ Precomputed segments
+	All computation occurs once in ViewModel.
+✔ Single redraw
+	Minimizes overhead when binding occurs.
+✔ Proper timezone mapping
+	Offsets are computed once per day.
+
+# 6. Future Extensions
+
+- Add remaining Panchanga stripes:
+	- Nakshatra
+	- Tara Bala
+	- Nitya Yoga
+	- Karana
+	- Chandra Bala
+- Create a unified PanchangaSliceSet structure.
+- Build a Day Details page showing full Panchanga.
+- Add caching layer for recurrent Swiss computations.
+
+#7. Summary
+
+This module defines a high-performance Panchanga rendering subsystem for the PADMA application.
+We now have:
+- Timezone-correct slice generation,
+- GraphicsView-based rendering,
+- Instant calendar performance,
+- A scalable design for all six Panchanga layers.
 

@@ -246,29 +246,7 @@ namespace PADMA.UI
                     TithiSegments = tithiSegments
                 });
             }
-            /*
-            // 5. Если есть профиль, таймзона и слайсы — заполняем TithiSegments
-            if (profile != null && tzInfo != null && tithiSlices != null)
-            {
-                foreach (var day in Days)
-                {
-                    day.TithiSegments = BuildTithiSegmentsForDay(
-                        tithiSlices,
-                        day.Date,
-                        tzInfo,
-                        DataCache.Instance);
-                }
-            }*/
-            /*
-            #if DEBUG
-            foreach (var day in Days)
-            {
-                var count = day.TithiSegments?.Count ?? 0;
-                System.Diagnostics.Debug.WriteLine(
-                    $"[TITHI] {day.Date:yyyy-MM-dd} ({day.Date:ddd}) -> {count} segments");
-            }
-            #endif
-            */
+            
             OnPropertyChanged(nameof(Days));
         }
 
