@@ -1,5 +1,6 @@
 ﻿using PADMA.Core.Enums;
 using PADMA.Core.Models;
+using PADMA.Core.Services;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -71,6 +72,7 @@ namespace PADMA.Core.Services
 
         public IReadOnlyList<Profile> ProfileList { get; private set; } = new List<Profile>();
         public Profile? ActiveProfile { get; set; }
+        public IProfileContextService ProfileContextService { get; } = new ProfileContextService();
 
         public IReadOnlyList<AppLocation> LocationList { get; private set; } = new List<AppLocation>();
 
@@ -86,7 +88,7 @@ namespace PADMA.Core.Services
         /// <summary>
         /// Load all static and localized reference data from the database.
         /// </summary>
-        public void LoadAll(DatabaseService db, string? preferredUiLang = null)
+        public void LoadAll (DatabaseService db, string? preferredUiLang = null)
         {
             // Определяем язык интерфейса
             CurrentLanguageCode = preferredUiLang ?? db.GetActiveLanguageCode();
@@ -171,11 +173,15 @@ namespace PADMA.Core.Services
             // Профили
             ProfileList = db.GetProfiles().ToList();
             ActiveProfile = GetActiveProfile();
-
+            
             // Локации
             LocationList = db.GetLocations().ToList();
 
+            
+
         }
+
+
 
         /// <summary>
         /// Refresh app settings and localized texts (used after configuration changes).
@@ -213,6 +219,13 @@ namespace PADMA.Core.Services
         public IReadOnlyList<Profile> GetProfiles(DatabaseService db)
         {
             return db.GetProfiles().ToList();
+        }
+
+        public event Action? ProfileContextUpdated;
+        public async Task RebuildProfileContextAsync()
+        {
+            await ProfileContextService.RebuildAsync();
+            ProfileContextUpdated?.Invoke();
         }
 
         public AppLocation? GetLocationById(int id)

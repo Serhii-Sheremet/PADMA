@@ -69,7 +69,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<DatabaseService>();
         ServiceLocator.Services = builder.Services.BuildServiceProvider();
 
-        // 2) Регистрируем один-единственный экземпляр DatabaseService
+        // Регистрируем один-единственный экземпляр DatabaseService
         var db = new DatabaseService();
         builder.Services.AddSingleton(db);
 

@@ -5,6 +5,7 @@ using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
 using PADMA.Core.TransitBuilder;
+using PADMA.Core.Utilities;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -138,6 +139,8 @@ namespace PADMA.UI
 
         public CalendarViewModel()
         {
+            DataCache.Instance.ProfileContextUpdated += () => RefreshCalendar();
+
             var today = DateTime.Today;
             Year = today.Year;
             Month = today.Month;
@@ -178,50 +181,20 @@ namespace PADMA.UI
             List<TaraBalaSlice>? taraBalaSlices = null;
             List<TithiSlice>? tithiSlices = null;
             Profile? profile = DataCache.Instance.ActiveProfile;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
 
-            AppLocation? birthLocation = null;
-            if (profile != null)
-            {
-                birthLocation = DataCache.Instance.LocationList
-                    .FirstOrDefault(l => l.Id == profile.PlaceOfBirthId);
-                // Получаем накшатру рождения, если есть дата и место рождения
-                if (birthLocation != null)
-                {
-                    if (double.TryParse(birthLocation.Latitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var latit) &&
-                        double.TryParse(birthLocation.Longitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var longi))
-                    {
-                        double offset = TimeZoneService.GetUtcOffsetHours(profile.DateOfBirth, latit, longi);
-                        DateTime localBD = profile.DateOfBirth.AddHours(-offset);
-
-                        var bdPlanetData = SwissAnalysis.CalculatePlanetsPositionForDate(localBD, latit, longi);
-                        birthNakshatraId = bdPlanetData.Where(i => i.PlanetId == (int)EPlanet.MOON).FirstOrDefault()?.NakshatraId ?? 1;
-                    }
-                }
-            }
-
-            // Если профиля нет — просто строим календарь по датам, без полосок
-            AppLocation? livingLocation = null;
-            if (profile != null)
-            {
-                livingLocation = DataCache.Instance.LocationList
-                    .FirstOrDefault(l => l.Id == profile.PlaceOfLivingId);
-            }
-
-            // Считаем окно календаря (если есть таймзона)
-            DateTimeOffset visibleStart, visibleEnd, bufferStart, bufferEnd;
             IReadOnlyList<DateOnly> visibleDays;
-
-            if (livingLocation != null &&
-                double.TryParse(livingLocation.Latitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var lat) &&
-                double.TryParse(livingLocation.Longitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var lon))
+            if (profile != null && ctx != null)
             {
-                var tzId = TimeZoneService.GetDotNetTimeZoneId(lat, lon);
-                tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+                tzInfo = ctx.TimeZoneInfo;
+                birthNakshatraId = ctx.BirthNakshatraMoonId;
+
+                // Считаем окно календаря (если есть таймзона)
+                DateTimeOffset visibleStart, visibleEnd, bufferStart, bufferEnd;
 
                 (visibleStart, visibleEnd, bufferStart, bufferEnd, visibleDays) =
                     CalendarWindowService.BuildWindow(year, month, DataCache.Instance.DayOfWeek, tzInfo);
 
-                
                 var bufferStartUtc = bufferStart.UtcDateTime;
                 var bufferEndUtc = bufferEnd.UtcDateTime;
 
@@ -231,13 +204,11 @@ namespace PADMA.UI
                 if (birthNakshatraId > 0)
                     taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraId);
 
-
-
                 // ---- Swiss + Tithi —---
                 var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc);
                 tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
 
-                
+
             }
             else
             {
@@ -263,35 +234,28 @@ namespace PADMA.UI
                 IList<PanchangaSegment> nakshatraSegments = new List<PanchangaSegment>();
                 IList<PanchangaSegment> taraBalaSegments = new List<PanchangaSegment>();
                 IList<PanchangaSegment> tithiSegments = new List<PanchangaSegment>();
-                
 
                 if (profile != null && tzInfo != null)
                 {
                     if (nakshatraSlices != null)
                     {
-                        nakshatraSegments = BuildNakshatraSegmentsForDay(
-                        nakshatraSlices,
-                        date,
-                        tzInfo,
-                        DataCache.Instance);
+                        nakshatraSegments = PanchangaHelper.BuildSegmentsForDay(
+                            nakshatraSlices, date, tzInfo, DataCache.Instance,
+                            slice => (EColor)slice.ColorId);
                     }
 
                     if (taraBalaSlices != null)
                     {
-                        taraBalaSegments = BuildTaraBalaSegmentsForDay(
-                        taraBalaSlices,
-                        date,
-                        tzInfo,
-                        DataCache.Instance);
+                        taraBalaSegments = PanchangaHelper.BuildSegmentsForDay(
+                            taraBalaSlices, date, tzInfo, DataCache.Instance,
+                            slice => (EColor)slice.ColorId);
                     }
 
                     if (tithiSlices != null)
                     {
-                        tithiSegments = BuildTithiSegmentsForDay(
-                        tithiSlices,
-                        date,
-                        tzInfo,
-                        DataCache.Instance);
+                        tithiSegments = PanchangaHelper.BuildSegmentsForDay(
+                            tithiSlices, date, tzInfo, DataCache.Instance,
+                            slice => (EColor)slice.ColorId);
                     }
                 }
 
@@ -309,139 +273,6 @@ namespace PADMA.UI
             
             OnPropertyChanged(nameof(Days));
         }
-
-        private IList<PanchangaSegment> BuildNakshatraSegmentsForDay(
-            IEnumerable<NakshatraSlice> nakshatraSlicesUtc,
-            DateTime dayLocal,
-            TimeZoneInfo tz,
-            DataCache cache)
-        {
-            var result = new List<PanchangaSegment>();
-
-            // границы дня в локальном времени
-            var offset = tz.GetUtcOffset(dayLocal);
-            var dayStartLocal = new DateTimeOffset(dayLocal.Date, offset);
-            var dayEndLocal = dayStartLocal.AddDays(1);
-
-            foreach (var slice in nakshatraSlicesUtc)
-            {
-                // слайс в локальном времени
-                var sliceStartLocal = new DateTimeOffset(slice.StartUtc, TimeSpan.Zero).ToOffset(offset);
-                var sliceEndLocal = new DateTimeOffset(slice.EndUtc, TimeSpan.Zero).ToOffset(offset);
-
-                // пересекаем с сутками
-                var effStart = sliceStartLocal > dayStartLocal ? sliceStartLocal : dayStartLocal;
-                var effEnd = sliceEndLocal < dayEndLocal ? sliceEndLocal : dayEndLocal;
-
-                if (effEnd <= effStart)
-                    continue;
-
-                // цвет из ColorId накшатры
-                var colorCode = (EColor)slice.ColorId;
-                var color = cache.GetColor(colorCode);
-
-                result.Add(new PanchangaSegment
-                {
-                    Start = effStart.LocalDateTime,
-                    End = effEnd.LocalDateTime,
-                    Color = color
-                });
-            }
-
-            return result
-                .OrderBy(s => s.Start)
-                .ToList();
-        }
-
-        private IList<PanchangaSegment> BuildTaraBalaSegmentsForDay(
-            IEnumerable<TaraBalaSlice> taraBalaSlicesUtc,
-            DateTime dayLocal,
-            TimeZoneInfo tz,
-            DataCache cache)
-        {
-            var result = new List<PanchangaSegment>();
-
-            // границы дня в локальном времени
-            var offset = tz.GetUtcOffset(dayLocal);
-            var dayStartLocal = new DateTimeOffset(dayLocal.Date, offset);
-            var dayEndLocal = dayStartLocal.AddDays(1);
-
-            foreach (var slice in taraBalaSlicesUtc)
-            {
-                // слайс в локальном времени
-                var sliceStartLocal = new DateTimeOffset(slice.StartUtc, TimeSpan.Zero).ToOffset(offset);
-                var sliceEndLocal = new DateTimeOffset(slice.EndUtc, TimeSpan.Zero).ToOffset(offset);
-
-                // пересекаем с сутками
-                var effStart = sliceStartLocal > dayStartLocal ? sliceStartLocal : dayStartLocal;
-                var effEnd = sliceEndLocal < dayEndLocal ? sliceEndLocal : dayEndLocal;
-
-                if (effEnd <= effStart)
-                    continue;
-
-                // цвет из ColorId накшатры
-                var colorCode = (EColor)slice.ColorId;
-                var color = cache.GetColor(colorCode);
-
-                result.Add(new PanchangaSegment
-                {
-                    Start = effStart.LocalDateTime,
-                    End = effEnd.LocalDateTime,
-                    Color = color
-                });
-            }
-
-            return result
-                .OrderBy(s => s.Start)
-                .ToList();
-        }
-
-        private IList<PanchangaSegment> BuildTithiSegmentsForDay(
-            IEnumerable<TithiSlice> tithiSlicesUtc,
-            DateTime dayLocal,
-            TimeZoneInfo tz,
-            DataCache cache)
-        {
-            var result = new List<PanchangaSegment>();
-
-            // границы дня в локальном времени
-            var offset = tz.GetUtcOffset(dayLocal);
-            var dayStartLocal = new DateTimeOffset(dayLocal.Date, offset);
-            var dayEndLocal = dayStartLocal.AddDays(1);
-
-            foreach (var slice in tithiSlicesUtc)
-            {
-                // слайс в локальном времени
-                var sliceStartLocal = new DateTimeOffset(slice.StartUtc, TimeSpan.Zero).ToOffset(offset);
-                var sliceEndLocal = new DateTimeOffset(slice.EndUtc, TimeSpan.Zero).ToOffset(offset);
-
-                // пересекаем с сутками
-                var effStart = sliceStartLocal > dayStartLocal ? sliceStartLocal : dayStartLocal;
-                var effEnd = sliceEndLocal < dayEndLocal ? sliceEndLocal : dayEndLocal;
-
-                if (effEnd <= effStart)
-                    continue;
-
-                var colorCode = (EColor)slice.ColorId;
-                var color = cache.GetColor(colorCode);
-
-                result.Add(new PanchangaSegment
-                {
-                    Start = effStart.LocalDateTime,
-                    End = effEnd.LocalDateTime,
-                    Color = color
-                });
-            }
-
-            return result
-                .OrderBy(s => s.Start)
-                .ToList();
-        }
-
-
-
-
-
 
         public event PropertyChangedEventHandler PropertyChanged;
 

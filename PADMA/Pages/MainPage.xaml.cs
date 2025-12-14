@@ -131,7 +131,7 @@ namespace PADMA.Pages
             double lat = 49.506984;
             double lon = 26.764657;
             double alt = 0.0;
-            char hsys = 'O'; // Placidus (замени при необходимости)
+            char hsys = 'O'; // Placidus
 
             // 2) Локальная дата рождения (БЕЗ смещения)
             var localBirth = new LocalDateTime(1971, 12, 5, 0, 40, 0);
