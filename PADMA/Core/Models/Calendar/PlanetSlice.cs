@@ -16,7 +16,7 @@ namespace PADMA.Core.Models.Calendar
         /// <summary>
         /// For Rahu/Ketu we must know whether slice refers to MEAN or TRUE mode.
         /// </summary>
-        public ENodeType NodeType { get; set; } = ENodeType.NONE;
+        public EAppSetting NodeType { get; set; } = EAppSetting.NODEMEAN;
 
         /// <summary>
         /// Zodiac sign ID (1–12), corresponds to EZodiac.

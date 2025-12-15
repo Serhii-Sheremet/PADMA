@@ -1,10 +1,9 @@
-﻿using Microsoft.VisualBasic;
+﻿using PADMA.Core.TransitBuilder;
 using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
-using PADMA.Core.TransitBuilder;
 using PADMA.Core.Utilities;
 using System;
 using System.Collections.ObjectModel;
@@ -176,10 +175,14 @@ namespace PADMA.UI
             Days.Clear();
 
             TimeZoneInfo? tzInfo = null;
-            int birthNakshatraId = 0;
+            int birthNakshatraMoonId = 0, birthZodiacMoonId = 0, birthLagnaId = 0;
+            List<PlanetSlice>? moonSlices = null;
             List<NakshatraSlice>? nakshatraSlices = null;
             List<TaraBalaSlice>? taraBalaSlices = null;
             List<TithiSlice>? tithiSlices = null;
+            List<KaranaSlice>? karanaSlices = null;
+            List<NityaYogaSlice>? nityaYogaSlices = null;
+            List<ChandraBalaSlice>? chandraBalaSlices = null;
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
 
@@ -187,7 +190,9 @@ namespace PADMA.UI
             if (profile != null && ctx != null)
             {
                 tzInfo = ctx.TimeZoneInfo;
-                birthNakshatraId = ctx.BirthNakshatraMoonId;
+                birthNakshatraMoonId = ctx.BirthNakshatraMoonId;
+                birthZodiacMoonId = ctx.BirthZodiacMoonId;
+                birthLagnaId = ctx.BirthLagnaId;
 
                 // Считаем окно календаря (если есть таймзона)
                 DateTimeOffset visibleStart, visibleEnd, bufferStart, bufferEnd;
@@ -198,17 +203,26 @@ namespace PADMA.UI
                 var bufferStartUtc = bufferStart.UtcDateTime;
                 var bufferEndUtc = bufferEnd.UtcDateTime;
 
-                // ---- Swiss + Nakshatra (Луна) + TaraBala ----
+                // ---- Swiss + Moon Slices + Nakshatra (Луна) + TaraBala ----
                 var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc);
+                moonSlices = PlanetTransitBuilder.BuildPlanetSlices(moonData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, ctx.NodeType);
                 nakshatraSlices = NakshatraTransitBuilder.BuildNakshatraSlices(moonData);
-                if (birthNakshatraId > 0)
-                    taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraId);
+                if (birthNakshatraMoonId > 0)
+                    taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraMoonId);
 
                 // ---- Swiss + Tithi —---
                 var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc);
                 tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
 
+                // ---- Karana ----
+                karanaSlices = KaranaTransitBuilder.BuildKaranaSlices(tithiSlices);
 
+                // ---- Swiss + Nitya Yoga ----
+                var nityaYogaData = SwissAnalysis.CalculateNityaYogaDataList_London(bufferStartUtc, bufferEndUtc);
+                nityaYogaSlices = NityaYogaTransitBuilder.BuildNityaYogaSlices(nityaYogaData);
+
+                // ---- Chandra Bala ----
+                chandraBalaSlices = ChandraBalaTransitBuilder.BuildChandraBalaSlices(moonSlices, birthZodiacMoonId);
             }
             else
             {
@@ -234,6 +248,9 @@ namespace PADMA.UI
                 IList<PanchangaSegment> nakshatraSegments = new List<PanchangaSegment>();
                 IList<PanchangaSegment> taraBalaSegments = new List<PanchangaSegment>();
                 IList<PanchangaSegment> tithiSegments = new List<PanchangaSegment>();
+                IList<PanchangaSegment> karanaSegments = new List<PanchangaSegment>();
+                IList<PanchangaSegment> nityaYogaSegments = new List<PanchangaSegment>();
+                IList<PanchangaSegment> chandraBalaSegments = new List<PanchangaSegment>();
 
                 if (profile != null && tzInfo != null)
                 {
@@ -257,6 +274,27 @@ namespace PADMA.UI
                             tithiSlices, date, tzInfo, DataCache.Instance,
                             slice => (EColor)slice.ColorId);
                     }
+
+                    if(karanaSlices != null)
+                    {
+                         karanaSegments = PanchangaHelper.BuildSegmentsForDay(
+                             karanaSlices, date, tzInfo, DataCache.Instance,
+                             slice => (EColor)slice.ColorId);
+                    }   
+
+                    if(nityaYogaSlices != null)
+                    {
+                        nityaYogaSegments = PanchangaHelper.BuildSegmentsForDay(
+                            nityaYogaSlices, date, tzInfo, DataCache.Instance,
+                            slice => (EColor)slice.ColorId);
+                    }
+
+                    if(chandraBalaSlices != null)
+                    {
+                        chandraBalaSegments = PanchangaHelper.BuildSegmentsForDay(
+                            chandraBalaSlices, date, tzInfo, DataCache.Instance,
+                            slice => (EColor)slice.ColorId);
+                    }
                 }
 
                 Days.Add(new DayItem
@@ -267,7 +305,10 @@ namespace PADMA.UI
                     IsToday = isToday,
                     NakshatraSegments = nakshatraSegments,
                     TaraBalaSegments = taraBalaSegments,
-                    TithiSegments = tithiSegments
+                    TithiSegments = tithiSegments,
+                    KaranaSegments = karanaSegments,
+                    NityaYogaSegments = nityaYogaSegments,
+                    ChandraBalaSegments = chandraBalaSegments
                 });
             }
             

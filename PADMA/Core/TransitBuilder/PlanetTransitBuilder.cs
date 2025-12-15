@@ -1,18 +1,19 @@
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
+using PADMA.Core.Services;
 using PADMA.Core.Enums;
 using PADMA.Core.Utilities;
 
-namespace PADMA.Core.Services.TransitBuilder
+namespace PADMA.Core.TransitBuilder
 {
     public static class PlanetTransitBuilder
     {
         public static List<PlanetSlice> BuildPlanetSlices(
             List<PlanetData> list, 
-            int birthMoonNakshatraId,
+            int birthNakshatraMoonId,
             int birthZodiacMoonId,
             int birthLagnaId,
-            ENodeType nodeType)
+            EAppSetting nodeType)
         {
             var result = new List<PlanetSlice>();
 
@@ -22,7 +23,7 @@ namespace PADMA.Core.Services.TransitBuilder
             var swappedZodiacLagna = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthLagnaId);
             var swappedZodiacMoon = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthZodiacMoonId);
 
-            var swappedNakshatras = TransitBuilderUtility.SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthMoonNakshatraId);
+            var swappedNakshatras = TransitBuilderUtility.SwapNakshatras(DataCache.Instance.NakshatraList.ToList(), birthNakshatraMoonId);
             var taraMatrix = TransitBuilderUtility.MakeTaraBalaMatrix(swappedNakshatras);
 
             for (int i = 0; i < list.Count; i++)
