@@ -311,7 +311,8 @@ namespace PADMA.Core.Analysis
             double[] moon0 = SwissService.GetPlanetPosition(fromUtc.AddSeconds(-1), (int)EPlanet.MOON);
 
             double yogaLon = GetYogaLongitude(sun0[0], moon0[0]);
-            int currentYogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+            int currentNakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+            int currentYogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == currentNakshatraId)?.Id ?? 0;
 
             DateTime cursor = fromUtc;
             while (cursor < toUtc)
@@ -328,7 +329,8 @@ namespace PADMA.Core.Analysis
                 var sun = SwissService.GetPlanetPosition(exact, (int)EPlanet.SUN);
                 var moon = SwissService.GetPlanetPosition(exact, (int)EPlanet.MOON);
                 yogaLon = GetYogaLongitude(sun[0], moon[0]);
-                currentYogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+                currentNakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+                currentYogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == currentNakshatraId)?.Id ?? 0;
 
                 results.Add(new NityaYogaData
                 {
@@ -354,7 +356,8 @@ namespace PADMA.Core.Analysis
                 var sun = SwissService.GetPlanetPosition(t, (int)EPlanet.SUN);
                 var moon = SwissService.GetPlanetPosition(t, (int)EPlanet.MOON);
                 double yogaLon = GetYogaLongitude(sun[0], moon[0]);
-                int yogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+                int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+                int yogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == nakshatraId)?.Id ?? 0;
                 if (yogaId != currentYogaId)
                     return (true, t);
                 t = t.Add(step);
@@ -371,7 +374,8 @@ namespace PADMA.Core.Analysis
                 var sun = SwissService.GetPlanetPosition(mid, (int)EPlanet.SUN);
                 var moon = SwissService.GetPlanetPosition(mid, (int)EPlanet.MOON);
                 double yogaLon = GetYogaLongitude(sun[0], moon[0]);
-                int yogaId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+                int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
+                int yogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == nakshatraId)?.Id ?? 0;
 
                 if (yogaId != oldYogaId)
                     hi = mid;

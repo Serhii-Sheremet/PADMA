@@ -13,7 +13,7 @@ namespace PADMA.Core.Models.Calendar
             Kind = ETransitKind.NityaYoga;
         }
 
-        internal static int GetYogaColorId(int yogaId)
+        internal static int GetNityaYogaColorId(int yogaId)
         {
             return DataCache.Instance.NityaYogaList
                 .FirstOrDefault(y => y.Id == yogaId)?

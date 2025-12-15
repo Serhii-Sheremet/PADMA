@@ -213,8 +213,8 @@ namespace PADMA.Pages
             //TestSunriseSunsetUniversal();
 
             /*
-            var from = new DateTime(2025, 10, 30, 0, 0, 0, DateTimeKind.Utc);
-            var to = from.AddDays(1);
+            var from = new DateTime(2025, 12, 1, 0, 0, 0, DateTimeKind.Utc);
+            var to = from.AddDays(31);
             var yogas = SwissAnalysis.CalculateNityaYogaDataList_London(from, to);
             foreach (var y in yogas)
                 Console.WriteLine(y);

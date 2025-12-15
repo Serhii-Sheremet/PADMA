@@ -27,7 +27,7 @@ namespace PADMA.Core.TransitBuilder
                     StartUtc = current.DateTimeUtc,
                     EndUtc = nextStart,
                     NityaYogaId = id,
-                    ColorId = NityaYogaSlice.GetYogaColorId(id)
+                    ColorId = NityaYogaSlice.GetNityaYogaColorId(id)
                 };
 
                 result.Add(slice);
