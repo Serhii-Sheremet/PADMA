@@ -176,7 +176,6 @@ namespace PADMA.UI
 
             TimeZoneInfo? tzInfo = null;
             int birthNakshatraMoonId = 0, birthZodiacMoonId = 0, birthLagnaId = 0;
-            List<PlanetSlice>? moonSlices = null;
             List<NakshatraSlice>? nakshatraSlices = null;
             List<TaraBalaSlice>? taraBalaSlices = null;
             List<TithiSlice>? tithiSlices = null;
@@ -196,19 +195,18 @@ namespace PADMA.UI
 
                 // Считаем окно календаря (если есть таймзона)
                 DateTimeOffset visibleStart, visibleEnd, bufferStart, bufferEnd;
-
                 (visibleStart, visibleEnd, bufferStart, bufferEnd, visibleDays) =
                     CalendarWindowService.BuildWindow(year, month, DataCache.Instance.DayOfWeek, tzInfo);
 
                 var bufferStartUtc = bufferStart.UtcDateTime;
                 var bufferEndUtc = bufferEnd.UtcDateTime;
 
-                // ---- Swiss + Moon Slices + Nakshatra (Луна) + TaraBala ----
+                // ---- Swiss (Moon) + Nakshatra (Moon) ----
                 var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc);
-                moonSlices = PlanetTransitBuilder.BuildPlanetSlices(moonData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, ctx.NodeType);
                 nakshatraSlices = NakshatraTransitBuilder.BuildNakshatraSlices(moonData);
-                if (birthNakshatraMoonId > 0)
-                    taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraMoonId);
+
+                // ---- TaraBala ----
+                taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraMoonId);
 
                 // ---- Swiss + Tithi —---
                 var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc);
@@ -222,7 +220,7 @@ namespace PADMA.UI
                 nityaYogaSlices = NityaYogaTransitBuilder.BuildNityaYogaSlices(nityaYogaData);
 
                 // ---- Chandra Bala ----
-                chandraBalaSlices = ChandraBalaTransitBuilder.BuildChandraBalaSlices(moonSlices, birthZodiacMoonId);
+                chandraBalaSlices = ChandraBalaTransitBuilder.BuildChandraBalaSlices(moonData, birthZodiacMoonId);
             }
             else
             {
