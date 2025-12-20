@@ -2153,6 +2153,9 @@ Uses the interval **previousSunrise → sunrise**.
 
 ## 16.7. Status: Completed
 
+----------------
+----------------
+
  TBD: Here will be the continuation for TransitBuilders that are not ready yet
 
 ----------------
@@ -2316,18 +2319,7 @@ This is essential for rendering continuous bars across day boundaries.
 	Minimizes overhead when binding occurs.
 ✔ Proper timezone mapping
 	Offsets are computed once per day.
-
-# 6. Future Extensions
-
-- Add remaining Panchanga stripes:
-	- Nitya Yoga
-	- Karana
-	- Chandra Bala
-- Create a unified PanchangaSliceSet structure.
-- Build a Day Details page showing full Panchanga.
-- Add caching layer for recurrent Swiss computations.
-
-#7. Summary
+#6. Summary
 
 This module defines a high-performance Panchanga rendering subsystem for the PADMA application.
 We now have:
