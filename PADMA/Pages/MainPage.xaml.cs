@@ -1,17 +1,19 @@
-﻿using Microsoft.Maui.Controls;
+﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Views;
+using GeoTimeZone;
+using NodaTime;
 using PADMA.Core.Analysis;
+using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Native;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
-using PADMA.Core.Enums;
 using PADMA.UI;
-using GeoTimeZone;
-using NodaTime;
-using System;
 using System.Globalization;
 using System.Linq;
-using static System.Net.Mime.MediaTypeNames;
+using System.Threading;
 
 namespace PADMA.Pages
 {
@@ -29,17 +31,19 @@ namespace PADMA.Pages
 
             // Инициализация культуры
             Vm.InitializeCulture();
+            var culture = Vm.CurrentCulture ?? CultureInfo.CurrentCulture;
+            var popup = new MonthPickerPopup(culture, Vm.Year, Vm.Month);
 
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
             {
                 _needsRefreshAfterConfig = true;
 
                 Vm?.ReloadCultureAndRefresh();
-                UpdateTitle();
+                //UpdateTitle();
                 UpdateDaysHeader();
             });
 
-            UpdateTitle();
+            //UpdateTitle();
             AddToolbarButtons();
             UpdateDaysHeader();
         }
@@ -246,7 +250,7 @@ namespace PADMA.Pages
                     DataCache.Instance.Refresh(db);
 
                     Vm?.ReloadCultureAndRefresh();
-                    UpdateTitle();
+                    //UpdateTitle();
                     UpdateDaysHeader();
 
                     _needsRefreshAfterConfig = false; // сброс флага после обновления
@@ -257,8 +261,7 @@ namespace PADMA.Pages
                 System.Diagnostics.Debug.WriteLine($"[PADMA] MainPage.OnAppearing error: {ex.Message}");
             }
         }
-
-
+        
         private void UpdateTitle()
         {
             if (Vm == null) return;
@@ -282,7 +285,7 @@ namespace PADMA.Pages
             prev.Clicked += (s, e) =>
             {
                 Vm?.MoveMonth(-1);
-                UpdateTitle();
+                //UpdateTitle();
                 UpdateDaysHeader();
             };
 
@@ -294,7 +297,7 @@ namespace PADMA.Pages
             next.Clicked += (s, e) =>
             {
                 Vm?.MoveMonth(1);
-                UpdateTitle();
+                //UpdateTitle();
                 UpdateDaysHeader();
             };
 
@@ -351,7 +354,6 @@ namespace PADMA.Pages
             }
         }
 
-
         private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.CurrentSelection == null || e.CurrentSelection.Count == 0)
@@ -365,5 +367,27 @@ namespace PADMA.Pages
 
             await Shell.Current.GoToAsync($"day?Date={selected.Date:yyyy-MM-dd}");
         }
+
+        private async void OnMonthTitleTapped(object sender, EventArgs e)
+        {
+            if (Vm is null) return;
+
+            var popup = new MonthPickerPopup(Vm.CurrentCulture, Vm.Year, Vm.Month);
+
+            var res = await this.ShowPopupAsync<DateTime?>(
+                popup,
+                PopupOptions.Empty,
+                CancellationToken.None);
+
+            if (res.WasDismissedByTappingOutsideOfPopup)
+                return;
+
+            var dt = res.Result;
+            if (dt.HasValue)
+                Vm.SetMonthYear(dt.Value.Year, dt.Value.Month);
+        }
+
+
+
     }
 }

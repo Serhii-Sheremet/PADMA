@@ -1,19 +1,17 @@
-﻿using PADMA.Core.TransitBuilder;
+﻿using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Core;
 using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
+using PADMA.Core.TransitBuilder;
 using PADMA.Core.Utilities;
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
-using System.Reflection.PortableExecutable;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Windows.Input;
+
 
 namespace PADMA.UI
 {
@@ -151,6 +149,7 @@ namespace PADMA.UI
         /// </summary>
         public void RefreshCalendar()
         {
+            OnPropertyChanged(nameof(MonthYearTitle));
             GenerateDays(Year, Month);
         }
 
@@ -163,7 +162,7 @@ namespace PADMA.UI
             Year = newDate.Year;
             Month = newDate.Month;
             GenerateDays(Year, Month);
-            UpdateMonthTitle(); // добавлено, чтобы заголовок обновлялся по культуре
+            //UpdateMonthTitle(); // добавлено, чтобы заголовок обновлялся по культуре
         }
 
         /// <summary>
@@ -317,6 +316,61 @@ namespace PADMA.UI
 
         private void OnPropertyChanged(string propertyName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+        //  заголовок календаря с учётом культуры
+        public string MonthYearTitle
+        {
+            get
+            {
+                var raw = new DateTime(Year, Month, 1).ToString("MMMM yyyy", CurrentCulture);
+                if (string.IsNullOrEmpty(raw)) return raw;
+                return char.ToUpper(raw[0], CurrentCulture) + raw.Substring(1);
+            }
+        }
+
+        public void SetMonthYear(int year, int month)
+        {
+            if (Year == year && Month == month)
+                return;
+
+            Year = year;
+            Month = month;
+
+            RefreshCalendar();
+
+            // если MonthYearTitle вычисляемое — обновить
+            OnPropertyChanged(nameof(MonthYearTitle));
+        }
+
+
+
+        /*
+        public ICommand ShowMonthPickerCommand => new Command(async () =>
+        {
+            // Page нужен для показа popup — проще всего прокинуть через Messaging / service,
+            // но для старта можно сделать через Shell.Current
+            if (Shell.Current?.CurrentPage == null)
+                return;
+
+            var popup = new MonthPickerPopup(CurrentCulture, Year, Month);
+
+            // Важно: generic ShowPopupAsync<DateTime>
+            IPopupResult<DateTime> result =
+                await this.ShowPopupAsync<DateTime>(popup);
+
+            if (result.WasDismissedByTappingOutsideOfPopup)
+                return;
+
+            var dt = result.Result; // DateTime
+            Year = dt.Year;
+            Month = dt.Month;
+            RefreshCalendar();
+
+
+        });
+        */
+
+
 
 
     }

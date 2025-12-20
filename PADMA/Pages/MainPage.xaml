@@ -3,7 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:ui="clr-namespace:PADMA.UI;assembly=PADMA"
              x:Class="PADMA.Pages.MainPage"
-             Title="Calendar">
+             xmlns:controls="clr-namespace:Plugin.Maui.Calendar.Controls;assembly=Plugin.Maui.Calendar"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit">
+
+    <Shell.TitleView>
+        <Grid Padding="0" VerticalOptions="Center">
+            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                <Label Text="{Binding MonthYearTitle}"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center" />
+                <Label Text="▼" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnMonthTitleTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
+    </Shell.TitleView>
 
     <Grid Padding="0" RowSpacing="0" ColumnSpacing="0">
 
@@ -14,7 +30,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 🔹 Шапка с аббревиатурами дней -->
+        <!-- Шапка с аббревиатурами дней -->
         <Grid x:Name="DaysHeaderGrid"
               Grid.Row="0"
               HeightRequest="24"
@@ -32,7 +48,7 @@
             </Grid.ColumnDefinitions>
         </Grid>
 
-        <!-- 🔹 Календарь -->
+        <!-- Календарь -->
         <CollectionView x:Name="CalendarCollection"
                         Grid.Row="1"
                         ItemsSource="{Binding Days}"
