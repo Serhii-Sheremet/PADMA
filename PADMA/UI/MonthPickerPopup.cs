@@ -23,6 +23,34 @@ public sealed class MonthPickerPopup : Popup<DateTime?>
             Month = month
         };
 
+        _cal.EventsScrollViewVisible = false;   // <-- вот это чаще всего убирает “↑”
+        _cal.SwipeUpToHideEnabled = false;      // можно оставить как дополнительную защиту
+        _cal.FooterSectionTemplate = new DataTemplate(() => new ContentView { IsVisible = false });
+
+        _cal.DaysTitleLabelStyle = new Style(typeof(Label))
+        {
+            Setters =
+            {
+                new Setter { Property = Label.FontSizeProperty, Value = 11d }, // под Android обычно отлично
+                new Setter { Property = Label.LineBreakModeProperty, Value = LineBreakMode.NoWrap },
+                new Setter { Property = Label.MaxLinesProperty, Value = 1 },
+                new Setter { Property = Label.HorizontalTextAlignmentProperty, Value = TextAlignment.Center }
+            }
+        };
+
+        _cal.WeekendTitleStyle = new Style(typeof(Label))
+        {
+            Setters =
+            {
+                new Setter { Property = Label.FontSizeProperty, Value = 11d },
+                new Setter { Property = Label.LineBreakModeProperty, Value = LineBreakMode.NoWrap },
+                new Setter { Property = Label.MaxLinesProperty, Value = 1 },
+                new Setter { Property = Label.HorizontalTextAlignmentProperty, Value = TextAlignment.Center }
+            }
+        };
+
+        _cal.FirstDayOfWeek = DataCache.Instance.DayOfWeek;
+
         // гарантируем не-null
         _cal.SelectedDates ??= new ObservableCollection<DateTime>();
 
@@ -44,39 +72,81 @@ public sealed class MonthPickerPopup : Popup<DateTime?>
         var btnCancel = new Button { Text = Localization.GetLocalizedText("Cancel", DataCache.Instance.CurrentLanguageCode) };
         btnCancel.Clicked += async (_, __) => await CloseAsync(null);
 
+        var btnToday = new Button { Text = Localization.GetLocalizedText("Today", DataCache.Instance.CurrentLanguageCode) };
+        btnToday.Clicked += async (_, __) =>
+        {
+            await CloseAsync(DateTime.Today);
+        };
+
         var btnOk = new Button { Text = "OK" };
         btnOk.Clicked += async (_, __) =>
         {
-            // 1) если плагин всё-таки ведёт SelectedDates — берём оттуда
-            DateTime dt = default;
-            if (_cal.SelectedDates != null && _cal.SelectedDates.Count > 0)
-                dt = _cal.SelectedDates[_cal.SelectedDates.Count - 1];
-
-            // 2) fallback: берём текущие Year/Month/Day из контрола
-            if (dt == default)
-                dt = new DateTime(_cal.Year, _cal.Month, _cal.Day);
-
+            // День нам не важен — используем всегда 1
+            var dt = new DateTime(_cal.Year, _cal.Month, 1);
             await CloseAsync(dt);
         };
 
+        static void ApplyWideFooterButtonStyle(Button b)
+        {
+            b.FontSize = 12; 
+            b.LineBreakMode = LineBreakMode.WordWrap; 
+            b.HorizontalOptions = LayoutOptions.Fill;
+            b.VerticalOptions = LayoutOptions.Center;
+            b.MinimumHeightRequest = 32;
+
+            // часто помогает от "уродского" переноса:
+            b.Padding = new Thickness(10, 6); // чуть компактнее
+        }
+
+        static void ApplyOkFooterButtonStyle(Button b)
+        {
+            b.FontSize = 12;
+            b.LineBreakMode = LineBreakMode.NoWrap;
+            b.HorizontalOptions = LayoutOptions.End;   // прижать вправо
+            b.VerticalOptions = LayoutOptions.Center;
+            b.MinimumHeightRequest = 32;
+            b.Padding = new Thickness(14, 6);          // можно чуть шире по бокам
+        }
+
+        ApplyWideFooterButtonStyle(btnCancel);
+        ApplyWideFooterButtonStyle(btnToday);
+        ApplyOkFooterButtonStyle(btnOk);
+
+        var footer = new Grid
+        {
+            ColumnSpacing = 8,
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star), // Cancel
+                new ColumnDefinition(GridLength.Star), // Today
+                new ColumnDefinition(GridLength.Auto), // OK
+            },
+            HorizontalOptions = LayoutOptions.Fill
+        };
+
+        footer.Add(btnCancel, 0, 0);
+        footer.Add(btnToday, 1, 0);
+        footer.Add(btnOk, 2, 0);
+
+
         Content = new Frame
         {
-            Padding = 12,
+            Padding = 8,
             CornerRadius = 16,
             Content = new VerticalStackLayout
             {
-                Spacing = 10,
+                Spacing = 4,
                 Children =
                 {
                     _cal,
-                    new HorizontalStackLayout
-                    {
-                        HorizontalOptions = LayoutOptions.End,
-                        Spacing = 8,
-                        Children = { btnCancel, btnOk }
-                    }
+                    footer
                 }
             }
         };
+
+
+        
+
+
     }
 }

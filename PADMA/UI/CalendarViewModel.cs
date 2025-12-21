@@ -161,8 +161,8 @@ namespace PADMA.UI
             var newDate = new DateTime(Year, Month, 1).AddMonths(offset);
             Year = newDate.Year;
             Month = newDate.Month;
+            SetMonthYear(Year, Month);
             GenerateDays(Year, Month);
-            //UpdateMonthTitle(); // добавлено, чтобы заголовок обновлялся по культуре
         }
 
         /// <summary>
@@ -344,31 +344,7 @@ namespace PADMA.UI
 
 
 
-        /*
-        public ICommand ShowMonthPickerCommand => new Command(async () =>
-        {
-            // Page нужен для показа popup — проще всего прокинуть через Messaging / service,
-            // но для старта можно сделать через Shell.Current
-            if (Shell.Current?.CurrentPage == null)
-                return;
-
-            var popup = new MonthPickerPopup(CurrentCulture, Year, Month);
-
-            // Важно: generic ShowPopupAsync<DateTime>
-            IPopupResult<DateTime> result =
-                await this.ShowPopupAsync<DateTime>(popup);
-
-            if (result.WasDismissedByTappingOutsideOfPopup)
-                return;
-
-            var dt = result.Result; // DateTime
-            Year = dt.Year;
-            Month = dt.Month;
-            RefreshCalendar();
-
-
-        });
-        */
+        
 
 
 

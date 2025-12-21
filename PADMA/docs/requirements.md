@@ -2432,3 +2432,105 @@ application while adapting it to modern MAUI patterns.
 
 -----
 
+# Month / Year Picker Popup (Calendar Popup)
+
+## Purpose
+The **Month / Year Picker Popup** provides a dedicated UI for selecting a target **month and year** used to rebuild the main 42day calendar window in PADMA.  
+It is optimized for **clarity, localization, and predictable behavior**, while still giving users a visual overview of the month.
+
+The popup is implemented using **Plugin.Maui.Calendar (v2.0.12)** and **CommunityToolkit.Maui.Popup**.
+
+## Invocation
+The popup is opened from **MainPage** when the user taps the month/year title or uses the toolbar controls.
+
+**Input parameters:**
+- `CultureInfo culture` — active UI culture
+- `int year` — current calendar year
+- `int month` — current calendar month
+
+```csharp
+new MonthPickerPopup(CurrentCulture, Year, Month)
+```
+
+## Functional Behavior
+
+### Selection Model
+- The popup is a **month/year selector**, not a full date selector.
+- Tapping individual days is allowed **for visual feedback only**.
+- The confirmed result **never depends on the selected day**.
+
+### Confirmation Rules
+| Action | Result |
+|------|--------|
+| **OK** | Returns `new DateTime(Year, Month, 1)` |
+| **Today** | Returns `DateTime.Today` |
+| **Cancel** | Returns `null` |
+| Tap outside popup | Ignored (no change applied) |
+
+The caller always extracts **Year / Month** and rebuilds the calendar window accordingly.
+
+## Calendar Control Configuration
+
+### Core Settings
+- `Culture` — bound to active UI culture
+- `FirstDayOfWeek` — taken from `DataCache.Instance.DayOfWeek`
+- `Year`, `Month` — controlled explicitly
+- `Day = 1` — fixed technical value
+
+### Disabled Features
+The popup intentionally disables features that are not relevant to month selection:
+
+- Event list / footer panel
+- Swipe up hide gesture
+- Footer arrow indicator
+
+This ensures a clean, predictable UI focused on month navigation.
+
+## Weekday Header Styling
+
+To avoid multiline wrapping on Android (especially for Slavic languages), weekday headers are customized:
+
+- Reduced font size
+- Forced single line rendering
+- Centered alignment
+
+This prevents visual artifacts such as duplicated “second rows” of weekday letters.
+
+## Footer Buttons Layout
+
+### Buttons
+- **Cancel** — localized
+- **Today** — localized
+- **OK** — fixed short label
+
+### Layout Strategy
+- Footer uses a **Grid** with columns: `*, *, Auto`
+- `Cancel` and `Today` share available width
+- `OK` uses minimal width and is right aligned
+
+This prevents long localized labels (e.g. Ukrainian) from pushing buttons outside the popup frame.
+
+## Localization
+
+All user visible text is localized via `APP_TEXTS` and `Localization.GetLocalizedText()`.
+
+Supported languages:
+- English (`en`)
+- Ukrainian (`uk`)
+- Polish (`pl`)
+- Russian (`ru`)
+
+## Design Rationale
+
+- Keeps **month navigation fast** via arrows
+- Avoids accidental date based logic
+- Works consistently across Android / Windows
+- Fully respects application settings (culture, first day of week)
+- Scales correctly for long localized labels
+
+This popup is considered the **canonical month/year selection mechanism** in PADMA.
+
+## Status
+**Implemented and stable**  
+
+-----

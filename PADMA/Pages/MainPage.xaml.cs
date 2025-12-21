@@ -250,7 +250,6 @@ namespace PADMA.Pages
                     DataCache.Instance.Refresh(db);
 
                     Vm?.ReloadCultureAndRefresh();
-                    //UpdateTitle();
                     UpdateDaysHeader();
 
                     _needsRefreshAfterConfig = false; // сброс флага после обновления
@@ -284,8 +283,8 @@ namespace PADMA.Pages
             };
             prev.Clicked += (s, e) =>
             {
-                Vm?.MoveMonth(-1);
-                //UpdateTitle();
+                var dt = new DateTime(Vm.Year, Vm.Month, 1).AddMonths(-1);
+                Vm.SetMonthYear(dt.Year, dt.Month);
                 UpdateDaysHeader();
             };
 
@@ -296,8 +295,8 @@ namespace PADMA.Pages
             };
             next.Clicked += (s, e) =>
             {
-                Vm?.MoveMonth(1);
-                //UpdateTitle();
+                var dt = new DateTime(Vm.Year, Vm.Month, 1).AddMonths(1);
+                Vm.SetMonthYear(dt.Year, dt.Month);
                 UpdateDaysHeader();
             };
 
