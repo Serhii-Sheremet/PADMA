@@ -234,7 +234,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Validation", lang),
                 Localization.GetLocalizedText("Profile name is required.", lang), 
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return false;
         }
@@ -245,7 +245,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Validation", lang),
                 Localization.GetLocalizedText("Date of birth is required.", lang), 
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return false;
         }
@@ -256,7 +256,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Validation", lang),
                 Localization.GetLocalizedText("Place of birth is required.", lang), 
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return false;
         }
@@ -267,7 +267,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Validation", lang),
                 Localization.GetLocalizedText("Place of living is required.", lang), 
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return false;
         }
@@ -317,7 +317,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Saved", lang),
                 Localization.GetLocalizedText("Profile saved successfully.", lang), 
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return true;
         }
@@ -327,7 +327,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Error", lang),
                 Localization.GetLocalizedText("Failed to save profile. Please try again.", lang), 
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return false;
         }
@@ -435,7 +435,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Default profile", lang),
                 Localization.GetLocalizedText("Save profile first.", lang),
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return;
         }
@@ -453,7 +453,7 @@ public partial class ProfileDetailPage : ContentPage
         await DisplayAlert(
             Localization.GetLocalizedText("Done", lang),
             Localization.GetLocalizedText("Profile marked as default.", lang),
-            Localization.GetLocalizedText("OK", lang)
+            "OK"
         );
     }
 
@@ -466,7 +466,7 @@ public partial class ProfileDetailPage : ContentPage
             await DisplayAlert(
                 Localization.GetLocalizedText("Delete", lang),
                 Localization.GetLocalizedText("Nothing to delete.", lang),
-                Localization.GetLocalizedText("OK", lang)
+                "OK"
             );
             return;
         }
@@ -485,7 +485,7 @@ public partial class ProfileDetailPage : ContentPage
         await DisplayAlert(
             Localization.GetLocalizedText("Deleted", lang),
             Localization.GetLocalizedText("Profile deleted.", lang),
-            Localization.GetLocalizedText("OK", lang)
+            "OK"
         );
 
         await GoBackAsync();

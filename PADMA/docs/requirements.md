@@ -2328,3 +2328,107 @@ We now have:
 - Instant calendar performance,
 - A scalable design for all six Panchanga layers.
 
+-----
+
+# Profile Context Service
+
+## Overview
+
+`ProfileContextService` is a dedicated application-level service responsible for
+building, caching, and providing **precomputed profile-dependent astrological data**
+used across the PADMA application.
+
+Its main purpose is to **centralize all expensive and profile-specific calculations**
+that were previously duplicated in UI layers (e.g. `CalendarViewModel`) and to ensure
+that these calculations are performed **once per active profile**, then reused
+consistently throughout the app.
+
+This service is a key architectural component that decouples:
+- profile data
+- Swiss Ephemeris calculations
+- transit-related baseline values
+
+from UI logic and calendar rendering.
+
+## High-Level Responsibilities
+
+`ProfileContextService` is responsible for:
+
+- Building a **ProfileTransitContext** for the active profile
+- Performing all required Swiss Ephemeris calculations for the profile
+- Resolving and caching:
+  - profile timezone
+  - birth Moon Nakshatra
+  - birth Moon Zodiac (Rashi)
+  - birth planetary positions
+- Providing a stable, reusable context object to all consumers
+- Notifying the application when the context has been rebuilt
+
+## Lifecycle and Initialization
+
+### Creation
+
+- `ProfileContextService` is instantiated once as part of `DataCache`
+- It exists for the entire lifetime of the application
+
+### Rebuild
+
+The context is built via:
+
+```csharp
+await ProfileContextService.RebuildAsync();
+```
+
+This method:
+- Reads the active profile from DataCache
+- Resolves profile locations and timezone
+- Converts birth datetime to UTC
+- Performs Swiss Ephemeris calculations
+- Constructs a new ProfileTransitContext
+- Assigns it to Current
+
+### Timing
+
+RebuildAsync() is called:
+- on application startup (App.OnStart)
+- whenever the active profile changes (future extension)
+The context is not rebuilt implicitly inside view models or UI code.
+
+### Access Pattern
+
+The current context is accessed synchronously:
+```
+var ctx = DataCache.Instance.ProfileContextService.Current;
+```
+Consumers must handle the possibility that Current is null
+(e.g. during early startup before RebuildAsync completes).
+
+### Update Notification
+
+To avoid UI race conditions, DataCache exposes an event:
+
+```
+event Action ProfileContextUpdated;
+```
+This event is raised after RebuildAsync() completes successfully.
+
+Typical usage:
+- CalendarViewModel subscribes to this event
+- Upon notification, it triggers calendar regeneration
+
+This pattern ensures:
+- no async logic inside view models
+- no blocking UI initialization
+- deterministic redraw after context availability
+
+### Design Notes
+
+- The service is intentionally stateful, but with a narrow and controlled scope
+- Context rebuilding is explicit and observable
+- The design favors predictability over implicit magic
+- All calculations are traceable and reproducible
+This approach closely mirrors the architectural evolution from the legacy PAD
+application while adapting it to modern MAUI patterns.
+
+-----
+

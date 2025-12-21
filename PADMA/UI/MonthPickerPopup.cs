@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Maui.Views;
 using PADMA.Core.Utilities;
+using PADMA.Core.Services;
 using Microsoft.Maui.Controls;
 
 using CalendarControl = Plugin.Maui.Calendar.Controls.Calendar;
@@ -40,10 +41,10 @@ public sealed class MonthPickerPopup : Popup<DateTime?>
             if (dt != default) _selected = dt;
         };
 
-        var btnCancel = new Button { Text = "Cancel" };
+        var btnCancel = new Button { Text = Localization.GetLocalizedText("Cancel", DataCache.Instance.CurrentLanguageCode) };
         btnCancel.Clicked += async (_, __) => await CloseAsync(null);
 
-        var btnOk = new Button { Text = "OK" }; // Localization.GetLocalizedText("OK", lang)
+        var btnOk = new Button { Text = "OK" };
         btnOk.Clicked += async (_, __) =>
         {
             // 1) если плагин всё-таки ведёт SelectedDates — берём оттуда
