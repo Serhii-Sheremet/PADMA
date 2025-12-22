@@ -159,16 +159,17 @@ namespace PADMA.UI
         public void MoveMonth(int offset)
         {
             var newDate = new DateTime(Year, Month, 1).AddMonths(offset);
-            Year = newDate.Year;
-            Month = newDate.Month;
-            SetMonthYear(Year, Month);
-            GenerateDays(Year, Month);
+            SetMonthYear(newDate.Year, newDate.Month);
+        }
+
+        public void RebuildCurrentMonth()
+        {
+            RefreshCalendar();              // пересоберёт Days на текущих Year/Month
         }
 
         /// <summary>
         /// Core: build a 6x7 grid (42 days) based on the selected first day of week.
         /// </summary>
-
         private void GenerateDays(int year, int month)
         {
             Days.Clear();

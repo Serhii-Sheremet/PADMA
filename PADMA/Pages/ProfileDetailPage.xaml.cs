@@ -426,37 +426,6 @@ public partial class ProfileDetailPage : ContentPage
 
     private void OnEditClicked(object sender, EventArgs e) => SetEditMode(true);
 
-    private async void OnSetDefaultClicked(object sender, EventArgs e)
-    {
-        string lang = DataCache.Instance.CurrentLanguageCode;
-
-        if (_profile == null || _profile.Id <= 0)
-        {
-            await DisplayAlert(
-                Localization.GetLocalizedText("Default profile", lang),
-                Localization.GetLocalizedText("Save profile first.", lang),
-                "OK"
-            );
-            return;
-        }
-
-        bool confirm = await DisplayAlert(
-            Localization.GetLocalizedText("Default profile", lang),
-            Localization.GetLocalizedText("Set this profile as default?", lang),
-            Localization.GetLocalizedText("Yes", lang),
-            Localization.GetLocalizedText("No", lang)
-        );
-
-        if (!confirm) return;
-
-        _database.SetDefaultProfile(_profile.Id);
-        await DisplayAlert(
-            Localization.GetLocalizedText("Done", lang),
-            Localization.GetLocalizedText("Profile marked as default.", lang),
-            "OK"
-        );
-    }
-
     private async void OnDeleteClicked(object sender, EventArgs e)
     {
         string lang = DataCache.Instance.CurrentLanguageCode;

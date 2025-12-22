@@ -34,16 +34,23 @@ namespace PADMA.Pages
             var culture = Vm.CurrentCulture ?? CultureInfo.CurrentCulture;
             var popup = new MonthPickerPopup(culture, Vm.Year, Vm.Month);
 
+            MessagingCenter.Unsubscribe<object>(this, "SettingsChanged");
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
             {
                 _needsRefreshAfterConfig = true;
 
                 Vm?.ReloadCultureAndRefresh();
-                //UpdateTitle();
+                UpdateDaysHeader();
+            });
+            
+            MessagingCenter.Unsubscribe<object>(this, "ProfileChanged");
+            MessagingCenter.Subscribe<object>(this, "ProfileChanged", _ =>
+            {
+                Vm?.ReloadCultureAndRefresh();
+                //Vm?.RebuildCurrentMonth();
                 UpdateDaysHeader();
             });
 
-            //UpdateTitle();
             AddToolbarButtons();
             UpdateDaysHeader();
         }

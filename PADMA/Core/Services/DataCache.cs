@@ -209,11 +209,7 @@ namespace PADMA.Core.Services
 
         public Profile? GetActiveProfile()
         {
-            var active = ProfileList.FirstOrDefault(p => p.Checked);
-            if (active != null)
-                return active;
-
-            return ProfileList.FirstOrDefault(); // может вернуть null — это ок
+            return ProfileList.FirstOrDefault(p => p.Checked) ?? null;
         }
 
         public IReadOnlyList<Profile> GetProfiles(DatabaseService db)

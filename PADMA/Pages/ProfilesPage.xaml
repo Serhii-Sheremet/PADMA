@@ -1,63 +1,114 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:pages="clr-namespace:PADMA.Pages"
-             x:Class="PADMA.Pages.ProfilesPage"
-             Title="Profiles">
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="PADMA.Pages.ProfilesPage"
+    Title="Profiles">
 
-    <!-- Toolbar: burger (Shell), close on the right -->
-    <ContentPage.ToolbarItems>
-        <ToolbarItem IconImageSource="close_icon.png"
-                 Priority="0"
-                 Order="Primary"
-                 Clicked="OnCloseClicked" />
-    </ContentPage.ToolbarItems>
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="12"
+          RowSpacing="10">
 
-    <VerticalStackLayout Padding="20" Spacing="15">
-
-        <!-- Action Bar -->
-        <Button x:Name="btnAddProfile"
+        <!-- ADD NEW PROFILE -->
+        <Button
+            Grid.Row="0"
+            x:Name="btnAddProfile"
             Text="Add new profile"
             Clicked="OnAddProfileClicked"
-            HorizontalOptions="Center" />
+            FontSize="16"
+            HeightRequest="48" />
 
-        <!-- Profiles List -->
-        <CollectionView ItemsSource="{Binding Profiles}"
-                    SelectionMode="None">
+        <!-- PROFILES LIST -->
+        <CollectionView
+            Grid.Row="1"
+            x:Name="profilesView"
+            ItemsSource="{Binding Profiles}"
+            SelectionMode="Single"
+            SelectionChanged="OnProfileSelected">
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Frame BorderColor="{DynamicResource FrameBorderColor}"
-                 CornerRadius="10"
-                 Padding="10"
-                 Margin="5,2">
+                    <Frame
+                        Padding="10"
+                        Margin="0,4"
+                        CornerRadius="10"
+                        HasShadow="False"
+                        BorderColor="#C8C8C8"
+                        InputTransparent="True">
 
-                        <!-- Tap opens details -->
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer
-                Command="{Binding Source={RelativeSource AncestorType={x:Type pages:ProfilesPage}}, Path=OpenProfileCommand}"
-                CommandParameter="{Binding .}" />
-                        </Frame.GestureRecognizers>
+                        <!-- Visual states for selection highlight -->
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup Name="CommonStates">
+                                <VisualState Name="Normal">
+                                    <VisualState.Setters>
+                                        <Setter Property="BackgroundColor" Value="Transparent" />
+                                        <Setter Property="BorderColor" Value="#C8C8C8" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState Name="Selected">
+                                    <VisualState.Setters>
+                                        <Setter Property="BackgroundColor" Value="#1A000000" />
+                                        <Setter Property="BorderColor" Value="#666666" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
 
-                        <Grid ColumnDefinitions="30, *" VerticalOptions="Center">
-                            <!-- Default marker -->
+                        <!-- star (left) + name (right) -->
+                        <Grid ColumnDefinitions="26,*"
+                              ColumnSpacing="10"
+                              VerticalOptions="Center">
+
+                            <!-- Default marker on the LEFT -->
                             <Image Source="star_shine.png"
-                     HeightRequest="20"
-                     WidthRequest="20"
-                     IsVisible="{Binding IsDefault}"
-                     HorizontalOptions="Center"
-                     VerticalOptions="Center" />
+                                   HeightRequest="20"
+                                   WidthRequest="20"
+                                   Grid.Column="0"
+                                   IsVisible="{Binding IsDefault}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
 
-                            <!-- Profile name -->
-                            <Label Grid.Column="1"
-                     Text="{Binding ProfileName}"
-                     FontSize="18"
-                     VerticalOptions="Center"
-                     TextColor="{DynamicResource PrimaryTextColor}" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding ProfileName}"
+                                FontSize="15"
+                                VerticalOptions="Center" />
+
                         </Grid>
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-    </VerticalStackLayout>
+
+        <!-- ACTIONS PANEL -->
+        <Grid
+            Grid.Row="2"
+            x:Name="actionsPanel"
+            IsVisible="False"
+            ColumnSpacing="8"
+            ColumnDefinitions="*,2*,Auto">
+
+            <Button
+                Grid.Column="0"
+                x:Name="btnDetails"
+                Text="Details"
+                FontSize="12"
+                Clicked="OnDetailsClicked" />
+
+            <Button
+                Grid.Column="1"
+                x:Name="btnSetDefault"
+                Text="Set default"
+                FontSize="12"
+                Clicked="OnSetDefaultClicked" />
+
+            <Button
+                Grid.Column="2"
+                x:Name="btnChoose"
+                Text="Choose"
+                FontSize="12"
+                Clicked="OnChooseClicked" />
+        </Grid>
+
+    </Grid>
 </ContentPage>

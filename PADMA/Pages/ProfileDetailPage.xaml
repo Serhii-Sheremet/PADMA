@@ -100,13 +100,6 @@
                              BackgroundColor="Transparent"
                              ToolTipProperties.Text="Edit" />
 
-                <ImageButton Source="star_shine.png"
-                             HeightRequest="32"
-                             WidthRequest="32"
-                             Clicked="OnSetDefaultClicked"
-                             BackgroundColor="Transparent"
-                             ToolTipProperties.Text="Set as default" />
-
                 <ImageButton Source="delete_icon.png"
                              HeightRequest="32"
                              WidthRequest="32"
