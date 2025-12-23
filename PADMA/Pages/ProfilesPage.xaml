@@ -5,6 +5,13 @@
     x:Class="PADMA.Pages.ProfilesPage"
     Title="Profiles">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="close_icon.png"
+                 Priority="0"
+                 Order="Primary"
+                 Clicked="OnCloseClicked" />
+    </ContentPage.ToolbarItems>
+
     <Grid RowDefinitions="Auto,*,Auto"
           Padding="12"
           RowSpacing="10">

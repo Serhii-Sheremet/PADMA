@@ -498,7 +498,15 @@ for all pages within the **Profiles** feature.
 It ensures full consistency with the existing PADMA user interface conventions  
 used by **ConfigurationPage** and other modules.  
 
----
+The Profiles module manages user profiles and defines how profile data is selected, activated,
+and used by the Calendar and calculation engine.
+
+The design clearly separates three different concepts:
+- Selected profile — temporarily selected in the list UI.
+- Active profile — currently used by the Calendar and calculations.
+- Default profile — profile automatically loaded on app startup.
+
+This separation avoids implicit side effects and makes profile behavior predictable.
 
 ### 🏠 ProfilesPage — Main Hub  
 
@@ -512,13 +520,37 @@ used by **ConfigurationPage** and other modules.
 [➕ Add new profile]
 ```
 
-**Behavior:**  
-- Tap on a profile → opens `ProfileDetailPage` in **View mode**.  
+**Profiles list:
+- Displays all profiles.
+- Default profile is marked with a ⭐ icon in the left column.
+- Tap on a profile:
+	- Selects the profile (visual highlight).
+	- Does not navigate or trigger calculations.
+- Re-tapping an already selected profile removes selection.
 - Tap “Add new profile” → opens `ProfileDetailPage` in **Create mode**.  
 - ❌ Close → returns to **MainPage**.  
-- On return from a child page, the list refreshes to reflect changes.  
+- On return from a child page, the list refreshes to reflect changes
 
----
+## 🔽 Context Action Panel (Bottom)
+
+Appears only when a profile is selected.
+```
+[ Details ]   [ Set default ]   [ Choose ]
+```
+### Button behavior:
+
+| Button          | Behavior                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Details**     | Opens `ProfileDetailPage` in **View mode** for the selected profile.                                                                |
+| **Set default** | Marks the selected profile as default (`CHECKED = 1`). Disabled if the profile is already default.                               	|
+| **Choose**      | Makes the selected profile the **active profile** and returns to `MainPage`. Disabled if the selected profile is already active. 	|
+
+**Visibility rules:
+- The action panel is hidden when:
+	- no profile is selected,
+	- Choose is executed,
+	- Cancel / Close (❌) is executed.
+- The panel remains visible after Set default, allowing further actions.
 
 ### 👤 ProfileDetailPage — Profile Card  
 
@@ -529,12 +561,10 @@ used by **ConfigurationPage** and other modules.
 
 **Action Bar (below toolbar):**  
 ```
-[ 💾 Save ] [ ✏️ Edit ] [ 🌟 Set default ] [ 🗑 Delete ]
+[ 💾 Save ] [ ✏️ Edit ] [ 🗑 Delete ]
 ```
 
 **Button order confirmed:** Save first.
-
----
 
 #### 🔹 Modes of operation  
 
@@ -543,8 +573,6 @@ used by **ConfigurationPage** and other modules.
 | **View** | All input fields are read-only. Only action buttons are active. |
 | **Edit** | All input fields become editable, including name, surname, date, and locations. |
 | **New** | Empty form, all fields editable, title = “New profile”. |
-
----
 
 #### 🔹 Field structure  
 
@@ -558,22 +586,17 @@ used by **ConfigurationPage** and other modules.
 | Place of living | Button → opens `LocationPage` |
 | Message / notes | Multiline entry (optional) |
 
----
-
 #### 🔹 Button behavior  
 
 | Button | Action | Confirmation |
 |---------|---------|---------------|
 | 💾 **Save** | Writes changes to `PROFILE` and new `LOCATION` entries if needed. Updates cache and returns to `ProfilesPage`. | ✅ “Save changes to profile?” |
 | ✏️ **Edit** | Enables editable mode for all fields. | — |
-| 🌟 **Set default** | Sets current profile as default (`CHECKED = 1`), unsets others. | — |
 | 🗑 **Delete** | Deletes current profile and returns to list. | ✅ “Delete this profile?” |
 
 The **❌ Close** icon and **← Back arrow** both trigger the same method `HandleBackAsync()`.
 Both must show the same confirmation dialog sequence when unsaved changes exist.  
 If no changes exist, they immediately return to the profiles list without prompts. 
-
----
 
 ### 🔹 Confirmation Dialogs and Validation Rules
 | Event | Dialog | Conditions |
@@ -586,8 +609,6 @@ If no changes exist, they immediately return to the profiles list without prompt
 
 
 Dialogs follow the same visual and logical pattern as those used in `ConfigBasePage`.  
-
----
 
 ### 🌍 LocationPage — Location Lookup  
 
@@ -610,8 +631,6 @@ Searches and selects geographic locations using **Nominatim API**.
 - Database update occurs only after the entire profile is saved.  
 - Therefore, this page acts as a **lookup-only** component, not a data editor.  
 
----
-
 ### 🧩 Navigation hierarchy  
 
 ```
@@ -623,8 +642,6 @@ AppShell
  ├── ConfigurationPage (burger + close)
  └── ExitPage
 ```
-
----
 
 ### 🔹 Navigation and State Persistence
 - Navigating to `LocationSearchPage` **must not reset** or discard current profile form data.  
@@ -638,21 +655,51 @@ private string? _snapshotJson;         // Serialized snapshot of initial state
 private bool HasRealChanges() => JsonSerializer.Serialize(_profile) != _snapshotJson;
 ```
 
----
-
 ### 🔹 Behavior When Returning from Location Search
 - `MessagingCenter` sends `"LocationSelected"` with `(Mode, AppLocation)` payload.  
 - The appropriate field (`Place of Birth` or `Place of Living`) updates immediately.  
 - `_snapshotJson` is **not refreshed** after location selection — this ensures the “unsaved changes” dialog remains functional.  
 - The `_skipSnapshotOnce` flag prevents snapshot regeneration upon re-entering the page.
 
----
+### 🔄 Profile Selection & Activation Flow
+
+Choosing a profile:
+1. User selects a profile in ProfilesPage.
+2. Presses Choose.
+3. Application:
+	- Updates DataCache.ActiveProfile.
+	- Reloads LocationList cache.
+	- Rebuilds ProfileContextService.
+	- Sends "ProfileChanged" message.
+4. Navigates back to MainPage.
+5. Calendar recalculates and redraws using the new active profile.
+
+**Important rules:
+- Selecting a profile does not trigger calculations.
+- Calculations occur only after pressing Choose.
+- Profiles without a valid birth location cannot be chosen.
+
+### ⭐ Default Profile Logic
+
+- Only one profile may be marked as default.
+- Default profile:
+	- Is loaded automatically on app startup.
+	- Does not automatically become active during runtime.
+- Default flag affects startup behavior only.
+
+### ❌ Exit & Cancel Behavior
+
+- ❌ Close icon:
+	- Clears selection.
+	- Hides action panel.
+	- Returns to MainPage.
+- No profile state is changed on cancel.
 
 ### ⚙️ Integration rules  
 
 - Navigation consistency follows the same convention as configuration pages.  
 - Confirm dialogs are reused from existing shared logic.  
-- Changes in profiles may trigger `"ProfileChanged"` messaging events,  
+- Changes in profiles triggers `"ProfileChanged"` messaging events,  
   to notify the Calendar or other pages of an active profile switch.  
 - Data saving logic ensures that new locations are committed only when  
   a profile save operation is confirmed.  
@@ -662,9 +709,6 @@ private bool HasRealChanges() => JsonSerializer.Serialize(_profile) != _snapshot
   other computational modules.  
 - Changes in profiles do **not** send `"SettingsChanged"` messages,  
   unless language or calendar configuration are directly affected.  
-- In future development, a dedicated `"ProfileChanged"` event may be added. 
-
----
 
 ### 🌐 Localization  
 
@@ -678,46 +722,15 @@ Localization.GetLocalizedText("Native English Text", DataCache.Instance.CurrentL
 All UI text entries must exist in the `APP_TEXTS` table  
 with four translations: **English, Ukrainian, Polish, Russian**.  
 
----
+### 🎯 UX Summary
 
-### 🎨 UX summary  
+- Profile selection is explicit and reversible.
+- No hidden recalculations.
+- Default profile logic is predictable.
+- Profile activation is intentional and user-controlled.
 
-```
-╔════════════════════════════╗
-║ ☰ Profiles                ❌ ║
-╚════════════════════════════╝
-[ ➕ Add new profile ]
-───────────────
-• John Doe
-• Mary Smith
-───────────────
-      │
-      ▼
-╔════════════════════════════╗
-║ ← John Doe                ❌ ║
-╚════════════════════════════╝
-[ 💾 Save ] [ ✏️ Edit ] [ 🌟 Set default ] [ 🗑 Delete ]
-────────────────────────────────────---------
-| Profile name: John Doe            		|
-| Date of birth: 12.05.1988 12:48:00        |
-| Place of birth: Kyiv ⯈           			|
-| Place of living: Warsaw ⯈        			|
-────────────────────────────────────---------
-      │
-      ▼
-╔════════════════════════════╗
-║ ← Location search           ║
-╚════════════════════════════╝
-| Search: [Kyiv] (🔍)         |
-| Results:                   |
-|  - Київ, Україна           |
-|  - Kyiv, Ukraine           |
-────────────────────────────────────
-```
-
-**Data source:**  
-Location data structure is defined in  
-[`docs/sql/padma_tables.sql`](https://github.com/Serhii-Sheremet/PADMA/blob/main/PADMA/docs/sql/padma_tables.sql). 
+This architecture ensures clarity, stability, and future extensibility
+(e.g., natal chart pages, profile-based reports).
 
 ### 🗺️ Nominatim (OpenStreetMap)
 
@@ -725,7 +738,6 @@ To find GPS coordinates for locations the Nominatim API are used
 🔗 https://nominatim.org/release-docs/latest/api/Search/
 
 ---
-
 
 # 🌠 Swiss Module — SwissService, SwissAnalysis, SwissUtility, SweConst
 

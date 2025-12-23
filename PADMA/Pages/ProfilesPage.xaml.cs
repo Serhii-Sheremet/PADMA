@@ -34,6 +34,7 @@ namespace PADMA.Pages
         {
             base.OnAppearing();
             LoadProfiles();
+            ClearSelection();
         }
 
         private void LoadProfiles()
@@ -72,7 +73,12 @@ namespace PADMA.Pages
 
             btnDetails.IsEnabled = has;
             btnSetDefault.IsEnabled = has && !(_selectedProfile?.IsDefault ?? false);
-            btnChoose.IsEnabled = has;
+
+            // disable Choose if already active
+            var activeId = DataCache.Instance.ActiveProfile?.Id;
+            bool isAlreadyActive = has && activeId.HasValue && _selectedProfile!.Id == activeId.Value;
+
+            btnChoose.IsEnabled = has && !isAlreadyActive;
         }
 
         private async void OnDetailsClicked(object sender, EventArgs e)
@@ -124,13 +130,26 @@ namespace PADMA.Pages
 
             DataCache.Instance.ActiveProfile = profile;
 
-            // Перестроить ProfileTransitContext
-            await DataCache.Instance.ProfileContextService.RebuildAsync();
+            // гарантируем, что LOCATION-кеш актуален (особенно сразу после создания профиля)
+            DataCache.Instance.ReloadLocations(_database);
 
-            // уведомить MainPage
+            try
+            {
+                await DataCache.Instance.ProfileContextService.RebuildAsync();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // на случай, если всё равно не нашли локацию
+                var lang = DataCache.Instance.CurrentLanguageCode;
+                await DisplayAlert(
+                    Localization.GetLocalizedText("Error", lang),
+                    ex.Message,
+                    "OK");
+                return;
+            }
+
             MessagingCenter.Send<object>(this, "ProfileChanged");
-
-            // закрыть Profiles и вернуться на main
+            ClearSelection();
             await Shell.Current.GoToAsync("//main", true);
         }
 
@@ -150,10 +169,19 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
+            ClearSelection();
             await Shell.Current.GoToAsync("//main", true);
         }
 
+        private void ClearSelection()
+        {
+            _selectedProfile = null;
 
+            if (profilesView != null)
+                profilesView.SelectedItem = null;
+
+            UpdateActionsVisibility();
+        }
 
 
 

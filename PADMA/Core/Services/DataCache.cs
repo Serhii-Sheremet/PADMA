@@ -230,8 +230,9 @@ namespace PADMA.Core.Services
         }
 
         public IReadOnlyList<AppLocation> ReloadLocations(DatabaseService db)
-        { 
-            return db.GetLocations().ToList(); ;
+        {
+            LocationList = db.GetLocations().ToList();
+            return LocationList;    
         }
 
     }
