@@ -1,5 +1,6 @@
-﻿using CommunityToolkit.Maui.Views;
-using CommunityToolkit.Maui.Core;
+﻿using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui.Views;
+using NodaTime;
 using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
@@ -63,6 +64,20 @@ namespace PADMA.UI
             }
         }
 
+        private string _activeProfileDisplay = string.Empty;
+        public string ActiveProfileDisplay
+        {
+            get => _activeProfileDisplay;
+            set { _activeProfileDisplay = value; OnPropertyChanged(); }
+        }
+
+        private string _activeLocationTimeZoneDisplay = string.Empty;
+        public string ActiveLocationTimeZoneDisplay
+        {
+            get => _activeLocationTimeZoneDisplay;
+            set { _activeLocationTimeZoneDisplay = value; OnPropertyChanged(); }
+        }
+
         public CultureInfo CurrentCulture =>
             !string.IsNullOrWhiteSpace(CultureCode)
                 ? new CultureInfo(CultureCode)
@@ -120,20 +135,6 @@ namespace PADMA.UI
             }
         }
 
-        private void UpdateMonthTitle()
-        {
-            try
-            {
-                MonthTitle = new DateTime(Year, Month, 1).ToString("MMMM yyyy", CurrentCulture);
-            }
-            catch
-            {
-                MonthTitle = $"{Year}-{Month:00}";
-            }
-        }
-        // === Конец блока культуры ===
-
-
         public CalendarViewModel()
         {
             DataCache.Instance.ProfileContextUpdated += () => RefreshCalendar();
@@ -141,6 +142,8 @@ namespace PADMA.UI
             var today = DateTime.Today;
             Year = today.Year;
             Month = today.Month;
+
+            UpdateActiveProfileInfo();
             GenerateDays(Year, Month);
         }
 
@@ -149,6 +152,7 @@ namespace PADMA.UI
         /// </summary>
         public void RefreshCalendar()
         {
+            UpdateActiveProfileInfo();
             OnPropertyChanged(nameof(MonthYearTitle));
             GenerateDays(Year, Month);
         }
@@ -343,9 +347,139 @@ namespace PADMA.UI
             OnPropertyChanged(nameof(MonthYearTitle));
         }
 
+        private void UpdateActiveProfileInfo()
+        {
 
+            string locality = string.Empty;
+            string offsetText = string.Empty;
+            string transitionSuffix = string.Empty;
+            TimeZoneInfo tzInfo = TimeZoneInfo.Utc;
+            
+            var profile = DataCache.Instance.ActiveProfile;
+            var ctx = DataCache.Instance.ProfileContextService?.Current;
 
-        
+            ActiveProfileDisplay = profile?.ProfileName ?? string.Empty;
+
+            int localityId = profile?.PlaceOfLivingId ?? 0;
+            locality = DataCache.Instance.LocationList
+                .FirstOrDefault(x => x.Id == localityId)?.Locality ?? string.Empty;
+
+            if (ctx != null)
+            {
+                tzInfo = ctx.TimeZoneInfo;
+                var sampleLocal = GetMonthSampleLocalTime(Year, Month);
+                var baseOffset = tzInfo.GetUtcOffset(sampleLocal);
+                offsetText = FormatUtcOffset(baseOffset);
+
+                // transition (если есть)
+                var transition = FindOffsetTransitionInMonth(tzInfo, Year, Month);
+
+                if (transition.HasValue)
+                {
+                    transitionSuffix = GetOffsetChangeSuffix(
+                        tzInfo,
+                        transition.Value,
+                        baseOffset);
+                }
+            }
+
+            ActiveLocationTimeZoneDisplay = string.IsNullOrWhiteSpace(locality)
+                    ? $"{tzInfo.Id}, {offsetText}{transitionSuffix}"
+                    : $"{locality}, {offsetText}{transitionSuffix}";
+        }
+
+        private static DateTime GetMonthSampleLocalTime(int year, int month)
+        {
+            int day = Math.Min(15, DateTime.DaysInMonth(year, month));
+            return new DateTime(year, month, day, 12, 0, 0, DateTimeKind.Unspecified);
+        }
+
+        private static string FormatUtcOffset(TimeSpan offset)
+        {
+            var sign = offset >= TimeSpan.Zero ? "+" : "-";
+            offset = offset.Duration();
+            return $"UTC{sign}{offset.Hours:00}:{offset.Minutes:00}";
+        }
+
+        /// <summary>
+        /// Returns the local DateTime of DST/offset transition within the specified month (if any).
+        /// If there are multiple transitions (rare), returns the first.
+        /// </summary>
+        private static DateTime? FindOffsetTransitionInMonth(TimeZoneInfo tz, int year, int month)
+        {
+            var days = DateTime.DaysInMonth(year, month);
+
+            // Compare offset at noon for each day (stable, avoids ambiguous hours)
+            TimeSpan prevOffset = tz.GetUtcOffset(new DateTime(year, month, 1, 12, 0, 0, DateTimeKind.Unspecified));
+
+            for (int d = 2; d <= days; d++)
+            {
+                var noon = new DateTime(year, month, d, 12, 0, 0, DateTimeKind.Unspecified);
+                var off = tz.GetUtcOffset(noon);
+
+                if (off != prevOffset)
+                {
+                    // Transition happened between day d-1 noon and day d noon.
+                    // Narrow down within that 24h window.
+                    var start = new DateTime(year, month, d - 1, 0, 0, 0, DateTimeKind.Unspecified);
+                    var end = new DateTime(year, month, d, 23, 59, 59, DateTimeKind.Unspecified);
+
+                    return FindTransitionByBinarySearch(tz, start, end);
+                }
+
+                prevOffset = off;
+            }
+
+            return null;
+        }
+
+        private static DateTime FindTransitionByBinarySearch(TimeZoneInfo tz, DateTime startLocal, DateTime endLocal)
+        {
+            // Binary search by offset change
+            TimeSpan startOffset = tz.GetUtcOffset(startLocal);
+            TimeSpan endOffset = tz.GetUtcOffset(endLocal);
+
+            // Safety: if no change, return start
+            if (startOffset == endOffset) return startLocal;
+
+            DateTime lo = startLocal;
+            DateTime hi = endLocal;
+
+            // Search down to ~1 minute precision
+            while ((hi - lo).TotalMinutes > 1)
+            {
+                var midTicks = lo.Ticks + (hi.Ticks - lo.Ticks) / 2;
+                var mid = new DateTime(midTicks, DateTimeKind.Unspecified);
+
+                var midOffset = tz.GetUtcOffset(mid);
+                if (midOffset == startOffset)
+                    lo = mid;
+                else
+                    hi = mid;
+            }
+
+            // hi is the first moment where offset differs (approx)
+            return hi;
+        }
+
+        private static string GetOffsetChangeSuffix(
+            TimeZoneInfo tz,
+            DateTime transitionLocal,
+            TimeSpan currentMonthOffset)
+        {
+            // offset сразу ПОСЛЕ перехода
+            var after = tz.GetUtcOffset(transitionLocal.AddMinutes(5));
+
+            var delta = after - currentMonthOffset;
+            if (delta == TimeSpan.Zero)
+                return string.Empty;
+
+            var hours = Math.Abs(delta.TotalHours);
+
+            var sign = delta.TotalHours > 0 ? "+" : "-";
+            return $" ({sign}{hours:0.#}h {transitionLocal:yyyy-MM-dd})";
+        }
+
 
 
 

@@ -22,17 +22,40 @@
     </Shell.TitleView>
 
     <Grid Padding="0" RowSpacing="0" ColumnSpacing="0">
-
+        
         <Grid.RowDefinitions>
+            <!-- NEW: строка с активным профилем -->
+            <RowDefinition Height="Auto" />
             <!-- Новый ряд для заголовков дней недели -->
             <RowDefinition Height="Auto" />
             <!-- Основной календарь -->
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- NEW: Active profile row -->
+        <Grid Grid.Row="0"
+          Padding="8,2"
+          ColumnSpacing="8"
+          ColumnDefinitions="*,Auto"
+          Opacity="0.85">
+
+            <Label Grid.Column="0"
+               Text="{Binding ActiveProfileDisplay}"
+               FontSize="14"
+               LineBreakMode="TailTruncation"
+               VerticalOptions="Center" />
+
+            <Label Grid.Column="1"
+               Text="{Binding ActiveLocationTimeZoneDisplay}"
+               FontSize="14"
+               LineBreakMode="TailTruncation"
+               HorizontalTextAlignment="End"
+               VerticalOptions="Center" />
+        </Grid>
+
         <!-- Шапка с аббревиатурами дней -->
         <Grid x:Name="DaysHeaderGrid"
-              Grid.Row="0"
+              Grid.Row="1"
               HeightRequest="24"
               Margin="0"
               ColumnSpacing="0"
@@ -50,7 +73,7 @@
 
         <!-- Календарь -->
         <CollectionView x:Name="CalendarCollection"
-                        Grid.Row="1"
+                        Grid.Row="2"
                         ItemsSource="{Binding Days}"
                         SelectionMode="Single"
                         SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
