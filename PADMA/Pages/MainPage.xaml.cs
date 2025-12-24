@@ -47,7 +47,6 @@ namespace PADMA.Pages
             MessagingCenter.Subscribe<object>(this, "ProfileChanged", _ =>
             {
                 Vm?.ReloadCultureAndRefresh();
-                //Vm?.RebuildCurrentMonth();
                 UpdateDaysHeader();
             });
 
@@ -247,25 +246,24 @@ namespace PADMA.Pages
                 Console.WriteLine($"{(EEclipse)e.EclipseId} | {e.Date:yyyy-MM-dd HH:mm}");
             */
 
-
-            try
+            if (_needsRefreshAfterConfig)
             {
-                if (_needsRefreshAfterConfig)
+                _needsRefreshAfterConfig = false; // сразу сбросить, чтобы не зациклиться
+
+                MainThread.BeginInvokeOnMainThread(async () =>
                 {
+                    // дать MainPage реально отрисоваться (и показать overlay календаря)
+                    await Task.Yield();
+
                     // На всякий случай подтянем свежие настройки и тексты из БД в кэш
                     var db = ServiceLocator.Services.GetService<DatabaseService>();
                     DataCache.Instance.Refresh(db);
 
                     Vm?.ReloadCultureAndRefresh();
                     UpdateDaysHeader();
-
-                    _needsRefreshAfterConfig = false; // сброс флага после обновления
-                }
+                });
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] MainPage.OnAppearing error: {ex.Message}");
-            }
+            
         }
         
         private void UpdateTitle()

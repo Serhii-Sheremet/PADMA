@@ -161,5 +161,33 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+        
+        <!-- Busy overlay: показывается во время расчётов и блокирует UI -->
+        <Grid
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            IsVisible="{Binding IsBusy}"
+            InputTransparent="False"
+            BackgroundColor="#80000000"
+            ZIndex="999">
+
+            <VerticalStackLayout
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="12">
+
+                <ActivityIndicator
+                    IsRunning="True"
+                    WidthRequest="48"
+                    HeightRequest="48" />
+
+                <Label
+                    Text="{Binding BusyText}"
+                    TextColor="White"
+                    FontSize="Medium"
+                    HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+
     </Grid>
 </ContentPage>

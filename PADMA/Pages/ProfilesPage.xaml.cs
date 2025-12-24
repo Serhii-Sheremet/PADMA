@@ -11,6 +11,49 @@ namespace PADMA.Pages
         private readonly DatabaseService _database;
         private ProfileViewItem? _selectedProfile;
         public ObservableCollection<ProfileViewItem> Profiles { get; } = new();
+
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy == value) return;
+                _isBusy = value;
+                OnPropertyChanged(); // ContentPage это BindableObject Ч работает
+            }
+        }
+
+        private string _busyText = "Please waitЕ";
+        public string BusyText
+        {
+            get => _busyText;
+            set
+            {
+                if (_busyText == value) return;
+                _busyText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private async Task RunBusyAsync(string text, Func<Task> action)
+        {
+            BusyText = text;
+            IsBusy = true;
+
+            // важно: дать UI шанс отрисовать overlay
+            await Task.Yield();
+
+            try
+            {
+                await action();
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         public Command<ProfileViewItem> OpenProfileCommand { get; }
 
         public ProfilesPage(DatabaseService database)
@@ -122,38 +165,26 @@ namespace PADMA.Pages
         {
             if (_selectedProfile == null) return;
 
-            // ЌайдЄм полноценный Profile (не view item)
             var profile = DataCache.Instance.GetProfiles(_database)
                 .FirstOrDefault(p => p.Id == _selectedProfile.Id);
 
             if (profile == null) return;
 
-            DataCache.Instance.ActiveProfile = profile;
-
-            // гарантируем, что LOCATION-кеш актуален (особенно сразу после создани€ профил€)
-            DataCache.Instance.ReloadLocations(_database);
-
-            try
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            await RunBusyAsync(Localization.GetLocalizedText("Switching profileЕ", lang), async () =>
             {
+                DataCache.Instance.ActiveProfile = profile;
+                DataCache.Instance.ReloadLocations(_database);
                 await DataCache.Instance.ProfileContextService.RebuildAsync();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // на случай, если всЄ равно не нашли локацию
-                var lang = DataCache.Instance.CurrentLanguageCode;
-                await DisplayAlert(
-                    Localization.GetLocalizedText("Error", lang),
-                    ex.Message,
-                    "OK");
-                return;
-            }
 
-            MessagingCenter.Send<object>(this, "ProfileChanged");
-            ClearSelection();
-            await Shell.Current.GoToAsync("//main", true);
+                MessagingCenter.Send<object>(this, "ProfileChanged");
+                ClearSelection();
+                await Shell.Current.GoToAsync("//main", true);
+
+                // ƒать UI шанс показать MainPage overlay
+                await Task.Yield();
+            });
         }
-
-
 
         private async Task NavigateToProfile(ProfileViewItem? profile)
         {

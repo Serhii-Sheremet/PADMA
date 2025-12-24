@@ -1553,7 +1553,7 @@ cache.TaraBalaDescList.FirstOrDefault(d => d.TaraBalaId == slice.TaraBalaId)
 Slice remains computational and minimal.
 
 ### 9.7. Output
-List\<TaraBalaSlice>
+List<TaraBalaSlice>
 
 ## 9.8. Status: Completed
 

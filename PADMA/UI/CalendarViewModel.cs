@@ -1,6 +1,4 @@
-﻿using CommunityToolkit.Maui.Core;
-using CommunityToolkit.Maui.Views;
-using NodaTime;
+﻿using NodaTime;
 using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
@@ -119,20 +117,58 @@ namespace PADMA.UI
             RefreshCalendar();
         }
 
-
-        // === Опционально: обновлённый заголовок месяца (если где-то нужен)
-        private string _monthTitle;
-        public string MonthTitle
+        private bool _isBusy;
+        public bool IsBusy
         {
-            get => _monthTitle;
-            private set
+            get => _isBusy;
+            set
             {
-                if (_monthTitle != value)
-                {
-                    _monthTitle = value;
-                    OnPropertyChanged();
-                }
+                if (_isBusy == value) return;
+                _isBusy = value;
+                OnPropertyChanged(nameof(IsBusy));
             }
+        }
+
+        private string _busyText = "Please wait…";
+        public string BusyText
+        {
+            get => _busyText;
+            set
+            {
+                if (_busyText == value) return;
+                _busyText = value;
+                OnPropertyChanged(nameof(BusyText));
+            }
+        }
+
+        private async Task RunBusyAsync(string text, Func<Task> action)
+        {
+            BusyText = text;
+            IsBusy = true;
+
+            // ВАЖНО: дать UI шанс отрисовать overlay
+            await Task.Yield();
+
+            try
+            {
+                await action();
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task GenerateDaysAsync(int year, int month)
+        {
+            if (IsBusy) return;
+
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            await RunBusyAsync(Localization.GetLocalizedText("Calculating calendar…", lang), () =>
+            {
+                GenerateDays(year, month);
+                return Task.CompletedTask;
+            });
         }
 
         public CalendarViewModel()
@@ -144,7 +180,7 @@ namespace PADMA.UI
             Month = today.Month;
 
             UpdateActiveProfileInfo();
-            GenerateDays(Year, Month);
+            _ = GenerateDaysAsync(Year, Month);
         }
 
         /// <summary>
@@ -154,7 +190,7 @@ namespace PADMA.UI
         {
             UpdateActiveProfileInfo();
             OnPropertyChanged(nameof(MonthYearTitle));
-            GenerateDays(Year, Month);
+            _ = GenerateDaysAsync(Year, Month);
         }
 
         /// <summary>

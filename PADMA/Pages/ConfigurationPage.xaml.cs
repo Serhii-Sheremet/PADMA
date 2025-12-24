@@ -8,9 +8,45 @@ namespace PADMA.Pages
     {
         private bool _hasConfigChanges = false;
 
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy == value) return;
+                _isBusy = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _busyText = "Please wait…";
+        public string BusyText
+        {
+            get => _busyText;
+            set
+            {
+                if (_busyText == value) return;
+                _busyText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private async Task RunBusyAsync(string text, Func<Task> action)
+        {
+            BusyText = text;
+            IsBusy = true;
+
+            await Task.Yield(); // дать UI шанс отрисовать overlay
+
+            try { await action(); }
+            finally { IsBusy = false; }
+        }
+
         public ConfigurationPage()
         {
             InitializeComponent();
+            BindingContext = this;   // чтобы IsBusy/BusyText брались из code-behind
 
             // Универсальная подписка на событие "SettingsChanged" от всех дочерних страниц
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ =>
@@ -31,17 +67,17 @@ namespace PADMA.Pages
 
         private void ApplyLocalization()
         {
-            var langCode = DataCache.Instance.CurrentLanguageCode;
+            var lang = DataCache.Instance.CurrentLanguageCode;
 
-            Title = Localization.GetLocalizedText("Settings", langCode);
-            btnLanguage.Text = Localization.GetLocalizedText("Language", langCode);
-            btnFirstDayOfWeek.Text = Localization.GetLocalizedText("First day of week", langCode);
-            btnTransits.Text = Localization.GetLocalizedText("Planetary transits", langCode);
-            btnNodes.Text = Localization.GetLocalizedText("Nodes (Rahu and Ketu)", langCode);
-            btnHora.Text = Localization.GetLocalizedText("Hora", langCode);
-            btnMuhurta.Text = Localization.GetLocalizedText("30 Muhurtas (60 Ghatis)", langCode);
-            btnMrityuBhaga.Text = Localization.GetLocalizedText("Mrityu Bhaga", langCode);
-            btnSunrise.Text = Localization.GetLocalizedText("Sunrise calculation", langCode);
+            Title = Localization.GetLocalizedText("Settings", lang);
+            btnLanguage.Text = Localization.GetLocalizedText("Language", lang);
+            btnFirstDayOfWeek.Text = Localization.GetLocalizedText("First day of week", lang);
+            btnTransits.Text = Localization.GetLocalizedText("Planetary transits", lang);
+            btnNodes.Text = Localization.GetLocalizedText("Nodes (Rahu and Ketu)", lang);
+            btnHora.Text = Localization.GetLocalizedText("Hora", lang);
+            btnMuhurta.Text = Localization.GetLocalizedText("30 Muhurtas (60 Ghatis)", lang);
+            btnMrityuBhaga.Text = Localization.GetLocalizedText("Mrityu Bhaga", lang);
+            btnSunrise.Text = Localization.GetLocalizedText("Sunrise calculation", lang);
         }
 
         private async Task ShowSettingsUpdatedMessage()
@@ -57,14 +93,23 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            // Проверяем, были ли изменения с дочерних страниц
-            if (_hasConfigChanges)
-            {
-                // Шлём глобальное сообщение для MainPage о необходимости обновления календаря
-                MessagingCenter.Send<object>(this, "ConfigurationHubClosedWithChanges");
-            }
+            if (IsBusy) return;
 
-            await Shell.Current.GoToAsync("//main", true);
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            await RunBusyAsync(Localization.GetLocalizedText("Applying settings…", lang), async () =>
+            {
+                // Проверяем, были ли изменения с дочерних страниц
+                if (_hasConfigChanges)
+                {
+                    // Шлём глобальное сообщение для MainPage о необходимости обновления календаря
+                    MessagingCenter.Send<object>(this, "ConfigurationHubClosedWithChanges");
+                }
+
+                await Shell.Current.GoToAsync("//main", true);
+
+                // чуть сгладит переход, чтобы MainPage успел показать свой overlay
+                await Task.Yield();
+            });
         }
 
         private async void OnLanguageClicked(object sender, EventArgs e)
