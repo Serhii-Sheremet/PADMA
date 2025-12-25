@@ -14,6 +14,8 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(ProfileDetailPage), typeof(PADMA.Pages.ProfileDetailPage));
         Routing.RegisterRoute(nameof(LocationSearchPage), typeof(PADMA.Pages.LocationSearchPage));
 
+        // Регистрируем маршрут для DayOverviewPage и DayPage
+        Routing.RegisterRoute("dayOverview", typeof(DayOverviewPage));
         Routing.RegisterRoute("day", typeof(DayPage));
 
         // Регистрируем маршруты для всех страниц конфигурации
@@ -26,6 +28,9 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(MuhurtasPage), typeof(PADMA.Pages.MuhurtasPage));
         Routing.RegisterRoute(nameof(MrityuBhagaPage), typeof(PADMA.Pages.MrityuBhagaPage));
         Routing.RegisterRoute(nameof(SunrisePage), typeof(PADMA.Pages.SunrisePage));
+
+        
+        
     }
 
     private async void OnSettingsClicked(object sender, EventArgs e)

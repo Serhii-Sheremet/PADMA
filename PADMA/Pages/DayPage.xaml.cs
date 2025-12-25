@@ -20,12 +20,14 @@ namespace PADMA.Pages
         public DayPage()
         {
             InitializeComponent();
+            BindingContext = this;
         }
+
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            // возвращаемся на календарь
-            await Shell.Current.GoToAsync("//calendar");
+            // Закрываем DayPage полностью и возвращаемся на календарь
+            await Shell.Current.GoToAsync("//main", true);
         }
     }
 }

@@ -25,6 +25,7 @@
     </FlyoutItem>
 
     <!-- Вложенные маршруты -->
+    <ShellContent Route="dayOverview" ContentTemplate="{DataTemplate pages:DayOverviewPage}" />
     <ShellContent Route="day" ContentTemplate="{DataTemplate pages:DayPage}" />
     <ShellContent Route="firstDayOfWeek" ContentTemplate="{DataTemplate pages:FirstDayOfWeekPage}" />
 

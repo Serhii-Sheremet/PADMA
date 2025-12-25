@@ -360,16 +360,28 @@ namespace PADMA.Pages
 
         private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (Vm is null) return;
+
             if (e.CurrentSelection == null || e.CurrentSelection.Count == 0)
                 return;
 
-            var selected = e.CurrentSelection[0] as DayItem;
-            if (selected == null)
+            var tapped = e.CurrentSelection[0] as DayItem;
+            if (tapped == null)
                 return;
 
+            // важно: сбрасываем выделение CollectionView, чтобы следующий тап по тому же элементу снова вызвал SelectionChanged
             ((CollectionView)sender).SelectedItem = null;
 
-            await Shell.Current.GoToAsync($"day?Date={selected.Date:yyyy-MM-dd}");
+            // 1) если тапнули по уже выбранному дню -> открываем DayOverview
+            if (Vm.SelectedDay != null && Vm.SelectedDay.Date == tapped.Date)
+            {
+                await Shell.Current.GoToAsync("dayOverview", true,
+                        new Dictionary<string, object> { { "Day", tapped } });
+                return;
+            }
+
+            // 2) иначе просто выбираем день (подсветка)
+            Vm.SelectedDay = tapped;
         }
 
         private async void OnMonthTitleTapped(object sender, EventArgs e)

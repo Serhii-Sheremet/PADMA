@@ -5,6 +5,10 @@
     x:Class="PADMA.Pages.DayPage"
     Title="Day">
 
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" />
+    </Shell.BackButtonBehavior>
+
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="✕" Priority="0" Order="Primary" Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>

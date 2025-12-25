@@ -46,6 +46,18 @@ namespace PADMA.UI
             }
         }
 
+        private DayItem? _selectedDay;
+        public DayItem? SelectedDay
+        {
+            get => _selectedDay;
+            set
+            {
+                if (ReferenceEquals(_selectedDay, value)) return;
+                _selectedDay = value;
+                OnPropertyChanged(nameof(SelectedDay));
+            }
+        }
+
         // === Добавлено: поддержка CultureCode ===
         private string _cultureCode;
         public string CultureCode

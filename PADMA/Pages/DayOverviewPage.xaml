@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ui:ConfigBasePage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
+    xmlns:local="clr-namespace:PADMA.UI"
+    x:Class="PADMA.Pages.DayOverviewPage">
+
+    <!-- ВНИМАНИЕ:
+         ConfigBasePage уже содержит ScrollView внутри.
+         Но в проекте дочерние конфиг-страницы тоже часто кладут свой ScrollView — это ок.
+         Чтобы не плодить вложенный ScrollView, здесь используем просто VerticalStackLayout. -->
+
+    <VerticalStackLayout Spacing="14" Padding="16">
+
+        <!-- Заголовок дня (крупно) -->
+        <Label
+            x:Name="HeaderLabel"
+            FontSize="20"
+            FontAttributes="Bold"
+            HorizontalOptions="Center" />
+
+        <!-- Подзаголовок (день недели, краткая инфа) -->
+        <Label
+            x:Name="SubHeaderLabel"
+            FontSize="14"
+            TextColor="#666"
+            HorizontalOptions="Center" />
+
+        <!-- Panchanga bars (крупнее, чем в календаре) -->
+        <VerticalStackLayout Spacing="10">
+
+            <Label x:Name="NakshatraLabel" FontSize="14" TextColor="#333" />
+            <local:PanchangaBar HeightRequest="18"
+                                DayDate="{Binding Day.Date}"
+                                Segments="{Binding Day.NakshatraSegments}" />
+
+            <Label x:Name="TaraBalaLabel" FontSize="14" TextColor="#333" />
+            <local:PanchangaBar HeightRequest="18"
+                                DayDate="{Binding Day.Date}"
+                                Segments="{Binding Day.TaraBalaSegments}" />
+
+            <Label x:Name="TithiLabel" FontSize="14" TextColor="#333" />
+            <local:PanchangaBar HeightRequest="18"
+                                DayDate="{Binding Day.Date}"
+                                Segments="{Binding Day.TithiSegments}" />
+
+            <Label x:Name="KaranaLabel" FontSize="14" TextColor="#333" />
+            <local:PanchangaBar HeightRequest="18"
+                                DayDate="{Binding Day.Date}"
+                                Segments="{Binding Day.KaranaSegments}" />
+
+            <Label x:Name="NityaYogaLabel" FontSize="14" TextColor="#333" />
+            <local:PanchangaBar HeightRequest="18"
+                                DayDate="{Binding Day.Date}"
+                                Segments="{Binding Day.NityaYogaSegments}" />
+
+            <Label x:Name="ChandraBalaLabel" FontSize="14" TextColor="#333" />
+            <local:PanchangaBar HeightRequest="18"
+                                DayDate="{Binding Day.Date}"
+                                Segments="{Binding Day.ChandraBalaSegments}" />
+        </VerticalStackLayout>
+
+        <!-- Кнопка перехода на DayPage -->
+        <Button
+            x:Name="OpenDayDetailsButton"
+            Text="Open Day Details"
+            CornerRadius="10"
+            HeightRequest="34"
+            Clicked="OnOpenDayDetailsClicked" />
+    </VerticalStackLayout>
+</ui:ConfigBasePage>
