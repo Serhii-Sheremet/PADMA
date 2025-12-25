@@ -2546,3 +2546,140 @@ This popup is considered the **canonical month/year selection mechanism** in PAD
 **Implemented and stable**  
 
 -----
+
+# PADMA – Calendar Day Interaction & Day Overview UX Specification
+
+## Purpose
+
+This chapter defines the user interaction model for selecting a day in the main calendar,
+previewing day information, and navigating to the full Day page (daily diary)
+in the PADMA (Personal Astrological Diary Mobile App).
+
+The goal is to provide a **mobile-friendly, intuitive, and scalable UX**
+that replaces mouse-based desktop interactions with touch-based patterns.
+
+## Context & Constraints
+
+- The main calendar displays **42 days** (6×7 grid).
+- Each day cell is visually small and contains only **colored bars (Panchanga segments)**.
+- Displaying text directly inside calendar cells is not viable on mobile screens.
+- The application targets **mobile platforms (Android, iOS)** using .NET MAUI.
+- Existing UX patterns from Configuration pages should be reused where possible.
+
+## High-Level Interaction Model
+
+The interaction with calendar days follows a **three-level depth model**:
+
+1. **Selection** – choose a day in the calendar.
+2. **Overview** – preview detailed information for the selected day.
+3. **Details** – open the full Day page (daily diary).
+
+## Step 1: Day Selection (Calendar Grid)
+
+### Interaction
+- **Tap on a day cell**:
+  - Selects the day.
+  - Visually highlights the selected day (e.g. light orange background).
+  - If another day was previously selected, selection moves to the new day.
+
+### Notes
+- This action does **not** open a popup.
+- Selection is lightweight and reversible.
+
+## Step 2: Day Overview (Preview / Popup Page)
+
+### Trigger
+- **Tap again on the already selected day**.
+
+This is **not a system double-tap**, but a logical:
+> *tap on selected item → open overview*
+
+### Result
+- A **near full-screen page** opens, visually behaving like a popup.
+- The user remains conceptually “inside the calendar context”.
+
+### Content of Day Overview
+The overview page displays:
+- Large, clearly visible **Panchanga bars** for the day.
+- Additional bars (e.g. Yogas) not shown in the calendar grid.
+- Key textual information for the day (to be defined later).
+- A single primary action button:
+  - **“Open Day Details”** (or equivalent localized text).
+
+## Navigation & Closing Behavior (Day Overview)
+
+The Day Overview page uses the **same header UX pattern as Configuration pages**.
+
+### Toolbar Layout
+```
+[ ← Back ] Title of the Day [ ✕ Close ]
+```
+
+### Closing Options
+Both of the following close the overview and return to the calendar:
+- **Back arrow (←)** on the left (Shell navigation).
+- **Close (✕)** button on the right.
+
+### System Navigation
+- System Back button / gesture must also close the overview.
+- No background tap-to-dismiss behavior is used.
+
+### Explicit Non-Goals
+- No closing by tapping outside the content area.
+- No “Close” button inside the content body.
+
+## Step 3: Navigation to Day Page (Daily Diary)
+
+### Trigger
+- Tap on **“Open Day Details”** button in the Day Overview.
+
+### Result
+- The Day Overview closes.
+- Navigation proceeds to the dedicated **DayPage**.
+- The DayPage represents the full daily diary / working view.
+
+### Rationale
+- Prevents accidental deep navigation.
+- Keeps the overview page lightweight and informational.
+- Clearly separates *preview* vs *work* modes.
+
+## Architectural Notes
+
+- The Day Overview is implemented as a **regular Shell page**, not a modal dialog.
+- It reuses the existing **ConfigBasePage / configuration hub header pattern**:
+  - Back arrow provided by Shell.
+  - Close (✕) button provided by shared template logic.
+- This ensures:
+  - UX consistency across the app.
+  - Minimal new infrastructure.
+  - Predictable navigation behavior.
+
+## UX Principles Followed
+
+- Mobile-first interaction (tap-based, no hover, no mouse assumptions).
+- Progressive disclosure of information.
+- Explicit user control over navigation depth.
+- Reuse of established application UX patterns.
+- Avoidance of hidden or non-discoverable gestures.
+
+## Future Extensions (Out of Scope)
+
+- Exact list of textual data shown in Day Overview.
+- Editing or interaction inside the overview page.
+- Animations or transitions.
+- Gesture-based shortcuts (e.g. swipe to open DayPage).
+
+These can be defined in follow-up specifications.
+
+## Summary
+
+The final interaction flow is:
+
+**Tap day → Select**  
+**Tap selected day → Day Overview**  
+**Tap “Open Day Details” → DayPage**
+
+This model provides clarity, scalability, and a high-quality mobile UX
+while staying fully aligned with existing PADMA architecture.
+
+-----
