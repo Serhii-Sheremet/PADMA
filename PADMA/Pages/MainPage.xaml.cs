@@ -11,6 +11,7 @@ using PADMA.Core.Native;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI;
+using PADMA.UI.Services;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -33,19 +34,20 @@ namespace PADMA.Pages
             Vm.InitializeCulture();
             var culture = Vm.CurrentCulture ?? CultureInfo.CurrentCulture;
             var popup = new MonthPickerPopup(culture, Vm.Year, Vm.Month);
+            var dayService = ServiceLocator.Services.GetService<IDayComputationService>();
 
             MessagingCenter.Unsubscribe<object>(this, "SettingsChanged");
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
             {
+                dayService?.InvalidateAll();
                 _needsRefreshAfterConfig = true;
-
-                Vm?.ReloadCultureAndRefresh();
-                UpdateDaysHeader();
             });
             
             MessagingCenter.Unsubscribe<object>(this, "ProfileChanged");
             MessagingCenter.Subscribe<object>(this, "ProfileChanged", _ =>
             {
+                dayService?.InvalidateAll();
+
                 Vm?.ReloadCultureAndRefresh();
                 UpdateDaysHeader();
             });

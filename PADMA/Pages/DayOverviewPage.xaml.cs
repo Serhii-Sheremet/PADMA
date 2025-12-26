@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Maui.Controls;
 using PADMA.UI;
+using PADMA.UI.Services;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 
@@ -10,6 +11,7 @@ namespace PADMA.Pages
     public partial class DayOverviewPage : UI.Templates.ConfigBasePage, IQueryAttributable
     {
         private DayItem? _day;
+        private readonly IDayComputationService _dayService;
 
         public DayItem? Day
         {
@@ -23,17 +25,48 @@ namespace PADMA.Pages
             }
         }
 
+        private DayOverviewData? _overviewData;
+        public DayOverviewData? OverviewData
+        {
+            get => _overviewData;
+            private set
+            {
+                _overviewData = value;
+                OnPropertyChanged(nameof(OverviewData));
+            }
+        }
+
         public DayOverviewPage()
         {
             InitializeComponent();
             BindingContext = this;
+
+            _dayService = ServiceLocator.Services.GetService<IDayComputationService>()
+                ?? throw new InvalidOperationException("IDayComputationService is not registered");
+
         }
+
+        private async Task LoadOverviewAsync(DayItem day)
+        {
+            var profile = DataCache.Instance.ActiveProfile;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+
+            if (profile == null || ctx == null)
+                return;
+
+            var key = new DayKey(profile.Id, DateOnly.FromDateTime(day.Date));
+            OverviewData = await _dayService.GetOverviewAsync(key, day);
+        }
+
 
         public void ApplyQueryAttributes(IDictionary<string, object> query)
         {
             if (query.TryGetValue("Day", out var obj) && obj is DayItem day)
             {
                 Day = day;
+
+                // не блокируем UI — просто запускаем подгрузку
+                _ = LoadOverviewAsync(day);
                 return;
             }
 
