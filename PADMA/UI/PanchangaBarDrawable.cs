@@ -44,6 +44,48 @@ namespace PADMA.UI
                 canvas.FillColor = seg.Color;
                 canvas.FillRectangle(x1, 0, w, height);
 
+                // --- TEXT (no wrapping) ---
+                var text = seg.Text;
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    if (height >= 18 && w >= 24)
+                    {
+                        var pad = 1f;
+                        var drawW = Math.Max(1f, w - pad * 2);
+
+                        // Подбираем размер шрифта (как у тебя было)
+                        canvas.FontColor = Colors.Black;
+                        var fontSize = Math.Max(10f, height * 0.55f);
+
+                        // Задаём шрифт (обычный системный)
+                        var font = Microsoft.Maui.Graphics.Font.Default; 
+                        
+                        // Измеряем текст
+                        var textSize = canvas.GetStringSize(text, font, fontSize);
+
+                        // Если текст не помещается — НЕ рисуем
+                        if (textSize.Width <= drawW)
+                        {
+                            canvas.SaveState();
+
+                            canvas.Font = font;
+                            canvas.FontSize = fontSize;
+                            canvas.FontColor = Colors.Black;
+
+                            canvas.ClipRectangle(x1, 0, w, height);
+
+                            canvas.DrawString(
+                                text,
+                                x1 + pad, 0,
+                                drawW, height,
+                                HorizontalAlignment.Left,
+                                VerticalAlignment.Center);
+
+                            canvas.RestoreState();
+                        }
+                    }
+                }
+
                 // вертикальная чёрная линия, если не в самом конце
                 if (Math.Abs(x2 - width) > 0.5f)
                 {

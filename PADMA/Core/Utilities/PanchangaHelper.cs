@@ -20,7 +20,8 @@ namespace PADMA.Core.Utilities
             DateTime dayLocal,
             TimeZoneInfo tz,
             DataCache cache,
-            Func<TSlice, EColor> getColorCode)
+            Func<TSlice, EColor> getColorCode,
+            Func<TSlice, string?>? getText = null)
             where TSlice : CalendarSlice
         {
             if (slicesUtc == null) throw new ArgumentNullException(nameof(slicesUtc));
@@ -51,11 +52,28 @@ namespace PADMA.Core.Utilities
                 var colorCode = getColorCode(slice);
                 var color = cache.GetColor(colorCode);
 
+                var core = getText?.Invoke(slice); // например "4.Rohini"
+                string? text = core;
+
+                if (!string.IsNullOrWhiteSpace(core))
+                {
+                    // dayLocal — локальное время, соответствует началу суток (00:00) для строящегося дня
+                    dayStartLocal = dayLocal.Date; // 00:00 локально
+                    startLocal = effStart.LocalDateTime;
+
+                    // если сегмент начался НЕ в самом начале дня, то добавляем время
+                    if (startLocal > dayStartLocal.AddSeconds(1)) // маленький допуск
+                    {
+                        text = $"{startLocal:HH:mm} {core}";
+                    }
+                }
+
                 result.Add(new PanchangaSegment
                 {
                     Start = effStart.LocalDateTime,
                     End = effEnd.LocalDateTime,
-                    Color = color
+                    Color = color,
+                    Text = text
                 });
             }
 
@@ -71,9 +89,10 @@ namespace PADMA.Core.Utilities
             DateTime dayLocal,
             TimeZoneInfo tz,
             DataCache cache,
-            Func<CalendarSlice, EColor> getColorCode)
+            Func<CalendarSlice, EColor> getColorCode,
+            Func<CalendarSlice, string?>? getText = null)
         {
-            return BuildSegmentsForDay<CalendarSlice>(slicesUtc, dayLocal, tz, cache, getColorCode);
+            return BuildSegmentsForDay<CalendarSlice>(slicesUtc, dayLocal, tz, cache, getColorCode, getText);
         }
     }
 }

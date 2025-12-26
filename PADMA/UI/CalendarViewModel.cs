@@ -236,6 +236,38 @@ namespace PADMA.UI
             List<ChandraBalaSlice>? chandraBalaSlices = null;
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
+            
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            var nakById = DataCache.Instance.NakshatraDescList
+                .Where(x => x.LanguageCode == lang)
+                .ToDictionary(x => x.NakshatraId, x => string.IsNullOrWhiteSpace(x.ShortName) ? x.Name : x.ShortName);
+            var taraById = DataCache.Instance.TaraBalaDescList
+                .Where(x => x.LanguageCode == lang)
+                .ToDictionary(x => x.TaraBalaId, x => string.IsNullOrWhiteSpace(x.ShortName) ? x.Name : x.ShortName);
+
+            var tithiById = DataCache.Instance.TithiDescList
+                .Where(x => x.LanguageCode == lang)
+                .ToDictionary(x => x.TithiId, x => string.IsNullOrWhiteSpace(x.ShortName) ? x.Name : x.ShortName);
+
+            var karanaById = DataCache.Instance.KaranaDescList
+                .Where(x => x.LanguageCode == lang)
+                .ToDictionary(x => x.KaranaId, x => x.Name ?? "");
+
+            var nityaYogaById = DataCache.Instance.NityaYogaDescList
+                .Where(x => x.LanguageCode == lang)
+                .ToDictionary(x => x.NityaYogaId, x => x.Name ?? "");
+
+            var zodiacCodeById = DataCache.Instance.ZodiacList
+                .ToDictionary(
+                    z => z.Id,
+                    z =>
+                    {
+                        var code = z.ZodiacCode; // "SCO"
+                        if (string.IsNullOrEmpty(code))
+                            return "";
+
+                        return char.ToUpper(code[0]) + code.Substring(1).ToLower();
+                    });
 
             IReadOnlyList<DateOnly> visibleDays;
             if (profile != null && ctx != null)
@@ -308,42 +340,64 @@ namespace PADMA.UI
                     {
                         nakshatraSegments = PanchangaHelper.BuildSegmentsForDay(
                             nakshatraSlices, date, tzInfo, DataCache.Instance,
-                            slice => (EColor)slice.ColorId);
+                            slice => (EColor)slice.ColorId,
+                            slice => $"{slice.NakshatraId}.{nakById.GetValueOrDefault(slice.NakshatraId, "")}");
                     }
 
                     if (taraBalaSlices != null)
                     {
                         taraBalaSegments = PanchangaHelper.BuildSegmentsForDay(
                             taraBalaSlices, date, tzInfo, DataCache.Instance,
-                            slice => (EColor)slice.ColorId);
+                            slice => (EColor)slice.ColorId,
+                            slice => $"{slice.TaraBalaId}.{taraById.GetValueOrDefault(slice.TaraBalaId, "")}");
                     }
 
                     if (tithiSlices != null)
                     {
                         tithiSegments = PanchangaHelper.BuildSegmentsForDay(
                             tithiSlices, date, tzInfo, DataCache.Instance,
-                            slice => (EColor)slice.ColorId);
+                            slice => (EColor)slice.ColorId,
+                            slice => $"{slice.TithiId}.{tithiById.GetValueOrDefault(slice.TithiId, "")}");
                     }
 
                     if(karanaSlices != null)
                     {
                          karanaSegments = PanchangaHelper.BuildSegmentsForDay(
                              karanaSlices, date, tzInfo, DataCache.Instance,
-                             slice => (EColor)slice.ColorId);
+                             slice => (EColor)slice.ColorId,
+                             slice => $"{karanaById.GetValueOrDefault(slice.KaranaId, "")}");
                     }   
 
                     if(nityaYogaSlices != null)
                     {
                         nityaYogaSegments = PanchangaHelper.BuildSegmentsForDay(
                             nityaYogaSlices, date, tzInfo, DataCache.Instance,
-                            slice => (EColor)slice.ColorId);
+                            slice => (EColor)slice.ColorId,
+                            slice => $"{slice.NityaYogaId}.{nityaYogaById.GetValueOrDefault(slice.NityaYogaId, "")}");
                     }
 
                     if(chandraBalaSlices != null)
                     {
+                        string tplHouse = Localization.GetLocalizedText("Moon in {0} house", lang);
+                        string tplHouseSign = Localization.GetLocalizedText("Moon in {0} house, {1}", lang);
+
                         chandraBalaSegments = PanchangaHelper.BuildSegmentsForDay(
                             chandraBalaSlices, date, tzInfo, DataCache.Instance,
-                            slice => (EColor)slice.ColorId);
+                            slice => (EColor)slice.ColorId,
+                            slice =>
+                            {
+                                var house = slice.HouseNumber; // 1..12
+
+                                // Показ знака только для Scorpio (SCO)
+                                if (slice.ZodiacCode == EZodiac.SCO)
+                                {
+                                    var zodiacId = (int)slice.ZodiacCode;
+                                    var zodiacCode = zodiacCodeById.GetValueOrDefault(zodiacId, "Sco");
+                                    return string.Format(tplHouseSign, house, zodiacCode);
+                                }
+
+                                return string.Format(tplHouse, house);
+                            });
                     }
                 }
 

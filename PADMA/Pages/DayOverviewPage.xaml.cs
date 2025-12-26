@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Maui.Controls;
+using System.Globalization;
 using PADMA.UI;
 using PADMA.UI.Services;
 using PADMA.Core.Services;
@@ -77,9 +78,10 @@ namespace PADMA.Pages
         private void ApplyLocalizedLabels()
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
+            var culture = new CultureInfo(lang);
 
             if (Day != null)
-                Title = Day.Date.ToString("dd MMMM yyyy");
+                Title = Day.Date.ToString("dd MMMM yyyy", culture);
 
             OpenDayDetailsButton.Text = Localization.GetLocalizedText("Open Day Details", lang);
         }
