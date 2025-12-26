@@ -2683,3 +2683,175 @@ This model provides clarity, scalability, and a high-quality mobile UX
 while staying fully aligned with existing PADMA architecture.
 
 -----
+
+# PADMA – Day-Level Progressive Computation Strategy
+
+## Purpose
+
+This document defines the architectural approach for calculating astrological data
+at different UI levels (Calendar, Day Overview, Day Details) in PADMA.
+
+The goal is to:
+- minimize unnecessary calculations,
+- improve performance on mobile devices,
+- avoid oversized Day objects,
+- and ensure consistent results across all UI levels.
+
+## Background
+
+In the legacy PAD desktop application, all calculations were performed upfront
+for each day, resulting in very large Day objects (200+ properties),
+even though only a small subset of this data was used in most UI scenarios.
+
+For PADMA (mobile-first), this approach is not optimal due to:
+- limited screen size,
+- performance constraints,
+- and typical user behavior (few days explored deeply).
+
+## Core Principle
+
+**Progressive computation with in-memory caching.**
+
+Astrological data is calculated:
+- only when needed,
+- at the appropriate UI depth,
+- and cached per day to avoid recomputation.
+
+## Computation Levels
+
+### Level 1 – Calendar (MainPage)
+
+**Scope:**
+- 42-day grid (6×7).
+
+**Calculations:**
+- Panchanga segments required for the calendar view:
+  - Nakshatra
+  - Tara Bala
+  - Tithi
+  - Karana
+  - Nitya Yoga
+  - Chandra Bala
+
+**Result:**
+- Lightweight `DayItem` objects.
+- No heavy transit or timeline calculations.
+
+### Level 2 – Day Overview (DayOverviewPage)
+
+**Scope:**
+- Single selected day.
+
+**Calculations (in addition to Level 1):**
+- Expanded Panchanga presentation (same segments, with textual context).
+- Additional Muhurta segments.
+- Day-level Yogas (if applicable).
+
+**Result:**
+- `DayOverviewData` model.
+- Designed for quick, near-instant rendering.
+
+### Level 3 – Day Details (DayPage)
+
+**Scope:**
+- Single selected day (deep analysis).
+
+**Calculations:**
+- Full transit and event data, including:
+  - Planetary transits
+  - Muhurta timelines
+  - Yogas
+  - Ghati-based Panchanga
+  - Eclipses
+  - Additional astrological events
+- Vertical time-scale with 20+ stacked segments.
+- Preparation for user-defined events and notifications.
+
+**Result:**
+- `DayDetailsData` model.
+- Heavy computation, executed lazily.
+
+## Caching Strategy
+
+### Cache Type
+- **In-memory only**.
+- No persistence to SQLite.
+
+### Cache Key
+```
+(ProfileId, Date)
+```
+- `ProfileId` uniquely defines:
+  - birth data,
+  - living data
+- Language and localization are **not part of the cache key**.
+
+## Localization & Timezone Handling
+
+- All cached data stores **structural / numeric results only**:
+  - enums,
+  - IDs,
+  - time intervals,
+  - segment definitions.
+- Localized texts are generated at the UI level using:
+```
+DataCache.Instance.CurrentLanguageCode
+```
+- Timezone is derived from `ProfileId`.
+
+Changing language:
+- does NOT invalidate the cache.
+
+Changing profile or profile timezone:
+- invalidates cached data for that profile (or all cache initially).
+
+## Day Computation Service
+
+A dedicated service coordinates calculations and caching.
+
+### Responsibilities
+- Build and cache `DayOverviewData` and `DayDetailsData`.
+- Reuse already computed results across UI levels.
+- Ensure single computation per day using lazy execution.
+
+### Conceptual Interface
+```
+Task<DayOverviewData> GetOverviewAsync(DayKey key, DayItem baseDay);
+Task<DayDetailsData> GetDetailsAsync(DayKey key, DayItem baseDay);
+
+void InvalidateProfile(int profileId);
+void InvalidateAll();
+```
+
+## Cache Invalidation Rules
+
+Cache is invalidated when:
+- Active profile changes.
+- Configuration affecting calculations changes (timezone, ayanamsa, etc.).
+
+Initial implementation may use:
+```
+InvalidateAll()
+```
+for simplicity and safety.
+
+## Benefits
+
+- Fast calendar rendering.
+- Minimal memory usage.
+- Heavy calculations only when explicitly requested.
+- Clean separation of concerns between UI levels.
+- Scalable foundation for future features (events, notifications, analytics).
+
+##Summary
+
+PADMA uses a three-level progressive computation model:
+- Light data for many days.
+- Medium data for a selected day overview.
+- Heavy data only for deep day analysis.
+All calculations are cached in memory per (ProfileId, Date)
+and reused across UI layers whenever possible.
+
+------
+
+
