@@ -2967,17 +2967,150 @@ DayOverviewPage will later include multiple blocks:
 - Panchanga
 - Planet-sign transits (9 planets)
 - Muhurta (5 bars)
-- Yogas
+- Yogas (which are present at this day)
 
 Between these blocks, a small vertical spacing (~2px) will be used, while **within** each block the bars remain tightly stacked (Spacing=0).
 
-## Open item: prevent text wrapping in graphics
+---------
 
-A known remaining issue: in some cases, MAUI `DrawString(...)` may render multi-line wrapping for certain texts/segments (notably ChandraBala).
+# PADMA – Planet Markers (Calendar + DayOverview) Architecture
 
-Target behavior:
-- do not wrap;
-- if not fitting, do not draw.
+Scope: MainPage (42-day calendar cells) + DayOverviewPage (overview blocks)
 
-This is under investigation; rendering logic may be refined (e.g., strict measurement, non-breaking spaces, alternate draw APIs, or explicit ellipsis strategy).
+## Goal
 
+Show compact **planet state/event markers** on the **calendar grid** (MainPage) and a richer view on DayOverviewPage, without forcing heavy per-day computations.
+
+Markers highlight:
+- retrograde state,
+- zodiac ingress (sign change),
+- exaltation / debilitation.
+
+## Symbol semantics (strict)
+
+### Base marker (default)
+- `Pl` — planet is in normal/direct motion by default.
+- **No `D` symbol** is used anywhere.
+
+### Retrograde (state)
+- `.R` suffix means **retrograde state**:
+  - `Pl.R`
+
+### Ingress (event)
+- `→` indicates **zodiac ingress event** (planet changes sign during that day):
+  - `Pl→`
+
+### Combined retrograde + ingress
+If ingress happens while the planet is retrograde:
+- `Pl.R→`
+
+### Exaltation / Debilitation (state)
+- `↑` indicates exaltation state
+- `↓` indicates debilitation state
+
+These are displayed **next to the planet marker**:
+- `Pl↑`
+- `Pl↓`
+- combined with retro/ingress when applicable:
+  - `Pl↑`
+  - `Pl.R→`  **Important Note:** If planet in retrograde movement - we will not show `↑` or `↓`. But sign ingress `→` is shown if happen
+  - `Pl↓`
+  - etc.
+
+**Note:** When planet become in exaltation or debilitation - the fact isteself is the palnet has ingress. So, sign ingress `→` is not necessary in this case.
+
+### Important: no “retrograde end” marker
+When a planet exits retrograde state, the marker simply returns to base:
+- `Pl.R` → `Pl` or `Pl↓` (if planet before retrograde was in debilitation and continue to be in this state)
+(no special “end” symbol is shown on the calendar)
+
+## Acceptable & Non-Acceptable markers
+
+### Acceptable:
+Pl
+Pl.R
+Pl→
+Pl.R→
+Pl↑
+Pl↓
+
+### Non-Acceptable (should not shown):
+❌ Pl→↑
+❌ Pl→↓
+❌ Pl.R↑
+❌ Pl.R↓
+❌ Pl.R→↑
+❌ Pl.R→↓
+
+## Localization policy (planet abbreviations)
+
+Planet marker prefix `Pl` is **localized** using `DataCache.Instance.PlanetDescList` for the current language.
+
+- Use **first 2 characters** of the localized planet name.
+- Examples (illustrative): `Me`, `Ma`, `Mo`, etc.
+
+### Robustness note (nonLatin alphabets)
+If the localized name begins with nonLatin letters (uk/ru), the “first 2 characters” rule still applies (e.g., `Ме`, `Лу`).  
+If later you decide the calendar should keep Latin-like abbreviations for compactness, add a dedicated `Abbrev2` field to `PlanetDesc` or a mapping table.
+
+## Data model
+
+### Calendar-level: PlanetMarker (minimal, event-oriented)
+Calendar cells must remain lightweight. Store only what is necessary for display and sorting.
+
+Suggested model:
+
+- `Planet` (EPlanet)
+- `Retrograde` (bool) – state
+- `Ingress` (bool) – event in this day
+- `Exaltation` (bool) – state
+- `Debilitation` (bool) – state
+- `ZodiacFrom / ZodiacTo` (optional, for DayOverview; calendar may ignore)
+- `Time` (optional, for DayOverview; calendar may ignore)
+- `ShortText` (string) – computed string for MainPage, e.g. `Me.R→`
+
+### Storage
+Add to `DayItem`:
+- `List<PlanetMarker> PlanetMarkers` (for calendar and overview reuse)
+
+## Computation boundaries (performance)
+
+### CalendarViewModel responsibility (MainPage)
+`CalendarViewModel.GenerateDays(...)` prepares `DayItem.PlanetMarkers` for each visible day.
+
+Principle: **event extraction only**, not full 24h timeline.
+- Detect sign ingress during the day (Zodiac change).
+- Detect retrograde state for that day.
+- Detect exaltation/debilitation state for that day.
+
+This enables MainPage to show markers instantly without opening DayOverviewPage.
+
+### DayOverviewPage
+Reuses `DayItem.PlanetMarkers` and can render:
+- the same short markers,
+- optional expanded view (e.g., include time of ingress, show zodiac codes),
+- or a separate “Planet block” (9 planets list/grid).
+
+Heavy/extended computation may later be moved to `IDayComputationService` (progressive/cached) if needed.
+
+## Display rules on MainPage (calendar cell)
+
+- Use a **single line** under day number (above Panchanga bars).
+- Show up to N markers (recommend N=2 or N=3) to avoid clutter.
+- Sort by priority, for example:
+  1. Ingress events (`→`, including `R→`)
+  2. Retrograde state (`.R`)
+  3. Exaltation/Debilitation (`↑/↓`)
+- If more markers exist, they will be separated by `, `.
+
+## Display rules on DayOverviewPage
+
+- Can show all planet markers for the day (no strict N limit).
+- May include time (`HH:mm`) for ingress events (optional).
+- Exaltation/debilitation may be emphasized by color or iconography later.
+
+## Notes / open items
+
+- Exact detection logic for retrograde/exaltation/debilitation depends on the current Transit Engine data sources and will be implemented incrementally.
+
+------
