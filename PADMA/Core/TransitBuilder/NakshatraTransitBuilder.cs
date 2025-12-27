@@ -22,16 +22,13 @@ namespace PADMA.Core.TransitBuilder
 
             for (int i = 1; i < mList.Count; i++)
             {
-                var item = mList[i];
-                var nid = item.NakshatraId;
-
                 // накшатра поменялась - закрываем предыдущий интервал
-                if (nid != currentNakId)
+                if (mList[i].NakshatraId != currentNakId)
                 {
                     var slice = new NakshatraSlice
                     {
                         StartUtc = currentStartUtc,
-                        EndUtc = item.DateTimeUtc, // до момента смены
+                        EndUtc = mList[i].DateTimeUtc, // до момента смены
                         NakshatraId = currentNakId,
                         ColorId = NakshatraSlice.GetNakshatraColorId(currentNakId),
                         NakshatraCode = (ENakshatra)currentNakId
@@ -40,8 +37,8 @@ namespace PADMA.Core.TransitBuilder
                     result.Add(slice);
 
                     // начинаем новый интервал
-                    currentNakId = nid;
-                    currentStartUtc = item.DateTimeUtc;
+                    currentNakId = mList[i].NakshatraId;
+                    currentStartUtc = mList[i].DateTimeUtc;
                 }
             }
 

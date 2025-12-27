@@ -11,7 +11,6 @@ namespace PADMA.Core.TransitBuilder
         public static List<ChandraBalaSlice> BuildChandraBalaSlices(List<PlanetData> mList, int birthZodiacMoonId)
         {
             int houseNumber = 0, colorId = 0;
-            EZodiac zodiacCode;
             var result = new List<ChandraBalaSlice>();
 
             if (mList == null || mList.Count == 0)
@@ -26,38 +25,33 @@ namespace PADMA.Core.TransitBuilder
 
             for (int i = 1; i < mList.Count; i++)
             {
-                var item = mList[i];
-                var zid = item.ZodiacId;
-
                 // zodiac поменялcя - закрываем предыдущий интервал
-                if (zid != currentZodiacId)
+                if (mList[i].ZodiacId != currentZodiacId)
                 {
-                    zodiacCode = (EZodiac)item.ZodiacId;
                     (houseNumber, colorId) = GetChandraBalaColorAndHouse(currentZodiacId, swappedZodiacs);
                     result.Add(new ChandraBalaSlice
                     {
                         StartUtc = currentStartUtc,
-                        EndUtc = item.DateTimeUtc, // до момента смены
-                        ZodiacCode = zodiacCode,
+                        EndUtc = mList[i].DateTimeUtc, // до момента смены
+                        ZodiacCode = (EZodiac)currentZodiacId,
                         HouseNumber = houseNumber,
                         ColorId = colorId
                     });
 
                     // начинаем новый интервал
-                    currentZodiacId = zid;
-                    currentStartUtc = item.DateTimeUtc;
+                    currentZodiacId = mList[i].ZodiacId;
+                    currentStartUtc = mList[i].DateTimeUtc;
                 }
             }
 
             // закрываем последнюю чандру балу до последней точки ряда
             var last = mList[mList.Count - 1];
-            zodiacCode = (EZodiac)last.ZodiacId;
             (houseNumber, colorId) = GetChandraBalaColorAndHouse(currentZodiacId, swappedZodiacs);
             var lastSlice = new ChandraBalaSlice
             {
                 StartUtc = currentStartUtc,
                 EndUtc = last.DateTimeUtc,
-                ZodiacCode = zodiacCode,
+                ZodiacCode = (EZodiac)last.ZodiacId,
                 HouseNumber = houseNumber,
                 ColorId = colorId
             };
@@ -74,8 +68,7 @@ namespace PADMA.Core.TransitBuilder
             int houseNumber = index >= 0 ? index + 1 : 0;
             // Determine color
             int colorId;
-            if (houseNumber == 6 || houseNumber == 8 || houseNumber == 12 ||
-                zodiacCode == EZodiac.SCO)
+            if (houseNumber == 6 || houseNumber == 8 || houseNumber == 12 || zodiacCode == EZodiac.SCO)
             {
                 colorId = (int)EColor.RED;
             }
