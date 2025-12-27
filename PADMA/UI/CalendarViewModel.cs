@@ -395,7 +395,7 @@ namespace PADMA.UI
                                     var zodiacCode = zodiacCodeById.GetValueOrDefault(zodiacId, "Sco");
                                     return string.Format(tplHouseSign, house, zodiacCode);
                                 }
-
+                                
                                 return string.Format(tplHouse, house);
                             });
                     }

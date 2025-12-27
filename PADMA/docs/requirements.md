@@ -2744,7 +2744,8 @@ Astrological data is calculated:
 
 **Calculations (in addition to Level 1):**
 - Expanded Panchanga presentation (same segments, with textual context).
-- Additional Muhurta segments.
+- Planets transit through Zodiac signs segments.
+- Muhurta segments.
 - Day-level Yogas (if applicable).
 
 **Result:**
@@ -2854,4 +2855,129 @@ and reused across UI layers whenever possible.
 
 ------
 
+# PADMA – DayOverview Panchanga Bars: Text-on-Segments Architecture
+
+Scope: MainPage calendar + DayOverviewPage (Panchanga bars)
+
+## Goal
+
+Display localized, compact labels **directly on Panchanga timeline bars** (segments), aligned to the **left edge of each segment**, without adding extra UI labels beside/under the bars.
+This improves readability on mobile screens and prepares the same rendering approach for future blocks (Muhurta, Yogas, transits, DayPage timeline).
+
+## High-level approach
+
+### 1) Segment carries text
+`PanchangaSegment` is extended with an optional text field:
+- `Text` (string?, optional) — already localized and formatted for display (e.g. `4.Rohini`, or `10:37 4.Rohini`)
+This field is **UI-facing** and is **not** part of heavy computations. It is built at the UI/ViewModel layer when segments are created for display.
+
+### 2) Text is produced during segment building (UI layer)
+The common helper `PanchangaHelper.BuildSegmentsForDay(...)` is extended to accept an **optional** delegate that can produce text per slice:
+- `getText` optional callback; if not provided, `PanchangaSegment.Text` remains null.
+This keeps the helper generic while enabling text injection for any bar type.
+
+Text creation (ids, names, time prefix) is performed at the point where segments are created (e.g., `CalendarViewModel.GenerateDays(...)`), using:
+- dictionaries from `DataCache` for localized names (ShortName/Name),
+- `DataCache.Instance.CurrentLanguageCode` for current language.
+
+### 3) Rendering is done in the bar drawable
+`PanchangaBarDrawable` renders:
+- segment rectangles,
+- vertical separators,
+- optional `seg.Text` overlay.
+
+Rendering rules:
+- text is **left-aligned** within the segment with a small padding (~1px),
+- text is drawn only if the segment is large enough (height/width thresholds),
+- text is clipped to the segment rectangle to avoid overdraw.
+
+**Note:** wrapping control is being actively refined; the current goal is “no wrapping; if not fitting – do not show”.
+
+## Text formatting rules
+
+### Alignment
+- Label is drawn at the **start** of each segment (left edge), not centered.
+
+### Time prefix
+- If a segment starts at the day boundary (00:00) — display only entity text:  
+  `Id.Name`
+- If a segment starts inside the day — prefix with local time (24h):  
+  `HH:mm Id.Name`
+
+Examples:
+- `4.Rohini`
+- `10:37 5.Mrigashira`
+
+### Compact name policy
+- For entities that have `ShortName`, prefer it for on-bar display.
+- If `ShortName` is missing (e.g., Karana, NityaYoga), use full `Name`.
+
+No extra whitespace inside the entity token: `Id.Name` (no space after dot).  
+Time and entity are separated by a single space: `HH:mm Id.Name`.
+
+## Localization policy
+
+### Names (Nakshatra, TaraBala, Tithi, etc.)
+Localized names are obtained via dictionaries built from `DataCache` for the current `LanguageCode`.
+
+### Template phrases (ChandraBala)
+ChandraBala uses localized templates stored in `APP_TEXTS`.
+
+Added keys (NATIVETEXT) and translations (FOREIGNTEXT):
+- `Moon in {0} house`
+- `Moon in {0} house, {1}`
+
+Formatting is done via `string.Format(localizedTemplate, ...)`.
+
+### Zodiac code
+Zodiac 3-letter codes are taken from table `ZODIAC.ZODIACCODE` and formatted for display as `TitleCase` (e.g., `SCO` → `Sco`).  
+This is structural data (not localized).
+
+### Special case – Scorpio highlighting
+For ChandraBala, the “with sign” template is used only for **Scorpio** (SCO).  
+This case is additionally highlighted by a special color rule (red override) in the ChandraBala builder.
+
+## Files / components involved
+
+### Data model
+- `PanchangaSegment` — added `Text` property.
+
+### Segment builder
+- `PanchangaHelper.BuildSegmentsForDay(...)` — added optional `getText` delegate and assigned `PanchangaSegment.Text` accordingly.
+- Wrapper overloads (non-generic) are updated to accept the same optional delegate and pass it through.
+
+### Rendering
+- `PanchangaBarDrawable` — draws `seg.Text` left-aligned and clipped per segment.
+
+### ViewModel integration
+- `CalendarViewModel.GenerateDays(...)` — builds per-language dictionaries and supplies `getText` for each Panchanga bar:
+  - Nakshatra
+  - TaraBala
+  - Tithi
+  - Karana
+  - NityaYoga
+  - ChandraBala (template-based)
+
+### Page usage
+- `DayOverviewPage.xaml` — displays the 6 Panchanga bars as a single “monolithic” block (no external labels), relying on on-segment text.
+
+## UX layout note (future blocks)
+
+DayOverviewPage will later include multiple blocks:
+- Panchanga
+- Planet-sign transits (9 planets)
+- Muhurta (5 bars)
+- Yogas
+
+Between these blocks, a small vertical spacing (~2px) will be used, while **within** each block the bars remain tightly stacked (Spacing=0).
+
+## Open item: prevent text wrapping in graphics
+
+A known remaining issue: in some cases, MAUI `DrawString(...)` may render multi-line wrapping for certain texts/segments (notably ChandraBala).
+
+Target behavior:
+- do not wrap;
+- if not fitting, do not draw.
+
+This is under investigation; rendering logic may be refined (e.g., strict measurement, non-breaking spaces, alternate draw APIs, or explicit ellipsis strategy).
 

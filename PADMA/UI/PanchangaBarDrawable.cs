@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Maui.Graphics;
+using GFont = Microsoft.Maui.Graphics.Font;
 
 namespace PADMA.UI
 {
@@ -53,36 +54,55 @@ namespace PADMA.UI
                         var pad = 1f;
                         var drawW = Math.Max(1f, w - pad * 2);
 
-                        // Подбираем размер шрифта (как у тебя было)
-                        canvas.FontColor = Colors.Black;
+                        var drawText = text
+                            .Replace("\r", "")
+                            .Replace("\n", " ")
+                            .Trim();
+
+                        var font = GFont.Default;
                         var fontSize = Math.Max(10f, height * 0.55f);
 
-                        // Задаём шрифт (обычный системный)
-                        var font = Microsoft.Maui.Graphics.Font.Default; 
-                        
-                        // Измеряем текст
-                        var textSize = canvas.GetStringSize(text, font, fontSize);
+                        // центрируем по высоте одной строки (примерно)
+                        var oneLineH = fontSize + 2f;
+                        var y = (height - oneLineH) / 2f;
 
-                        // Если текст не помещается — НЕ рисуем
-                        if (textSize.Width <= drawW)
+                        canvas.SaveState();
+                        canvas.ClipRectangle(x1, 0, w, height);
+
+                        canvas.Font = font;
+                        canvas.FontSize = fontSize;
+                        canvas.FontColor = Colors.Black;
+
+                        // --- draw char-by-char to prevent any wrapping ---
+                        float x = x1 + pad;
+                        float xLimit = x1 + pad + drawW;
+
+                        foreach (var ch in drawText)
                         {
-                            canvas.SaveState();
+                            var s = ch.ToString();
 
-                            canvas.Font = font;
-                            canvas.FontSize = fontSize;
-                            canvas.FontColor = Colors.Black;
+                            // измеряем ширину символа тем же шрифтом/размером
+                            var sz = canvas.GetStringSize(s, font, fontSize);
+                            var cw = sz.Width;
 
-                            canvas.ClipRectangle(x1, 0, w, height);
+                            if (cw <= 0.01f) cw = fontSize * 0.3f; // запасной вариант
 
+                            if (x + cw > xLimit)
+                                break;
+
+                            // рисуем символ в маленьком прямоугольнике
                             canvas.DrawString(
-                                text,
-                                x1 + pad, 0,
-                                drawW, height,
+                                s,
+                                x, y,
+                                cw + 1f, oneLineH,
                                 HorizontalAlignment.Left,
-                                VerticalAlignment.Center);
+                                VerticalAlignment.Center,
+                                TextFlow.ClipBounds);
 
-                            canvas.RestoreState();
+                            x += cw;
                         }
+
+                        canvas.RestoreState();
                     }
                 }
 
