@@ -66,12 +66,12 @@ namespace PADMA.Pages
             {
                 Day = day;
 
-                // не блокируем UI — просто запускаем подгрузку
+                // We don't block the UI - we just start the download
                 _ = LoadOverviewAsync(day);
                 return;
             }
 
-            // На всякий случай, чтобы не падало
+            // Just in case, so it doesn't fall.
             Day = null;
         }
 

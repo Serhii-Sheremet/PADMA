@@ -3017,14 +3017,15 @@ These are displayed **next to the planet marker**:
   - `Pl↓`
   - etc.
 
-**Note:** When planet become in exaltation or debilitation - the fact isteself is the palnet has ingress. So, sign ingress `→` is not necessary in this case.
+**Note:** When planet become in exaltation or debilitation - the fact itself is the planet has ingress. So, sign ingress `→` is not necessary in this case.
+**Note:** Planet Moon is quite fast, so will be ommited to show markers on 42 days calendar view (details will be prvided on 'DayOverviewPage' and 'DayPage')
 
 ### Important: no “retrograde end” marker
-When a planet exits retrograde state, the marker simply returns to base:
-- `Pl.R` → `Pl` or `Pl↓` (if planet before retrograde was in debilitation and continue to be in this state)
+When a planet exits retrograde state, marker returns to base (Pl) or to Pl↑/Pl↓ if the planet is (still) exalted/debilitated in direct motion.
 (no special “end” symbol is shown on the calendar)
 
 ## Acceptable & Non-Acceptable markers
+Acceptable markers are final calendar tokens per planet per day (after applying precedence rules)
 
 ### Acceptable:
 Pl
@@ -3042,15 +3043,26 @@ Pl↓
 ❌ Pl.R→↑
 ❌ Pl.R→↓
 
+### Marker precedence (single final token per planet)
+1. If `Retrograde == true`:
+   - show `Pl.R→` if `Ingress == true`
+   - else show `Pl.R`
+   - (do not show `↑/↓` while retrograde)
+2. Else (direct motion):
+   - if `Exaltation == true` → show `Pl↑` (do not add `→`)
+   - else if `Debilitation == true` → show `Pl↓` (do not add `→`)
+   - else if `Ingress == true` → show `Pl→`
+   - else → show `Pl`
+
 ## Localization policy (planet abbreviations)
 
 Planet marker prefix `Pl` is **localized** using `DataCache.Instance.PlanetDescList` for the current language.
 
 - Use **first 2 characters** of the localized planet name.
-- Examples (illustrative): `Me`, `Ma`, `Mo`, etc.
+- Examples (illustrative): `Me`, `Ma`, `Ju`, etc.
 
 ### Robustness note (nonLatin alphabets)
-If the localized name begins with nonLatin letters (uk/ru), the “first 2 characters” rule still applies (e.g., `Ме`, `Лу`).  
+If the localized name begins with nonLatin letters (uk/ru), the “first 2 characters” rule still applies (e.g., `Ме`, `Со`).  
 If later you decide the calendar should keep Latin-like abbreviations for compactness, add a dedicated `Abbrev2` field to `PlanetDesc` or a mapping table.
 
 ## Data model
@@ -3067,7 +3079,7 @@ Suggested model:
 - `Debilitation` (bool) – state
 - `ZodiacFrom / ZodiacTo` (optional, for DayOverview; calendar may ignore)
 - `Time` (optional, for DayOverview; calendar may ignore)
-- `ShortText` (string) – computed string for MainPage, e.g. `Me.R→`
+- `FinalToken` (string) – computed string for MainPage, e.g. `Me.R→`
 
 ### Storage
 Add to `DayItem`:

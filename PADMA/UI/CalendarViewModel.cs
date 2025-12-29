@@ -58,7 +58,7 @@ namespace PADMA.UI
             }
         }
 
-        // === Добавлено: поддержка CultureCode ===
+        // === CultureCode supporting ===
         private string _cultureCode;
         public string CultureCode
         {
@@ -93,7 +93,7 @@ namespace PADMA.UI
                 ? new CultureInfo(CultureCode)
                 : CultureInfo.CurrentUICulture;
 
-        // === Инициализация культуры ===
+        // === Culture initialization ===
         public void InitializeCulture()
         {
             ReloadCultureAndRefresh();
@@ -121,7 +121,6 @@ namespace PADMA.UI
             }
             catch (Exception ex)
             {
-                //System.Diagnostics.Debug.WriteLine($"[PADMA] ReloadCultureAndRefresh failed: {ex.Message}");
                 CultureCode = CultureInfo.CurrentUICulture.Name;
                 OnPropertyChanged(nameof(CurrentCulture));
             }
@@ -158,7 +157,7 @@ namespace PADMA.UI
             BusyText = text;
             IsBusy = true;
 
-            // ВАЖНО: дать UI шанс отрисовать overlay
+            // IMPORTANT: Give the UI a chance to render the overlay
             await Task.Yield();
 
             try
@@ -216,7 +215,7 @@ namespace PADMA.UI
 
         public void RebuildCurrentMonth()
         {
-            RefreshCalendar();              // пересоберёт Days на текущих Year/Month
+            RefreshCalendar();              // will rebuild Days on the current Year/Month
         }
 
         /// <summary>
@@ -277,7 +276,7 @@ namespace PADMA.UI
                 birthZodiacMoonId = ctx.BirthZodiacMoonId;
                 birthLagnaId = ctx.BirthLagnaId;
 
-                // Считаем окно календаря (если есть таймзона)
+                // We calculate the calendar window (if there is a time zone)
                 DateTimeOffset visibleStart, visibleEnd, bufferStart, bufferEnd;
                 (visibleStart, visibleEnd, bufferStart, bufferEnd, visibleDays) =
                     CalendarWindowService.BuildWindow(year, month, DataCache.Instance.DayOfWeek, tzInfo);
@@ -308,7 +307,7 @@ namespace PADMA.UI
             }
             else
             {
-                // если профиля/локации/таймзоны нет — строим видимые дни по старой логике
+                // If there is no profile/location/time zone, we just build visible days only
                 var firstOfMonth = new DateTime(year, month, 1);
                 int shift = ((7 + (int)firstOfMonth.DayOfWeek - (int)DataCache.Instance.DayOfWeek) % 7);
                 var startDate = firstOfMonth.AddDays(-shift);
@@ -320,7 +319,7 @@ namespace PADMA.UI
                 visibleDays = tmp;
             }
 
-            // Создаём 42 DayItem строго по visibleDays
+            // Create 42 DayItem strictly according to visibleDays
             foreach (var d in visibleDays)
             {
                 var date = d.ToDateTime(TimeOnly.MinValue);
@@ -388,7 +387,7 @@ namespace PADMA.UI
                             {
                                 var house = slice.HouseNumber; // 1..12
 
-                                // Показ знака только для Scorpio (SCO)
+                                // Show sign only for Scorpio (SCO)
                                 if (slice.ZodiacCode == EZodiac.SCO)
                                 {
                                     var zodiacId = (int)slice.ZodiacCode;
@@ -424,7 +423,7 @@ namespace PADMA.UI
         private void OnPropertyChanged(string propertyName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        //  заголовок календаря с учётом культуры
+        //  Culturally appropriate calendar title
         public string MonthYearTitle
         {
             get
@@ -445,7 +444,7 @@ namespace PADMA.UI
 
             RefreshCalendar();
 
-            // если MonthYearTitle вычисляемое — обновить
+            // if MonthYearTitle can be recalculated — refresh
             OnPropertyChanged(nameof(MonthYearTitle));
         }
 
@@ -473,7 +472,7 @@ namespace PADMA.UI
                 var baseOffset = tzInfo.GetUtcOffset(sampleLocal);
                 offsetText = FormatUtcOffset(baseOffset);
 
-                // transition (если есть)
+                // transition (if any)
                 var transition = FindOffsetTransitionInMonth(tzInfo, Year, Month);
 
                 if (transition.HasValue)
@@ -569,7 +568,7 @@ namespace PADMA.UI
             DateTime transitionLocal,
             TimeSpan currentMonthOffset)
         {
-            // offset сразу ПОСЛЕ перехода
+            // offset immediately AFTER the transition
             var after = tz.GetUtcOffset(transitionLocal.AddMinutes(5));
 
             var delta = after - currentMonthOffset;

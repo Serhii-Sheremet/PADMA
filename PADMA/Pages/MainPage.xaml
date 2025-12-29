@@ -24,15 +24,15 @@
     <Grid Padding="0" RowSpacing="0" ColumnSpacing="0">
         
         <Grid.RowDefinitions>
-            <!-- NEW: строка с активным профилем -->
+            <!-- Row with active profile -->
             <RowDefinition Height="Auto" />
-            <!-- Новый ряд для заголовков дней недели -->
+            <!-- Row for the headings of the days of the week -->
             <RowDefinition Height="Auto" />
-            <!-- Основной календарь -->
+            <!-- Main calendar -->
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- NEW: Active profile row -->
+        <!-- Active profile row -->
         <Grid Grid.Row="0"
           Padding="8,2"
           ColumnSpacing="8"
@@ -53,7 +53,7 @@
                VerticalOptions="Center" />
         </Grid>
 
-        <!-- Шапка с аббревиатурами дней -->
+        <!-- Headings with day abbreviations -->
         <Grid x:Name="DaysHeaderGrid"
               Grid.Row="1"
               HeightRequest="24"
@@ -71,7 +71,7 @@
             </Grid.ColumnDefinitions>
         </Grid>
 
-        <!-- Календарь -->
+        <!-- Calendar -->
         <CollectionView x:Name="CalendarCollection"
                         Grid.Row="2"
                         ItemsSource="{Binding Days}"
@@ -166,8 +166,8 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-        
-        <!-- Busy overlay: показывается во время расчётов и блокирует UI -->
+
+        <!-- Busy overlay: appears during calculations and blocks the UI -->
         <Grid
             Grid.Row="0"
             Grid.RowSpan="3"

@@ -90,68 +90,68 @@ namespace PADMA.Core.Services
         /// </summary>
         public void LoadAll (DatabaseService db, string? preferredUiLang = null)
         {
-            // Определяем язык интерфейса
+            // Interface language
             CurrentLanguageCode = preferredUiLang ?? db.GetActiveLanguageCode();
 
-            // Языки
+            // all supported languages
             LanguageList = db.GetLanguages();
 
-            // Настройки приложения (APPSETTING)
+            // Appllication settings (APPSETTING)
             AppSettingsList = db.GetAppSettingsList();
 
-            // Первый день недели
+            // First day of week setting
             DayOfWeek = db.GetFirstDayOfWeekFromDb();
 
-            // Тексты интерфейса (APP_TEXTS)
+            // Interface texts (APP_TEXTS)
             AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
 
-            // Цвета
+            // Colors
             ColorList = db.GetColors();
             ColorDescList = db.GetColorDescs().ToList();
 
-            // Планеты
+            // Planets
             PlanetList = db.GetPlanets();
             PlanetDescList = db.GetPlanetDescs().ToList();
 
-            // Транзиты
+            // Transits
             TransitList = db.GetTransits();
             TransitDescList = db.GetTransitDescs().ToList();
 
-            // Зодиаки
+            // Zodiacs
             ZodiacList = db.GetZodiacs().ToList();
             ZodiacDescList = db.GetZodiacDescs().ToList();
 
-            // Пады 
+            // Padas 
             PadaList = db.GetPadas().ToList();
 
-            // Mrityu Bhaga (мёртвые градусы)
+            // Mrityu Bhaga (dead degrees)
             MrityuBhagaList = db.GetMrityuBhaga().ToList();
 
             // Nitya Yogas
             NityaYogaList = db.GetNityaYogas().ToList();
             NityaYogaDescList = db.GetNityaYogaDescs().ToList();
 
-            // Затмения
+            // Eclipeses
             EclipseList = db.GetEclipses().ToList();
             EclipseDescList = db.GetEclipseDescs().ToList();
 
-            // Накшатры
+            // Nakshatras
             NakshatraList = db.GetNakshatras().ToList();
             NakshatraDescList = db.GetNakshatraDescs().ToList();
 
-            // Тара Бала
+            // Tara Balas
             TaraBalaList = db.GetTaraBalas().ToList();
             TaraBalaDescList = db.GetTaraBalaDescs().ToList();
 
-            // Титхи
+            // tithis
             TithiList = db.GetTithis().ToList();
             TithiDescList = db.GetTithiDescs().ToList();
 
-            // Караны
+            // Karanas
             KaranaList = db.GetKaranas().ToList();
             KaranaDescList = db.GetKaranaDescs().ToList();
 
-            // Мухурты
+            // Muhurtas
             MuhurtaList = db.GetMuhurtas().ToList();
             MuhurtaDescList = db.GetMuhurtaDescs().ToList();
             Muhurta30List = db.GetMuhurta30s().ToList();
@@ -159,29 +159,27 @@ namespace PADMA.Core.Services
             Ghati60List = db.GetGhati60s().ToList();
             Ghati60DescList = db.GetGhati60Descs().ToList();
 
-            // Массы
+            // Masas
             MasaList = db.GetMasas().ToList();
             MasaDescList = db.GetMasaDescs().ToList();
 
-            // Описания специальных навамш
+            // Descriptions of special navamsas
             SpecialNavamsaDescList = db.GetSpecialNavamsaDescs().ToList();
-            
-            // Йоги
+
+            // Yogas
             YogaList = db.GetYogas().ToList();
             YogaDescList = db.GetYogaDescs().ToList();
 
-            // Профили
+            // Profiles
             ProfileList = db.GetProfiles().ToList();
             ActiveProfile = GetActiveProfile();
             
-            // Локации
+            // Locations
             LocationList = db.GetLocations().ToList();
 
             
 
         }
-
-
 
         /// <summary>
         /// Refresh app settings and localized texts (used after configuration changes).
@@ -200,11 +198,11 @@ namespace PADMA.Core.Services
             var c = ColorList.FirstOrDefault(x => x.Id == id);
             if (c != null)
             {
-                // Предполагаем, что c.ARGBVALUE — это int в формате 0xAARRGGBB
+                // We assume that c.ARGBVALUE is an int in the 0xAARRGGBB format
                 return Color.FromUint(unchecked((uint)c.ArgbValue));
             }
 
-            return Colors.Black; // fallback, если цвета нет в базе
+            return Colors.Black; // fallback, if the color is not found
         }
 
         public Profile? GetActiveProfile()

@@ -7,13 +7,13 @@
     x:Class="PADMA.Pages.DayOverviewPage">
 
     <!-- ВНИМАНИЕ:
-         ConfigBasePage уже содержит ScrollView внутри.
-         Но в проекте дочерние конфиг-страницы тоже часто кладут свой ScrollView — это ок.
-         Чтобы не плодить вложенный ScrollView, здесь используем просто VerticalStackLayout. -->
+         ConfigBasePage already has ScrollView inside.
+         But in the project, child config pages also often put their own ScrollView — it's OK.
+         To avoid creating nested ScrollView, just using VerticalStackLayout here. -->
 
     <VerticalStackLayout Spacing="0" Padding="0">
 
-        <!-- Panchanga bars (крупнее, чем в календаре) -->
+        <!-- Panchanga bars (larger than on the calendar) -->
         <VerticalStackLayout Spacing="0" Margin="0,0,0,2">
 
             <!--<Label x:Name="NakshatraLabel" FontSize="12" TextColor="#333" />-->
@@ -46,8 +46,8 @@
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.ChandraBalaSegments}" />
         </VerticalStackLayout>
-        
-        <!-- Кнопка перехода на DayPage -->
+
+        <!-- Button for navigating to DayPage -->
         <Button Margin="12"
             x:Name="OpenDayDetailsButton"
             Text="Open Day Details"
