@@ -16,32 +16,26 @@
         <!-- Panchanga bars (larger than on the calendar) -->
         <VerticalStackLayout Spacing="0" Margin="0,0,0,2">
 
-            <!--<Label x:Name="NakshatraLabel" FontSize="12" TextColor="#333" />-->
             <local:PanchangaBar Margin="0" HeightRequest="24"
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.NakshatraSegments}" />
 
-            <!--<Label x:Name="TaraBalaLabel" FontSize="12" TextColor="#333" />-->
             <local:PanchangaBar Margin="0" HeightRequest="24"
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.TaraBalaSegments}" />
 
-            <!--<Label x:Name="TithiLabel" FontSize="12" TextColor="#333" />-->
             <local:PanchangaBar Margin="0" HeightRequest="24"
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.TithiSegments}" />
 
-            <!--<Label x:Name="KaranaLabel" FontSize="12" TextColor="#333" />-->
             <local:PanchangaBar Margin="0" HeightRequest="24"
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.KaranaSegments}" />
 
-            <!--<Label x:Name="NityaYogaLabel" FontSize="12" TextColor="#333" />-->
             <local:PanchangaBar Margin="0" HeightRequest="24"
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.NityaYogaSegments}" />
 
-            <!--<Label x:Name="ChandraBalaLabel" FontSize="12" TextColor="#333" />-->
             <local:PanchangaBar Margin="0" HeightRequest="24"
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.ChandraBalaSegments}" />
