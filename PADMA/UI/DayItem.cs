@@ -12,6 +12,8 @@ namespace PADMA.UI
         public bool IsCurrentMonth { get; set; } // принадлежит ли текущему месяцу
         public bool IsToday { get; set; }        // сегодняшний ли день
 
+        public string PlanetMarkersText { get; set; } = string.Empty;
+
         public IList<PanchangaSegment> NakshatraSegments { get; set; } = new List<PanchangaSegment>();
         public IList<PanchangaSegment> TaraBalaSegments { get; set; } = new List<PanchangaSegment>();
         public IList<PanchangaSegment> TithiSegments { get; set; } = new List<PanchangaSegment>();

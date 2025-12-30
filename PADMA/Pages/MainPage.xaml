@@ -123,6 +123,19 @@
                                    Margin="2,2,0,0"
                                    TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
 
+                            <!-- Planet markers (shown between day number and panchanga bars) -->
+                            <Label Grid.Row="0"
+                                   Text="{Binding PlanetMarkersText}"
+                                   FontSize="10"
+                                   HorizontalOptions="FillAndExpand"
+                                   HorizontalTextAlignment="Start"
+                                   VerticalOptions="End"
+                                   Margin="2,0,2,2"
+                                   LineBreakMode="TailTruncation"
+                                   MaxLines="1"
+                                   TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
+
+
                             <Grid Grid.Row="1"
                                   RowDefinitions="*,*,*,*,*,*"
                                   VerticalOptions="FillAndExpand"

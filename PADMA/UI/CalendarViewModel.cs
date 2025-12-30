@@ -6,6 +6,7 @@ using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
 using PADMA.Core.TransitBuilder;
 using PADMA.Core.Utilities;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -227,12 +228,27 @@ namespace PADMA.UI
 
             TimeZoneInfo? tzInfo = null;
             int birthNakshatraMoonId = 0, birthZodiacMoonId = 0, birthLagnaId = 0;
+
+            List<PlanetData>? rahuData = null;
+            List<PlanetData>? ketuData = null;
+
             List<NakshatraSlice>? nakshatraSlices = null;
             List<TaraBalaSlice>? taraBalaSlices = null;
             List<TithiSlice>? tithiSlices = null;
             List<KaranaSlice>? karanaSlices = null;
             List<NityaYogaSlice>? nityaYogaSlices = null;
             List<ChandraBalaSlice>? chandraBalaSlices = null;
+
+            List<PlanetSlice>? sunSlices = null;
+            List<PlanetSlice>? moonSlices = null;
+            List<PlanetSlice>? marsSlices = null;
+            List<PlanetSlice>? mercurySlices = null;
+            List<PlanetSlice>? jupiterSlices = null;
+            List<PlanetSlice>? venusSlices = null;
+            List<PlanetSlice>? saturnSlices = null;
+            List<PlanetSlice>? rahuSlices = null;
+            List<PlanetSlice>? ketuSlices = null;
+
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
             
@@ -268,6 +284,11 @@ namespace PADMA.UI
                         return char.ToUpper(code[0]) + code.Substring(1).ToLower();
                     });
 
+            // Active Node settings
+            var nodeSetting = DataCache.Instance.AppSettingsList
+                .FirstOrDefault(s => s.GroupCode == "NODE" && s.Active == 1);
+            var appSettingEnum = (EAppSetting)(nodeSetting?.Id ?? (int)EAppSetting.NODEMEAN);
+
             IReadOnlyList<DateOnly> visibleDays;
             if (profile != null && ctx != null)
             {
@@ -284,26 +305,53 @@ namespace PADMA.UI
                 var bufferStartUtc = bufferStart.UtcDateTime;
                 var bufferEndUtc = bufferEnd.UtcDateTime;
 
-                // ---- Swiss (Moon) + Nakshatra (Moon) ----
+                // ---- Swiss: PlanetData calculation ----
+                var sunData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SUN, bufferStartUtc, bufferEndUtc);
                 var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc);
-                nakshatraSlices = NakshatraTransitBuilder.BuildNakshatraSlices(moonData);
+                var marsData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MARS, bufferStartUtc, bufferEndUtc);
+                var mercuryData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MERCURY, bufferStartUtc, bufferEndUtc);
+                var jupiterData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.JUPITER, bufferStartUtc, bufferEndUtc);
+                var venusData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.VENUS, bufferStartUtc, bufferEndUtc);
+                var saturnData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SATURN, bufferStartUtc, bufferEndUtc);
+                switch (appSettingEnum)
+                {
+                    case EAppSetting.NODEMEAN: rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHUMEAN, bufferStartUtc, bufferEndUtc); break;
 
+                    case EAppSetting.NODETRUE: rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHUTRUE, bufferStartUtc, bufferEndUtc); break;
+                }
+                ketuData = rahuData?.Select(d => SwissAnalysis.CalculateKetuData(d)).ToList();
+
+                // ---- SWISS: alculate Eclipse Data ---- TODO
+
+                // ---- Preparing Panchanga slices ----
+                // ---- Nakshatra (Moon) ----
+                nakshatraSlices = NakshatraTransitBuilder.BuildNakshatraSlices(moonData);
                 // ---- TaraBala ----
                 taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraMoonId);
-
                 // ---- Swiss + Tithi —---
                 var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc);
                 tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
-
                 // ---- Karana ----
                 karanaSlices = KaranaTransitBuilder.BuildKaranaSlices(tithiSlices);
-
                 // ---- Swiss + Nitya Yoga ----
                 var nityaYogaData = SwissAnalysis.CalculateNityaYogaDataList_London(bufferStartUtc, bufferEndUtc);
                 nityaYogaSlices = NityaYogaTransitBuilder.BuildNityaYogaSlices(nityaYogaData);
-
                 // ---- Chandra Bala ----
                 chandraBalaSlices = ChandraBalaTransitBuilder.BuildChandraBalaSlices(moonData, birthZodiacMoonId);
+
+                // ---- Preparing Planet slices ----
+                sunSlices = PlanetTransitBuilder.BuildPlanetSlices(sunData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                moonSlices = PlanetTransitBuilder.BuildPlanetSlices(moonData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                marsSlices = PlanetTransitBuilder.BuildPlanetSlices(marsData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                mercurySlices = PlanetTransitBuilder.BuildPlanetSlices(mercuryData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                jupiterSlices = PlanetTransitBuilder.BuildPlanetSlices(jupiterData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                venusSlices = PlanetTransitBuilder.BuildPlanetSlices(venusData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                saturnSlices = PlanetTransitBuilder.BuildPlanetSlices(saturnData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                rahuSlices = PlanetTransitBuilder.BuildPlanetSlices(rahuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                ketuSlices = PlanetTransitBuilder.BuildPlanetSlices(ketuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+
+                // ---- Preparing Eclipces slices ---- TODO
+
             }
             else
             {
@@ -325,6 +373,7 @@ namespace PADMA.UI
                 var date = d.ToDateTime(TimeOnly.MinValue);
                 bool isCurrentMonth = (date.Month == month && date.Year == year);
                 bool isToday = date.Date == DateTime.Today;
+                var planetMarkersText = string.Empty;   
 
                 IList<PanchangaSegment> nakshatraSegments = new List<PanchangaSegment>();
                 IList<PanchangaSegment> taraBalaSegments = new List<PanchangaSegment>();
@@ -335,6 +384,7 @@ namespace PADMA.UI
 
                 if (profile != null && tzInfo != null)
                 {
+                    // Preparing Panchanga segments for the day
                     if (nakshatraSlices != null)
                     {
                         nakshatraSegments = PanchangaHelper.BuildSegmentsForDay(
@@ -359,15 +409,15 @@ namespace PADMA.UI
                             slice => $"{slice.TithiId}.{tithiById.GetValueOrDefault(slice.TithiId, "")}");
                     }
 
-                    if(karanaSlices != null)
+                    if (karanaSlices != null)
                     {
-                         karanaSegments = PanchangaHelper.BuildSegmentsForDay(
-                             karanaSlices, date, tzInfo, DataCache.Instance,
-                             slice => (EColor)slice.ColorId,
-                             slice => $"{karanaById.GetValueOrDefault(slice.KaranaId, "")}");
-                    }   
+                        karanaSegments = PanchangaHelper.BuildSegmentsForDay(
+                            karanaSlices, date, tzInfo, DataCache.Instance,
+                            slice => (EColor)slice.ColorId,
+                            slice => $"{karanaById.GetValueOrDefault(slice.KaranaId, "")}");
+                    }
 
-                    if(nityaYogaSlices != null)
+                    if (nityaYogaSlices != null)
                     {
                         nityaYogaSegments = PanchangaHelper.BuildSegmentsForDay(
                             nityaYogaSlices, date, tzInfo, DataCache.Instance,
@@ -375,7 +425,7 @@ namespace PADMA.UI
                             slice => $"{slice.NityaYogaId}.{nityaYogaById.GetValueOrDefault(slice.NityaYogaId, "")}");
                     }
 
-                    if(chandraBalaSlices != null)
+                    if (chandraBalaSlices != null)
                     {
                         string tplHouse = Localization.GetLocalizedText("Moon in {0} house", lang);
                         string tplHouseSign = Localization.GetLocalizedText("Moon in {0} house, {1}", lang);
@@ -394,10 +444,45 @@ namespace PADMA.UI
                                     var zodiacCode = zodiacCodeById.GetValueOrDefault(zodiacId, "Sco");
                                     return string.Format(tplHouseSign, house, zodiacCode);
                                 }
-                                
+
                                 return string.Format(tplHouse, house);
                             });
                     }
+
+                    // Preparing planet markers for day
+                    // Day UTC boundaries (local day of profile)
+                    var dayStartLocal = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Unspecified);
+                    var dayEndLocal = dayStartLocal.AddDays(1);
+
+                    var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
+                    var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
+
+                    // Collect planet markers (6 planets, no Moon, Rahu & Ketu)
+                    var markers = new List<string>(8);
+
+                    string? m;
+
+                    m = BuildMarkerTextForDay(EPlanet.SUN, sunSlices, dayStartUtc, dayEndUtc);
+                    if (!string.IsNullOrEmpty(m)) markers.Add(m);
+
+                    m = BuildMarkerTextForDay(EPlanet.MERCURY, mercurySlices, dayStartUtc, dayEndUtc);
+                    if (!string.IsNullOrEmpty(m)) markers.Add(m);
+
+                    m = BuildMarkerTextForDay(EPlanet.VENUS, venusSlices, dayStartUtc, dayEndUtc);
+                    if (!string.IsNullOrEmpty(m)) markers.Add(m);
+
+                    m = BuildMarkerTextForDay(EPlanet.MARS, marsSlices, dayStartUtc, dayEndUtc);
+                    if (!string.IsNullOrEmpty(m)) markers.Add(m);
+
+                    m = BuildMarkerTextForDay(EPlanet.JUPITER, jupiterSlices, dayStartUtc, dayEndUtc);
+                    if (!string.IsNullOrEmpty(m)) markers.Add(m);
+
+                    m = BuildMarkerTextForDay(EPlanet.SATURN, saturnSlices, dayStartUtc, dayEndUtc);
+                    if (!string.IsNullOrEmpty(m)) markers.Add(m);
+
+                    // Final string
+                    planetMarkersText = string.Join(' ', markers);
+
                 }
 
                 Days.Add(new DayItem
@@ -406,6 +491,7 @@ namespace PADMA.UI
                     DayNumber = date.Day,
                     IsCurrentMonth = isCurrentMonth,
                     IsToday = isToday,
+                    PlanetMarkersText = planetMarkersText,
                     NakshatraSegments = nakshatraSegments,
                     TaraBalaSegments = taraBalaSegments,
                     TithiSegments = tithiSegments,
@@ -580,6 +666,137 @@ namespace PADMA.UI
             var sign = delta.TotalHours > 0 ? "+" : "-";
             return $" ({sign}{hours:0.#}h {transitionLocal:yyyy-MM-dd})";
         }
+
+        public static string? BuildMarkerTextForDay(
+            EPlanet planet,
+            IReadOnlyList<PlanetSlice> slicesSorted,
+            DateTime dayStartUtc,
+            DateTime dayEndUtc)
+        {
+            if (slicesSorted == null || slicesSorted.Count == 0)
+                return null;
+
+            // base slice on day start
+            PlanetSlice? baseSlice = null;
+            for (int i = slicesSorted.Count - 1; i >= 0; i--)
+            {
+                if (slicesSorted[i].StartUtc <= dayStartUtc)
+                {
+                    baseSlice = slicesSorted[i];
+                    break;
+                }
+            }
+            baseSlice ??= slicesSorted[0];
+
+            bool zodiacChanged = false;
+
+            bool retroEnter = false; // direct -> retro
+            bool retroExit = false; // retro -> direct
+
+            // We'll keep the "last slice state within the day" to know current zodiac at the end of day
+            // (needed for retro-exit to show Pl / Pl↑ / Pl↓ correctly)
+            PlanetSlice endStateSlice = baseSlice;
+
+            for (int i = 0; i < slicesSorted.Count; i++)
+            {
+                var s = slicesSorted[i];
+                if (s.StartUtc < dayStartUtc) continue;
+                if (s.StartUtc >= dayEndUtc) break;
+
+                endStateSlice = s;
+
+                if (s.ZodiacId != baseSlice.ZodiacId)
+                    zodiacChanged = true;
+
+                if (s.IsRetrograde != baseSlice.IsRetrograde)
+                {
+                    if (!baseSlice.IsRetrograde && s.IsRetrograde) retroEnter = true;
+                    if (baseSlice.IsRetrograde && !s.IsRetrograde) retroExit = true;
+                }
+            }
+
+            // Also: if there are no slices starting inside the day, endStateSlice should reflect the state during the day.
+            // baseSlice is enough in that case.
+
+            // Decide marker kind by strict rules
+            string eventSymbol = "";
+            bool showR = false;
+            bool showPlainPl = false;
+
+            if (retroEnter)
+            {
+                // Retro entry cancels exalt/debil markers completely
+                showR = true;
+
+                // Only allowed extra is retro + zodiac change
+                if (zodiacChanged)
+                    eventSymbol = "→"; // => Pl.R→
+                else
+                    eventSymbol = "";  // => Pl.R
+            }
+            else if (retroExit)
+            {
+                // On retro exit, we show what planet is NOW (direct), based on current zodiac
+                var exNow = ExaltationUtility.GetPlanetExaltation(planet, (EZodiac)endStateSlice.ZodiacId);
+
+                if (exNow == EExaltation.EXALTATION) eventSymbol = "↑";
+                else if (exNow == EExaltation.DEBILITATION) eventSymbol = "↓";
+                else if (zodiacChanged) eventSymbol = "→";
+                else showPlainPl = true; // => just Pl
+            }
+            else
+            {
+                // No retro toggle today: we show only change events
+                // Exalt/debil "entry" is detected relative to start-of-day state
+                var startEx = ExaltationUtility.GetPlanetExaltation(planet, (EZodiac)baseSlice.ZodiacId);
+
+                bool exaltEntry = false;
+                bool debilEntry = false;
+
+                for (int i = 0; i < slicesSorted.Count; i++)
+                {
+                    var s = slicesSorted[i];
+                    if (s.StartUtc < dayStartUtc) continue;
+                    if (s.StartUtc >= dayEndUtc) break;
+
+                    var ex = ExaltationUtility.GetPlanetExaltation(planet, (EZodiac)s.ZodiacId);
+
+                    if (startEx != EExaltation.EXALTATION && ex == EExaltation.EXALTATION)
+                        exaltEntry = true;
+
+                    if (startEx != EExaltation.DEBILITATION && ex == EExaltation.DEBILITATION)
+                        debilEntry = true;
+                }
+
+                // ↑/↓ override → (no Pl→↑, no Pl→↓)
+                if (exaltEntry) eventSymbol = "↑";
+                else if (debilEntry) eventSymbol = "↓";
+                else if (zodiacChanged) eventSymbol = "→";
+                else return null; // no change today => no marker
+            }
+
+            // If retroExit but none of symbols and showPlainPl==false -> shouldn't happen, but safe:
+            if (!showPlainPl && eventSymbol.Length == 0 && !showR)
+                return null;
+
+            // planet short name (localized, first 2 chars)
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            string pl = DataCache.Instance.PlanetDescList
+                .FirstOrDefault(p => p.LanguageCode == lang && p.PlanetId == (int)planet)?.Name ?? string.Empty;
+
+            var text = pl.Length >= 2 ? pl.Substring(0, 2) : pl;
+
+            if (showR)
+                text += ".R";
+
+            if (showPlainPl)
+                return text; // "Pl"
+
+            text += eventSymbol;
+            return text;
+        }
+
+
 
 
 

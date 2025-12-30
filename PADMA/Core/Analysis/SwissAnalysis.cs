@@ -155,7 +155,7 @@ namespace PADMA.Core.Analysis
             return pdList;
         }
 
-        private static PlanetData CalculateKetuData(PlanetData rahuData)
+        public static PlanetData CalculateKetuData(PlanetData rahuData)
         {
             double kLongitude = SwissUtility.AdjustForKetu(rahuData.Longitude);
             int planetId = 0;
