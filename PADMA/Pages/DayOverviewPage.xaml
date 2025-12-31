@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:PADMA.UI"
     x:Class="PADMA.Pages.DayOverviewPage">
 
-    <!-- ВНИМАНИЕ:
+    <!-- ATTENTION:
          ConfigBasePage already has ScrollView inside.
          But in the project, child config pages also often put their own ScrollView — it's OK.
          To avoid creating nested ScrollView, just using VerticalStackLayout here. -->
@@ -40,6 +40,20 @@
                                 DayDate="{Binding Day.Date}"
                                 Segments="{Binding Day.ChandraBalaSegments}" />
         </VerticalStackLayout>
+
+        <!-- Planet stripes (9 bars) -->
+        <VerticalStackLayout Spacing="0" Margin="0,2,0,0"
+                     BindableLayout.ItemsSource="{Binding OverviewData.PlanetStripes}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <local:PanchangaBar HeightRequest="24"
+                    DayDate="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                     Path=BindingContext.Day.Date}"
+                    Segments="{Binding Segments}" />
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+
 
         <!-- Button for navigating to DayPage -->
         <Button Margin="12"

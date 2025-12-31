@@ -1,4 +1,6 @@
 ﻿using System;
+using PADMA.Core.Enums;
+using PADMA.Core.Models.Calendar;
 
 namespace PADMA.UI
 {
@@ -20,5 +22,7 @@ namespace PADMA.UI
         public IList<PanchangaSegment> KaranaSegments { get; set; } = new List<PanchangaSegment>();
         public IList<PanchangaSegment> NityaYogaSegments { get; set; } = new List<PanchangaSegment>();
         public IList<PanchangaSegment> ChandraBalaSegments { get; set; } = new List<PanchangaSegment>();
+
+        public Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>? TransitPack { get; set; }
     }
 }

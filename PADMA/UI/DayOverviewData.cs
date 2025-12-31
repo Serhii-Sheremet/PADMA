@@ -10,6 +10,8 @@ namespace PADMA.UI
     {
         public DayKey Key { get; }
 
+        public IList<PlanetStripe> PlanetStripes { get; } = new List<PlanetStripe>();
+
         /// <summary>
         /// 5 Muhurta bars (or any overview-level segments).
         /// Keep as a flat list for now; we can split into 5 lists later if needed.

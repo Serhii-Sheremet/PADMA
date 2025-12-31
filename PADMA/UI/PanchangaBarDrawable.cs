@@ -41,9 +41,22 @@ namespace PADMA.UI
                 float x2 = (float)(width * (endMinutes / totalMinutes));
                 float w  = Math.Max(1f, x2 - x1);
 
-                // цвет сегмента
-                canvas.FillColor = seg.Color;
-                canvas.FillRectangle(x1, 0, w, height);
+                if (!seg.IsSplitColor)
+                {
+                    // цвет сегмента
+                    canvas.FillColor = seg.Color ?? Colors.Transparent;
+                    canvas.FillRectangle(x1, 0, w, height);
+                }
+                else 
+                {
+                    // верхняя половина
+                    canvas.FillColor = seg.ColorTop ?? seg.Color ?? Colors.Transparent;
+                    canvas.FillRectangle(x1, 0, w, height / 2);
+
+                    // нижняя половина
+                    canvas.FillColor = seg.ColorBottom ?? seg.Color ?? Colors.Transparent;
+                    canvas.FillRectangle(x1, height / 2, w, height / 2);
+                }
 
                 // --- TEXT (no wrapping) ---
                 var text = seg.Text;

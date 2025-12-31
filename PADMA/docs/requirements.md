@@ -3108,12 +3108,12 @@ Heavy/extended computation may later be moved to `IDayComputationService` (progr
 ## Display rules on MainPage (calendar cell)
 
 - Use a **single line** under day number (above Panchanga bars).
-- Show up to N markers (recommend N=2 or N=3) to avoid clutter.
+- Show only markers for actual state change event.
 - Sort by priority, for example:
   1. Ingress events (`→`, including `R→`)
   2. Retrograde state (`.R`)
   3. Exaltation/Debilitation (`↑/↓`)
-- If more markers exist, they will be separated by `, `.
+- If more markers exist, they will be separated by ` `.
 
 ## Display rules on DayOverviewPage
 

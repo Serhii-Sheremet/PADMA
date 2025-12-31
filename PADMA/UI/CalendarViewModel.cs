@@ -10,6 +10,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.Numerics;
 using System.Windows.Input;
 
 
@@ -249,6 +250,8 @@ namespace PADMA.UI
             List<PlanetSlice>? rahuSlices = null;
             List<PlanetSlice>? ketuSlices = null;
 
+            Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>? transitPack = null;
+
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
             
@@ -349,6 +352,20 @@ namespace PADMA.UI
                 saturnSlices = PlanetTransitBuilder.BuildPlanetSlices(saturnData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
                 rahuSlices = PlanetTransitBuilder.BuildPlanetSlices(rahuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
                 ketuSlices = PlanetTransitBuilder.BuildPlanetSlices(ketuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+
+                transitPack = new Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>
+                {
+                    { EPlanet.SUN, sunSlices },
+                    { EPlanet.MOON, moonSlices },
+                    { EPlanet.MERCURY, mercurySlices },
+                    { EPlanet.VENUS, venusSlices },
+                    { EPlanet.MARS, marsSlices },
+                    { EPlanet.JUPITER, jupiterSlices },
+                    { EPlanet.SATURN, saturnSlices },
+                    { EPlanet.RAHUMEAN, rahuSlices },
+                    { EPlanet.KETUMEAN, ketuSlices }
+                };
+
 
                 // ---- Preparing Eclipces slices ---- TODO
 
@@ -497,7 +514,8 @@ namespace PADMA.UI
                     TithiSegments = tithiSegments,
                     KaranaSegments = karanaSegments,
                     NityaYogaSegments = nityaYogaSegments,
-                    ChandraBalaSegments = chandraBalaSegments
+                    ChandraBalaSegments = chandraBalaSegments,
+                    TransitPack = transitPack
                 });
             }
             
@@ -773,6 +791,10 @@ namespace PADMA.UI
                 else if (debilEntry) eventSymbol = "↓";
                 else if (zodiacChanged) eventSymbol = "→";
                 else return null; // no change today => no marker
+
+                // Allowed: Pl.R→ only (retro state + zodiac change), but NOT Pl.R↑ / Pl.R↓
+                if (eventSymbol == "→" && baseSlice.IsRetrograde)
+                    showR = true;
             }
 
             // If retroExit but none of symbols and showPlainPl==false -> shouldn't happen, but safe:
@@ -783,7 +805,6 @@ namespace PADMA.UI
             var lang = DataCache.Instance.CurrentLanguageCode;
             string pl = DataCache.Instance.PlanetDescList
                 .FirstOrDefault(p => p.LanguageCode == lang && p.PlanetId == (int)planet)?.Name ?? string.Empty;
-
             var text = pl.Length >= 2 ? pl.Substring(0, 2) : pl;
 
             if (showR)
@@ -796,6 +817,12 @@ namespace PADMA.UI
             return text;
         }
 
+        private static EPlanet NormalizeNodePlanet(EPlanet p)
+        {
+            if (p == EPlanet.RAHUTRUE) return EPlanet.RAHUMEAN;
+            if (p == EPlanet.KETUTRUE) return EPlanet.KETUMEAN;
+            return p;
+        }
 
 
 
