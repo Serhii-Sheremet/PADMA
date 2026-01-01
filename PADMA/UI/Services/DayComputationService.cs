@@ -20,6 +20,7 @@ namespace PADMA.UI.Services
 
         private readonly Dictionary<DayKey, Lazy<Task<DayOverviewData>>> _overviewCache = new();
         private readonly Dictionary<DayKey, Lazy<Task<DayDetailsData>>> _detailsCache = new();
+        private static bool IsNodePlanet(EPlanet planet) => planet == EPlanet.RAHUMEAN || planet == EPlanet.KETUMEAN;
 
         public Task<DayOverviewData> GetOverviewAsync(DayKey key, DayItem baseDay, CancellationToken ct = default)
         {
@@ -87,8 +88,17 @@ namespace PADMA.UI.Services
             // System.Diagnostics.Debug.WriteLine($"[DayComputation] BuildOverview {key.ProfileId} {key.Date}");
             
             var data = new DayOverviewData(key);
-            var dayStartLocal = key.Date.ToDateTime(TimeOnly.MinValue);
-            var dayEndLocal = key.Date.AddDays(1).ToDateTime(TimeOnly.MinValue);
+            
+            TimeZoneInfo tzInfo = TimeZoneInfo.Utc;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            if (ctx?.TimeZoneInfo != null)
+                tzInfo = ctx.TimeZoneInfo;
+
+            var dayStartLocal = baseDay.Date.Date;      // 00:00 локального дня
+            var dayEndLocal = dayStartLocal.AddDays(1);
+
+            var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
+            var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
 
             var transitSetting = DataCache.Instance.AppSettingsList
                 .FirstOrDefault(s => s.GroupCode == "TRANSIT" && s.Active == 1);
@@ -99,10 +109,8 @@ namespace PADMA.UI.Services
             // --------------------------
             if (baseDay?.TransitPack != null)
             {
-                // если PlanetSlice.StartUtc уже приведён к localUtc (как в календаре),
-                // то сравниваем напрямую:
-                var dayStart = dayStartLocal;
-                var dayEnd = dayEndLocal;
+                var dayStart = dayStartUtc;
+                var dayEnd = dayEndUtc;
 
                 var planets9 = new[]
                 {
@@ -126,8 +134,11 @@ namespace PADMA.UI.Services
                     var segments = BuildPlanetOverviewSegments(
                         planet,
                         slicesSorted,
-                        dayStart,
-                        dayEnd,
+                        dayStartUtc,
+                        dayEndUtc,
+                        dayStartLocal,
+                        dayEndLocal,
+                        tzInfo,
                         transitMode);
 
                     data.PlanetStripes.Add(new PlanetStripe
@@ -193,6 +204,9 @@ namespace PADMA.UI.Services
             IReadOnlyList<PlanetSlice> slicesSorted,
             DateTime dayStartUtc,
             DateTime dayEndUtc,
+            DateTime dayStartLocal,
+            DateTime dayEndLocal,
+            TimeZoneInfo tzInfo,
             EAppSetting transitMode)
         {
             var result = new List<PanchangaSegment>();
@@ -216,12 +230,15 @@ namespace PADMA.UI.Services
             bool curRetro = baseSlice.IsRetrograde;
             var curEx = ExaltationUtility.GetPlanetExaltation(planet, (EZodiac)curZodiacId);
 
+            var zodiac = GetZodiacName(baseSlice.ZodiacId);
+            var label = BuildPlanetLabelText(planet, curRetro, curEx); // Pl / Pl.R / Pl↑ / Pl↓
+
             // First segment (starts at 00:00 local), with "label on the left"
             var first = new PanchangaSegment
             {
-                Start = dayStartUtc,
-                End = dayEndUtc, // temporarily, will cut when first event occurs
-                Text = BuildPlanetLabelText(planet, curRetro, curEx) // Pl / Pl.R / Pl↑ / Pl↓
+                Start = dayStartLocal,
+                End = dayEndLocal, // temporarily, will cut when first event occurs
+                Text = string.IsNullOrEmpty(zodiac) ? label : $"{label}, {zodiac}"
             };
 
             ApplyTransitColorsForSlice(first, baseSlice, transitMode);
@@ -242,7 +259,7 @@ namespace PADMA.UI.Services
                     continue;
 
                 // boundary time
-                var tLocal = s.StartUtc;
+                var tLocal = TimeZoneInfo.ConvertTimeFromUtc(s.StartUtc, tzInfo); 
 
                 // close previous segment
                 result[^1].End = tLocal;
@@ -260,12 +277,25 @@ namespace PADMA.UI.Services
                     zodiacChanged: zodiacChanged,
                     newEx: newEx);
 
+                if (eventText == null)
+                {
+                    // Для узлов: ретро-toggle игнорируем как событие.
+                    // Тогда просто обновим состояние (если надо) и продолжим без сегмента.
+                    curZodiacId = s.ZodiacId;
+                    curRetro = s.IsRetrograde;
+                    curEx = newEx;
+                    continue;
+                }
+
+                zodiac = GetZodiacName(s.ZodiacId);
                 // new segment begins at event time
                 var seg = new PanchangaSegment
                 {
                     Start = tLocal,
                     End = dayEndUtc, // will cut by next event
-                    Text = $"{tLocal:HH:mm} {eventText}"
+                    Text = string.IsNullOrEmpty(zodiac)
+                        ? $"{tLocal:HH:mm} {eventText}"
+                        : $"{tLocal:HH:mm} {eventText}, {zodiac}"
                 };
 
                 ApplyTransitColorsForSlice(seg, s, transitMode);
@@ -278,7 +308,7 @@ namespace PADMA.UI.Services
             }
 
             // ensure last ends at end-of-day
-            result[^1].End = dayEndUtc;
+            result[^1].End = dayEndLocal;
             return result;
         }
 
@@ -286,6 +316,9 @@ namespace PADMA.UI.Services
         {
             // planet short name (localized, first 2 chars)
             var pl = GetPlanetShortName(planet);
+
+            if (IsNodePlanet(planet))
+                return pl;
 
             if (isRetro)
                 return $"{pl}.R";
@@ -311,6 +344,12 @@ namespace PADMA.UI.Services
         {
             // planet short name (localized, first 2 chars)
             var pl = GetPlanetShortName(planet);
+
+            if (IsNodePlanet(planet))
+            {
+                // only ingress marker allowed for nodes
+                return zodiacChanged ? $"{pl}→" : null;
+            }
 
             // Retro enter
             if (!oldRetro && newRetro)
@@ -353,6 +392,16 @@ namespace PADMA.UI.Services
 
             return pl.Length >= 2 ? pl.Substring(0, 2) : pl;
         }
+
+        private static string GetZodiacName(int zodiacId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            string zodiac = DataCache.Instance.ZodiacDescList
+                .FirstOrDefault(z => z.LanguageCode == lang && z.ZodiacId == zodiacId)?.Name ?? string.Empty;
+
+            return zodiac;
+        }
+
 
 
     }

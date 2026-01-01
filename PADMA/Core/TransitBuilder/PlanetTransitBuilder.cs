@@ -51,10 +51,10 @@ namespace PADMA.Core.TransitBuilder
                 int padaNumber = SwissUtility.GetPadaNumberByPadaId(d.PadaId);
                 slice.NavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(d.NakshatraId, padaNumber);
 
-                slice.HouseFromMoon = CalculateHouse(swappedZodiacMoon, birthZodiacMoonId);
+                slice.HouseFromMoon = CalculateHouse(swappedZodiacMoon, slice.ZodiacId);
                 slice.MoonColorCode = (EColor)GetPlanetColorCode((EPlanet)slice.PlanetId, slice.HouseFromMoon);  
 
-                slice.HouseFromLagna = CalculateHouse(swappedZodiacMoon, birthLagnaId);
+                slice.HouseFromLagna = CalculateHouse(swappedZodiacLagna, slice.ZodiacId);
                 slice.LagnaColorCode = (EColor)GetPlanetColorCode((EPlanet)slice.PlanetId, slice.HouseFromLagna);
 
                 result.Add(slice);

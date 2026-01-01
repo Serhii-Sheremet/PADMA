@@ -2973,18 +2973,28 @@ Between these blocks, a small vertical spacing (~2px) will be used, while **with
 
 ---------
 
-# PADMA – Planet Markers (Calendar + DayOverview) Architecture
+# PADMA – Planet Markers & Planet Transit Overview
 
-Scope: MainPage (42-day calendar cells) + DayOverviewPage (overview blocks)
+(MainPage Calendar + DayOverviewPage)
+
+This document finalizes the **planet marker and planetary transit overview architecture**
+after full implementation and validation.
+
+Scope:
+- **MainPage** – 42-day calendar grid (compact markers)
+- **DayOverviewPage** – detailed planetary transit block (striped bars)
 
 ## Goal
 
-Show compact **planet state/event markers** on the **calendar grid** (MainPage) and a richer view on DayOverviewPage, without forcing heavy per-day computations.
+Provide a **clear, compact, and astrologically correct visualization**
+of important planetary changes without heavy per-day recomputation.
 
-Markers highlight:
+The system highlights:
 - retrograde state,
 - zodiac ingress (sign change),
-- exaltation / debilitation.
+- exaltation / debilitation,
+- with full localization support,
+- and correct timezone handling.
 
 ## Symbol semantics (strict)
 
@@ -2996,7 +3006,7 @@ Markers highlight:
 - `.R` suffix means **retrograde state**:
   - `Pl.R`
 
-### Ingress (event)
+### Zodiac ingress (event)
 - `→` indicates **zodiac ingress event** (planet changes sign during that day):
   - `Pl→`
 
@@ -3011,18 +3021,15 @@ If ingress happens while the planet is retrograde:
 These are displayed **next to the planet marker**:
 - `Pl↑`
 - `Pl↓`
-- combined with retro/ingress when applicable:
-  - `Pl↑`
-  - `Pl.R→`  **Important Note:** If planet in retrograde movement - we will not show `↑` or `↓`. But sign ingress `→` is shown if happen
-  - `Pl↓`
-  - etc.
 
-**Note:** When planet become in exaltation or debilitation - the fact itself is the planet has ingress. So, sign ingress `→` is not necessary in this case.
-**Note:** Planet Moon is quite fast, so will be ommited to show markers on 42 days calendar view (details will be prvided on 'DayOverviewPage' and 'DayPage')
+**Rules:**
+- If a planet is retrograde, **do not show** `↑` or `↓`.
+- Exaltation/debilitation itself implies sign ingress → no extra `→` is shown.
 
-### Important: no “retrograde end” marker
-When a planet exits retrograde state, marker returns to base (Pl) or to Pl↑/Pl↓ if the planet is (still) exalted/debilitated in direct motion.
-(no special “end” symbol is shown on the calendar)
+### Exclusion (calendar)
+- Moon is **excluded** from markers on MainPage (too fast).
+- Rahu and Ketu are **excluded** rom markers on MainPage as well.
+- Moon, Rahu and Ketu details are available on **DayOverviewPage** and **DayPage**.
 
 ## Acceptable & Non-Acceptable markers
 Acceptable markers are final calendar tokens per planet per day (after applying precedence rules)
@@ -3053,76 +3060,136 @@ Pl↓
    - else if `Debilitation == true` → show `Pl↓` (do not add `→`)
    - else if `Ingress == true` → show `Pl→`
    - else → show `Pl`
+   
+### Retrograde exit
+- No special “end” marker.
+- Marker returns to `Pl`, `Pl↑`, or `Pl↓` depending on current state.
+
+## Special Rule: Rahu & Ketu
+
+For **Rahu and Ketu**:
+
+- **Never show**:
+  - `.R`
+  - `↑` / `↓`
+- **Allowed only**:
+  - base label: `Ra`, `Ke`
+  - zodiac ingress: `Ra→`, `Ke→`
+
+This applies to:
+- DayOverviewPage transit blocks 
+
+Internally, calculations may use TRUE/MEAN nodes, but UI always displays
+Rahu/Ketu as a single entity.
 
 ## Localization policy (planet abbreviations)
 
-Planet marker prefix `Pl` is **localized** using `DataCache.Instance.PlanetDescList` for the current language.
+### Planet abbreviations
+- Planet names are localized using:
+  - `DataCache.Instance.PlanetDescList`
+- Marker prefix uses **first 2 characters** of localized name.
 
-- Use **first 2 characters** of the localized planet name.
-- Examples (illustrative): `Me`, `Ma`, `Ju`, etc.
+Examples:
+- `Ju`, `Ma`, `Ve`
+- `Со`, `Ма` (non-Latin languages supported)
 
-### Robustness note (nonLatin alphabets)
-If the localized name begins with nonLatin letters (uk/ru), the “first 2 characters” rule still applies (e.g., `Ме`, `Со`).  
-If later you decide the calendar should keep Latin-like abbreviations for compactness, add a dedicated `Abbrev2` field to `PlanetDesc` or a mapping table.
+### Zodiac names (DayOverviewPage)
+- Zodiac names are **fully localized**.
+- Retrieved from:
+  - `DataCache.Instance.ZodiacDescList`
+- Displayed as:
+```
+Ju.R→, Capricorn
+14:32 Ju→, Aquarius
+```
+(No zodiac codes are used in UI.)
 
-## Data model
+## 7. MainPage (Calendar) – Display Rules
 
-### Calendar-level: PlanetMarker (minimal, event-oriented)
-Calendar cells must remain lightweight. Store only what is necessary for display and sorting.
+- One compact line per day, under day number.
+- Show **only days where an event occurs**.
+- Markers separated by space:
+`Ju.R→ Me↑`
 
-Suggested model:
+### Ordering (recommended)
+1. Ingress events (`→`, including `R→`)
+2. Retrograde (`.R`)
+3. Exaltation / Debilitation (`↑/↓`)
 
-- `Planet` (EPlanet)
-- `Retrograde` (bool) – state
-- `Ingress` (bool) – event in this day
-- `Exaltation` (bool) – state
-- `Debilitation` (bool) – state
-- `ZodiacFrom / ZodiacTo` (optional, for DayOverview; calendar may ignore)
-- `Time` (optional, for DayOverview; calendar may ignore)
-- `FinalToken` (string) – computed string for MainPage, e.g. `Me.R→`
+## 8. DayOverviewPage – Planet Transit Block
 
-### Storage
-Add to `DayItem`:
-- `List<PlanetMarker> PlanetMarkers` (for calendar and overview reuse)
+### Visual structure
+- Dedicated **Planetary Transit Block**
+- 9 horizontal stripes:
+- Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Rahu, Ketu
+- Positioned below Panchanga block (with spacing)
 
-## Computation boundaries (performance)
+### Stripe content
+- Stripe starts at local `00:00` with base label:
+`Ju.R, Capricorn`
 
-### CalendarViewModel responsibility (MainPage)
-`CalendarViewModel.GenerateDays(...)` prepares `DayItem.PlanetMarkers` for each visible day.
+- Each event creates a vertical split and new segment:
+`14:32 Ju→, Aquarius`
 
-Principle: **event extraction only**, not full 24h timeline.
-- Detect sign ingress during the day (Zodiac change).
-- Detect retrograde state for that day.
-- Detect exaltation/debilitation state for that day.
+### Color logic
+- Colors derived from Transit Engine:
+- Moon-based
+- Lagna-based
+- or split (top/bottom) depending on `EAppSetting`:
+  - `TRANZITMOON`
+  - `TRANZITLAGNA`
+  - `TRANZITMOONANDLAGNA`
 
-This enables MainPage to show markers instantly without opening DayOverviewPage.
+## Data Flow & Technical Architecture
 
-### DayOverviewPage
-Reuses `DayItem.PlanetMarkers` and can render:
-- the same short markers,
-- optional expanded view (e.g., include time of ingress, show zodiac codes),
-- or a separate “Planet block” (9 planets list/grid).
+### PlanetSlice (core)
+- All planetary calculations are done in **UTC**.
+- `PlanetSlice.StartUtc` is authoritative.
+- Contains:
+- ZodiacId
+- Retrograde flag
+- Color codes (Moon/Lagna)
+- Other transit metadata
 
-Heavy/extended computation may later be moved to `IDayComputationService` (progressive/cached) if needed.
+### TransitPack (shared)
+- Built once in `CalendarViewModel`.
+- Stored in `DayItem` and reused everywhere.
 
-## Display rules on MainPage (calendar cell)
+`Dictionary<EPlanet, IReadOnlyList<PlanetSlice>> TransitPack`
 
-- Use a **single line** under day number (above Panchanga bars).
-- Show only markers for actual state change event.
-- Sort by priority, for example:
-  1. Ingress events (`→`, including `R→`)
-  2. Retrograde state (`.R`)
-  3. Exaltation/Debilitation (`↑/↓`)
-- If more markers exist, they will be separated by ` `.
+**Keys:**
+- Sun..Saturn
+- RahuMean (8)
+- KetuMean (9)
 
-## Display rules on DayOverviewPage
+TRUE/MEAN choice is resolved during computation;
+UI always uses MEAN keys
 
-- Can show all planet markers for the day (no strict N limit).
-- May include time (`HH:mm`) for ingress events (optional).
-- Exaltation/debilitation may be emphasized by color or iconography later.
+## DayOverview computation
 
-## Notes / open items
+- Uses TransitPack
+- Converts:
+	- Local day boundaries → UTC
+	- UTC event times → Local (TimeZoneInfo from ProfileContextService)
+- Aggregates slices to sign/retro-level (pads ignored here)
 
-- Exact detection logic for retrograde/exaltation/debilitation depends on the current Transit Engine data sources and will be implemented incrementally.
+## Performance Principles
+
+- No recomputation on DayOverviewPage.
+- Calendar and Overview reuse the same TransitPack.
+- Heavy Swiss calculations are done once per window.
+
+## Current Status
+
+✔ MainPage planet markers implemented
+✔ DayOverview planetary transit block implemented
+✔ Localization complete
+✔ Timezone handling corrected
+✔ Rahu/Ketu exceptions enforced
+✔ Color logic validated
+
+## Notes / Future Extensions
+
+- DayPage will reuse the same TransitPack for pad-level visualization.
 
 ------
