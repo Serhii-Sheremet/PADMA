@@ -85,7 +85,7 @@ namespace PADMA.Core.Services
         /// <param name="utcDate">UTC datetime</param>
         /// <param name="planetId">Internal PADMA PlanetId</param>
         /// <returns>Array: [longitude, latitude, distance, speedLong]</returns>
-        public static double[] GetPlanetPosition(DateTime utcDate, int planetId)
+        public static double[] GetPlanetPosition(DateTime utcDate, int planetId, EAppSetting nodeType)
         {
             if (!SwissUtility.IsSupportedPlanet(planetId))
                 throw new ArgumentException($"Unsupported planetId {planetId}. Ketu is handled separately.", nameof(planetId));
@@ -101,7 +101,7 @@ namespace PADMA.Core.Services
             if (conv < 0) throw new InvalidOperationException($"swe_utc_to_jd error: {serr}");
             double jd = dret[1]; // UT
 
-            int swePlanetConst = SwissUtility.GetPlanetSWEConstByPlanetId(planetId);
+            int swePlanetConst = SwissUtility.GetPlanetSWEConstByPlanetId(planetId, nodeType);
             if (swePlanetConst < 0)
                 throw new ArgumentException($"Invalid planetId {planetId} mapping.", nameof(planetId));
 

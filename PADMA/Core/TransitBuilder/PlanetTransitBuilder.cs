@@ -70,10 +70,6 @@ namespace PADMA.Core.TransitBuilder
 
         private static int GetPlanetColorCode(EPlanet pCode, int pHouse)
         {
-            if (pCode == EPlanet.RAHUTRUE)
-                pCode = EPlanet.RAHUMEAN;
-            if (pCode == EPlanet.KETUTRUE)
-                pCode = EPlanet.KETUMEAN;
             return DataCache.Instance.TransitList.Where(i => i.PlanetId == (int)pCode && i.House == pHouse).FirstOrDefault()?.ColorId ?? 0;
         }
 

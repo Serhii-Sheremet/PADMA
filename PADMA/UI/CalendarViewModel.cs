@@ -230,9 +230,6 @@ namespace PADMA.UI
             TimeZoneInfo? tzInfo = null;
             int birthNakshatraMoonId = 0, birthZodiacMoonId = 0, birthLagnaId = 0;
 
-            List<PlanetData>? rahuData = null;
-            List<PlanetData>? ketuData = null;
-
             List<NakshatraSlice>? nakshatraSlices = null;
             List<TaraBalaSlice>? taraBalaSlices = null;
             List<TithiSlice>? tithiSlices = null;
@@ -290,7 +287,7 @@ namespace PADMA.UI
             // Active Node settings
             var nodeSetting = DataCache.Instance.AppSettingsList
                 .FirstOrDefault(s => s.GroupCode == "NODE" && s.Active == 1);
-            var appSettingEnum = (EAppSetting)(nodeSetting?.Id ?? (int)EAppSetting.NODEMEAN);
+            var nodeMode = (EAppSetting)(nodeSetting?.Id ?? (int)EAppSetting.NODEMEAN);
 
             IReadOnlyList<DateOnly> visibleDays;
             if (profile != null && ctx != null)
@@ -309,22 +306,18 @@ namespace PADMA.UI
                 var bufferEndUtc = bufferEnd.UtcDateTime;
 
                 // ---- Swiss: PlanetData calculation ----
-                var sunData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SUN, bufferStartUtc, bufferEndUtc);
-                var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc);
-                var marsData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MARS, bufferStartUtc, bufferEndUtc);
-                var mercuryData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MERCURY, bufferStartUtc, bufferEndUtc);
-                var jupiterData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.JUPITER, bufferStartUtc, bufferEndUtc);
-                var venusData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.VENUS, bufferStartUtc, bufferEndUtc);
-                var saturnData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SATURN, bufferStartUtc, bufferEndUtc);
-                switch (appSettingEnum)
-                {
-                    case EAppSetting.NODEMEAN: rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHUMEAN, bufferStartUtc, bufferEndUtc); break;
-
-                    case EAppSetting.NODETRUE: rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHUTRUE, bufferStartUtc, bufferEndUtc); break;
-                }
-                ketuData = rahuData?.Select(d => SwissAnalysis.CalculateKetuData(d)).ToList();
+                var sunData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SUN, bufferStartUtc, bufferEndUtc, nodeMode);
+                var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc, nodeMode);
+                var marsData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MARS, bufferStartUtc, bufferEndUtc, nodeMode);
+                var mercuryData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MERCURY, bufferStartUtc, bufferEndUtc, nodeMode);
+                var jupiterData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.JUPITER, bufferStartUtc, bufferEndUtc, nodeMode);
+                var venusData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.VENUS, bufferStartUtc, bufferEndUtc, nodeMode);
+                var saturnData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SATURN, bufferStartUtc, bufferEndUtc, nodeMode);
+                var rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHU, bufferStartUtc, bufferEndUtc, nodeMode);
+                var ketuData = rahuData?.Select(d => SwissAnalysis.CalculateKetuData(d)).ToList();
 
                 // ---- SWISS: alculate Eclipse Data ---- TODO
+
 
                 // ---- Preparing Panchanga slices ----
                 // ---- Nakshatra (Moon) ----
@@ -332,26 +325,26 @@ namespace PADMA.UI
                 // ---- TaraBala ----
                 taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraMoonId);
                 // ---- Swiss + Tithi —---
-                var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc);
+                var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc, nodeMode);
                 tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
                 // ---- Karana ----
                 karanaSlices = KaranaTransitBuilder.BuildKaranaSlices(tithiSlices);
                 // ---- Swiss + Nitya Yoga ----
-                var nityaYogaData = SwissAnalysis.CalculateNityaYogaDataList_London(bufferStartUtc, bufferEndUtc);
+                var nityaYogaData = SwissAnalysis.CalculateNityaYogaDataList_London(bufferStartUtc, bufferEndUtc, nodeMode);
                 nityaYogaSlices = NityaYogaTransitBuilder.BuildNityaYogaSlices(nityaYogaData);
                 // ---- Chandra Bala ----
                 chandraBalaSlices = ChandraBalaTransitBuilder.BuildChandraBalaSlices(moonData, birthZodiacMoonId);
 
                 // ---- Preparing Planet slices ----
-                sunSlices = PlanetTransitBuilder.BuildPlanetSlices(sunData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                moonSlices = PlanetTransitBuilder.BuildPlanetSlices(moonData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                marsSlices = PlanetTransitBuilder.BuildPlanetSlices(marsData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                mercurySlices = PlanetTransitBuilder.BuildPlanetSlices(mercuryData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                jupiterSlices = PlanetTransitBuilder.BuildPlanetSlices(jupiterData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                venusSlices = PlanetTransitBuilder.BuildPlanetSlices(venusData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                saturnSlices = PlanetTransitBuilder.BuildPlanetSlices(saturnData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                rahuSlices = PlanetTransitBuilder.BuildPlanetSlices(rahuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
-                ketuSlices = PlanetTransitBuilder.BuildPlanetSlices(ketuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, appSettingEnum);
+                sunSlices = PlanetTransitBuilder.BuildPlanetSlices(sunData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                moonSlices = PlanetTransitBuilder.BuildPlanetSlices(moonData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                marsSlices = PlanetTransitBuilder.BuildPlanetSlices(marsData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                mercurySlices = PlanetTransitBuilder.BuildPlanetSlices(mercuryData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                jupiterSlices = PlanetTransitBuilder.BuildPlanetSlices(jupiterData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                venusSlices = PlanetTransitBuilder.BuildPlanetSlices(venusData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                saturnSlices = PlanetTransitBuilder.BuildPlanetSlices(saturnData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                rahuSlices = PlanetTransitBuilder.BuildPlanetSlices(rahuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
+                ketuSlices = PlanetTransitBuilder.BuildPlanetSlices(ketuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
 
                 transitPack = new Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>
                 {
@@ -362,8 +355,8 @@ namespace PADMA.UI
                     { EPlanet.MARS, marsSlices },
                     { EPlanet.JUPITER, jupiterSlices },
                     { EPlanet.SATURN, saturnSlices },
-                    { EPlanet.RAHUMEAN, rahuSlices },
-                    { EPlanet.KETUMEAN, ketuSlices }
+                    { EPlanet.RAHU, rahuSlices },
+                    { EPlanet.KETU, ketuSlices }
                 };
 
 
@@ -816,17 +809,6 @@ namespace PADMA.UI
             text += eventSymbol;
             return text;
         }
-
-        private static EPlanet NormalizeNodePlanet(EPlanet p)
-        {
-            if (p == EPlanet.RAHUTRUE) return EPlanet.RAHUMEAN;
-            if (p == EPlanet.KETUTRUE) return EPlanet.KETUMEAN;
-            return p;
-        }
-
-
-
-
 
 
     }

@@ -25,7 +25,7 @@ namespace PADMA.Core.Analysis
 
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        public static List<PlanetData> CalculatePlanetDataList_London(int planetId, DateTime startUtc, DateTime endUtc)
+        public static List<PlanetData> CalculatePlanetDataList_London(int planetId, DateTime startUtc, DateTime endUtc, EAppSetting nodeType)
         {
             var results = new List<PlanetData>();
 
@@ -34,18 +34,18 @@ namespace PADMA.Core.Analysis
             int currentEpoch = startEpoch;
 
             int stepSeconds = 3600; // 1 hour step
-            var prevData = CalculatePlanetData(planetId, EpochToDateTime(currentEpoch));
+            var prevData = CalculatePlanetData(planetId, EpochToDateTime(currentEpoch), nodeType);
             results.Add(prevData);
 
             while (currentEpoch < endEpoch)
             {
                 currentEpoch += stepSeconds;
-                var newData = CalculatePlanetData(planetId, EpochToDateTime(currentEpoch));
+                var newData = CalculatePlanetData(planetId, EpochToDateTime(currentEpoch), nodeType);
 
                 if (HasStateChanged(prevData, newData))
                 {
-                    int preciseEpoch = FindTransitionEpoch(planetId, prevData, newData, currentEpoch - stepSeconds, currentEpoch);
-                    var preciseData = CalculatePlanetData(planetId, EpochToDateTime(preciseEpoch));
+                    int preciseEpoch = FindTransitionEpoch(planetId, prevData, newData, currentEpoch - stepSeconds, currentEpoch, nodeType);
+                    var preciseData = CalculatePlanetData(planetId, EpochToDateTime(preciseEpoch), nodeType);
 
                     results.Add(preciseData);
                     prevData = preciseData;
@@ -64,29 +64,29 @@ namespace PADMA.Core.Analysis
                 || a.IsRetrograde != b.IsRetrograde;
         }
 
-        private static int FindTransitionEpoch(int planetId, PlanetData fromState, PlanetData toState, int startEpoch, int endEpoch)
+        private static int FindTransitionEpoch(int planetId, PlanetData fromState, PlanetData toState, int startEpoch, int endEpoch, EAppSetting nodeType)
         {
             if (endEpoch - startEpoch <= 1)
                 return endEpoch;
 
             int midEpoch = startEpoch + (endEpoch - startEpoch) / 2;
-            var midData = CalculatePlanetData(planetId, EpochToDateTime(midEpoch));
+            var midData = CalculatePlanetData(planetId, EpochToDateTime(midEpoch), nodeType);
 
             if (HasStateChanged(fromState, midData))
-                return FindTransitionEpoch(planetId, fromState, midData, startEpoch, midEpoch);
+                return FindTransitionEpoch(planetId, fromState, midData, startEpoch, midEpoch, nodeType);
             else
-                return FindTransitionEpoch(planetId, midData, toState, midEpoch, endEpoch);
+                return FindTransitionEpoch(planetId, midData, toState, midEpoch, endEpoch, nodeType);
         }
 
-        private static PlanetData CalculatePlanetData(int planetId, DateTime utcDate)
+        private static PlanetData CalculatePlanetData(int planetId, DateTime utcDate, EAppSetting nodeType)
         {
-            var position = SwissService.GetPlanetPosition(utcDate, planetId);
+            var position = SwissService.GetPlanetPosition(utcDate, planetId, nodeType);
             double lon = position[0];
             double lat = position[1];
             double dist = position[2];
 
             // speed calculation (difference in longitude per minute)
-            var positionLater = SwissService.GetPlanetPosition(utcDate.AddMinutes(1), planetId);
+            var positionLater = SwissService.GetPlanetPosition(utcDate.AddMinutes(1), planetId, nodeType);
             double speedLon = positionLater[0] - lon;
             if (speedLon > 180) speedLon -= 360;
             if (speedLon < -180) speedLon += 360;
@@ -125,32 +125,28 @@ namespace PADMA.Core.Analysis
             => Epoch.AddSeconds(epoch);
 
 
-        public static List<PlanetData> CalculatePlanetPositionsForDate(DateTime date, double latitude, double longitude)
+        public static List<PlanetData> CalculatePlanetPositionsForDate(DateTime date, double latitude, double longitude, EAppSetting nodeType)
         {
             List<PlanetData> pdList = new List<PlanetData>();
 
-            PlanetData moonData = CalculatePlanetData((int)EPlanet.MOON, date);
+            PlanetData moonData = CalculatePlanetData((int)EPlanet.MOON, date, nodeType);
             pdList.Add(moonData);
-            PlanetData sunData = CalculatePlanetData((int)EPlanet.SUN, date);
+            PlanetData sunData = CalculatePlanetData((int)EPlanet.SUN, date, nodeType);
             pdList.Add(sunData);
-            PlanetData mercuryData = CalculatePlanetData((int)EPlanet.MERCURY, date);
+            PlanetData mercuryData = CalculatePlanetData((int)EPlanet.MERCURY, date, nodeType);
             pdList.Add(mercuryData);
-            PlanetData venusData = CalculatePlanetData((int)EPlanet.VENUS, date);
+            PlanetData venusData = CalculatePlanetData((int)EPlanet.VENUS, date, nodeType);
             pdList.Add(venusData);
-            PlanetData marsData = CalculatePlanetData((int)EPlanet.MARS, date);
+            PlanetData marsData = CalculatePlanetData((int)EPlanet.MARS, date, nodeType);
             pdList.Add(marsData);
-            PlanetData jupiterData = CalculatePlanetData((int)EPlanet.JUPITER, date);
+            PlanetData jupiterData = CalculatePlanetData((int)EPlanet.JUPITER, date, nodeType);
             pdList.Add(jupiterData);
-            PlanetData saturnData = CalculatePlanetData((int)EPlanet.SATURN, date);
+            PlanetData saturnData = CalculatePlanetData((int)EPlanet.SATURN, date, nodeType);
             pdList.Add(saturnData);
-            PlanetData rahuMeanData = CalculatePlanetData((int)EPlanet.RAHUMEAN, date);
-            pdList.Add(rahuMeanData);
-            PlanetData rahuTrueData = CalculatePlanetData((int)EPlanet.RAHUTRUE, date);
-            pdList.Add(rahuTrueData);
-            PlanetData ketuMeanData = CalculateKetuData(rahuMeanData);
-            pdList.Add(ketuMeanData);
-            PlanetData ketuTrueData = CalculateKetuData(rahuTrueData);
-            pdList.Add(ketuTrueData);
+            PlanetData rahuData = CalculatePlanetData((int)EPlanet.RAHU, date, nodeType);
+            pdList.Add(rahuData);
+            PlanetData ketuData = CalculateKetuData(rahuData);
+            pdList.Add(ketuData);
 
             return pdList;
         }
@@ -196,7 +192,7 @@ namespace PADMA.Core.Analysis
         /// Calculates all Tithi change times within a UTC range.
         /// Sidereal (Lahiri), geocentric, using London coordinates (GMT+0).
         /// </summary>
-        public static List<TithiData> CalculateTithiDataList_London(DateTime fromUtc, DateTime toUtc)
+        public static List<TithiData> CalculateTithiDataList_London(DateTime fromUtc, DateTime toUtc, EAppSetting nodeType)
         {
             if (toUtc <= fromUtc)
                 return new List<TithiData>();
@@ -206,7 +202,7 @@ namespace PADMA.Core.Analysis
 
             var results = new List<TithiData>();
 
-            double msDiff0 = GetMoonSunDiff(fromUtc);
+            double msDiff0 = GetMoonSunDiff(fromUtc, nodeType);
             int currentTithi = GetCurrentTithi(msDiff0);
 
             DateTime cursor = fromUtc;
@@ -214,14 +210,14 @@ namespace PADMA.Core.Analysis
             while (cursor < toUtc)
             {
                 // шаг 1 час — грубый поиск смены титхи
-                var (changed, rough) = ScanUntilTithiChange(cursor, toUtc, currentTithi, TimeSpan.FromHours(1));
+                var (changed, rough) = ScanUntilTithiChange(cursor, toUtc, currentTithi, TimeSpan.FromHours(1), nodeType);
                 if (!changed)
                     break;
 
                 // уточнение бинарным поиском до секунды
-                DateTime exact = RefineChangeTimeToSecond(rough - TimeSpan.FromHours(1), rough, currentTithi);
+                DateTime exact = RefineChangeTimeToSecond(rough - TimeSpan.FromHours(1), rough, currentTithi, nodeType);
 
-                double diffAtExact = GetMoonSunDiff(exact);
+                double diffAtExact = GetMoonSunDiff(exact, nodeType);
                 currentTithi = GetCurrentTithi(diffAtExact);
 
                 results.Add(new TithiData
@@ -239,12 +235,12 @@ namespace PADMA.Core.Analysis
 
         // --- internal Tithi helpers ---
         private static (bool changed, DateTime when) ScanUntilTithiChange(
-            DateTime start, DateTime stop, int currentTithi, TimeSpan step)
+            DateTime start, DateTime stop, int currentTithi, TimeSpan step, EAppSetting nodeType)
         {
             var t = start;
             while (t <= stop)
             {
-                var diff = GetMoonSunDiff(t);
+                var diff = GetMoonSunDiff(t, nodeType);
                 var tithi = GetCurrentTithi(diff);
                 if (tithi != currentTithi)
                     return (true, t);
@@ -253,13 +249,12 @@ namespace PADMA.Core.Analysis
             return (false, stop);
         }
 
-        private static DateTime RefineChangeTimeToSecond(
-            DateTime lo, DateTime hi, int oldTithi)
+        private static DateTime RefineChangeTimeToSecond(DateTime lo, DateTime hi, int oldTithi, EAppSetting nodeType)
         {
             while ((hi - lo).TotalSeconds > 1)
             {
                 var mid = lo.AddSeconds((hi - lo).TotalSeconds / 2.0);
-                var diff = GetMoonSunDiff(mid);
+                var diff = GetMoonSunDiff(mid, nodeType);
                 var tithi = GetCurrentTithi(diff);
                 if (tithi != oldTithi)
                     hi = mid;
@@ -273,11 +268,11 @@ namespace PADMA.Core.Analysis
         /// Returns Moon-Sun longitude difference in sidereal Lahiri mode.
         /// Uses SwissService.GetPlanetPosition() (already sidereal).
         /// </summary>
-        private static double GetMoonSunDiff(DateTime utc)
+        private static double GetMoonSunDiff(DateTime utc, EAppSetting nodeType)
         {
             // Важно: GetPlanetPosition ожидает внутренний PlanetId (не SWE-константы!)
-            var sun = SwissService.GetPlanetPosition(utc, (int)EPlanet.SUN); // Sun
-            var moon = SwissService.GetPlanetPosition(utc, (int)EPlanet.MOON); // Moon
+            var sun = SwissService.GetPlanetPosition(utc, (int)EPlanet.SUN, nodeType); // Sun
+            var moon = SwissService.GetPlanetPosition(utc, (int)EPlanet.MOON, nodeType); // Moon
 
             double diff = moon[0] - sun[0];
             diff %= 360.0;
@@ -296,7 +291,7 @@ namespace PADMA.Core.Analysis
             return (d > i) ? i + 1 : i;
         }
 
-        public static List<NityaYogaData> CalculateNityaYogaDataList_London(DateTime fromUtc, DateTime toUtc)
+        public static List<NityaYogaData> CalculateNityaYogaDataList_London(DateTime fromUtc, DateTime toUtc, EAppSetting nodeType)
         {
             if (toUtc <= fromUtc)
                 return new List<NityaYogaData>();
@@ -307,8 +302,8 @@ namespace PADMA.Core.Analysis
             var results = new List<NityaYogaData>();
 
             // начальные данные (на секунду раньше диапазона, чтобы корректно определить текущую йогу)
-            double[] sun0 = SwissService.GetPlanetPosition(fromUtc.AddSeconds(-1), (int)EPlanet.SUN);
-            double[] moon0 = SwissService.GetPlanetPosition(fromUtc.AddSeconds(-1), (int)EPlanet.MOON);
+            double[] sun0 = SwissService.GetPlanetPosition(fromUtc.AddSeconds(-1), (int)EPlanet.SUN, nodeType);
+            double[] moon0 = SwissService.GetPlanetPosition(fromUtc.AddSeconds(-1), (int)EPlanet.MOON, nodeType);
 
             double yogaLon = GetYogaLongitude(sun0[0], moon0[0]);
             int currentNakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
@@ -318,16 +313,16 @@ namespace PADMA.Core.Analysis
             while (cursor < toUtc)
             {
                 // грубый поиск смены йоги шагом 1 час
-                var (changed, rough) = ScanUntilYogaChange(cursor, toUtc, currentYogaId, TimeSpan.FromHours(1));
+                var (changed, rough) = ScanUntilYogaChange(cursor, toUtc, currentYogaId, TimeSpan.FromHours(1), nodeType);
                 if (!changed)
                     break;
 
                 // уточнение момента смены йоги до секунды
-                DateTime exact = RefineYogaChangeToSecond(rough - TimeSpan.FromHours(1), rough, currentYogaId);
+                DateTime exact = RefineYogaChangeToSecond(rough - TimeSpan.FromHours(1), rough, currentYogaId, nodeType);
 
                 // вычисляем положение Солнца и Луны в момент изменения
-                var sun = SwissService.GetPlanetPosition(exact, (int)EPlanet.SUN);
-                var moon = SwissService.GetPlanetPosition(exact, (int)EPlanet.MOON);
+                var sun = SwissService.GetPlanetPosition(exact, (int)EPlanet.SUN, nodeType);
+                var moon = SwissService.GetPlanetPosition(exact, (int)EPlanet.MOON, nodeType);
                 yogaLon = GetYogaLongitude(sun[0], moon[0]);
                 currentNakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
                 currentYogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == currentNakshatraId)?.Id ?? 0;
@@ -347,14 +342,13 @@ namespace PADMA.Core.Analysis
 
         // --- внутренние помощники ---
 
-        private static (bool changed, DateTime when) ScanUntilYogaChange(
-            DateTime start, DateTime stop, int currentYogaId, TimeSpan step)
+        private static (bool changed, DateTime when) ScanUntilYogaChange(DateTime start, DateTime stop, int currentYogaId, TimeSpan step, EAppSetting nodeType)
         {
             var t = start;
             while (t <= stop)
             {
-                var sun = SwissService.GetPlanetPosition(t, (int)EPlanet.SUN);
-                var moon = SwissService.GetPlanetPosition(t, (int)EPlanet.MOON);
+                var sun = SwissService.GetPlanetPosition(t, (int)EPlanet.SUN, nodeType);
+                var moon = SwissService.GetPlanetPosition(t, (int)EPlanet.MOON, nodeType);
                 double yogaLon = GetYogaLongitude(sun[0], moon[0]);
                 int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
                 int yogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == nakshatraId)?.Id ?? 0;
@@ -365,14 +359,13 @@ namespace PADMA.Core.Analysis
             return (false, stop);
         }
 
-        private static DateTime RefineYogaChangeToSecond(
-            DateTime lo, DateTime hi, int oldYogaId)
+        private static DateTime RefineYogaChangeToSecond(DateTime lo, DateTime hi, int oldYogaId, EAppSetting nodeType)
         {
             while ((hi - lo).TotalSeconds > 1)
             {
                 var mid = lo.AddSeconds((hi - lo).TotalSeconds / 2.0);
-                var sun = SwissService.GetPlanetPosition(mid, (int)EPlanet.SUN);
-                var moon = SwissService.GetPlanetPosition(mid, (int)EPlanet.MOON);
+                var sun = SwissService.GetPlanetPosition(mid, (int)EPlanet.SUN, nodeType);
+                var moon = SwissService.GetPlanetPosition(mid, (int)EPlanet.MOON, nodeType);
                 double yogaLon = GetYogaLongitude(sun[0], moon[0]);
                 int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
                 int yogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == nakshatraId)?.Id ?? 0;
@@ -396,7 +389,7 @@ namespace PADMA.Core.Analysis
             return SwissService.NormalizeDegrees(raw);
         }
 
-        public static List<MrityuBhagaData> CalculateMrityuBhagaDataList_London(int planetId, DateTime fromUtc, DateTime toUtc)
+        public static List<MrityuBhagaData> CalculateMrityuBhagaDataList_London(int planetId, DateTime fromUtc, DateTime toUtc, EAppSetting nodeType)
         {
             var results = new List<MrityuBhagaData>();
             if (toUtc <= fromUtc) return results;
@@ -431,7 +424,7 @@ namespace PADMA.Core.Analysis
             while (cur <= toUtc)
             {
                 // позиція планети
-                var planet = SwissService.GetPlanetPosition(cur, planetId);
+                var planet = SwissService.GetPlanetPosition(cur, planetId, nodeType);
                 double lon = SwissService.NormalizeDegrees(planet[0]);
                 bool retro = planet[3] < 0;
                 int zodId = SwissUtility.GetZodiacIdFromDegree(lon);

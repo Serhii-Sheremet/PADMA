@@ -33,6 +33,11 @@ public sealed class ProfileContextService : IProfileContextService
             var livingLoc = DataCache.Instance.LocationList.Where(loc => loc.Id == profile.PlaceOfLivingId).FirstOrDefault()
                 ?? throw new InvalidOperationException("Living location not found.");
 
+            // Active Node settings
+            var nodeSetting = DataCache.Instance.AppSettingsList
+                .FirstOrDefault(s => s.GroupCode == "NODE" && s.Active == 1);
+            var nodeMode = (EAppSetting)(nodeSetting?.Id ?? (int)EAppSetting.NODEMEAN);
+
             // Data by birth location
             int birthZodiacMoonId = 1, birthNakshatraMoonId = 1, birthPadaMoonId = 1, lagnaId = 1;
             double birthLat = 0, birthLon = 0, acendent = 0;
@@ -51,7 +56,7 @@ public sealed class ProfileContextService : IProfileContextService
                 localBirthDate = profile.DateOfBirth.AddHours(-offset);
 
                 char hsys = 'O'; // Placidus
-                bdPlanetData = SwissAnalysis.CalculatePlanetPositionsForDate(localBirthDate, birthLat, birthLon);
+                bdPlanetData = SwissAnalysis.CalculatePlanetPositionsForDate(localBirthDate, birthLat, birthLon, nodeMode);
                 acendent = SwissService.CalculateAscendantForDate(localBirthDate, birthLat, birthLon, 0, hsys);
             }
 

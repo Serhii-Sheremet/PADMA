@@ -20,7 +20,7 @@ namespace PADMA.UI.Services
 
         private readonly Dictionary<DayKey, Lazy<Task<DayOverviewData>>> _overviewCache = new();
         private readonly Dictionary<DayKey, Lazy<Task<DayDetailsData>>> _detailsCache = new();
-        private static bool IsNodePlanet(EPlanet planet) => planet == EPlanet.RAHUMEAN || planet == EPlanet.KETUMEAN;
+        private static bool IsNodePlanet(EPlanet planet) => planet == EPlanet.RAHU || planet == EPlanet.KETU;
 
         public Task<DayOverviewData> GetOverviewAsync(DayKey key, DayItem baseDay, CancellationToken ct = default)
         {
@@ -121,8 +121,8 @@ namespace PADMA.UI.Services
                     EPlanet.MARS,
                     EPlanet.JUPITER,
                     EPlanet.SATURN,
-                    EPlanet.RAHUMEAN,
-                    EPlanet.KETUMEAN
+                    EPlanet.RAHU,
+                    EPlanet.KETU
                 };
 
                 foreach (var planet in planets9)

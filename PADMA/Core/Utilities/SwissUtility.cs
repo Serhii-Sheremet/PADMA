@@ -1,6 +1,7 @@
 using System;
 using PADMA.Core.Services;
 using PADMA.Core.Native;
+using PADMA.Core.Enums;
 
 namespace PADMA.Core.Utilities
 {
@@ -14,7 +15,7 @@ namespace PADMA.Core.Utilities
         /// Converts PADMA internal PlanetId (EPlanet / PLANET table)
         /// to its Swiss Ephemeris constant (SweConst.SE_*).
         /// </summary>
-        public static int GetPlanetSWEConstByPlanetId(int planetId)
+        public static int GetPlanetSWEConstByPlanetId(int planetId, EAppSetting nodeType)
         {
             return planetId switch
             {
@@ -25,9 +26,10 @@ namespace PADMA.Core.Utilities
                 5 => SweConst.SE_JUPITER,
                 6 => SweConst.SE_VENUS,
                 7 => SweConst.SE_SATURN,
-                8 => SweConst.SE_MEAN_NODE,   // Rahu (Mean)
-                10 => SweConst.SE_TRUE_NODE,  // Rahu (True)
-                // 9 и 11 — Ketu (Mean / True) — вычисляются как противоположные точки
+                8 => nodeType == EAppSetting.NODEMEAN
+                        ? SweConst.SE_MEAN_NODE   // Rahu (Mean)
+                        : SweConst.SE_TRUE_NODE,  // Rahu (True)
+                // 9 — Ketu (Mean / True) — вычисляются как противоположные точки
                 _ => -1
             };
         }

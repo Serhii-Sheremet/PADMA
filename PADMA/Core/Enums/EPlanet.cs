@@ -9,9 +9,7 @@
         JUPITER = 5,
         VENUS = 6,
         SATURN = 7,
-        RAHUMEAN = 8,
-        KETUMEAN = 9,
-        RAHUTRUE = 10,
-        KETUTRUE = 11
+        RAHU = 8,
+        KETU = 9
     }
 }

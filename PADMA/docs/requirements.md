@@ -3159,11 +3159,10 @@ Ju.R→, Capricorn
 
 **Keys:**
 - Sun..Saturn
-- RahuMean (8)
-- KetuMean (9)
+- Rahu (8)
+- Ketu (9)
 
-TRUE/MEAN choice is resolved during computation;
-UI always uses MEAN keys
+TRUE/MEAN node choice is resolved during computation;
 
 ## DayOverview computation
 
