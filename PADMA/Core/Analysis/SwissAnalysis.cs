@@ -400,19 +400,16 @@ namespace PADMA.Core.Analysis
             var mbList = DataCache.Instance.MrityuBhagaList;
 
             // активна конфігурація
-            var setting = DataCache.Instance.AppSettingsList
-                .FirstOrDefault(s => s.GroupCode == "MRITYUBHAGA" && s.Active == 1);
-
-            var mode = setting?.SettingCode ?? "NEQUAL";
-            double tol = mode switch
+            var mbSettingMode = DataCache.Instance.GetActiveMrityuBhagaSettings();
+            double tol = mbSettingMode switch
             {
-                "NEQUAL" => 0.5,
-                "NLESS" => 1.0,
-                "NMORE" => 1.0,
-                "NERNST" => 1.0,
+                EAppSetting.MRITYUBHAGANEQUAL => 0.5,
+                EAppSetting.MRITYUBHAGANLESS => 1.0,
+                EAppSetting.MRITYUBHAGANMORE => 1.0,
+                EAppSetting.MRITYUBHAGAERNST => 1.0,
                 _ => 0.5
             };
-            var appSettingEnum = (EAppSetting)(setting?.Id ?? (int)EAppSetting.MRITYUBHAGANEQUAL);
+            
 
             DateTime cur = fromUtc;
             bool inZone = false;
@@ -435,12 +432,12 @@ namespace PADMA.Core.Analysis
 
                 // формуємо діапазон згідно з налаштуванням
                 double fromDeg = mb.Degree, toDeg = mb.Degree;
-                switch (mode)
+                switch (mbSettingMode)
                 {
-                    case "NEQUAL": fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
-                    case "NLESS": fromDeg = mb.Degree - tol; toDeg = mb.Degree; break;
-                    case "NMORE": fromDeg = mb.Degree; toDeg = mb.Degree + tol; break;
-                    case "NERNST": fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
+                    case EAppSetting.MRITYUBHAGANEQUAL: fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
+                    case EAppSetting.MRITYUBHAGANLESS: fromDeg = mb.Degree - tol; toDeg = mb.Degree; break;
+                    case EAppSetting.MRITYUBHAGANMORE: fromDeg = mb.Degree; toDeg = mb.Degree + tol; break;
+                    case EAppSetting.MRITYUBHAGAERNST: fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
                 }
 
                 fromDeg = SwissService.NormalizeDegrees(fromDeg);
@@ -458,7 +455,7 @@ namespace PADMA.Core.Analysis
                         PlanetId = (int)planetId,
                         ZodiacId = zodId,
                         Degree = mb.Degree,
-                        MrityuBhagaSetting = appSettingEnum,
+                        MrityuBhagaSetting = mbSettingMode,
                         LongitudeFrom = fromDeg,
                         LongitudeTo = toDeg,
                         DateFromUtc = cur

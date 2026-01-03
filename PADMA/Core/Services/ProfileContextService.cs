@@ -34,9 +34,7 @@ public sealed class ProfileContextService : IProfileContextService
                 ?? throw new InvalidOperationException("Living location not found.");
 
             // Active Node settings
-            var nodeSetting = DataCache.Instance.AppSettingsList
-                .FirstOrDefault(s => s.GroupCode == "NODE" && s.Active == 1);
-            var nodeMode = (EAppSetting)(nodeSetting?.Id ?? (int)EAppSetting.NODEMEAN);
+            var nodeMode = DataCache.Instance.GetActiveNodeSetting();
 
             // Data by birth location
             int birthZodiacMoonId = 1, birthNakshatraMoonId = 1, birthPadaMoonId = 1, lagnaId = 1;
@@ -79,8 +77,6 @@ public sealed class ProfileContextService : IProfileContextService
                 lagnaId = SwissUtility.GetZodiacIdFromDegree(acendent);
             }
 
-            EAppSetting nodeType = (EAppSetting)(DataCache.Instance.AppSettingsList.FirstOrDefault(i => i.GroupCode.Equals("NODE") && i.Active == 1)?.Id ?? 18);
-
             var ctx = new ProfileTransitContext(
                 ProfileId: profile.Id,
                 BirthDateUtc: localBirthDate,
@@ -95,7 +91,7 @@ public sealed class ProfileContextService : IProfileContextService
                 BirthPadaMoonId: birthPadaMoonId,
                 BirthLagnaId: lagnaId,
                 BirthPlanetDataList: bdPlanetData,
-                nodeType
+                nodeMode
             );
 
             Current = ctx;

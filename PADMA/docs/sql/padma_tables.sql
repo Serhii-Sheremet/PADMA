@@ -59,22 +59,6 @@ CREATE TABLE IF NOT EXISTS "ECLIPSE_DESC" (
 	PRIMARY KEY("ID" AUTOINCREMENT),
 	FOREIGN KEY("ECLIPSEID") REFERENCES "ECLIPSE"("ID")
 );
-CREATE TABLE IF NOT EXISTS "FONTLIST" (
-	"ID"	INTEGER,
-	"FONTID"	INTEGER,
-	"CODE"	TEXT,
-	"FONTSTYLEID"	INTEGER,
-	PRIMARY KEY("ID" AUTOINCREMENT),
-	FOREIGN KEY("FONTID") REFERENCES "SYSTEMFONT"("ID")
-);
-CREATE TABLE IF NOT EXISTS "FONTLIST_DESC" (
-	"ID"	INTEGER,
-	"FONTLISTID"	INTEGER,
-	"NAME"	TEXT,
-	"LANGUAGECODE"	VARCHAR(2),
-	PRIMARY KEY("ID" AUTOINCREMENT),
-	FOREIGN KEY("FONTLISTID") REFERENCES "FONTLIST"("ID")
-);
 CREATE TABLE IF NOT EXISTS "GHATI60" (
 	"ID"	INTEGER,
 	"POSITION"	SMALLINT,
@@ -118,14 +102,6 @@ CREATE TABLE IF NOT EXISTS "LANGUAGE" (
 	"LANGUAGECODE"	VARCHAR(2),
 	"CULTURECODE"	VARCHAR(5),
 	PRIMARY KEY("ID" AUTOINCREMENT)
-);
-CREATE TABLE IF NOT EXISTS "LANGUAGE_DESC" (
-	"ID"	INTEGER,
-	"LANGUAGEID"	INTEGER,
-	"NAME"	TEXT,
-	"LANGUAGECODE"	TEXT,
-	PRIMARY KEY("ID" AUTOINCREMENT),
-	FOREIGN KEY("LANGUAGEID") REFERENCES "LANGUAGE"("ID")
 );
 CREATE TABLE IF NOT EXISTS "LOCATION" (
 	"ID"	INTEGER,
@@ -290,12 +266,6 @@ CREATE TABLE IF NOT EXISTS "SPECIALNAVAMSA_DESC" (
 	"LANGUAGECODE"	VARCHAR(2),
 	PRIMARY KEY("ID" AUTOINCREMENT)
 );
-CREATE TABLE IF NOT EXISTS "SYSTEMFONT" (
-	"ID"	INTEGER,
-	"APPMAIN"	SMALLINT,
-	"SYSTEMNAME"	TEXT,
-	PRIMARY KEY("ID" AUTOINCREMENT)
-);
 CREATE TABLE IF NOT EXISTS "TARABALA" (
 	"ID"	INTEGER,
 	"COLORID"	INTEGER,
@@ -424,7 +394,7 @@ INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (20,'W
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (21,'WEEK','WEEKMONDAY',1);
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (22,'SUNRISE','TIP',1);
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (23,'SUNRISE','CENTER',0);
-INSERT INTO "APP_META" ("KEY","VALUE") VALUES ('DB_VERSION','0.0.26');
+INSERT INTO "APP_META" ("KEY","VALUE") VALUES ('DB_VERSION','0.0.27');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (1,'Language','Language','en');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (2,'Language','Мова','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (3,'Language','Język','pl');
@@ -995,39 +965,6 @@ INSERT INTO "ECLIPSE_DESC" ("ID","ECLIPSEID","NAME","LANGUAGECODE") VALUES (5,2,
 INSERT INTO "ECLIPSE_DESC" ("ID","ECLIPSEID","NAME","LANGUAGECODE") VALUES (6,2,'Сонячне затемнення','uk');
 INSERT INTO "ECLIPSE_DESC" ("ID","ECLIPSEID","NAME","LANGUAGECODE") VALUES (7,2,'Zaćmienie Słońca','pl');
 INSERT INTO "ECLIPSE_DESC" ("ID","ECLIPSEID","NAME","LANGUAGECODE") VALUES (8,2,'Солнечное затмение','ru');
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (1,12,'HEADER',2);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (2,13,'CALENDARTEXT',1);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (3,13,'TRANZITTEXT',1);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (4,7,'TRANSTOOLTIPHEADER',2);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (5,7,'TRANSTOOLTIPTEXT',3);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (6,11,'DWTOOLTIPTITLE',2);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (7,11,'DWTOOLTIPTIME',1);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (8,11,'DWTOOLTIPTEXT',3);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (9,11,'PEVTOOLTIPDATE',2);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (10,11,'PEVTOOLTIPTIME',1);
-INSERT INTO "FONTLIST" ("ID","FONTID","CODE","FONTSTYLEID") VALUES (11,4,'PEVTOOLTIPTEXT',3);
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (1,1,'Header','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (2,2,'Calendar text','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (3,3,'Tranzit text','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (4,4,'Tranzit tooltip header','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (5,5,'Tranzit tooltip text','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (6,6,'Diary tooltip title','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (7,7,'Diary tooltip time period','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (8,8,'Diary tooltip text','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (9,9,'Appointment tooltip date','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (10,10,'Appointment tooltip time','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (11,11,'Appointment tooltip text','en');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (12,1,'Заголовок календаря','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (13,2,'Текст календаря','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (14,3,'Текст транзитов','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (15,4,'Заголовок подсказки транзитов','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (16,5,'Текст подсказки транзитов','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (17,6,'Заголовок подсказки ежедневника','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (18,7,'Временной период подсказки ежедневника','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (19,8,'Текст подсказки ежедневника','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (20,9,'Дата подсказки записи','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (21,10,'Время подсказки записи','ru');
-INSERT INTO "FONTLIST_DESC" ("ID","FONTLISTID","NAME","LANGUAGECODE") VALUES (22,11,'Текст подсказки записи','ru');
 INSERT INTO "GHATI60" ("ID","POSITION","COLORID","GHATI60CODE") VALUES (1,1,2,'GHORA');
 INSERT INTO "GHATI60" ("ID","POSITION","COLORID","GHATI60CODE") VALUES (2,1,2,'RAKSHAS');
 INSERT INTO "GHATI60" ("ID","POSITION","COLORID","GHATI60CODE") VALUES (3,2,2,'NAGA');
@@ -1632,14 +1569,6 @@ INSERT INTO "LANGUAGE" ("ID","LANGUAGECODE","CULTURECODE") VALUES (1,'en','en-US
 INSERT INTO "LANGUAGE" ("ID","LANGUAGECODE","CULTURECODE") VALUES (2,'uk','uk-UA');
 INSERT INTO "LANGUAGE" ("ID","LANGUAGECODE","CULTURECODE") VALUES (3,'pl','pl-PL');
 INSERT INTO "LANGUAGE" ("ID","LANGUAGECODE","CULTURECODE") VALUES (4,'ru','ru-RU');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (1,1,'English','en');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (2,2,'Ukrainian','en');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (3,3,'Polish','en');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (4,4,'Russian','en');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (5,1,'Английский','ru');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (6,2,'Украинский','ru');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (7,3,'Польский','ru');
-INSERT INTO "LANGUAGE_DESC" ("ID","LANGUAGEID","NAME","LANGUAGECODE") VALUES (8,2,'Русский','ru');
 INSERT INTO "LOCATION" ("ID","LOCALITY","LATITUDE","LONGITUDE","REGION","STATE","COUNTRY","COUNTRYCODE","LANGUAGECODE") VALUES (37460,'Київ','50.4501','30.5234','Київ','Київська область','Україна','UA','uk');
 INSERT INTO "LOCATION" ("ID","LOCALITY","LATITUDE","LONGITUDE","REGION","STATE","COUNTRY","COUNTRYCODE","LANGUAGECODE") VALUES (37461,'Чорний Острів','49.3323','26.8484','Хмельницький район','Хмельницька область','Україна','UA','uk');
 INSERT INTO "MASA" ("ID","ZODIACID","SHUNYANAKSHATRA","SHUNYATITHI") VALUES (1,12,'1,4','8,9,11,23,24,26');
@@ -2440,21 +2369,6 @@ INSERT INTO "SPECIALNAVAMSA_DESC" ("ID","SPECIALNAVAMSAID","NAME","LANGUAGECODE"
 INSERT INTO "SPECIALNAVAMSA_DESC" ("ID","SPECIALNAVAMSAID","NAME","LANGUAGECODE") VALUES (30,8,'Варготтама','uk');
 INSERT INTO "SPECIALNAVAMSA_DESC" ("ID","SPECIALNAVAMSAID","NAME","LANGUAGECODE") VALUES (31,8,'Vargottama','pl');
 INSERT INTO "SPECIALNAVAMSA_DESC" ("ID","SPECIALNAVAMSAID","NAME","LANGUAGECODE") VALUES (32,8,'Варготтама','ru');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (1,0,'Arial');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (2,0,'Book Antiqua');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (3,0,'Calibri');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (4,0,'Cambria');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (5,0,'Century');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (6,0,'Courier New');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (7,0,'Georgia');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (8,1,'Microsoft Sans Serif');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (9,0,'Monotype Corsiva');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (10,0,'Palatino Linotype');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (11,0,'Segoe UI');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (12,0,'Segoe Print');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (13,0,'Tahoma');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (14,0,'Times New Roman');
-INSERT INTO "SYSTEMFONT" ("ID","APPMAIN","SYSTEMNAME") VALUES (15,0,'Yu Gothic UI Semilight');
 INSERT INTO "TARABALA" ("ID","COLORID") VALUES (1,2);
 INSERT INTO "TARABALA" ("ID","COLORID") VALUES (2,1);
 INSERT INTO "TARABALA" ("ID","COLORID") VALUES (3,2);
@@ -2535,11 +2449,11 @@ INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOOD
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (3,1,'Shukla Pratipat','Pratipat','Słońce, Agni','Nanda (zadowolenie)','Planowanie; medytacje; nauka; podróże; obejmowanie stanowiska; organizowanie festiwali; małżeństwo; prace związane z domem i działką; strzyżenie włosów.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (4,1,'Шукла Пратипат','Пратипат','Солнце, Агни','Нанда (удовлетворение)','Планирование; медитации; обучение; путешествия; вхождение в должность; проведение фестивалей; брак; работы, связанные с домом и земельным участком; подстригание волос.','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (5,2,'Shukla Dwitiya','Dwitiya','Moon, Ashwini Kumara, Brahma','Bhadra (sage)','Beginning actions related to authorities; marriage; decoration with gemstones; laying a house foundation, construction; fulfilling promises; entering a position; starting new activities; treatment; travels; creativity.','','en');
-INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (6,2,'Шукла Двитья','Двитья','Місяць, Ашвіні Кумара, Брахма','Бхадра (мудрець)','Початок дій, пов’язаних з представниками влади; шлюб; прикрашання дорогоцінним камінням; закладання фундаменту будинку, будівництво; виконання обіцянок; вступ на посаду; початок нових справ; лікування; подорожі; творчість.','','uk');
+INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (6,2,'Шукла Двітія','Двітія','Місяць, Ашвіні Кумара, Брахма','Бхадра (мудрець)','Початок дій, пов’язаних з представниками влади; шлюб; прикрашання дорогоцінним камінням; закладання фундаменту будинку, будівництво; виконання обіцянок; вступ на посаду; початок нових справ; лікування; подорожі; творчість.','','uk');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (7,2,'Shukla Dwitiya','Dwitiya','Księżyc, Ashwini Kumara, Brahma','Bhadra (mędrzec)','Rozpoczynanie działań związanych z przedstawicielami władzy; małżeństwo; ozdabianie drogocennymi kamieniami; kładzenie fundamentów domu, budowa; dotrzymywanie obietnic; obejmowanie stanowiska; rozpoczynanie nowych przedsięwzięć; leczenie; podróże; twórczość.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (8,2,'Шукла Двитья','Двитья','Луна, Ашвини Кумара, Брахма','Бхадра (мудрец)','Начало действий, связанных с представителями власти; брак; украшение драгоценными камнями; закладка фундамента дома, строительство; выполнение обещаний; вхождение в должность; начало новых дел; лечение; путешествия; творчество.','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (9,3,'Shukla Tritiya','Tritiya','Mars, Gauri (one of the names of Parvati)','Jaya (victory)','Beginning important activities; marriage; travels; treatment; learning; first music lesson; construction.','','en');
-INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (10,3,'Шукла Тритья','Тритья','Марс, Гаурі (одне з імен Парваті)','Джая (перемога)','Початок важливих справ; шлюб; подорожі; лікування; навчання; перший урок музики; будівництво.','','uk');
+INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (10,3,'Шукла Трітія','Трітія','Марс, Гаурі (одне з імен Парваті)','Джая (перемога)','Початок важливих справ; шлюб; подорожі; лікування; навчання; перший урок музики; будівництво.','','uk');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (11,3,'Shukla Tritiya','Tritiya','Mars, Gauri (jedno z imion Parvati)','Jaya (zwycięstwo)','Rozpoczynanie ważnych działań; małżeństwo; podróże; leczenie; nauka; pierwsza lekcja muzyki; budowa.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (12,3,'Шукла Тритья','Тритья','Марс, Гаури (одно из имен Парвати)','Джая (победа)','Начало важных дел; брак; путешествия; лечение; обучение; первый урок музыки; строительство.','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (13,4,'Shukla Chaturthi','Chaturthi','Mercury, Ganesha','Riktha (empty hands)','Cleaning, getting rid of unnecessary things, purification (home, body, mind); disputes; fighting enemies; using weapons or fire; removing obstacles.','Unfavorable day for important matters.','en');
@@ -2579,7 +2493,7 @@ INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOOD
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (47,12,'Shukla Dwadashi','Dwadashi','Merkury, Wisznu','Bhadra (mędrzec)','Dotrzymywanie obietnic; ceremonie religijne; dobroczynność; inne pomyślne działania. Małżeństwo umiarkowanie sprzyjające.','Podróże; masaż olejowy; wejście do nowego domu.','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (48,12,'Шукла Двадаши','Двадаши','Меркурий, Вишну','Бхадра (мудрец)','Выполнение обещаний; религиозные церемонии; благотворительность; другие благоприятные действия. Брак средне благоприятен.','Путешествия; масляный массаж; вход в новый дом.','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (49,13,'Shukla Trayodashi','Trayodashi','Jupiter, Kamadeva','Jaya (victory)','Beginning important activities; wearing new clothes or jewelry; fighting; fulfilling promises; treatment; travels.','','en');
-INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (50,13,'Шукла Траёдаші','Траёдаші','Юпітер, Камадева','Джая (перемога)','Початок важливих справ; одягання нового одягу чи прикрас; боротьба; виконання обіцянок; лікування; подорожі.','','uk');
+INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (50,13,'Шукла Трайодаші','Трайодаші','Юпітер, Камадева','Джая (перемога)','Початок важливих справ; одягання нового одягу чи прикрас; боротьба; виконання обіцянок; лікування; подорожі.','','uk');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (51,13,'Shukla Trayodashi','Trayodashi','Jowisz, Kamadeva','Jaya (zwycięstwo)','Rozpoczynanie ważnych działań; zakładanie nowej odzieży lub ozdób; walka; dotrzymywanie obietnic; leczenie; podróże.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (52,13,'Шукла Трайодаши','Трайодаши','Юпитер, Камадева','Джая (победа)','Начало важных дел; одевание новой одежды и украшений; борьба; выполнение обещаний; лечение; поездки.','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (53,14,'Shukla Chaturdashi','Chaturdashi','Venus, Shiva, Rudra','Riktha (empty hands)','Meditations, reading sacred books or mantras.','Unfavorable day for important matters. Avoid travel and hair cutting.','en');
@@ -2595,11 +2509,11 @@ INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOOD
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (63,16,'Krishna Pratipat','Pratipat','Słońce, Agni','Nanda (zadowolenie)','Rozpoczynanie ważnych działań; nauka; festiwale; podróże; obejmowanie stanowiska; małżeństwo; sprawy dotyczące domu lub ziemi; strzyżenie włosów.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (64,16,'Кришна Пратипат','Пратипат','Солнце, Агни','Нанда (удовлетворение)','Начало важных дел; обучение; фестивали; путешествия; вхождение в должность; брак; дела, связанные с домами или землями; подстригание волос.','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (65,17,'Krishna Dwitiya','Dwitiya','Moon, Ashwini Kumara, Brahma','Bhadra (sage)','Beginning new activities; forming new goals; actions related to authorities; marriage; decoration with gemstones; laying a house foundation; construction; fulfilling promises; entering a position; beginning work; treatment.','','en');
-INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (66,17,'Крішна Двіт’я','Двіт’я','Місяць, Ашвіні Кумара, Брахма','Бхадра (мудрець)','Початок нових справ; формування нових цілей; дії, повʼязані з представниками влади; шлюб; прикрашання дорогоцінним камінням; закладання фундаменту будинку; будівництво; виконання обіцянок; вступ на посаду; початок роботи; лікування.','','uk');
+INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (66,17,'Крішна Двітія','Двітія','Місяць, Ашвіні Кумара, Брахма','Бхадра (мудрець)','Початок нових справ; формування нових цілей; дії, повʼязані з представниками влади; шлюб; прикрашання дорогоцінним камінням; закладання фундаменту будинку; будівництво; виконання обіцянок; вступ на посаду; початок роботи; лікування.','','uk');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (67,17,'Krishna Dwitiya','Dwitiya','Księżyc, Ashwini Kumara, Brahma','Bhadra (mędrzec)','Rozpoczynanie nowych przedsięwzięć; formułowanie nowych celów; działania związane z przedstawicielami władzy; małżeństwo; ozdabianie kamieniami szlachetnymi; kładzenie fundamentów domu; budowa; dotrzymywanie obietnic; obejmowanie stanowiska; rozpoczęcie pracy; leczenie.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (68,17,'Кришна Двитья','Двитья','Луна, Ашвини Кумара, Брахма','Бхадра (мудрец)','Начало новых дел; формировании новых целей;  действия, связанные с представителями власти; брак; украшение драгоценными камнями; закладка фундамента дома, строительство; выполнение обещаний; вхождение в должность; начало работы; лечение;','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (69,18,'Krishna Tritiya','Tritiya','Mars, Gauri (one of the names of Parvati)','Jaya (victory)','Beginning important activities; marriage; travels; treatment; learning; first music lesson; construction.','','en');
-INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (70,18,'Крішна Тритья','Тритья','Марс, Гаурі (одне з імен Парваті)','Джая (перемога)','Початок важливих справ; шлюб; подорожі; лікування; навчання; перший урок музики; будівництво.','','uk');
+INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (70,18,'Крішна Трітія','Трітія','Марс, Гаурі (одне з імен Парваті)','Джая (перемога)','Початок важливих справ; шлюб; подорожі; лікування; навчання; перший урок музики; будівництво.','','uk');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (71,18,'Krishna Tritiya','Tritiya','Mars, Gauri (jedno z imion Parvati)','Jaya (zwycięstwo)','Rozpoczynanie ważnych działań; małżeństwo; podróże; leczenie; nauka; pierwsza lekcja muzyki; budowa.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (72,18,'Кришна Тритья','Тритья','Марс, Гаури (одно из имен Парвати)','Джая (победа)','Начало важных дел; брак; путешествия; лечение; обучение; первый урок музыки; строительство.','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (73,19,'Krishna Chaturthi','Chaturthi','Mercury, Ganesha','Riktha (empty hands)','Cleaning, decluttering, purification (home, body, mind); disputes; fighting enemies; using weapons or fire; removing obstacles.','Unfavorable day for important matters.','en');
@@ -2639,7 +2553,7 @@ INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOOD
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (107,27,'Krishna Dwadashi','Dwadashi','Merkury, Wisznu','Bhadra (mędrzec)','Dotrzymywanie obietnic; ceremonie religijne; dobroczynność; inne pomyślne działania. Małżeństwo umiarkowanie sprzyjające.','Podróże; masaż olejowy; wejście do nowego domu.','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (108,27,'Кришна Двадаши','Двадаши','Меркурий, Вишну','Бхадра (мудрец)','Выполнение обещаний; религиозные церемонии; благотворительность; другие благоприятные действия. Брак средне благоприятен.','Путешествия; масляный массаж; вход в новый дом.','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (109,28,'Krishna Trayodashi','Trayodashi','Jupiter, Kamadeva','Jaya (victory)','Beginning important activities; wearing new clothes or jewelry; fighting; fulfilling promises; treatment; travels.','','en');
-INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (110,28,'Крішна Траёдаші','Траёдаші','Юпітер, Камадева','Джая (перемога)','Початок важливих справ; одягання нового одягу чи прикрас; боротьба; виконання обіцянок; лікування; подорожі.','','uk');
+INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (110,28,'Крішна Трайодаші','Трайодаші','Юпітер, Камадева','Джая (перемога)','Початок важливих справ; одягання нового одягу чи прикрас; боротьба; виконання обіцянок; лікування; подорожі.','','uk');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (111,28,'Krishna Trayodashi','Trayodashi','Jowisz, Kamadeva','Jaya (zwycięstwo)','Rozpoczynanie ważnych działań; zakładanie nowej odzieży lub ozdób; walka; dotrzymywanie obietnic; leczenie; podróże.','','pl');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (112,28,'Кришна Трайодаши','Трайодаши','Юпитер, Камадева','Джая (победа)','Начало важных дел; одевание новой одежды и украшений; борьба; выполнение обещаний; лечение; поездки.','','ru');
 INSERT INTO "TITHI_DESC" ("ID","TITHIID","NAME","SHORTNAME","RULER","TYPE","GOODFOR","BADFOR","LANGUAGECODE") VALUES (113,29,'Krishna Chaturdashi','Chaturdashi','Venus, Shiva, Rudra','Riktha (empty hands)','Meditations; reading sacred books; chanting mantras.','Unfavorable day for important matters. Avoid travel and hair cutting.','en');

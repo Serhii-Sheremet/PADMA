@@ -81,14 +81,10 @@ namespace PADMA.UI.Services
 
         private static async Task<DayOverviewData> BuildOverviewAsync(DayKey key, DayItem baseDay, CancellationToken ct)
         {
-            // Placeholder: later we will compute Muhurta/Yogas using TransitEngine/Swiss services.
-            // For now, just return empty structure (but cached).
             await Task.Yield();
             ct.ThrowIfCancellationRequested();
-            // System.Diagnostics.Debug.WriteLine($"[DayComputation] BuildOverview {key.ProfileId} {key.Date}");
             
             var data = new DayOverviewData(key);
-            
             TimeZoneInfo tzInfo = TimeZoneInfo.Utc;
             var ctx = DataCache.Instance.ProfileContextService.Current;
             if (ctx?.TimeZoneInfo != null)
@@ -96,13 +92,9 @@ namespace PADMA.UI.Services
 
             var dayStartLocal = baseDay.Date.Date;      // 00:00 локального дня
             var dayEndLocal = dayStartLocal.AddDays(1);
-
             var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
             var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
-
-            var transitSetting = DataCache.Instance.AppSettingsList
-                .FirstOrDefault(s => s.GroupCode == "TRANSIT" && s.Active == 1);
-            var transitMode = (EAppSetting)(transitSetting?.Id ?? (int)EAppSetting.TRANZITMOON);
+            var transitMode = DataCache.Instance.GetActiveTransitSettings();
 
             // --------------------------
             // Planets transit lines
@@ -154,7 +146,6 @@ namespace PADMA.UI.Services
 
         private static async Task<DayDetailsData> BuildDetailsAsync(DayKey key, DayItem baseDay, CancellationToken ct)
         {
-            // Placeholder: later we will compute full timeline: transits, eclipses, etc.
             await Task.Yield();
             ct.ThrowIfCancellationRequested();
 
@@ -185,7 +176,7 @@ namespace PADMA.UI.Services
 
                 case EAppSetting.TRANZITMOONANDLAGNA:
                     seg.IsSplitColor = true;
-                    seg.Color = null;              // можно оставить, но не обязательно
+                    seg.Color = null;              
                     seg.ColorTop = moonColor;
                     seg.ColorBottom = lagnaColor;
                     break;
