@@ -8,6 +8,11 @@ namespace PADMA.UI
     /// </summary>
     public class DayOverviewData
     {
+        public string SunriseLabelText { get; set; } = string.Empty;
+        public string SunsetLabelText { get; set; } = string.Empty;
+        public string SunriseText { get; set; } = string.Empty;
+        public string SunsetText { get; set; } = string.Empty;
+
         public DayKey Key { get; }
 
         public IList<PlanetStripe> PlanetStripes { get; } = new List<PlanetStripe>();

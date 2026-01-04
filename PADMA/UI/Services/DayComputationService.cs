@@ -84,6 +84,7 @@ namespace PADMA.UI.Services
             await Task.Yield();
             ct.ThrowIfCancellationRequested();
             
+            var lang = DataCache.Instance.CurrentLanguageCode;
             var data = new DayOverviewData(key);
             TimeZoneInfo tzInfo = TimeZoneInfo.Utc;
             var ctx = DataCache.Instance.ProfileContextService.Current;
@@ -95,6 +96,33 @@ namespace PADMA.UI.Services
             var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
             var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
             var transitMode = DataCache.Instance.GetActiveTransitSettings();
+
+            data.SunriseLabelText = Localization.GetLocalizedText("Sunrise:", lang);
+            data.SunsetLabelText = Localization.GetLocalizedText("Sunset:", lang);
+            try
+            {
+                // Важно: координаты "Living"
+                double lat = ctx.LivingLat;
+                double lon = ctx.LivingLon;
+
+                // SwissService 
+                var sunriseUtc = SwissService.CalculateSunriseForDateAndLocation(dayStartUtc, lat, lon);
+                var sunsetUtc = SwissService.CalculateSunsetForDateAndLocation(dayStartUtc, lat, lon);
+
+                // convert to local time
+                var sunriseLocal = sunriseUtc.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(sunriseUtc.Value, tzInfo) : (DateTime?)null;
+                var sunsetLocal = sunsetUtc.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(sunsetUtc.Value, tzInfo) : (DateTime?)null;
+
+                // Time formating
+                data.SunriseText = sunriseLocal.HasValue ? sunriseLocal.Value.ToString("HH:mm:ss") : "--:--:--";
+                data.SunsetText = sunsetLocal.HasValue ? sunsetLocal.Value.ToString("HH:mm:ss") : "--:--:--";
+            }
+            catch
+            {
+                data.SunriseText = "--:--:--";
+                data.SunsetText = "--:--:--";
+            }
+
 
             // --------------------------
             // Planets transit lines

@@ -238,20 +238,16 @@ namespace PADMA.Core.Services
                 int ipl = SweConst.SE_SUN;
                 int iflag = SweConst.SEFLG_SWIEPH | SweConst.SEFLG_SIDEREAL;
 
+                // --- Build rsmi bitmask for sunrise ---
+                int rsmi = SweConst.SE_CALC_RISE; // base: sunrise
+
                 // --- Get current sunrise calculation setting from AppSettings ---
-                var setting = DataCache.Instance.AppSettingsList
-                    .FirstOrDefault(s => s.GroupCode == "SUNRISE" && s.Active == 1);
-
-                EAppSetting sunriseSetting = EAppSetting.SUNRISECENTER; // default
-                if (setting != null && Enum.IsDefined(typeof(EAppSetting), setting.Id))
-                    sunriseSetting = (EAppSetting)setting.Id;
-
-                int rsmi = sunriseSetting switch
+                EAppSetting sunriseSetting = DataCache.Instance.GetActiveSunriseSetting();
+                // TIP: ничего не добавл€ем (верхн€€ кромка по умолчанию)
+                if (sunriseSetting == EAppSetting.SUNRISECENTER)
                 {
-                    EAppSetting.SUNRISETIP => SweConst.SE_SUNRISE_TIP,
-                    EAppSetting.SUNRISECENTER => SweConst.SE_SUNRISE_CENTER,
-                    _ => SweConst.SE_SUNRISE_CENTER
-                };
+                    rsmi |= SweConst.SE_BIT_DISC_CENTER; // center of disc
+                }
 
                 // --- Convert to Julian day ---
                 double jut = dateUtc.Hour + dateUtc.Minute / 60.0 + dateUtc.Second / 3600.0;
@@ -288,7 +284,7 @@ namespace PADMA.Core.Services
                 // --- Convert Julian Day to DateTime (UTC) ---
                 double jd = tret[0];
                 double dayFraction = jd - Math.Floor(jd);
-                DateTime sunriseUtc = new DateTime(4713, 1, 1).AddDays(jd - 1721425.5);
+                DateTime sunriseUtc = new DateTime(1, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(jd - 1721425.5);
                 return sunriseUtc;
             }
             catch (Exception ex)
@@ -308,21 +304,16 @@ namespace PADMA.Core.Services
             {
                 int ipl = SweConst.SE_SUN;
                 int iflag = SweConst.SEFLG_SWIEPH | SweConst.SEFLG_SIDEREAL;
-
-                // --- Get current sunrise/sunset calculation setting from AppSettings ---
-                var setting = DataCache.Instance.AppSettingsList
-                    .FirstOrDefault(s => s.GroupCode == "SUNRISE" && s.Active == 1);
-
-                EAppSetting sunsetSetting = EAppSetting.SUNRISECENTER; // default
-                if (setting != null && Enum.IsDefined(typeof(EAppSetting), setting.Id))
-                    sunsetSetting = (EAppSetting)setting.Id;
-
-                int rsmi = sunsetSetting switch
+                
+                // --- Build rsmi bitmask for sunset ---
+                int rsmi = SweConst.SE_CALC_SET; // base: sunset
+                
+                // --- Get current sunset calculation setting from AppSettings ---
+                EAppSetting setting = DataCache.Instance.GetActiveSunriseSetting();
+                if (setting == EAppSetting.SUNRISECENTER)
                 {
-                    EAppSetting.SUNRISETIP => SweConst.SE_SUNSET_TIP,
-                    EAppSetting.SUNRISECENTER => SweConst.SE_SUNSET_CENTER,
-                    _ => SweConst.SE_SUNSET_CENTER
-                };
+                    rsmi |= SweConst.SE_BIT_DISC_CENTER; // center of disc
+                }
 
                 // --- Convert to Julian day ---
                 double jut = dateUtc.Hour + dateUtc.Minute / 60.0 + dateUtc.Second / 3600.0;
@@ -358,7 +349,8 @@ namespace PADMA.Core.Services
 
                 // --- Convert Julian Day to DateTime (UTC) ---
                 double jd = tret[0];
-                DateTime sunsetUtc = new DateTime(4713, 1, 1).AddDays(jd - 1721425.5);
+                DateTime sunsetUtc = new DateTime(1, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(jd - 1721425.5);
+
                 return sunsetUtc;
             }
             catch (Exception ex)

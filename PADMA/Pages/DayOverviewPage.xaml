@@ -13,6 +13,36 @@
 
     <VerticalStackLayout Spacing="0" Padding="0">
 
+        <!-- Sunrise / Sunset (top) -->
+        <Grid ColumnDefinitions="*,*"
+            Padding="0,0,0,2"
+            RowDefinitions="Auto">
+
+            <!-- Sunrise -->
+            <HorizontalStackLayout Grid.Column="0"
+                           Spacing="6"
+                           HorizontalOptions="Start"
+                           VerticalOptions="Center">
+                <Label Text= "{Binding OverviewData.SunriseLabelText}"
+                    Opacity="0.75" />
+                <Label Text="{Binding OverviewData.SunriseText}"
+                    FontAttributes="Bold" />
+            </HorizontalStackLayout>
+
+            <!-- Sunset -->
+            <HorizontalStackLayout Grid.Column="1"
+                           Spacing="6"
+                           HorizontalOptions="End"
+                           VerticalOptions="Center">
+                <Label Text="{Binding OverviewData.SunsetLabelText}"
+                    Opacity="0.75" />
+                <Label Text="{Binding OverviewData.SunsetText}"
+                    FontAttributes="Bold" />
+            </HorizontalStackLayout>
+
+        </Grid>
+
+
         <!-- Panchanga bars (larger than on the calendar) -->
         <VerticalStackLayout Spacing="0" Margin="0,0,0,2">
 
