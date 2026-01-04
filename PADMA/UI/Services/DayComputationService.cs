@@ -306,6 +306,13 @@ namespace PADMA.UI.Services
                     continue;
                 }
 
+                // For DayOverview: when zodiac changes, we already show the new zodiac name,
+                // so ingress arrow is redundant here (keep retro/exalt markers as-is).
+                if (zodiacChanged && eventText.Contains("→"))
+                {
+                    eventText = eventText.Replace("→", "").Trim();
+                }
+
                 zodiac = GetZodiacName(s.ZodiacId);
                 // new segment begins at event time
                 var seg = new PanchangaSegment

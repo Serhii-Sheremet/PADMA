@@ -450,8 +450,8 @@ namespace PADMA.UI
                                 if (slice.ZodiacCode == EZodiac.SCO)
                                 {
                                     var zodiacId = (int)slice.ZodiacCode;
-                                    var zodiacCode = zodiacCodeById.GetValueOrDefault(zodiacId, "Sco");
-                                    return string.Format(tplHouseSign, house, zodiacCode);
+                                    var zodiacName = GetZodiacName(zodiacId);
+                                    return string.Format(tplHouseSign, house, zodiacName);
                                 }
 
                                 return string.Format(tplHouse, house);
@@ -806,6 +806,16 @@ namespace PADMA.UI
                 return text; // "Pl"
 
             text += eventSymbol;
+            return text;
+        }
+
+        private static string GetZodiacName(int zodiacId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            string zodiac = DataCache.Instance.ZodiacDescList
+                .FirstOrDefault(z => z.LanguageCode == lang && z.ZodiacId == zodiacId)?.Name ?? string.Empty;
+            var text = zodiac.Length >= 3 ? zodiac.Substring(0, 3) : zodiac;
+
             return text;
         }
 
