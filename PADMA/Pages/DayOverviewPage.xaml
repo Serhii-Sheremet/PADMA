@@ -84,6 +84,21 @@
             </BindableLayout.ItemTemplate>
         </VerticalStackLayout>
 
+        <!-- MUHURTAS (one block, 5 stripes) -->
+        <VerticalStackLayout Margin="0,2,0,0"
+                     Spacing="0"
+                     BindableLayout.ItemsSource="{Binding OverviewData.MuhurtaStripes}">
+
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <local:MuhurtaBar HeightRequest="24"
+                           DayDate="{Binding DayStartLocal}"
+                           Stripe="{Binding .}" />
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+
+
 
         <!-- Button for navigating to DayPage -->
         <Button Margin="12"

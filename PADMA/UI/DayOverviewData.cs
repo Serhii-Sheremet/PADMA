@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace PADMA.UI
 {
@@ -17,11 +18,7 @@ namespace PADMA.UI
 
         public IList<PlanetStripe> PlanetStripes { get; } = new List<PlanetStripe>();
 
-        /// <summary>
-        /// 5 Muhurta bars (or any overview-level segments).
-        /// Keep as a flat list for now; we can split into 5 lists later if needed.
-        /// </summary>
-        public IList<PanchangaSegment> MuhurtaSegments { get; } = new List<PanchangaSegment>();
+        public ObservableCollection<MuhurtaOverviewStripe> MuhurtaStripes { get; } = new();
 
         /// <summary>
         /// Day-level yogas or other quick indicators (structure only).

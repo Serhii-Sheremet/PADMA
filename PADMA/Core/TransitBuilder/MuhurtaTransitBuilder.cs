@@ -122,12 +122,12 @@ namespace PADMA.Core.TransitBuilder
         private static readonly Dictionary<DayOfWeek, int> GulikaPartIndex = new()
         {
             { DayOfWeek.Monday,    5 },
-            { DayOfWeek.Tuesday,   6 },
-            { DayOfWeek.Wednesday, 4 },
-            { DayOfWeek.Thursday,  3 },
-            { DayOfWeek.Friday,    2 },
-            { DayOfWeek.Saturday,  1 },
-            { DayOfWeek.Sunday,    7 }
+            { DayOfWeek.Tuesday,   4 },
+            { DayOfWeek.Wednesday, 3 },
+            { DayOfWeek.Thursday,  2 },
+            { DayOfWeek.Friday,    1 },
+            { DayOfWeek.Saturday,  0 },
+            { DayOfWeek.Sunday,    6 }
         };
 
         private static MuhurtaSlice BuildGulikaKala(DateTime sunrise, TimeSpan dayLong, DayOfWeek dow)
@@ -152,13 +152,13 @@ namespace PADMA.Core.TransitBuilder
 
         private static readonly Dictionary<DayOfWeek, int> YamagandaPartIndex = new()
         {
-            { DayOfWeek.Monday,    7 },
-            { DayOfWeek.Tuesday,   5 },
-            { DayOfWeek.Wednesday, 6 },
-            { DayOfWeek.Thursday,  4 },
-            { DayOfWeek.Friday,    2 },
-            { DayOfWeek.Saturday,  3 },
-            { DayOfWeek.Sunday,    1 }
+            { DayOfWeek.Monday,    3 },
+            { DayOfWeek.Tuesday,   2 },
+            { DayOfWeek.Wednesday, 1 },
+            { DayOfWeek.Thursday,  0 },
+            { DayOfWeek.Friday,    6 },
+            { DayOfWeek.Saturday,  5 },
+            { DayOfWeek.Sunday,    4 }
         };
 
         private static MuhurtaSlice BuildYamaganda(DateTime sunrise, TimeSpan dayLong, DayOfWeek dow)

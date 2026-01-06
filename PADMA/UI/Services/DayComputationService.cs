@@ -7,6 +7,7 @@ using PADMA.Core.Enums;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.Core.Models.Calendar;
+using PADMA.Core.TransitBuilder;
 
 namespace PADMA.UI.Services
 {
@@ -169,7 +170,132 @@ namespace PADMA.UI.Services
                 }
             }
 
+            // --- MUHURTAS (overview stripes) ---
+            data.MuhurtaStripes.Clear();
+            try
+            {
+                double lat = ctx.LivingLat;
+                double lon = ctx.LivingLon;
+                double alt = 0; // если у профиля есть высота — подставь её
+
+                // SunriseSlice нужен для мухурт (prev/sunrise/sunset/nextSunrise)
+                //var sunriseSlice = SunriseTransitBuilder.Build(dayStartUtc.Date, lat, lon, alt);
+                var dateForLocalDayUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal.AddHours(12), tzInfo);
+                var sunriseSlice = SunriseTransitBuilder.Build(dateForLocalDayUtc, tzInfo, lat, lon, alt);
+
+                var sunriseSlices = new List<SunriseSlice>();
+                if (sunriseSlice != null)
+                    sunriseSlices.Add(sunriseSlice);
+
+                // builder уже сортирует по StartUtc
+                var muhurtas = MuhurtaTransitBuilder.BuildRange(sunriseSlices);
+
+                // Длина календарного дня (локально 00:00..24:00)
+                var dayLenSec = (dayEndLocal - dayStartLocal).TotalSeconds;
+                if (dayLenSec <= 0) dayLenSec = 86400;
+
+                foreach (var m in muhurtas)
+                {
+                    // конвертируем в локальное время
+                    var startLocal = TimeZoneInfo.ConvertTimeFromUtc(m.StartUtc, tzInfo);
+                    var endLocal = TimeZoneInfo.ConvertTimeFromUtc(m.EndUtc, tzInfo);
+
+                    // ограничим интервалом суток, чтобы не вылезало за рамки полосы
+                    if (endLocal <= dayStartLocal || startLocal >= dayEndLocal)
+                        continue;
+
+                    if (startLocal < dayStartLocal) startLocal = dayStartLocal;
+                    if (endLocal > dayEndLocal) endLocal = dayEndLocal;
+
+                    int muhurtaId = (int)m.MuhurtaCode;
+                    string shortName = GetMuhurtaShortName(muhurtaId, lang);
+                    Color color = GetMuhurtaColor(muhurtaId);
+
+                    double startRatio = (startLocal - dayStartLocal).TotalSeconds / dayLenSec;
+                    double endRatio = (endLocal - dayStartLocal).TotalSeconds / dayLenSec;
+
+                    // ширина линии как доля ширины полосы (подстрой при желании)
+                    const double lineW = 0.003; // ~0.3% ширины
+
+                    double sr = Math.Clamp(startRatio, 0, 1);
+                    double er = Math.Clamp(endRatio, 0, 1);
+                    if (er < sr) (sr, er) = (er, sr);
+
+                    var segmentBounds = new Rect(sr, 0, Math.Max(0, er - sr), 1);
+                    var startLineBounds = new Rect(Math.Clamp(sr - lineW / 2, 0, 1), 0, lineW, 1);
+                    var endLineBounds = new Rect(Math.Clamp(er - lineW / 2, 0, 1), 0, lineW, 1);
+
+                    // Подписи времени: X = позиция, размеры AutoSize
+                    Rect startLabelBounds = new Rect(sr, 0.5, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize);
+                    Rect endLabelBounds = new Rect(er, 0.5, AbsoluteLayout.AutoSize, AbsoluteLayout.AutoSize);
+
+                    data.MuhurtaStripes.Add(new MuhurtaOverviewStripe
+                    {
+                        Title = shortName,
+                        IsFormed = true,
+
+                        DayStartLocal = dayStartLocal,
+                        DayEndLocal = dayEndLocal,
+
+                        StartLocal = startLocal,
+                        EndLocal = endLocal,
+                        StartText = startLocal.ToString("HH:mm"),
+                        EndText = endLocal.ToString("HH:mm"),
+
+                        SegmentColor = color,
+                    });
+
+
+                }
+
+                // В среду Abhijit не формируется: добавляем пустую полосу последней
+                bool isWednesday = dayStartLocal.DayOfWeek == DayOfWeek.Wednesday;
+
+                // В твоём проекте EMuhurta совпадает с MUHURTA.ID, поэтому проверяем по коду:
+                bool hasAbhijit = data.MuhurtaStripes.Any(s =>
+                    s.IsFormed && s.Title.Equals(GetMuhurtaShortName((int)EMuhurta.ABHIJIT, lang)));
+
+                if (isWednesday && !muhurtas.Any(x => x.MuhurtaCode == EMuhurta.ABHIJIT))
+                {
+                    string abhijitShort = GetMuhurtaShortName((int)EMuhurta.ABHIJIT, lang); 
+                    data.MuhurtaStripes.Add(new MuhurtaOverviewStripe
+                    {
+                        Title = abhijitShort + Localization.GetLocalizedText(" does not occur", lang),
+                        IsFormed = false,
+
+                        DayStartLocal = dayStartLocal,
+                        DayEndLocal = dayEndLocal,
+
+                        StartText = "",
+                        EndText = "",
+                        SegmentColor = Colors.Transparent,
+                    });
+                }
+
+                // На всякий: полосы должны идти по старту (сверху вниз)
+                // (BuildRange уже сортирует, но после добавления пустой Abhijit лучше не трогать порядок)
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[MUHURTA] Failed: " + ex);
+            }
+
+
+
+
             return data;
+        }
+
+        private static string GetMuhurtaShortName(int muhurtaId, string lang)
+        {
+            return DataCache.Instance.MuhurtaDescList
+                .FirstOrDefault(m => m.LanguageCode == lang && m.MuhurtaId == muhurtaId)?.ShortName ?? string.Empty;
+        }
+
+        private static Color GetMuhurtaColor(int muhurtaId)
+        {
+            int colorId = DataCache.Instance.MuhurtaList.FirstOrDefault(mu => mu.Id == muhurtaId)?.ColorId ?? 0;
+            return DataCache.Instance.GetColor((EColor)colorId);
         }
 
         private static async Task<DayDetailsData> BuildDetailsAsync(DayKey key, DayItem baseDay, CancellationToken ct)

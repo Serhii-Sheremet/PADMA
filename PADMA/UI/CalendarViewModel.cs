@@ -107,15 +107,6 @@ namespace PADMA.UI
             {
                 var langCode = DataCache.Instance.CurrentLanguageCode;
                 string newCulture = DataCache.Instance.GetCurrentCultureCode(langCode);
-                /*string newCulture = code switch
-                {
-                    "en" => "en-US",
-                    "uk" => "uk-UA",
-                    "pl" => "pl-PL",
-                    "ru" => "ru-RU",
-                    _ => CultureInfo.CurrentUICulture.Name
-                };*/
-
                 if (!string.Equals(CultureCode, newCulture, StringComparison.OrdinalIgnoreCase))
                 {
                     CultureCode = newCulture;

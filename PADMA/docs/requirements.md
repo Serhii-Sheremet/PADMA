@@ -3192,3 +3192,74 @@ TRUE/MEAN node choice is resolved during computation;
 - DayPage will reuse the same TransitPack for pad-level visualization.
 
 ------
+
+## DayOverviewPage — Daily Muhurtas
+
+### Purpose
+The **Daily Muhurtas** block visualizes key Jyotish time windows of the day as clear, intuitive time segments within a single daily timeline.  
+The block is designed for quick visual orientation and practical day planning.
+
+### UI Placement
+- The Muhurtas block is located **below the Planet Transits block** on `DayOverviewPage`
+- Vertical spacing from the Planet Transits block: **2 px**
+- All Muhurtas are displayed as **one compact visual block**, without external headers or spacing between stripes
+
+### Displayed Muhurtas
+The following Muhurtas are displayed:
+1. **Brahma Muhurta**
+2. **Abhijit Muhurta**
+3. **Rahu Kala**
+4. **Yamaganda**
+5. **Gulika Kala**
+
+The number of stripes is fixed to **5**.
+
+### Ordering Rules
+- Muhurta stripes are ordered **by their start time** (ascending)
+- If a Muhurta does not form on a given day (e.g. *Abhijit Muhurta* on Wednesdays), it:
+  - is displayed **as the last stripe**
+  - has no time segment drawn
+  - shows a localized suffix **“does not occur”**
+
+### Visual Representation
+Each Muhurta is rendered as **one horizontal stripe with fixed height (24 px)**:
+
+- Transparent outline — represents the full calendar day (00:00–24:00, local time)
+- Colored segment — the active interval of the Muhurta
+  - the color is taken from `DataCache` via `Muhurta.ColorId`
+- Vertical markers:
+  - start of the Muhurta
+  - end of the Muhurta
+- All elements are drawn **inside a single stripe**, without additional UI elements above or below
+
+### Text Rendering Inside the Stripe
+All text is rendered directly inside the stripe using custom drawing logic:
+
+- **Left side**: localized short name of the Muhurta (`ShortName`)
+- **Start time**:
+  - displayed **to the left of the start marker**
+  - horizontal position is calculated using actual text width (`HH:mm`) to ensure the full text fits before the marker
+- **End time**:
+  - displayed **to the right of the end marker**
+- Time format: `HH:mm`
+- Font and sizing are consistent with other DayOverview stripes (no per-element font sizing in XAML)
+
+### Localization
+- Muhurta names are taken from `MuhurtaDescList` using localized `ShortName`
+- The suffix for a non-forming Muhurta is resolved via `APP_TEXTS`:
+  - key: `" does not occur"` (leading space included)
+  - supported languages: `en`, `uk`, `pl`, `ru`
+
+### Technical Implementation
+- Rendering is implemented via `GraphicsView` with a custom `MuhurtaBarDrawable`
+- Text positioning uses string measurement (`GetStringSize`) to avoid overlaps
+- All calculations are performed in UTC and converted to the active profile’s local time
+- `DayItem` does not store Muhurta data — Muhurtas are computed only in `DayOverviewData`
+
+### Status
+✅ Implemented  
+✅ Visually verified  
+✅ Aligned with legacy PAD behavior  
+
+------
+
