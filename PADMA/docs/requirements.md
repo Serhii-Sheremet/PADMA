@@ -3263,3 +3263,85 @@ All text is rendered directly inside the stripe using custom drawing logic:
 
 ------
 
+## Day Overview – Yogas of the Day
+
+### Purpose
+The **Yogas of the Day** block displays all applicable *non-Nitya* yogas occurring during the selected day.
+This block provides a compact, visual overview of yogas based on Panchanga rules, calculated according to **vara defined from sunrise to sunrise**, while being displayed within the civil day (00:00–24:00).
+
+### Placement in UI
+- The Yogas block is displayed on **DayOverviewPage**
+- Positioned **below the Muhurtas block**
+- Vertical spacing between blocks: **2 px**
+- The block participates in vertical scrolling together with other overview stripes
+- The bottom action button (“Day Details”) must always remain visible
+
+### Data Source
+- Yogas are calculated using:
+  - `YogaTransitBuilder`
+  - `Tithi` and `Nakshatra` slices
+  - Vara determined by **SunriseSlice** (`PreviousSunrise → Sunrise → NextSunrise`)
+- Yoga descriptions (ShortName) are loaded from cache:
+  - `DataCache.YogaDescList`
+- Colors are resolved via:
+  - `YogaSlice.GetYogaColorId()` → App color cache
+
+### Vara Definition
+- Vara is defined **astronomically**, from **sunrise to the next sunrise**
+- Two vara windows may intersect the civil day:
+  1. Tail of the previous vara (before sunrise)
+  2. Current vara (from sunrise onward)
+- Yogas from both windows are considered if they intersect the civil day
+
+### Display Rules
+
+#### General
+- Each **distinct yoga type** is displayed as **one horizontal bar**
+- If the same yoga occurs multiple times during the day, its periods are:
+  - **Merged into a single bar**
+  - Displayed as **multiple colored segments** on that bar
+- Segments are sorted by start time
+
+#### Segment Rendering
+- Each yoga segment is drawn as:
+  - A colored rectangle over a transparent base bar
+  - Vertical boundary lines at start and/or end (if inside the day)
+- Time labels:
+  - Start time (`HH:mm`) is shown **only if the segment starts after 00:00**
+  - End time (`HH:mm`) is shown **only if the segment ends before 24:00**
+- If a yoga:
+  - Started before the day → rendered from `00:00` without start time
+  - Ends after the day → rendered until `24:00` without end time
+
+#### Title
+- Yoga ShortName is rendered:
+  - Inside the bar
+  - Left-aligned
+  - On top of all segments (never hidden by fill)
+- Only one title per yoga bar, regardless of number of segments
+
+### Ordering
+- Yoga bars are ordered by:
+  - The start time of their **first segment** within the day
+- No fixed limit on the number of yogas per day
+
+### Edge Cases
+- Days may contain:
+  - Zero yogas
+  - One yoga
+  - Multiple yogas with multiple segments
+- Overlapping or adjacent segments of the same yoga are merged
+- All calculations respect the active profile’s timezone
+
+### Visual Consistency
+- Bar height matches other overview stripes (Panchanga, Transits, Muhurtas)
+- No additional labels outside the bar
+- Default font size and styling consistent across DayOverviewPage
+
+### Status
+- **Implemented**
+- Verified with legacy PAD behavior
+- Subject to data rule adjustments (tithi/nakshatra mappings) without UI changes
+
+----------
+

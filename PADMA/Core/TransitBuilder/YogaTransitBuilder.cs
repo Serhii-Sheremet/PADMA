@@ -129,6 +129,10 @@ namespace PADMA.Core.TransitBuilder
                     var start = t.StartUtc > n.StartUtc ? t.StartUtc : n.StartUtc;
                     var end = t.EndUtc < n.EndUtc ? t.EndUtc : n.EndUtc;
 
+                    // NEW: clamp to vara window (periodStartUtc..periodEndUtc)
+                    if (start < periodStartUtc) start = periodStartUtc;
+                    if (end > periodEndUtc) end = periodEndUtc;
+
                     if (start < end)
                     {
                         result.Add(new YogaSlice
@@ -751,6 +755,13 @@ namespace PADMA.Core.TransitBuilder
             }
 
             return result;
+        }
+
+        static (DateTime start, DateTime end) Clamp(DateTime start, DateTime end, DateTime ps, DateTime pe)
+        {
+            if (start < ps) start = ps;
+            if (end > pe) end = pe;
+            return (start, end);
         }
 
 

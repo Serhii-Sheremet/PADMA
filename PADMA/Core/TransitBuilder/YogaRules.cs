@@ -400,14 +400,15 @@ namespace PADMA.Core.TransitBuilder
         public static readonly Dictionary<DayOfWeek, HashSet<int>> MrityuTithisByVara =
             new()
             {
-                { DayOfWeek.Monday,    new HashSet<int> { 2, 7, 12, 17, 22, 27 } },
-                { DayOfWeek.Tuesday,   new HashSet<int> { 1, 6, 11, 16, 21, 26 } },
-                { DayOfWeek.Wednesday, new HashSet<int> { 3, 8, 13, 18, 23, 28 } },
-                { DayOfWeek.Thursday,  new HashSet<int> { 4, 9, 14, 19, 24, 29 } },
-                { DayOfWeek.Friday,    new HashSet<int> { 2, 7, 12, 17, 22, 27 } },
-                { DayOfWeek.Saturday,  new HashSet<int> { 5, 10, 15, 20, 25, 30 } },
-                { DayOfWeek.Sunday,    new HashSet<int> { 1, 6, 11, 16, 21, 26 } }
+                { DayOfWeek.Monday,    new() { 2, 7, 12, 17, 22, 27 } },
+                { DayOfWeek.Tuesday,   new() { 1, 6, 11, 16, 21, 26 } },
+                { DayOfWeek.Wednesday, new() { 3, 8, 13, 18, 23, 28 } },
+                { DayOfWeek.Thursday,  new() { 4, 9, 14, 19, 24, 29 } },
+                { DayOfWeek.Friday,    new() { 2, 7, 12, 17, 22, 27 } },
+                { DayOfWeek.Saturday,  new() { 5, 10, 15, 20, 25, 30 } },
+                { DayOfWeek.Sunday,    new() { 1, 6, 11, 16, 21, 26 } }
             };
+
 
         /// <summary>
         /// ADHAM-yoga: разрешённые тихти по дням недели.
@@ -415,14 +416,15 @@ namespace PADMA.Core.TransitBuilder
         public static readonly Dictionary<DayOfWeek, HashSet<int>> AdhamTithisByVara =
             new()
             {
-                { DayOfWeek.Monday,    new HashSet<int> { 11, 21 } },
-                { DayOfWeek.Tuesday,   new HashSet<int> { 10, 25 } },
-                { DayOfWeek.Wednesday, new HashSet<int> { 1,  9, 16, 24 } },
-                { DayOfWeek.Thursday,  new HashSet<int> { 8, 23 } },
-                { DayOfWeek.Friday,    new HashSet<int> { 7, 22 } },
-                { DayOfWeek.Saturday,  new HashSet<int> { 6, 21 } },
-                { DayOfWeek.Sunday,    new HashSet<int> { 7, 12, 22, 27 } }
+                { DayOfWeek.Monday,    new() { 11, 21 } },
+                { DayOfWeek.Tuesday,   new() { 10, 25 } },
+                { DayOfWeek.Wednesday, new() { 1, 9, 16, 24 } },
+                { DayOfWeek.Thursday,  new() { 8, 23 } },
+                { DayOfWeek.Friday,    new() { 7, 22 } },
+                { DayOfWeek.Saturday,  new() { 6, 21 } },
+                { DayOfWeek.Sunday,    new() { 7, 12, 22, 27 } }
             };
+
 
         /// <summary>
         /// YAMAGHATA-yoga: разрешённые накшатры по дням недели.
@@ -438,6 +440,7 @@ namespace PADMA.Core.TransitBuilder
                 { DayOfWeek.Saturday,  ENakshatra.HASTA },
                 { DayOfWeek.Sunday,    ENakshatra.MAGHA }
             };
+
 
         /// <summary>
         /// DAGDHA-yoga: разрешённые накшатры по дням недели.
@@ -460,13 +463,14 @@ namespace PADMA.Core.TransitBuilder
         public static readonly Dictionary<DayOfWeek, HashSet<int>> UnfavorableTithisByVara =
             new()
             {
-                { DayOfWeek.Monday,    new HashSet<int> { 6, 26 } },
-                { DayOfWeek.Tuesday,   new HashSet<int> { 5, 7, 20, 22 } },
-                { DayOfWeek.Wednesday, new HashSet<int> { 3, 8, 18, 23 } },
-                { DayOfWeek.Thursday,  new HashSet<int> { 6, 9, 21, 24 } },
-                { DayOfWeek.Friday,    new HashSet<int> { 8, 9, 10, 23, 24, 25 } },
-                { DayOfWeek.Saturday,  new HashSet<int> { 7, 9, 11, 22, 24, 26 } },
-                { DayOfWeek.Sunday,    new HashSet<int> { 4, 9 } }
+                { DayOfWeek.Monday,    new() { 6, 26 } },
+                { DayOfWeek.Tuesday,   new() { 5, 7, 20, 22 } },
+                { DayOfWeek.Wednesday, new() { 3, 8, 18, 23 } },
+                { DayOfWeek.Thursday,  new() { 6, 9, 21, 24 } },
+                { DayOfWeek.Friday,    new() { 8, 9, 10, 23, 24 } },
+                { DayOfWeek.Saturday,  new() { 7, 9, 11, 22, 24, 26 } },
+                { DayOfWeek.Sunday,    new() { 4, 9 } }
             };
+
     }
 }

@@ -20,11 +20,7 @@ namespace PADMA.UI
 
         public ObservableCollection<MuhurtaOverviewStripe> MuhurtaStripes { get; } = new();
 
-        /// <summary>
-        /// Day-level yogas or other quick indicators (structure only).
-        /// Later we can replace string with enum/id model if needed.
-        /// </summary>
-        public IList<string> Yogas { get; } = new List<string>();
+        public ObservableCollection<YogaOverviewStripe> YogaStripes { get; } = new();
 
         public DayOverviewData(DayKey key)
         {

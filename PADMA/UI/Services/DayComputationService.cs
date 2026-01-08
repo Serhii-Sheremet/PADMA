@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using PADMA.Core.Enums;
+using PADMA.Core.Analysis;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.Core.Models.Calendar;
@@ -280,22 +281,164 @@ namespace PADMA.UI.Services
                 Console.WriteLine("[MUHURTA] Failed: " + ex);
             }
 
+            // --- YOGAS (overview stripes, vara = sunrise..nextSunrise) ---
+            data.YogaStripes.Clear();
+            try
+            {
+                double lat = ctx.LivingLat;
+                double lon = ctx.LivingLon;
+                double alt = 0;
+
+                // Active Node settings
+                var nodeMode = DataCache.Instance.GetActiveNodeSetting();
+
+                // SunriseSlice for local day (contains prev/rise/set/next)
+                var dateForLocalDayUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal.AddHours(12), tzInfo);
+                var sunriseSlice = SunriseTransitBuilder.Build(dateForLocalDayUtc, tzInfo, lat, lon, alt);
+
+                var prevSunriseLocal = TimeZoneInfo.ConvertTimeFromUtc(sunriseSlice.PreviousSunriseUtc, tzInfo);
+                var sunriseLocal = TimeZoneInfo.ConvertTimeFromUtc(sunriseSlice.SunriseUtc, tzInfo);
+                var nextSunriseLocal = TimeZoneInfo.ConvertTimeFromUtc(sunriseSlice.NextSunriseUtc, tzInfo);
+
+                // Build input slices on extended range (UTC)
+                var inputStartUtc = sunriseSlice.PreviousSunriseUtc.AddDays(-2);
+                var inputEndUtc = sunriseSlice.NextSunriseUtc.AddDays(2);
+
+                var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, inputStartUtc, inputEndUtc, nodeMode);
+                var nakshatraSlices = NakshatraTransitBuilder.BuildNakshatraSlices(moonData);
+
+                var tithiData = SwissAnalysis.CalculateTithiDataList_London(inputStartUtc, inputEndUtc, nodeMode);
+                var tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
+
+                var raw = new List<(int YogaId, string Title, Color Color, DateTime StartLocal, DateTime EndLocal)>();
+
+                // helper local function: add yogas for one vara window
+                void AddYogasForVaraWindow(DayOfWeek vara, DateTime windowStartUtc, DateTime windowEndUtc)
+                {
+                    foreach (var y in DataCache.Instance.YogaList)
+                    {
+                        int yogaId = y.Id;
+                        var code = (EYoga)yogaId;
+
+                        var slices = YogaTransitBuilder.BuildYogaSlices(code, windowStartUtc, windowEndUtc, vara, tithiSlices, nakshatraSlices);
+                        if (slices == null || slices.Count == 0)
+                            continue;
+
+                        int colorId = YogaSlice.GetYogaColorId(yogaId);
+                        Color color = DataCache.Instance.GetColor((EColor)colorId);
+                        string title = GetYogaShortName(yogaId, lang);
+
+                        foreach (var s in slices)
+                        {
+                            // overlap with civil day (UTC)
+                            if (s.EndUtc <= dayStartUtc || s.StartUtc >= dayEndUtc)
+                                continue;
+
+                            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(s.StartUtc, tzInfo);
+                            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(s.EndUtc, tzInfo);
+
+                            // clamp to civil day (local)
+                            if (endLocal <= dayStartLocal || startLocal >= dayEndLocal)
+                                continue;
+
+                            if (startLocal < dayStartLocal) startLocal = dayStartLocal;
+                            if (endLocal > dayEndLocal) endLocal = dayEndLocal;
+
+                            raw.Add((yogaId, title, color, startLocal, endLocal));
+                        }
+                    }
+                }
+
+                // Two vara windows that may intersect the civil day
+                AddYogasForVaraWindow(
+                    vara: prevSunriseLocal.DayOfWeek,
+                    windowStartUtc: sunriseSlice.PreviousSunriseUtc,
+                    windowEndUtc: sunriseSlice.SunriseUtc);
+
+                AddYogasForVaraWindow(
+                    vara: sunriseLocal.DayOfWeek,
+                    windowStartUtc: sunriseSlice.SunriseUtc,
+                    windowEndUtc: sunriseSlice.NextSunriseUtc);
+
+                const int mergeToleranceSeconds = 1;
+                var tol = TimeSpan.FromSeconds(mergeToleranceSeconds);
+
+                var groupedStripes = raw
+                    .GroupBy(x => x.YogaId)
+                    .Select(g =>
+                    {
+                        var first = g.First();
+
+                        var stripe = new YogaOverviewStripe
+                        {
+                            YogaId = first.YogaId,
+                            Title = first.Title,
+                            SegmentColor = first.Color,
+                            DayStartLocal = dayStartLocal,
+                            DayEndLocal = dayEndLocal,
+                        };
+
+                        var ordered = g
+                            .OrderBy(x => x.StartLocal)
+                            .Select(x => (s: x.StartLocal, e: x.EndLocal))
+                            .ToList();
+
+                        // merge overlaps/touches
+                        var merged = new List<(DateTime s, DateTime e)>();
+                        foreach (var it in ordered)
+                        {
+                            if (merged.Count == 0)
+                            {
+                                merged.Add(it);
+                                continue;
+                            }
+
+                            var last = merged[^1];
+                            if (it.s <= last.e + tol)
+                            {
+                                var newEnd = it.e > last.e ? it.e : last.e;
+                                merged[^1] = (last.s, newEnd);
+                            }
+                            else
+                            {
+                                merged.Add(it);
+                            }
+                        }
+
+                        foreach (var m in merged)
+                        {
+                            bool showStart = m.s > dayStartLocal;
+                            bool showEnd = m.e < dayEndLocal;
+
+                            stripe.Segments.Add(new YogaTimeSegment
+                            {
+                                StartLocal = m.s,
+                                EndLocal = m.e,
+                                ShowStartBoundary = showStart,
+                                ShowEndBoundary = showEnd,
+                                StartText = showStart ? m.s.ToString("HH:mm") : "",
+                                EndText = showEnd ? m.e.ToString("HH:mm") : ""
+                            });
+                        }
+
+                        return stripe;
+                    })
+                    .OrderBy(s => s.Segments.Count == 0 ? DateTime.MaxValue : s.Segments[0].StartLocal)
+                    .ToList();
+
+                data.YogaStripes.Clear();
+                foreach (var ys in groupedStripes)
+                    data.YogaStripes.Add(ys);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[YOGA] Failed: " + ex);
+            }
 
 
 
             return data;
-        }
-
-        private static string GetMuhurtaShortName(int muhurtaId, string lang)
-        {
-            return DataCache.Instance.MuhurtaDescList
-                .FirstOrDefault(m => m.LanguageCode == lang && m.MuhurtaId == muhurtaId)?.ShortName ?? string.Empty;
-        }
-
-        private static Color GetMuhurtaColor(int muhurtaId)
-        {
-            int colorId = DataCache.Instance.MuhurtaList.FirstOrDefault(mu => mu.Id == muhurtaId)?.ColorId ?? 0;
-            return DataCache.Instance.GetColor((EColor)colorId);
         }
 
         private static async Task<DayDetailsData> BuildDetailsAsync(DayKey key, DayItem baseDay, CancellationToken ct)
@@ -554,6 +697,23 @@ namespace PADMA.UI.Services
             return zodiac;
         }
 
+        private static string GetMuhurtaShortName(int muhurtaId, string lang)
+        {
+            return DataCache.Instance.MuhurtaDescList
+                .FirstOrDefault(m => m.LanguageCode == lang && m.MuhurtaId == muhurtaId)?.ShortName ?? string.Empty;
+        }
+
+        private static Color GetMuhurtaColor(int muhurtaId)
+        {
+            int colorId = DataCache.Instance.MuhurtaList.FirstOrDefault(mu => mu.Id == muhurtaId)?.ColorId ?? 0;
+            return DataCache.Instance.GetColor((EColor)colorId);
+        }
+
+        private static string GetYogaShortName(int yogaId, string lang)
+        {
+            return DataCache.Instance.YogaDescList
+               .FirstOrDefault(y => y.LanguageCode == lang && y.YogaId == yogaId)?.ShortName ?? string.Empty;
+        }
 
 
     }

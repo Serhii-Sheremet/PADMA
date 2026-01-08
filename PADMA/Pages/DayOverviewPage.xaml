@@ -11,101 +11,120 @@
          But in the project, child config pages also often put their own ScrollView — it's OK.
          To avoid creating nested ScrollView, just using VerticalStackLayout here. -->
 
-    <VerticalStackLayout Spacing="0" Padding="0">
+    <Grid RowDefinitions="*,Auto"
+          RowSpacing="0">
 
-        <!-- Sunrise / Sunset (top) -->
-        <Grid ColumnDefinitions="*,*"
-            Padding="0,0,0,2"
-            RowDefinitions="Auto">
+        <ScrollView Grid.Row="0">
 
-            <!-- Sunrise -->
-            <HorizontalStackLayout Grid.Column="0"
+            <!-- ONE root content for ScrollView -->
+            <VerticalStackLayout Spacing="0">
+
+                <!-- Sunrise / Sunset (top) -->
+                <Grid ColumnDefinitions="*,*"
+                      Padding="0,0,0,2"
+                      RowDefinitions="Auto">
+
+                    <!-- Sunrise -->
+                    <HorizontalStackLayout Grid.Column="0"
                            Spacing="6"
                            HorizontalOptions="Start"
                            VerticalOptions="Center">
-                <Label Text= "{Binding OverviewData.SunriseLabelText}"
-                    Opacity="0.75" />
-                <Label Text="{Binding OverviewData.SunriseText}"
-                    FontAttributes="Bold" />
-            </HorizontalStackLayout>
+                        <Label Text= "{Binding OverviewData.SunriseLabelText}"
+                               Opacity="0.75" />
+                        <Label Text="{Binding OverviewData.SunriseText}"
+                               FontAttributes="Bold" />
+                    </HorizontalStackLayout>
 
-            <!-- Sunset -->
-            <HorizontalStackLayout Grid.Column="1"
+                    <!-- Sunset -->
+                    <HorizontalStackLayout Grid.Column="1"
                            Spacing="6"
                            HorizontalOptions="End"
                            VerticalOptions="Center">
-                <Label Text="{Binding OverviewData.SunsetLabelText}"
-                    Opacity="0.75" />
-                <Label Text="{Binding OverviewData.SunsetText}"
-                    FontAttributes="Bold" />
-            </HorizontalStackLayout>
+                        <Label Text="{Binding OverviewData.SunsetLabelText}"
+                               Opacity="0.75" />
+                        <Label Text="{Binding OverviewData.SunsetText}"
+                               FontAttributes="Bold" />
+                    </HorizontalStackLayout>
 
-        </Grid>
+                </Grid>
 
+                <!-- Panchanga bars (larger than on the calendar) -->
+                <VerticalStackLayout Spacing="0" Margin="0,0,0,2">
 
-        <!-- Panchanga bars (larger than on the calendar) -->
-        <VerticalStackLayout Spacing="0" Margin="0,0,0,2">
+                    <local:PanchangaBar Margin="0" HeightRequest="24"
+                            DayDate="{Binding Day.Date}"
+                            Segments="{Binding Day.NakshatraSegments}" />
 
-            <local:PanchangaBar Margin="0" HeightRequest="24"
-                                DayDate="{Binding Day.Date}"
-                                Segments="{Binding Day.NakshatraSegments}" />
+                    <local:PanchangaBar Margin="0" HeightRequest="24"
+                            DayDate="{Binding Day.Date}"
+                            Segments="{Binding Day.TaraBalaSegments}" />
 
-            <local:PanchangaBar Margin="0" HeightRequest="24"
-                                DayDate="{Binding Day.Date}"
-                                Segments="{Binding Day.TaraBalaSegments}" />
+                    <local:PanchangaBar Margin="0" HeightRequest="24"
+                            DayDate="{Binding Day.Date}"
+                            Segments="{Binding Day.TithiSegments}" />
 
-            <local:PanchangaBar Margin="0" HeightRequest="24"
-                                DayDate="{Binding Day.Date}"
-                                Segments="{Binding Day.TithiSegments}" />
+                    <local:PanchangaBar Margin="0" HeightRequest="24"
+                            DayDate="{Binding Day.Date}"
+                            Segments="{Binding Day.KaranaSegments}" />
 
-            <local:PanchangaBar Margin="0" HeightRequest="24"
-                                DayDate="{Binding Day.Date}"
-                                Segments="{Binding Day.KaranaSegments}" />
+                    <local:PanchangaBar Margin="0" HeightRequest="24"
+                            DayDate="{Binding Day.Date}"
+                            Segments="{Binding Day.NityaYogaSegments}" />
 
-            <local:PanchangaBar Margin="0" HeightRequest="24"
-                                DayDate="{Binding Day.Date}"
-                                Segments="{Binding Day.NityaYogaSegments}" />
+                    <local:PanchangaBar Margin="0" HeightRequest="24"
+                            DayDate="{Binding Day.Date}"
+                            Segments="{Binding Day.ChandraBalaSegments}" />
+                </VerticalStackLayout>
 
-            <local:PanchangaBar Margin="0" HeightRequest="24"
-                                DayDate="{Binding Day.Date}"
-                                Segments="{Binding Day.ChandraBalaSegments}" />
-        </VerticalStackLayout>
+                <!-- Planet stripes (9 bars) -->
+                <VerticalStackLayout Spacing="0" Margin="0,2,0,0"
+                          BindableLayout.ItemsSource="{Binding OverviewData.PlanetStripes}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <local:PanchangaBar HeightRequest="24"
+                                    DayDate="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                                     Path=BindingContext.Day.Date}"
+                                    Segments="{Binding Segments}" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
 
-        <!-- Planet stripes (9 bars) -->
-        <VerticalStackLayout Spacing="0" Margin="0,2,0,0"
-                     BindableLayout.ItemsSource="{Binding OverviewData.PlanetStripes}">
-            <BindableLayout.ItemTemplate>
-                <DataTemplate>
-                    <local:PanchangaBar HeightRequest="24"
-                    DayDate="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
-                                     Path=BindingContext.Day.Date}"
-                    Segments="{Binding Segments}" />
-                </DataTemplate>
-            </BindableLayout.ItemTemplate>
-        </VerticalStackLayout>
+                <!-- MUHURTAS (one block, 5 stripes) -->
+                <VerticalStackLayout Margin="0,3,0,0"
+                                     Spacing="0"
+                                     BindableLayout.ItemsSource="{Binding OverviewData.MuhurtaStripes}">
 
-        <!-- MUHURTAS (one block, 5 stripes) -->
-        <VerticalStackLayout Margin="0,2,0,0"
-                     Spacing="0"
-                     BindableLayout.ItemsSource="{Binding OverviewData.MuhurtaStripes}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <local:MuhurtaBar HeightRequest="24"
+                                              DayDate="{Binding DayStartLocal}"
+                                              Stripe="{Binding .}" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
 
-            <BindableLayout.ItemTemplate>
-                <DataTemplate>
-                    <local:MuhurtaBar HeightRequest="24"
-                           DayDate="{Binding DayStartLocal}"
-                           Stripe="{Binding .}" />
-                </DataTemplate>
-            </BindableLayout.ItemTemplate>
-        </VerticalStackLayout>
+                <!-- YOGAS (below Muhurtas) -->
+                <VerticalStackLayout Margin="0,4,0,0"
+                                     Spacing="0"
+                                     BindableLayout.ItemsSource="{Binding OverviewData.YogaStripes}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <local:YogaBar HeightRequest="24"
+                                           DayDate="{Binding DayStartLocal}"
+                                           Stripe="{Binding .}" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
 
-
-
-        <!-- Button for navigating to DayPage -->
-        <Button Margin="12"
+    <!-- Button for navigating to DayPage -->
+    <Button Grid.Row="1"
+            Margin="12"
             x:Name="OpenDayDetailsButton"
             Text="Open Day Details"
             CornerRadius="10"
             HeightRequest="34"
             Clicked="OnOpenDayDetailsClicked" />
-    </VerticalStackLayout>
+    </Grid>
 </ui:ConfigBasePage>

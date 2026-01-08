@@ -1,0 +1,27 @@
+namespace PADMA.UI;
+
+public sealed class YogaOverviewStripe
+{
+    public int YogaId { get; set; }
+    public string Title { get; set; } = string.Empty;
+
+    public DateTime DayStartLocal { get; set; }   // 00:00 local
+    public DateTime DayEndLocal { get; set; }     // 24:00 local
+
+    public Color SegmentColor { get; set; } = Colors.Transparent;
+
+    public List<YogaTimeSegment> Segments { get; } = new();
+}
+
+public sealed class YogaTimeSegment
+{
+    public DateTime StartLocal { get; set; }      // clamped to civil day
+    public DateTime EndLocal { get; set; }        // clamped to civil day
+
+    public bool ShowStartBoundary { get; set; }   // Start > dayStart
+    public bool ShowEndBoundary { get; set; }     // End < dayEnd
+
+    public string StartText { get; set; } = "";   // "HH:mm" or ""
+    public string EndText { get; set; } = "";     // "HH:mm" or ""
+}
+
