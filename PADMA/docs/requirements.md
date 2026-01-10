@@ -3345,3 +3345,78 @@ This block provides a compact, visual overview of yogas based on Panchanga rules
 
 ----------
 
+## 🌑🌞 Eclipses
+
+### General
+- The application displays **only total and partial solar and lunar eclipses**.
+- The number of eclipses is small (usually **4–5 per year**), but they are considered **high importance events** in Jyotish.
+- All eclipse calculations are performed **once** using Swiss Ephemeris:
+  - `SwissAnalysis.CalculateEclipses_London(fromUtc, toUtc)`
+- This method returns an **already filtered list** of required eclipses (`List<EclipseData>`).
+- All calculations are based on **London time (GMT-0)**; the eclipse moment is then converted to the **local time zone of the active profile** for display.
+
+### Data and Models
+- The `EclipseData` model contains:
+  - `EclipseId` — eclipse type  
+    - `1` — Lunar eclipse  
+    - `2` — Solar eclipse
+  - `Date` — exact eclipse moment (GMT-0 / UTC)
+- Eclipse type is defined via enum:
+  ```csharp
+  public enum EEclipse
+  {
+      MOONECLIPSE = 1,
+      SUNECLIPSE = 2
+  }
+  ```
+- Localized eclipse names are loaded from `DataCache.EclipseDescList`
+  (database table `ECLIPSE_DESC`).
+
+### Calendar (MainPage)
+- In the calendar grid (42 days + buffers), eclipses are displayed as **icons** inside the day cell:
+  - `sun_eclipse.png` — solar eclipse
+  - `moon_eclipse.png` — lunar eclipse
+- Icon placement:
+  - positioned **to the right of the day number**
+  - size: **16×16 px**
+  - additional right margin is reserved for future user events (corner triangles)
+- The day model `DayItem` is extended with:
+  ```csharp
+  public int? EclipseId { get; set; }
+  public DateTime? EclipseDate { get; set; } // eclipse moment (UTC / GMT-0)
+  public string? EclipseIcon { get; set; }
+  ```
+- Eclipse-to-day mapping logic:
+  - `EclipseDate` is converted to the profile’s local time zone
+  - the local date is matched against `DayItem.Date.Date`
+
+### DayOverviewPage
+- If an eclipse occurs on the selected day, a **dedicated Eclipse block** is shown.
+- The block:
+  - is displayed **only when an eclipse exists** (`HasEclipse = true`)
+  - **does not occupy layout space** when hidden (no visual gaps)
+- Placement:
+  - the Eclipse block is located **at the very top of the page**,
+    above the Sunrise/Sunset block
+- Block content:
+  - eclipse icon (24×24 px)
+  - localized eclipse name
+  - exact local time of the eclipse
+- Example display:
+  ```
+  14:23:05 Solar Eclipse
+  ```
+- Data is prepared in `DayComputationService` based on `DayItem`
+  **without any additional Swiss Ephemeris calculations**.
+
+### Architectural Notes
+- Swiss Ephemeris is used **only at the calendar calculation stage**.
+- UI pages (Calendar and DayOverview) operate exclusively on **precomputed data**.
+- Localization logic is encapsulated in helper methods and `DataCache`.
+- The implementation is fully compatible with future extensions:
+  - DayPage (daily time scale)
+  - user-defined events (appointments)
+
+----------
+
+

@@ -125,6 +125,25 @@ namespace PADMA.UI.Services
                 data.SunsetText = "--:--:--";
             }
 
+            // --------------------------
+            // Eclipse (if exists)
+            // --------------------------
+            data.HasEclipse = false;
+            if (baseDay.EclipseId.HasValue && baseDay.EclipseDate.HasValue)
+            {
+                data.HasEclipse = true;
+
+                data.EclipseIcon = baseDay.EclipseId.Value switch
+                {
+                    (int)EEclipse.SUNECLIPSE => "sun_eclipse.png",
+                    (int)EEclipse.MOONECLIPSE => "moon_eclipse.png",
+                    _ => string.Empty
+                };
+                // show local time of eclipse moment
+                var name = GetEclipseName(baseDay.EclipseId.Value, lang);
+                var eclipseLocal = TimeZoneInfo.ConvertTimeFromUtc(baseDay.EclipseDate.Value, tzInfo);
+                data.EclipseText = $"{eclipseLocal:HH:mm:ss} {name}";
+            }
 
             // --------------------------
             // Planets transit lines
@@ -715,6 +734,11 @@ namespace PADMA.UI.Services
                .FirstOrDefault(y => y.LanguageCode == lang && y.YogaId == yogaId)?.ShortName ?? string.Empty;
         }
 
+        private static string GetEclipseName(int eclipseId, string lang)
+        {
+            return DataCache.Instance.EclipseDescList
+                .FirstOrDefault(e => e.LanguageCode == lang && e.EclipseId == eclipseId)?.Name ?? string.Empty;
+        }
 
     }
 }

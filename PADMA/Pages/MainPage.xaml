@@ -115,7 +115,7 @@
                               HorizontalOptions="FillAndExpand"
                               VerticalOptions="FillAndExpand">
 
-                            <Label Grid.Row="0"
+                            <Label Grid.Row="0" Grid.Column="0"
                                    Text="{Binding DayNumber}"
                                    FontAttributes="Bold"
                                    HorizontalOptions="Start"
@@ -123,8 +123,17 @@
                                    Margin="2,2,0,0"
                                    TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
 
+                            <Image Grid.Row="0" Grid.Column="1"
+                                   Source="{Binding EclipseIcon}"
+                                   IsVisible="{Binding HasEclipse}"
+                                   HorizontalOptions="End"
+                                   VerticalOptions="Start"
+                                   Margin="0,2,16,0"
+                                   WidthRequest="16"
+                                   HeightRequest="16" />
+
                             <!-- Planet markers (shown between day number and panchanga bars) -->
-                            <Label Grid.Row="0"
+                            <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
                                    Text="{Binding PlanetMarkersText}"
                                    FontSize="10"
                                    HorizontalOptions="FillAndExpand"

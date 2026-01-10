@@ -14,6 +14,12 @@ namespace PADMA.UI
         public string SunriseText { get; set; } = string.Empty;
         public string SunsetText { get; set; } = string.Empty;
 
+        public bool HasEclipse { get; set; }
+        public string EclipseIcon { get; set; } = string.Empty;
+        public string EclipseText { get; set; } = string.Empty;
+        public string EclipseTime { get; set; } = string.Empty; // "HH:mm"
+
+
         public DayKey Key { get; }
 
         public IList<PlanetStripe> PlanetStripes { get; } = new List<PlanetStripe>();

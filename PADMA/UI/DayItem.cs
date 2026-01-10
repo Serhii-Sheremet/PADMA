@@ -14,6 +14,11 @@ namespace PADMA.UI
         public bool IsCurrentMonth { get; set; } // принадлежит ли текущему месяцу
         public bool IsToday { get; set; }        // сегодняшний ли день
 
+        public int? EclipseId { get; set; }
+        public DateTime? EclipseDate { get; set; } // локальная дата дня (00:00) в TZ профиля
+        public string? EclipseIcon { get; set; }
+        public bool HasEclipse => !string.IsNullOrEmpty(EclipseIcon);
+
         public string PlanetMarkersText { get; set; } = string.Empty;
 
         public IList<PanchangaSegment> NakshatraSegments { get; set; } = new List<PanchangaSegment>();

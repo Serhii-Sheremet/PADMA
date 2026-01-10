@@ -1,4 +1,5 @@
-﻿using NodaTime;
+﻿using Microsoft.Maui.Controls.Shapes;
+using NodaTime;
 using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
@@ -240,6 +241,7 @@ namespace PADMA.UI
             List<PlanetSlice>? ketuSlices = null;
 
             Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>? transitPack = null;
+            Dictionary<DateTime, EclipseData> eclipseByLocalDay = null;
 
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
@@ -306,8 +308,8 @@ namespace PADMA.UI
                 var rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHU, bufferStartUtc, bufferEndUtc, nodeMode);
                 var ketuData = rahuData?.Select(d => SwissAnalysis.CalculateKetuData(d)).ToList();
 
-                // ---- SWISS: alculate Eclipse Data ---- TODO
-
+                // ---- SWISS: Calculate Eclipse Data ---- 
+                var eclipsesData = SwissAnalysis.CalculateEclipses_London(bufferStartUtc, bufferEndUtc);
 
                 // ---- Preparing Panchanga slices ----
                 // ---- Nakshatra (Moon) ----
@@ -336,6 +338,7 @@ namespace PADMA.UI
                 rahuSlices = PlanetTransitBuilder.BuildPlanetSlices(rahuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
                 ketuSlices = PlanetTransitBuilder.BuildPlanetSlices(ketuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
 
+                // ---- Preparing TransitPack dictionary ----
                 transitPack = new Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>
                 {
                     { EPlanet.SUN, sunSlices },
@@ -349,8 +352,14 @@ namespace PADMA.UI
                     { EPlanet.KETU, ketuSlices }
                 };
 
-
-                // ---- Preparing Eclipces slices ---- TODO
+                // ---- Preparing Eclipces dictionary ----
+                eclipseByLocalDay = eclipsesData
+                        .GroupBy(e =>
+                        {
+                            var local = TimeZoneInfo.ConvertTimeFromUtc(e.Date, tzInfo);
+                            return local.Date;
+                        })
+                        .ToDictionary(g => g.Key, g => g.First());
 
             }
             else
@@ -480,9 +489,25 @@ namespace PADMA.UI
                     m = BuildMarkerTextForDay(EPlanet.SATURN, saturnSlices, dayStartUtc, dayEndUtc);
                     if (!string.IsNullOrEmpty(m)) markers.Add(m);
 
-                    // Final string
+                    // Final planet markers string
                     planetMarkersText = string.Join(' ', markers);
+                }
 
+                // Eclipse data for the day (if any)
+                eclipseByLocalDay.TryGetValue(date.Date, out var eclipse);
+
+                int? eclipseId = eclipse?.EclipseId;
+                DateTime? eclipseDate = eclipse?.Date;
+
+                string? eclipseIcon = null;
+                if (eclipse != null)
+                {
+                    eclipseIcon = eclipse.EclipseId switch
+                    {
+                        (int)EEclipse.SUNECLIPSE => "sun_eclipse.png",
+                        (int)EEclipse.MOONECLIPSE => "moon_eclipse.png",
+                        _ => null
+                    };
                 }
 
                 Days.Add(new DayItem
@@ -491,6 +516,9 @@ namespace PADMA.UI
                     DayNumber = date.Day,
                     IsCurrentMonth = isCurrentMonth,
                     IsToday = isToday,
+                    EclipseId = eclipseId,
+                    EclipseDate = eclipseDate,    
+                    EclipseIcon = eclipseIcon,
                     PlanetMarkersText = planetMarkersText,
                     NakshatraSegments = nakshatraSegments,
                     TaraBalaSegments = taraBalaSegments,
@@ -500,6 +528,8 @@ namespace PADMA.UI
                     ChandraBalaSegments = chandraBalaSegments,
                     TransitPack = transitPack
                 });
+
+                
             }
             
             OnPropertyChanged(nameof(Days));

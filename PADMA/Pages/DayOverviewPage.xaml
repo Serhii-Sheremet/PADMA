@@ -19,10 +19,30 @@
             <!-- ONE root content for ScrollView -->
             <VerticalStackLayout Spacing="0">
 
+                <!-- Eclipse (only if exists) -->
+                <Grid ColumnDefinitions="Auto,*"
+                        Padding="0,0,0,2"
+                        IsVisible="{Binding OverviewData.HasEclipse, TargetNullValue=False}">
+
+                    <Image Grid.Column="0"
+                        Source="{Binding OverviewData.EclipseIcon}"
+                        WidthRequest="24"
+                        HeightRequest="24"
+                        Margin="0,0,30,0"
+                        VerticalOptions="Center" />
+
+                    <Label Grid.Column="1"
+                        Text="{Binding OverviewData.EclipseText}"
+                        Opacity="0.75"
+                        FontAttributes="Bold"
+                        VerticalOptions="Center"
+                        LineBreakMode="TailTruncation" />
+                </Grid>
+
                 <!-- Sunrise / Sunset (top) -->
                 <Grid ColumnDefinitions="*,*"
-                      Padding="0,0,0,2"
-                      RowDefinitions="Auto">
+                        Padding="0,0,0,2"
+                        RowDefinitions="Auto">
 
                     <!-- Sunrise -->
                     <HorizontalStackLayout Grid.Column="0"
@@ -47,6 +67,8 @@
                     </HorizontalStackLayout>
 
                 </Grid>
+
+                
 
                 <!-- Panchanga bars (larger than on the calendar) -->
                 <VerticalStackLayout Spacing="0" Margin="0,0,0,2">
