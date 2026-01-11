@@ -17,6 +17,10 @@
             <converters:DayCellBackgroundConverter x:Key="DayCellBackgroundConverter" />
             <converters:HeightToCellHeightConverter x:Key="HeightToCellHeightConverter" />
             <converters:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
+
+            <!-- TEMP: verify resource works -->
+            <Color x:Key="TimelineLineColor">#1E88E5</Color>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

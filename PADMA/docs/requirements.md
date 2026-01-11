@@ -3419,4 +3419,129 @@ This block provides a compact, visual overview of yogas based on Panchanga rules
 
 ----------
 
+## DayPage – Timeline-Based Daily View
+
+### Overview
+DayPage represents a detailed daily view based on a vertical time timeline from **00:00 to 24:00**.  
+The page is designed as an interactive astrological diary, combining time scale, user events, and multiple transit lanes in a single synchronized layout.
+
+The page follows the hierarchy:
+**Calendar → DayOverview → DayPage**
+
+### General Layout
+The DayPage layout consists of the following main columns (from left to right):
+
+1. **Icons Column**
+   - Narrow column for time-bound icons.
+   - Examples:
+     - Sunrise / Sunset
+     - Solar and Lunar Eclipses
+     - Other significant daily markers
+   - Icons are vertically positioned according to their exact time.
+
+2. **Time Scale Column**
+   - Displays the vertical daily time scale.
+   - Time flows from top (00:00) to bottom (24:00).
+   - Used as the primary visual reference for all other columns.
+
+3. **User Events Column**
+   - Interactive column for creating and displaying user-defined events.
+   - Taps are aligned to time grid resolution.
+   - Visual grid assists precise time selection.
+
+4. **Transit Lanes Area**
+   - Contains multiple parallel vertical lanes for astrological transits.
+   - Lanes are horizontally scrollable.
+   - Each lane represents one type of transit (e.g. Lagna, Nakshatra, Tithi, etc.).
+   - Number of lanes is **not fixed** and can be extended in the future.
+
+### Scrolling Behavior
+- **Vertical scrolling**
+  - Applies to the entire timeline (icons, time scale, events, and transit lanes).
+  - Header row remains fixed.
+
+- **Horizontal scrolling**
+  - Applies only to the Transit Lanes area.
+  - Transit header, sticky labels, and transit body are horizontally synchronized.
+
+### Time Scale
+- Default time resolution: **15 minutes**
+- Planned configurable resolutions:
+  - 10 minutes
+  - 15 minutes
+  - 30 minutes
+
+#### Visual Rules
+- **15 minutes** – short tick
+- **30 minutes** – medium-length tick
+- **60 minutes (full hour)**:
+  - Full-width tick
+  - Time label displayed as `HH:mm`
+
+#### Scale Direction
+- Time scale ticks are rendered **from right to left**.
+- Right edge of ticks visually connects with the User Events grid.
+- This creates a continuous visual time grid between Time Scale and Events column.
+
+#### Pixel Mapping
+- **1 minute = 1 pixel**
+- Total daily height: **1440 pixels**
+
+### Events Time Grid
+- The User Events column displays horizontal grid lines aligned with the Time Scale.
+- Grid lines correspond to:
+  - 15-minute intervals
+  - 30-minute intervals
+  - Full hours
+- Grid lines extend across the entire Events column width.
+- No time text is shown inside the Events column (time labels exist only in the Time Scale column).
+
+#### Purpose
+- Visual guidance for user interaction.
+- Accurate time-slot selection for creating events.
+- Basis for future event hit-testing logic.
+
+### Transit Lanes
+- Each transit lane occupies a fixed-width vertical column.
+- Lanes are displayed side by side and scrolled horizontally.
+- Transit segments are drawn according to their time spans.
+- Segment boundaries are visually separated when a transit changes during the day.
+
+### Sticky Labels for Transit Lanes
+- Sticky labels indicate the **current active transit** at the top of the visible viewport.
+- Sticky labels are:
+  - **Not part of the header**
+  - Rendered as an overlay above the transit body
+  - Fixed vertically at the top of the visible area
+
+#### Behavior
+- Sticky label remains visible while its transit is active.
+- When a transit change enters the visible area, the sticky label updates accordingly.
+- Sticky labels are **optional per lane**:
+  - Visibility is controlled dynamically from code
+  - If no label text is provided, the sticky label is hidden
+  - Some lanes (e.g. daily Muhurtas) may not use sticky labels at all
+
+#### Visual Style
+- Transparent background
+- Text only (typically black)
+- Does not obscure underlying transit colors
+
+### Visual Styling
+- **Day background**: very light blue
+- **Night background**: slightly darker tone (planned)
+- Timeline ticks, grid lines, and separators use a unified timeline color.
+- Opacity levels are used to differentiate:
+  - Hour lines
+  - Half-hour lines
+  - Minor interval lines
+- Visual contrast is kept subtle to avoid heavy or aggressive appearance.
+
+### Extensibility
+- Transit lanes are not limited to a fixed number.
+- Additional lanes can be added without layout changes.
+- Time resolution is planned to be configurable via application settings.
+- User events functionality will be expanded with detailed editing and navigation flows.
+
+---------
 

@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     x:Class="PADMA.Pages.DayPage"
-    Title="Day">
+    BackgroundColor="#F7FBFF">
 
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsVisible="False" />
@@ -13,10 +13,350 @@
         <ToolbarItem Text="✕" Priority="0" Order="Primary" Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid Padding="16">
-        <Label x:Name="TitleLabel"
-           FontSize="20"
-           FontAttributes="Bold"
-           HorizontalOptions="Center" />
+    <!--
+        Root:
+        Row 0 = Header titles (24px)  [fixed]
+        Row 1 = Body (vertical scroll) + Sticky overlay [layered]
+    -->
+    <Grid RowDefinitions="1,24,1,*"
+          ColumnDefinitions="Auto,Auto,Auto,*"
+          ColumnSpacing="0"
+          RowSpacing="0"
+          Padding="0"
+          BackgroundColor="#F7FBFF">
+
+        <!-- ========================= -->
+        <!-- HEADER ROW (titles only) -->
+        <!-- ========================= -->
+
+        <!-- Horizontal lines like a table: under Toolbar (top) and under Header (bottom) -->
+        <!-- Row 0: top border under toolbar -->
+        <BoxView Grid.Row="0" Grid.ColumnSpan="4"
+             HeightRequest="1"
+             VerticalOptions="Fill"
+             Color="{StaticResource TimelineLineColor}"
+             Opacity="0.35"/>
+
+        <!-- Row 2: separator between header and body -->
+        <BoxView Grid.Row="2" Grid.ColumnSpan="4"
+             HeightRequest="1"
+             VerticalOptions="Fill"
+             Color="{StaticResource TimelineLineColor}"
+             Opacity="0.35"/>
+
+        <!-- Column 0: Icons header (empty) -->
+        <Grid Grid.Row="1" Grid.Column="0" WidthRequest="20" BackgroundColor="#F7FBFF" />
+
+        <!-- Vertical separator after Icons --><!--
+        <BoxView Grid.Row="1" Grid.Column="0"
+                 WidthRequest="1"
+                 HorizontalOptions="End"
+                 VerticalOptions="Fill"
+                 Color="Black"
+                 Opacity="0.25"/>-->
+
+        <!-- Column 1: Time header (empty) -->
+        <Grid Grid.Row="1" Grid.Column="1" WidthRequest="40" BackgroundColor="#F7FBFF" />
+
+        <!-- Vertical separator after Time -->
+        <BoxView Grid.Row="1" Grid.Column="1"
+                 WidthRequest="1"
+                 HorizontalOptions="End"
+                 VerticalOptions="Fill"
+                 Color="{StaticResource TimelineLineColor}"
+                 Opacity="0.25"/>
+
+        <!-- Column 2: Events header -->
+        <Grid Grid.Row="1" Grid.Column="2" WidthRequest="80" BackgroundColor="#F7FBFF">
+            <Label Text="Events"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   FontAttributes="Bold"
+                   Opacity="0.85"
+                   FontSize="12"/>
+        </Grid>
+
+        <!-- Vertical separator after Events -->
+        <BoxView Grid.Row="1" Grid.Column="2"
+                 WidthRequest="1"
+                 HorizontalOptions="End"
+                 VerticalOptions="Fill"
+                 Color="{StaticResource TimelineLineColor}"
+                 Opacity="0.25"/>
+
+        <!-- Column 3: Transit lanes titles header (horizontally scrollable, synced with body) -->
+        <ScrollView x:Name="TransitHeaderScroll"
+                    Grid.Row="1" Grid.Column="3"
+                    Orientation="Horizontal"
+                    HorizontalScrollBarVisibility="Never"
+                    VerticalScrollBarVisibility="Never"
+                    Scrolled="OnTransitHeaderScrolled"
+                    BackgroundColor="#F7FBFF">
+
+            <Grid x:Name="TransitHeaderGrid"
+                  HeightRequest="24"
+                  ColumnSpacing="0"
+                  RowSpacing="0"
+                  Padding="0"
+                  BackgroundColor="#F7FBFF">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="80" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Lane titles (24px row height is controlled by Root Grid row 0) -->
+                <Label Grid.Column="0" Text="Lagna" FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
+                       FontSize="12" />
+
+                <Label Grid.Column="1" Text="Naksh" FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
+                       FontSize="12" />
+
+                <Label Grid.Column="2" Text="TaraB" FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
+                       FontSize="12" />
+
+                <Label Grid.Column="3" Text="Tithi" FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
+                       FontSize="12" />
+
+                <!-- Vertical separators between lanes (header) -->
+                <BoxView Grid.Column="0"
+                         WidthRequest="1"
+                         HorizontalOptions="End"
+                         VerticalOptions="Fill"
+                         Color="{StaticResource TimelineLineColor}"
+                         Opacity="0.20"/>
+
+                <BoxView Grid.Column="1"
+                         WidthRequest="1"
+                         HorizontalOptions="End"
+                         VerticalOptions="Fill"
+                         Color="{StaticResource TimelineLineColor}"
+                         Opacity="0.20"/>
+
+                <BoxView Grid.Column="2"
+                         WidthRequest="1"
+                         HorizontalOptions="End"
+                         VerticalOptions="Fill"
+                         Color="{StaticResource TimelineLineColor}"
+                         Opacity="0.20"/>
+
+            </Grid>
+        </ScrollView>
+
+        <!-- ========================= -->
+        <!-- BODY ROW (layered) -->
+        <!--   - Vertical ScrollView (timeline starts at 00:00 right away) -->
+        <!--   - Sticky overlay on top (transparent background) -->
+        <!-- ========================= -->
+
+        <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4"
+              BackgroundColor="#F7FBFF"
+              Padding="0">
+
+            <!-- Main vertical scroll (timeline) -->
+            <ScrollView x:Name="BodyVerticalScroll"
+                        Orientation="Vertical"
+                        VerticalScrollBarVisibility="Always"
+                        BackgroundColor="#F7FBFF">
+
+                <!-- Body grid: Icons | Time | Events | (Transit lanes in horizontal scroll) -->
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*"
+                      ColumnSpacing="0"
+                      RowSpacing="0"
+                      Padding="0"
+                      BackgroundColor="#F7FBFF">
+
+                    <!-- ICONS column -->
+                    <Grid Grid.Column="0" WidthRequest="20" BackgroundColor="#F7FBFF" />
+
+                    <!-- Separator after Icons -->
+                    <BoxView Grid.Column="0"
+                             WidthRequest="1"
+                             HorizontalOptions="End"
+                             VerticalOptions="Fill"
+                             Color="{StaticResource TimelineLineColor}"
+                             Opacity="0.15"/>
+
+                    <!-- TIME SCALE column -->
+                    <Grid Grid.Column="1" WidthRequest="40" BackgroundColor="#F7FBFF" >
+                        <AbsoluteLayout x:Name="TimeScaleLayout"
+                                        BackgroundColor="Transparent" />
+                    </Grid>
+    
+                    <!-- Separator after Time -->
+                    <BoxView Grid.Column="1"
+                             WidthRequest="1"
+                             HorizontalOptions="End"
+                             VerticalOptions="Fill"
+                             Color="{StaticResource TimelineLineColor}"
+                             Opacity="0.15"/>
+
+                    <!-- USER EVENTS column -->
+                    <Grid Grid.Column="2" WidthRequest="80" BackgroundColor="#F7FBFF" >
+                        <AbsoluteLayout x:Name="EventsGridLayout"
+                                        BackgroundColor="Transparent" />
+                    </Grid>
+
+                <!-- Separator after Events -->
+                    <BoxView Grid.Column="2"
+                             WidthRequest="1"
+                             HorizontalOptions="End"
+                             VerticalOptions="Fill"
+                             Color="{StaticResource TimelineLineColor}"
+                             Opacity="0.15"/>
+
+                    <!-- TRANSIT LANES body (horizontal scroll) -->
+                    <ScrollView x:Name="TransitBodyScroll"
+                                Grid.Column="3"
+                                Orientation="Horizontal"
+                                HorizontalScrollBarVisibility="Always"
+                                VerticalScrollBarVisibility="Never"
+                                Scrolled="OnTransitBodyScrolled"
+                                BackgroundColor="#F7FBFF">
+
+                        <Grid x:Name="TransitBodyGrid"
+                              ColumnSpacing="0"
+                              RowSpacing="0"
+                              Padding="0"
+                              BackgroundColor="#F7FBFF">
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Big height placeholder for timeline content -->
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="1440" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Lane vertical separators (body) -->
+                            <BoxView Grid.Column="0"
+                                     WidthRequest="1"
+                                     HorizontalOptions="End"
+                                     VerticalOptions="Fill"
+                                     Color="{StaticResource TimelineLineColor}"
+                                     Opacity="0.12"/>
+
+                            <BoxView Grid.Column="1"
+                                     WidthRequest="1"
+                                     HorizontalOptions="End"
+                                     VerticalOptions="Fill"
+                                     Color="{StaticResource TimelineLineColor}"
+                                     Opacity="0.12"/>
+
+                            <BoxView Grid.Column="2"
+                                    WidthRequest="1"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Fill"
+                                    Color="{StaticResource TimelineLineColor}"
+                                    Opacity="0.12"/>
+
+                            <!-- (Temporary) Example blocks can be added later; keep empty for clean layout -->
+                        </Grid>
+                    </ScrollView>
+
+                </Grid>
+            </ScrollView>
+
+            <!-- Sticky overlay (transparent; does NOT shift 00:00 down) -->
+            <Grid x:Name="StickyOverlay"
+                  HeightRequest="20"
+                  VerticalOptions="Start"
+                  HorizontalOptions="Fill"
+                  BackgroundColor="Transparent"
+                  InputTransparent="True"
+                  Padding="0">
+
+                <!-- Keep left 3 columns aligned, sticky only for transit lanes -->
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*"
+                      ColumnSpacing="0"
+                      RowSpacing="0"
+                      Padding="0"
+                      BackgroundColor="Transparent">
+
+                    <Grid Grid.Column="0" WidthRequest="20" BackgroundColor="Transparent" />
+                    <Grid Grid.Column="1" WidthRequest="40" BackgroundColor="Transparent" />
+                    <Grid Grid.Column="2" WidthRequest="80" BackgroundColor="Transparent" />
+                    <Grid Grid.Column="3" WidthRequest="80" BackgroundColor="Transparent" />
+
+                    <!-- Sticky labels for lanes (synced horizontally with header/body) -->
+                    <ScrollView x:Name="TransitStickyScroll"
+                                Grid.Column="3"
+                                Orientation="Horizontal"
+                                HorizontalScrollBarVisibility="Never"
+                                VerticalScrollBarVisibility="Never"
+                                Scrolled="OnTransitStickyScrolled"
+                                BackgroundColor="Transparent">
+
+                        <Grid x:Name="TransitStickyGrid"
+                              ColumnSpacing="0"
+                              RowSpacing="0"
+                              Padding="0"
+                              BackgroundColor="Transparent">
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Example sticky labels (optional):
+                                 Make them invisible when empty / not needed -->
+                            <Label Grid.Column="0"
+                                   Text="(sticky)"
+                                   TextColor="Black"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   Opacity="0.85"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"/>
+
+                            <Label Grid.Column="1"
+                                   Text=""
+                                   IsVisible="False"
+                                   TextColor="Black"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   Opacity="0.85"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"/>
+
+                            <Label Grid.Column="2"
+                                   Text="(sticky)"
+                                   TextColor="Black"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   Opacity="0.85"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"/>
+
+                            <Label Grid.Column="3"
+                                   Text=""
+                                   IsVisible="False"
+                                   TextColor="Black"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   Opacity="0.85"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"/>
+                            
+                        </Grid>
+                    </ScrollView>
+
+                </Grid>
+            </Grid>
+
+        </Grid>
+
     </Grid>
 </ContentPage>
