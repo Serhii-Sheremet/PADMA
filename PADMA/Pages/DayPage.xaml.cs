@@ -1,15 +1,18 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Layouts;
 using Microsoft.Maui.Graphics;
+using PADMA.Core.Services;
 
 namespace PADMA.Pages
 {
     [QueryProperty(nameof(Date), "Date")]
-    public partial class DayPage : ContentPage
+    public partial class DayPage : ContentPage, IQueryAttributable
     {
-        private DateTime _date;
         private bool _syncingHorizontalScroll;
+        public DateTime? SunriseUtc { get; private set; }
+        public DateTime? SunsetUtc { get; private set; }
 
+        private DateTime _date;
         public DateTime Date
         {
             get => _date;
@@ -18,6 +21,18 @@ namespace PADMA.Pages
                 _date = value;
                 Title = _date.ToString("dd MMMM yyyy"); // title always selected date
             }
+        }
+
+        public void ApplyQueryAttributes(IDictionary<string, object> query)
+        {
+            if (query.TryGetValue("SunriseUtc", out var sr) && sr is DateTime sunriseUtc)
+                SunriseUtc = DateTime.SpecifyKind(sunriseUtc, DateTimeKind.Utc);
+
+            if (query.TryGetValue("SunsetUtc", out var ss) && ss is DateTime sunsetUtc)
+                SunsetUtc = DateTime.SpecifyKind(sunsetUtc, DateTimeKind.Utc);
+
+            // после получения параметров можно применить фон
+            ApplyDayNightBackgroundIfPossible();
         }
 
         public DayPage()
@@ -33,6 +48,66 @@ namespace PADMA.Pages
         {
             // Close DayPage completely and return to calendar
             await Shell.Current.GoToAsync("//main", true);
+        }
+        
+        private void ApplyDayNightBackgroundIfPossible()
+        {
+            if (SunriseUtc == null || SunsetUtc == null)
+                return;
+
+            TimeZoneInfo tzInfo = TimeZoneInfo.Utc;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            if (ctx?.TimeZoneInfo != null)
+                tzInfo = ctx.TimeZoneInfo;
+
+            if (tzInfo == null)
+                return;
+
+            var sunriseLocal = TimeZoneInfo.ConvertTimeFromUtc(SunriseUtc.Value, tzInfo);
+            var sunsetLocal = TimeZoneInfo.ConvertTimeFromUtc(SunsetUtc.Value, tzInfo);
+
+            var ySunrise = sunriseLocal.TimeOfDay.TotalMinutes * PixelsPerMinute;
+            var ySunset = sunsetLocal.TimeOfDay.TotalMinutes * PixelsPerMinute;
+
+            // цвета (потом подберёшь)
+            var dayColor = Color.FromArgb("#EAF6FF");
+            var nightColor = Color.FromArgb("#D7ECFF");
+
+            // фон для Time/Events через AbsoluteLayout
+            BuildColumnBackground(TimeBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 40);
+            BuildColumnBackground(EventsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 80);
+
+            // фон для TransitBodyGrid через BoxView
+            TransitNightBackground.Color = nightColor;
+            TransitNightBackground.HeightRequest = TimelineHeight;
+            TransitNightBackground.TranslationY = 0;
+
+            TransitDayBackground.Color = dayColor;
+            TransitDayBackground.HeightRequest = Math.Max(0, ySunset - ySunrise);
+            TransitDayBackground.TranslationY = ySunrise;
+        }
+
+        private void BuildColumnBackground(
+            AbsoluteLayout layout,
+            double ySunrise,
+            double ySunset,
+            Color dayColor,
+            Color nightColor,
+            double width)
+        {
+            layout.Children.Clear();
+            layout.HeightRequest = TimelineHeight;
+
+            // Night base full height
+            var night = new BoxView { Color = nightColor };
+            AbsoluteLayout.SetLayoutBounds(night, new Rect(0, 0, width, TimelineHeight));
+            layout.Children.Add(night);
+
+            // Day overlay
+            var day = new BoxView { Color = dayColor };
+            var dayHeight = Math.Max(0, ySunset - ySunrise);
+            AbsoluteLayout.SetLayoutBounds(day, new Rect(0, ySunrise, width, dayHeight));
+            layout.Children.Add(day);
         }
 
         private async void OnTransitBodyScrolled(object? sender, ScrolledEventArgs e)
@@ -72,7 +147,9 @@ namespace PADMA.Pages
         }
 
         private const int StepMinutes = 15;
-        private const double PixelsPerMinute = 1.0;
+        private const double PixelsPerMinute = 2.0;
+        private const int TotalMinutes = 24 * 60;     // 1440
+        private const double TimelineHeight = TotalMinutes * PixelsPerMinute; // 2880
 
         private void BuildTimeScale()
         {
@@ -81,8 +158,8 @@ namespace PADMA.Pages
             TimeScaleLayout.Children.Clear();
 
             // Full day height in pixels
-            var totalMinutes = 24 * 60;
-            var totalHeight = totalMinutes * PixelsPerMinute;
+            //var totalMinutes = 24 * 60;
+            var totalHeight = TimelineHeight;// totalMinutes * PixelsPerMinute;
 
             // Important: set layout height so ScrollView knows content size
             TimeScaleLayout.HeightRequest = totalHeight;
@@ -94,7 +171,7 @@ namespace PADMA.Pages
             var midTick = 18.0;
             var fullTick = colWidth; // full width for full hour
 
-            for (int minute = 0; minute <= totalMinutes; minute += StepMinutes)
+            for (int minute = 0; minute <= TotalMinutes; minute += StepMinutes)
             {
                 var y = minute * PixelsPerMinute;
 
@@ -127,7 +204,7 @@ namespace PADMA.Pages
                 TimeScaleLayout.Children.Add(tick);
 
                 // Hour label only at full hours
-                if (isHour && minute < totalMinutes)
+                if (isHour && minute < TotalMinutes)
                 {
                     var t = TimeSpan.FromMinutes(minute);
 

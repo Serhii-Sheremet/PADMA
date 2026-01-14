@@ -111,6 +111,9 @@ namespace PADMA.UI.Services
                 var sunriseUtc = SwissService.CalculateSunriseForDateAndLocation(dayStartUtc, lat, lon);
                 var sunsetUtc = SwissService.CalculateSunsetForDateAndLocation(dayStartUtc, lat, lon);
 
+                data.SunriseUtc = sunriseUtc;
+                data.SunsetUtc = sunsetUtc;
+
                 // convert to local time
                 var sunriseLocal = sunriseUtc.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(sunriseUtc.Value, tzInfo) : (DateTime?)null;
                 var sunsetLocal = sunsetUtc.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(sunsetUtc.Value, tzInfo) : (DateTime?)null;

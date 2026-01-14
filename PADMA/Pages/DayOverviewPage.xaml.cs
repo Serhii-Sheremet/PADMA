@@ -1,11 +1,12 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.Maui.Controls;
-using System.Globalization;
-using PADMA.UI;
-using PADMA.UI.Services;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.UI;
+using PADMA.UI.Services;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PADMA.Pages
 {
@@ -94,6 +95,12 @@ namespace PADMA.Pages
             {
                 { "Date", Day.Date }
             };
+
+            if (OverviewData?.SunriseUtc != null)
+                parameters["SunriseUtc"] = OverviewData.SunriseUtc.Value;
+
+            if (OverviewData?.SunsetUtc != null)
+                parameters["SunsetUtc"] = OverviewData.SunsetUtc.Value;
 
             await Shell.Current.GoToAsync("day", true, parameters);
         }

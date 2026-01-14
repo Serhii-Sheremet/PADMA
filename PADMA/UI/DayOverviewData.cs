@@ -13,6 +13,8 @@ namespace PADMA.UI
         public string SunsetLabelText { get; set; } = string.Empty;
         public string SunriseText { get; set; } = string.Empty;
         public string SunsetText { get; set; } = string.Empty;
+        public DateTime? SunriseUtc { get; set; }
+        public DateTime? SunsetUtc { get; set; }
 
         public bool HasEclipse { get; set; }
         public string EclipseIcon { get; set; } = string.Empty;

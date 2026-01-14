@@ -185,8 +185,8 @@
 
                     <!-- TIME SCALE column -->
                     <Grid Grid.Column="1" WidthRequest="40" BackgroundColor="#F7FBFF" >
-                        <AbsoluteLayout x:Name="TimeScaleLayout"
-                                        BackgroundColor="Transparent" />
+                        <AbsoluteLayout x:Name="TimeBackgroundLayout" BackgroundColor="Transparent" />
+                        <AbsoluteLayout x:Name="TimeScaleLayout" BackgroundColor="Transparent" />
                     </Grid>
     
                     <!-- Separator after Time -->
@@ -199,8 +199,8 @@
 
                     <!-- USER EVENTS column -->
                     <Grid Grid.Column="2" WidthRequest="80" BackgroundColor="#F7FBFF" >
-                        <AbsoluteLayout x:Name="EventsGridLayout"
-                                        BackgroundColor="Transparent" />
+                        <AbsoluteLayout x:Name="EventsBackgroundLayout" BackgroundColor="Transparent" />
+                        <AbsoluteLayout x:Name="EventsGridLayout" BackgroundColor="Transparent" />
                     </Grid>
 
                 <!-- Separator after Events -->
@@ -235,8 +235,18 @@
 
                             <!-- Big height placeholder for timeline content -->
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="1440" />
+                                <RowDefinition Height="2880" />
                             </Grid.RowDefinitions>
+
+                            <!-- Background: Day overlay -->
+                            <BoxView x:Name="TransitDayBackground"
+                                     Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="999"
+                                     BackgroundColor="Transparent" />
+
+                            <!-- Background: Night base -->
+                            <BoxView x:Name="TransitNightBackground"
+                                     Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="999"
+                                     BackgroundColor="Transparent" />
 
                             <!-- Lane vertical separators (body) -->
                             <BoxView Grid.Column="0"
