@@ -1,6 +1,9 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Layouts;
 using Microsoft.Maui.Graphics;
+using System.Collections.ObjectModel;
+using PADMA.Core.Enums;
+using PADMA.Core.Models;
 using PADMA.Core.Services;
 
 namespace PADMA.Pages
@@ -11,6 +14,17 @@ namespace PADMA.Pages
         private bool _syncingHorizontalScroll;
         public DateTime? SunriseUtc { get; private set; }
         public DateTime? SunsetUtc { get; private set; }
+
+        public sealed class TransitColumnVm
+        {
+            public int LineId { get; init; }
+            public string Code { get; init; } = string.Empty;
+            public string ShortName { get; init; } = string.Empty;
+            public string Name { get; init; } = string.Empty;
+        }
+
+        // То, к чему привязывается XAML (Header + Body)
+        public ObservableCollection<TransitColumnVm> TransitColumns { get; } = new();
 
         private DateTime _date;
         public DateTime Date
@@ -42,6 +56,7 @@ namespace PADMA.Pages
 
             BuildTimeScale();
             BuildEventsGrid();
+            BuildTransitColumns();
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
@@ -270,6 +285,42 @@ namespace PADMA.Pages
             }
         }
 
+        private void BuildTransitColumns()
+        {
+            TransitColumns.Clear();
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            // берём все enum-значения < 100 (то есть 1..21), USER=100 не включаем
+            var ids = Enum.GetValues(typeof(EDVLineName))
+                          .Cast<EDVLineName>()
+                          .Select(x => (int)x)
+                          .Where(id => id > 0 && id < 100)
+                          .Distinct()
+                          .OrderBy(id => id)
+                          .ToList();
+
+            foreach (var id in ids)
+            {
+                var code = DataCache.Instance.DVLineNameList?.FirstOrDefault(x => x.Id == id)?.Code ?? id.ToString();
+                var desc =DataCache.Instance.DVLineNameDescList?.FirstOrDefault(d => d.DVLineNameId == id && d.LanguageCode == lang) ?? null;
+
+                var name = desc?.Name;
+                if (string.IsNullOrWhiteSpace(name))
+                    name = code; // fallback
+
+                var shortName = desc?.ShortName;
+                if (string.IsNullOrWhiteSpace(shortName))
+                    shortName = code; // fallback
+
+                TransitColumns.Add(new TransitColumnVm
+                {
+                    LineId = id,
+                    Code = code,
+                    Name = name!,
+                    ShortName = shortName!
+                });
+            }
+        }
 
 
 

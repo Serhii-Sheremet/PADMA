@@ -86,68 +86,46 @@
 
         <!-- Column 3: Transit lanes titles header (horizontally scrollable, synced with body) -->
         <ScrollView x:Name="TransitHeaderScroll"
-                    Grid.Row="1" Grid.Column="3"
-                    Orientation="Horizontal"
-                    HorizontalScrollBarVisibility="Never"
-                    VerticalScrollBarVisibility="Never"
-                    Scrolled="OnTransitHeaderScrolled"
-                    BackgroundColor="#F7FBFF">
+            Grid.Row="1" Grid.Column="3"
+            Orientation="Horizontal"
+            HorizontalScrollBarVisibility="Never"
+            VerticalScrollBarVisibility="Never"
+            Scrolled="OnTransitHeaderScrolled"
+            BackgroundColor="#F7FBFF">
 
-            <Grid x:Name="TransitHeaderGrid"
-                  HeightRequest="24"
-                  ColumnSpacing="0"
-                  RowSpacing="0"
-                  Padding="0"
-                  BackgroundColor="#F7FBFF">
+            <HorizontalStackLayout Spacing="0"
+                           HeightRequest="24"
+                           BackgroundColor="#F7FBFF"
+                           BindableLayout.ItemsSource="{Binding TransitColumns}">
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="80" />
-                    <ColumnDefinition Width="80" />
-                    <ColumnDefinition Width="80" />
-                    <ColumnDefinition Width="80" />
-                </Grid.ColumnDefinitions>
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Grid WidthRequest="80"
+                              HeightRequest="24"
+                              Padding="0"
+                              BackgroundColor="#F7FBFF">
 
-                <!-- Lane titles (24px row height is controlled by Root Grid row 0) -->
-                <Label Grid.Column="0" Text="Lagna" FontAttributes="Bold"
-                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
-                       FontSize="12" />
+                            <Label Text="{Binding Name}"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"
+                                   FontSize="12"
+                                   LineBreakMode="TailTruncation"
+                                   MaxLines="1"/>
 
-                <Label Grid.Column="1" Text="Naksh" FontAttributes="Bold"
-                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
-                       FontSize="12" />
+                            <!-- separator -->
+                            <BoxView WidthRequest="1"
+                                     HorizontalOptions="End"
+                                     VerticalOptions="Fill"
+                                     Color="{StaticResource TimelineLineColor}"
+                                     Opacity="0.75"/>
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
 
-                <Label Grid.Column="2" Text="TaraB" FontAttributes="Bold"
-                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
-                       FontSize="12" />
-
-                <Label Grid.Column="3" Text="Tithi" FontAttributes="Bold"
-                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
-                       FontSize="12" />
-
-                <!-- Vertical separators between lanes (header) -->
-                <BoxView Grid.Column="0"
-                         WidthRequest="1"
-                         HorizontalOptions="End"
-                         VerticalOptions="Fill"
-                         Color="{StaticResource TimelineLineColor}"
-                         Opacity="0.20"/>
-
-                <BoxView Grid.Column="1"
-                         WidthRequest="1"
-                         HorizontalOptions="End"
-                         VerticalOptions="Fill"
-                         Color="{StaticResource TimelineLineColor}"
-                         Opacity="0.20"/>
-
-                <BoxView Grid.Column="2"
-                         WidthRequest="1"
-                         HorizontalOptions="End"
-                         VerticalOptions="Fill"
-                         Color="{StaticResource TimelineLineColor}"
-                         Opacity="0.20"/>
-
-            </Grid>
+            </HorizontalStackLayout>
         </ScrollView>
+
 
         <!-- ========================= -->
         <!-- BODY ROW (layered) -->
@@ -213,67 +191,63 @@
 
                     <!-- TRANSIT LANES body (horizontal scroll) -->
                     <ScrollView x:Name="TransitBodyScroll"
-                                Grid.Column="3"
+                                Grid.Row="2" Grid.Column="3"
                                 Orientation="Horizontal"
-                                HorizontalScrollBarVisibility="Always"
+                                HorizontalScrollBarVisibility="Never"
                                 VerticalScrollBarVisibility="Never"
                                 Scrolled="OnTransitBodyScrolled"
                                 BackgroundColor="#F7FBFF">
 
+                        <!-- One container that sizes to total width of all columns -->
                         <Grid x:Name="TransitBodyGrid"
-                              ColumnSpacing="0"
-                              RowSpacing="0"
                               Padding="0"
                               BackgroundColor="#F7FBFF">
 
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="80" />
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Big height placeholder for timeline content -->
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="2880" />
                             </Grid.RowDefinitions>
 
-                            <!-- Background: Day overlay -->
-                            <BoxView x:Name="TransitDayBackground"
-                                     Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="999"
-                                     BackgroundColor="Transparent" />
-
-                            <!-- Background: Night base -->
+                            <!-- Backgrounds (keep names for code-behind) -->
                             <BoxView x:Name="TransitNightBackground"
-                                     Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="999"
-                                     BackgroundColor="Transparent" />
+                                     Grid.Row="0"
+                                     BackgroundColor="Transparent"
+                                     HorizontalOptions="Fill"
+                                     VerticalOptions="Fill"/>
 
-                            <!-- Lane vertical separators (body) -->
-                            <BoxView Grid.Column="0"
-                                     WidthRequest="1"
-                                     HorizontalOptions="End"
-                                     VerticalOptions="Fill"
-                                     Color="{StaticResource TimelineLineColor}"
-                                     Opacity="0.12"/>
+                            <BoxView x:Name="TransitDayBackground"
+                                     Grid.Row="0"
+                                     BackgroundColor="Transparent"
+                                     HorizontalOptions="Fill"
+                                     VerticalOptions="Start"/>
 
-                            <BoxView Grid.Column="1"
-                                     WidthRequest="1"
-                                     HorizontalOptions="End"
-                                     VerticalOptions="Fill"
-                                     Color="{StaticResource TimelineLineColor}"
-                                     Opacity="0.12"/>
+                            <!-- Dynamic transit columns -->
+                            <HorizontalStackLayout Grid.Row="0"
+                                Spacing="0"
+                                BindableLayout.ItemsSource="{Binding TransitColumns}">
 
-                            <BoxView Grid.Column="2"
-                                    WidthRequest="1"
-                                    HorizontalOptions="End"
-                                    VerticalOptions="Fill"
-                                    Color="{StaticResource TimelineLineColor}"
-                                    Opacity="0.12"/>
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid WidthRequest="80"
+                                              HeightRequest="2880"
+                                              Padding="0"
+                                              BackgroundColor="Transparent">
 
-                            <!-- (Temporary) Example blocks can be added later; keep empty for clean layout -->
+                                            <!-- separator (right edge) -->
+                                            <BoxView WidthRequest="1"
+                                                     HorizontalOptions="End"
+                                                     VerticalOptions="Fill"
+                                                     Color="{StaticResource TimelineLineColor}"
+                                                     Opacity="0.75"/>
+
+                                            <!-- пока пусто: сюда позже положим реальные блоки/транзиты -->
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+
+                            </HorizontalStackLayout>
+
                         </Grid>
                     </ScrollView>
-
                 </Grid>
             </ScrollView>
 
@@ -307,60 +281,39 @@
                                 Scrolled="OnTransitStickyScrolled"
                                 BackgroundColor="Transparent">
 
-                        <Grid x:Name="TransitStickyGrid"
-                              ColumnSpacing="0"
-                              RowSpacing="0"
-                              Padding="0"
-                              BackgroundColor="Transparent">
+                        <HorizontalStackLayout Spacing="0"
+                            HeightRequest="20"
+                            BackgroundColor="Transparent"
+                            BindableLayout.ItemsSource="{Binding TransitColumns}">
 
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="80" />
-                            </Grid.ColumnDefinitions>
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid WidthRequest="80"
+                                          HeightRequest="20"
+                                          Padding="0"
+                                          BackgroundColor="Transparent">
 
-                            <!-- Example sticky labels (optional):
-                                 Make them invisible when empty / not needed -->
-                            <Label Grid.Column="0"
-                                   Text="(sticky)"
-                                   TextColor="Black"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   Opacity="0.85"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center"/>
+                                        <!-- пока тест: можно оставить пустым или поставить (sticky) -->
+                                        <!-- позже сюда будет подставляться текущее значение транзита -->
+                                        <Label Text="sticky"
+                                               TextColor="Black"
+                                               FontSize="11"
+                                               FontAttributes="Bold"
+                                               Opacity="0.85"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center"/>
 
-                            <Label Grid.Column="1"
-                                   Text=""
-                                   IsVisible="False"
-                                   TextColor="Black"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   Opacity="0.85"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center"/>
+                                        <!-- separator -->
+                                        <BoxView WidthRequest="1"
+                                                 HorizontalOptions="End"
+                                                 VerticalOptions="Fill"
+                                                 Color="{StaticResource TimelineLineColor}"
+                                                 Opacity="0.20"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
 
-                            <Label Grid.Column="2"
-                                   Text="(sticky)"
-                                   TextColor="Black"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   Opacity="0.85"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center"/>
-
-                            <Label Grid.Column="3"
-                                   Text=""
-                                   IsVisible="False"
-                                   TextColor="Black"
-                                   FontSize="11"
-                                   FontAttributes="Bold"
-                                   Opacity="0.85"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center"/>
-                            
-                        </Grid>
+                        </HorizontalStackLayout>
                     </ScrollView>
 
                 </Grid>

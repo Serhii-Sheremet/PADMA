@@ -69,12 +69,16 @@ namespace PADMA.Core.Services
         public IReadOnlyList<Yoga> YogaList { get; private set; } = new List<Yoga>();
         public IReadOnlyList<YogaDesc> YogaDescList { get; private set; } = new List<YogaDesc>();
 
+        public IReadOnlyList<DVLineName> DVLineNameList { get; private set; } = new List<DVLineName>();
+        public IReadOnlyList<DVLineNameDesc> DVLineNameDescList { get; private set; } = new List<DVLineNameDesc>();
+
 
         public IReadOnlyList<Profile> ProfileList { get; private set; } = new List<Profile>();
         public Profile? ActiveProfile { get; set; }
         public IProfileContextService ProfileContextService { get; } = new ProfileContextService();
 
         public IReadOnlyList<AppLocation> LocationList { get; private set; } = new List<AppLocation>();
+
 
 
         // --- App Settings and Texts ---
@@ -172,6 +176,10 @@ namespace PADMA.Core.Services
             // Yogas
             YogaList = db.GetYogas().ToList();
             YogaDescList = db.GetYogaDescs().ToList();
+
+            // DV Line Names
+            DVLineNameList = db.GetDVLineNames().ToList();
+            DVLineNameDescList = db.GetDVLineNameDescs().ToList();
 
             // Profiles
             ProfileList = db.GetProfiles().ToList();

@@ -1472,7 +1472,54 @@ namespace PADMA.Core.Services
             }
         }
 
+        /// <summary>
+        /// Return a list of DVlineNAmes Codes from DVLINENAME table.
+        /// </summary>
+        public IReadOnlyList<DVLineName> GetDVLineNames()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID   AS Id,
+                        CODE AS Code
+                    FROM DVLINENAME
+                    ORDER BY ID";
 
+                return _connection.Query<DVLineName>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetDVLineNames error: {ex.Message}");
+                return new List<DVLineName>();
+            }
+        }
+
+        /// <summary>
+        /// Return a list of DVLineName Descriptions from DVLINENAME_DESC table.
+        /// </summary>
+        public IReadOnlyList<DVLineNameDesc> GetDVLineNameDescs()
+        {
+            try
+            {
+                const string sql = @"
+                    SELECT 
+                        ID              AS Id,
+                        DVLINENAMEID    AS DVLineNameId,
+                        SHORTNAME       AS ShortName,
+                        NAME            AS Name,
+                        LANGUAGECODE    AS LanguageCode
+                    FROM DVLINENAME_DESC
+                    ORDER BY ID";
+
+                return _connection.Query<DVLineNameDesc>(sql);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] GetDVLineNameDescs error: {ex.Message}");
+                return new List<DVLineNameDesc>();
+            }
+        }
 
 
 
