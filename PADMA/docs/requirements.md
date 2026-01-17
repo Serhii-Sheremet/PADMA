@@ -3422,11 +3422,35 @@ This block provides a compact, visual overview of yogas based on Panchanga rules
 ## DayPage – Timeline-Based Daily View
 
 ### Overview
-DayPage represents a detailed daily view based on a vertical time timeline from **00:00 to 24:00**.  
+**DayPage** represents a detailed daily view based on a vertical time timeline from **00:00 to 24:00**.  
 The page is designed as an interactive astrological diary, combining time scale, user events, and multiple transit lanes in a single synchronized layout.
+Each transit lane represents a specific astrological factor (Nakshatra, Tithi, Yoga, etc.) and is rendered dynamically based on precomputed daily data.
+
+This implementation focuses on:
+- Reusing already calculated data (no heavy recalculations on DayPage)
+- High visual clarity on mobile devices
+- Smooth synchronization between timeline, transit lanes, headers, and sticky labels
 
 The page follows the hierarchy:
-**Calendar → DayOverview → DayPage**
+**MainPage → DayOverview → DayPage**
+
+## Data Flow
+
+1. **MainPage**
+   - Performs heavy ephemeris and transit calculations
+   - Builds `DayItem` objects for each day
+
+2. **DayOverviewPage**
+   - Receives `DayItem`
+   - Displays summary blocks
+   - Navigates to DayPage, passing the same `DayItem`
+
+3. **DayPage**
+   - Receives `DayItem` via `QueryProperty`
+   - Reuses:
+     - Panchanga segments (Nakshatra, Tithi, etc.)
+     - Transit slices
+   - No recalculation of ephemeris data is performed
 
 ### General Layout
 The DayPage layout consists of the following main columns (from left to right):
@@ -3496,23 +3520,73 @@ The DayPage layout consists of the following main columns (from left to right):
 - Grid lines extend across the entire Events column width.
 - No time text is shown inside the Events column (time labels exist only in the Time Scale column).
 
+## Auto-Centering on Current Time
+
+When opening DayPage:
+- If the displayed day is **today (in profile time zone)**, the timeline automatically scrolls so that:
+  - The current time is vertically centered when possible
+  - Near day start or end, scrolling is clamped to valid bounds
+
+This improves usability and allows immediate orientation around “now”.
+
 #### Purpose
 - Visual guidance for user interaction.
 - Accurate time-slot selection for creating events.
 - Basis for future event hit-testing logic.
 
-### Transit Lanes
+### Transit Lanes (Dynamic Columns)
 - Each transit lane occupies a fixed-width vertical column.
 - Lanes are displayed side by side and scrolled horizontally.
 - Transit segments are drawn according to their time spans.
 - Segment boundaries are visually separated when a transit changes during the day.
 
+- The number of transit lanes is **dynamic** and driven by the `EDVLineName` enum (IDs `< 100`).
+- Lane metadata (code, localized name, short name) is loaded from database tables:
+  - `DVLINENAME`
+  - `DVLINENAME_DESC`
+- Lanes are rendered using a horizontal `ScrollView` with a dynamic `BindableLayout`.
+
+Each lane:
+- Has a fixed width (currently `80px`)
+- Contains an `AbsoluteLayout` for vertical placement of transit segments
+- Uses the same vertical time scale as the main timeline
+
+## Transit Segments Rendering
+
+- Transit segments are rendered as vertical blocks positioned relative to the daily timeline:
+  - `Y = minutesFromDayStart * PixelsPerMinute`
+  - `Height = durationInMinutes * PixelsPerMinute`
+- Segments are **clipped to the current day** (00:00–24:00).
+- Support for split-colored segments is included (top/bottom color rendering).
+
+### Segment Separators & Labels
+- A thin horizontal separator line is drawn at each segment boundary.
+- A compact text label is rendered **just below the separator**, indicating the new segment.
+- Labels intentionally omit start time (time is already visible in the left time scale).
+- Example label format:
+  ```
+  NakshatraName
+  ```
+This prevents visual merging of consecutive segments with the same color and improves readability.
+
 ### Sticky Labels for Transit Lanes
+Each transit lane supports an optional **sticky label**:
 - Sticky labels indicate the **current active transit** at the top of the visible viewport.
 - Sticky labels are:
   - **Not part of the header**
-  - Rendered as an overlay above the transit body
-  - Fixed vertically at the top of the visible area
+  - It is rendered in a transparent overlay above the timeline.
+  - Sticky labels:
+    - Scroll **horizontally** together with transit lanes
+    - Remain **vertically fixed** at the top of the page
+
+### Update Logic
+- Sticky labels are updated on **vertical scrolling** of the timeline.
+- Current time is derived from:
+  ```
+  currentMinute = ScrollY / PixelsPerMinute
+  ```
+- The active segment is determined by checking which segment contains the corresponding time.
+- The sticky label text is updated dynamically.
 
 #### Behavior
 - Sticky label remains visible while its transit is active.
@@ -3542,6 +3616,19 @@ The DayPage layout consists of the following main columns (from left to right):
 - Additional lanes can be added without layout changes.
 - Time resolution is planned to be configurable via application settings.
 - User events functionality will be expanded with detailed editing and navigation flows.
+
+## Current Status
+
+Implemented:
+- Dynamic transit lanes
+- Nakshatra lane rendering
+- Segment separators and labels
+- Sticky labels synchronized with scroll
+- Auto-centering on current time
+
+Next steps:
+- Add remaining Panchanga and transit lanes
+- User-defined event lane
 
 ---------
 

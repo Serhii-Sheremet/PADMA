@@ -35,17 +35,17 @@
              HeightRequest="1"
              VerticalOptions="Fill"
              Color="{StaticResource TimelineLineColor}"
-             Opacity="0.35"/>
+             Opacity="0.85"/>
 
         <!-- Row 2: separator between header and body -->
         <BoxView Grid.Row="2" Grid.ColumnSpan="4"
              HeightRequest="1"
              VerticalOptions="Fill"
              Color="{StaticResource TimelineLineColor}"
-             Opacity="0.35"/>
+             Opacity="0.85"/>
 
         <!-- Column 0: Icons header (empty) -->
-        <Grid Grid.Row="1" Grid.Column="0" WidthRequest="20" BackgroundColor="#F7FBFF" />
+        <Grid Grid.Row="1" Grid.Column="0" WidthRequest="24" BackgroundColor="#F7FBFF" />
 
         <!-- Vertical separator after Icons --><!--
         <BoxView Grid.Row="1" Grid.Column="0"
@@ -56,7 +56,7 @@
                  Opacity="0.25"/>-->
 
         <!-- Column 1: Time header (empty) -->
-        <Grid Grid.Row="1" Grid.Column="1" WidthRequest="40" BackgroundColor="#F7FBFF" />
+        <Grid Grid.Row="1" Grid.Column="1" WidthRequest="36" BackgroundColor="#F7FBFF" />
 
         <!-- Vertical separator after Time -->
         <BoxView Grid.Row="1" Grid.Column="1"
@@ -64,7 +64,7 @@
                  HorizontalOptions="End"
                  VerticalOptions="Fill"
                  Color="{StaticResource TimelineLineColor}"
-                 Opacity="0.25"/>
+                 Opacity="0.85"/>
 
         <!-- Column 2: Events header -->
         <Grid Grid.Row="1" Grid.Column="2" WidthRequest="80" BackgroundColor="#F7FBFF">
@@ -82,7 +82,7 @@
                  HorizontalOptions="End"
                  VerticalOptions="Fill"
                  Color="{StaticResource TimelineLineColor}"
-                 Opacity="0.25"/>
+                 Opacity="0.85"/>
 
         <!-- Column 3: Transit lanes titles header (horizontally scrollable, synced with body) -->
         <ScrollView x:Name="TransitHeaderScroll"
@@ -118,7 +118,7 @@
                                      HorizontalOptions="End"
                                      VerticalOptions="Fill"
                                      Color="{StaticResource TimelineLineColor}"
-                                     Opacity="0.75"/>
+                                     Opacity="0.85"/>
                         </Grid>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
@@ -138,8 +138,9 @@
               Padding="0">
 
             <!-- Main vertical scroll (timeline) -->
-            <ScrollView x:Name="BodyVerticalScroll"
+            <ScrollView x:Name="TimelineScroll"
                         Orientation="Vertical"
+                        Scrolled="OnTimelineScrolled"
                         VerticalScrollBarVisibility="Always"
                         BackgroundColor="#F7FBFF">
 
@@ -151,7 +152,7 @@
                       BackgroundColor="#F7FBFF">
 
                     <!-- ICONS column -->
-                    <Grid Grid.Column="0" WidthRequest="20" BackgroundColor="#F7FBFF" />
+                    <Grid Grid.Column="0" WidthRequest="24" BackgroundColor="#F7FBFF" />
 
                     <!-- Separator after Icons -->
                     <BoxView Grid.Column="0"
@@ -159,10 +160,10 @@
                              HorizontalOptions="End"
                              VerticalOptions="Fill"
                              Color="{StaticResource TimelineLineColor}"
-                             Opacity="0.15"/>
+                             Opacity="0.85"/>
 
                     <!-- TIME SCALE column -->
-                    <Grid Grid.Column="1" WidthRequest="40" BackgroundColor="#F7FBFF" >
+                    <Grid Grid.Column="1" WidthRequest="36" BackgroundColor="#F7FBFF" >
                         <AbsoluteLayout x:Name="TimeBackgroundLayout" BackgroundColor="Transparent" />
                         <AbsoluteLayout x:Name="TimeScaleLayout" BackgroundColor="Transparent" />
                     </Grid>
@@ -173,7 +174,7 @@
                              HorizontalOptions="End"
                              VerticalOptions="Fill"
                              Color="{StaticResource TimelineLineColor}"
-                             Opacity="0.15"/>
+                             Opacity="0.85"/>
 
                     <!-- USER EVENTS column -->
                     <Grid Grid.Column="2" WidthRequest="80" BackgroundColor="#F7FBFF" >
@@ -187,7 +188,7 @@
                              HorizontalOptions="End"
                              VerticalOptions="Fill"
                              Color="{StaticResource TimelineLineColor}"
-                             Opacity="0.15"/>
+                             Opacity="0.85"/>
 
                     <!-- TRANSIT LANES body (horizontal scroll) -->
                     <ScrollView x:Name="TransitBodyScroll"
@@ -221,7 +222,8 @@
                                      VerticalOptions="Start"/>
 
                             <!-- Dynamic transit columns -->
-                            <HorizontalStackLayout Grid.Row="0"
+                            <HorizontalStackLayout x:Name="TransitColumnsHost"
+                                Grid.Row="0"
                                 Spacing="0"
                                 BindableLayout.ItemsSource="{Binding TransitColumns}">
 
@@ -232,12 +234,15 @@
                                               Padding="0"
                                               BackgroundColor="Transparent">
 
+                                            <!-- слой для отрисовки сегментов -->
+                                            <AbsoluteLayout InputTransparent="True" />
+
                                             <!-- separator (right edge) -->
                                             <BoxView WidthRequest="1"
                                                      HorizontalOptions="End"
                                                      VerticalOptions="Fill"
                                                      Color="{StaticResource TimelineLineColor}"
-                                                     Opacity="0.75"/>
+                                                     Opacity="0.85"/>
 
                                             <!-- пока пусто: сюда позже положим реальные блоки/транзиты -->
                                         </Grid>
@@ -295,9 +300,9 @@
 
                                         <!-- пока тест: можно оставить пустым или поставить (sticky) -->
                                         <!-- позже сюда будет подставляться текущее значение транзита -->
-                                        <Label Text="sticky"
+                                        <Label Text="{Binding StickyText}"
                                                TextColor="Black"
-                                               FontSize="11"
+                                               FontSize="10"
                                                FontAttributes="Bold"
                                                Opacity="0.85"
                                                HorizontalTextAlignment="Center"
@@ -308,7 +313,7 @@
                                                  HorizontalOptions="End"
                                                  VerticalOptions="Fill"
                                                  Color="{StaticResource TimelineLineColor}"
-                                                 Opacity="0.20"/>
+                                                 Opacity="0.85"/>
                                     </Grid>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>

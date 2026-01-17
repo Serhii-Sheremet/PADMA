@@ -93,7 +93,7 @@ namespace PADMA.Pages
 
             var parameters = new Dictionary<string, object>
             {
-                { "Date", Day.Date }
+                { "Day", Day }
             };
 
             if (OverviewData?.SunriseUtc != null)
