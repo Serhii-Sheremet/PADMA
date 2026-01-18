@@ -235,7 +235,7 @@
                                               BackgroundColor="Transparent">
 
                                             <!-- слой для отрисовки сегментов -->
-                                            <AbsoluteLayout InputTransparent="True" />
+                                            <AbsoluteLayout InputTransparent="False" />
 
                                             <!-- separator (right edge) -->
                                             <BoxView WidthRequest="1"
@@ -317,14 +317,45 @@
                                     </Grid>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
-
                         </HorizontalStackLayout>
                     </ScrollView>
-
                 </Grid>
             </Grid>
-
         </Grid>
+
+        <!-- Tooltip Overlay -->
+        <Grid x:Name="TooltipOverlay"
+              IsVisible="{Binding IsTooltipVisible}"
+              InputTransparent="{Binding IsTooltipHiddenInputTransparent}"
+              Grid.RowSpan="4"
+              Grid.ColumnSpan="4">
+
+            <!-- backdrop catches tap -->
+            <BoxView BackgroundColor="#80000000">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnTooltipBackdropTapped"/>
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <!-- panel is above backdrop, no close-tap here -->
+            <Frame Padding="12"
+                   CornerRadius="12"
+                   HasShadow="True"
+                   BackgroundColor="White"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   WidthRequest="320"
+                   MaximumHeightRequest="520">
+                <ScrollView>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{Binding TooltipTitle}" FontAttributes="Bold" FontSize="14"/>
+                        <Label Text="{Binding TooltipBody}" FontSize="12" LineBreakMode="WordWrap"/>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Frame>
+        </Grid>
+
+
 
     </Grid>
 </ContentPage>

@@ -3627,8 +3627,123 @@ Implemented:
 - Auto-centering on current time
 
 Next steps:
+- Context tooltip for transit lines
 - Add remaining Panchanga and transit lanes
-- User-defined event lane
+- User-defined event lane (add events feature)
 
 ---------
+
+# DayPage – Segment Selection & Tooltip Overlay
+
+## Purpose
+This section describes the interaction model and UI implementation for **segment selection** and **tooltip display** on the DayPage transit lanes.
+The goal is to provide rich contextual information for any transit segment without breaking the timeline layout or scroll behavior.
+
+## Segment Selection
+
+### Interaction Model
+Each transit segment supports a two-step tap interaction:
+
+1. **First tap**
+   - Selects the segment
+   - Visually highlights the entire segment
+   - Closes any open tooltip
+
+2. **Second tap on the same segment**
+   - Opens a tooltip with detailed information for that segment
+
+Tapping on a different segment switches selection to the new segment.
+
+## Visual Highlighting
+
+### Highlight Requirements
+- The selected segment must be highlighted **without changing its size or position**
+- No visual gaps or layout shifts are allowed
+- The highlight must cover the **entire visible segment area**
+
+### Implementation
+Each segment is rendered inside a wrapper container. The structure is:
+```
+Wrapper (AbsoluteLayout child)
+ ├─ Segment background (BoxView or Grid)
+ └─ Highlight overlay (Border)
+```
+- The segment background fills the entire wrapper
+- The highlight overlay is a `Border` rendered **above** the segment
+- The border uses `Stroke` only (no background) and is normally hidden
+- Highlight visibility is controlled by changing `Opacity`
+
+Because the border is an overlay and not a layout container, it does **not** affect segment geometry or spacing.
+
+## Tooltip Overlay
+
+### General Behavior
+- The tooltip is displayed as a centered overlay panel above the DayPage
+- The underlying page is dimmed using a semi-transparent backdrop
+- The tooltip does not open a new page and does not affect navigation state
+
+### Opening & Closing
+- Opened by a **second tap** on the currently selected segment
+- Closed by tapping anywhere outside the tooltip panel
+- When the tooltip is closed, the segment selection may either remain or be cleared (implementation choice)
+
+## Tooltip Overlay Structure
+
+The tooltip overlay consists of:
+
+- A full-page overlay grid
+- A semi-transparent backdrop that captures tap events
+- A centered panel containing scrollable content
+
+Key characteristics:
+- The overlay is fully hidden and input-transparent when not visible
+- When visible, it intercepts all input to prevent interaction with the timeline beneath
+- The tooltip panel itself allows vertical scrolling for long content
+
+## Scroll Interaction Compatibility
+
+Special care is taken to ensure compatibility with existing scroll behavior:
+
+- **Vertical scrolling** (timeline):
+  - Used to update sticky labels
+  - Disabled when tooltip is open
+
+- **Horizontal scrolling** (transit lanes):
+  - Remains synchronized across header, body, and sticky layers
+  - Disabled when tooltip is open
+
+- **Tap gestures**:
+  - Attached only to segment wrappers
+  - Do not interfere with scroll gestures
+
+## Data Handling
+
+- Each segment retains its full domain data (`PanchangaSegment`, transit slice, etc.)
+- Tooltip content is derived from segment IDs and domain models
+- Localized descriptions are resolved at display time using IDs, not preformatted text
+
+This design avoids duplication and ensures consistency across UI components.
+
+## Design Principles
+
+- Overlay-based UI for complex contextual information
+- No layout mutation during interaction
+- Clear separation between rendering, selection state, and data resolution
+- Fully reusable interaction pattern for all transit lanes
+
+## Current Status
+
+Implemented:
+- Segment selection by tap
+- Full-segment highlight overlay
+- Two-step tap interaction model
+- Centered tooltip overlay with backdrop
+- Safe coexistence with vertical and horizontal scrolling
+
+Planned:
+- Structured tooltip content (sections, icons, formatting)
+- Reuse of the same selection/tooltip mechanism for all transit lanes
+
+---------
+
 

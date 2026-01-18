@@ -1,5 +1,6 @@
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Layouts;
+using Microsoft.Maui.Controls;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
@@ -16,6 +17,8 @@ namespace PADMA.Pages
     {
         private bool _autoCenterRequested;
         private bool _syncingHorizontalScroll;
+        private readonly Dictionary<VisualElement, Border> _highlights = new();
+
         public DateTime? SunriseUtc { get; private set; }
         public DateTime? SunsetUtc { get; private set; }
 
@@ -51,6 +54,34 @@ namespace PADMA.Pages
                 OnPropertyChanged(nameof(Day));
             }
         }
+
+        private bool _isTooltipVisible;
+        public bool IsTooltipVisible
+        {
+            get => _isTooltipVisible;
+            set { _isTooltipVisible = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsTooltipHiddenInputTransparent)); }
+        }
+
+        // чтобы overlay не мешал скроллам когда скрыт
+        public bool IsTooltipHiddenInputTransparent => !IsTooltipVisible;
+
+        private string _tooltipTitle = "";
+        public string TooltipTitle
+        {
+            get => _tooltipTitle;
+            set { _tooltipTitle = value; OnPropertyChanged(); }
+        }
+
+        private string _tooltipBody = "";
+        public string TooltipBody
+        {
+            get => _tooltipBody;
+            set { _tooltipBody = value; OnPropertyChanged(); }
+        }
+
+        private PanchangaSegment? _selectedSegment;
+        private VisualElement? _selectedSegmentView;
+        private int _selectedLineId;
 
         private void ApplyLocalizedLabels()
         {
@@ -95,6 +126,11 @@ namespace PADMA.Pages
 
                 await CenterOnNowIfTodayAsync();
             });
+        }
+
+        private void OnTooltipBackdropTapped(object? sender, EventArgs e)
+        {
+            IsTooltipVisible = false;
         }
 
         public DayPage()
@@ -441,6 +477,7 @@ namespace PADMA.Pages
             if (lane == null) return;
 
             lane.Children.Clear();
+            _highlights.Clear();
 
             var dayStart = Day!.Date;              // 00:00 выбранного дня (локально)
             var dayEnd = dayStart.AddDays(1);
@@ -501,9 +538,47 @@ namespace PADMA.Pages
                     };
                 }
 
-                AbsoluteLayout.SetLayoutBounds(block, new Rect(0, y, 80, h));
-                AbsoluteLayout.SetLayoutFlags(block, AbsoluteLayoutFlags.None);
-                lane.Children.Add(block);
+                var wrapper = new Grid
+                {
+                    Padding = 0,
+                    Margin = 0,
+                    RowSpacing = 0,
+                    ColumnSpacing = 0
+                };
+
+                // 1) фон сегмента
+                if (block is View v)
+                {
+                    v.HorizontalOptions = LayoutOptions.Fill;
+                    v.VerticalOptions = LayoutOptions.Fill;
+                }
+                wrapper.Children.Add(block);
+
+                // 2) рамка выделения поверх
+                var highlight = new Border
+                {
+                    Stroke = new SolidColorBrush(Colors.Gold),
+                    StrokeThickness = 2,          // можно 1, если тонко
+                    Background = null,
+                    Padding = 0,
+                    Margin = 0,
+                    InputTransparent = true,
+                    Opacity = 0.0,
+                    HorizontalOptions = LayoutOptions.Fill,
+                    VerticalOptions = LayoutOptions.Fill
+                };
+                wrapper.Children.Add(highlight);
+                _highlights[wrapper] = highlight;
+
+                // TAP on wrapper
+                var tap = new TapGestureRecognizer();
+                tap.Tapped += (s, e) => OnSegmentTapped(lineId, seg, wrapper);
+                wrapper.GestureRecognizers.Add(tap);
+
+                // Position wrapper in the lane (AbsoluteLayout)
+                AbsoluteLayout.SetLayoutBounds(wrapper, new Rect(0, y, 80, h));
+                AbsoluteLayout.SetLayoutFlags(wrapper, AbsoluteLayoutFlags.None);
+                lane.Children.Add(wrapper);
 
                 // граница перед сегментом (кроме самого первого)
                 // текст в начале сегмента (если он начинается внутри суток, а не в 00:00)
@@ -581,6 +656,52 @@ namespace PADMA.Pages
 
             TransitColumns[idx].StickyText = GetSegmentLabelText(seg);  
         }
+
+        private void OnSegmentTapped(int lineId, PanchangaSegment seg, VisualElement view)
+        {
+            // 1-й тап: выделяем
+            if (_selectedSegment == null || !ReferenceEquals(_selectedSegment, seg) || _selectedLineId != lineId)
+            {
+                ClearSelection();
+
+                _selectedSegment = seg;
+                _selectedLineId = lineId;
+                _selectedSegmentView = view;
+
+                HighlightSelection(view, true);
+
+                // при выборе сегмента тултип закрываем
+                IsTooltipVisible = false;
+                return;
+            }
+
+            // 2-й тап по тому же сегменту: открываем тултип
+            TooltipTitle = $"Nakshatra";               // позже: по lineId -> DVLineNameDesc.Name
+            TooltipBody = seg.Text ?? "";             // позже: собираем по Id в разделы
+            IsTooltipVisible = true;
+        }
+
+        private void ClearSelection()
+        {
+            if (_selectedSegmentView != null)
+                HighlightSelection(_selectedSegmentView, false);
+
+            _selectedSegment = null;
+            _selectedSegmentView = null;
+            _selectedLineId = 0;
+        }
+
+        private void HighlightSelection(VisualElement view, bool selected)
+        {
+            if (_highlights.TryGetValue(view, out var h))
+                h.Opacity = selected ? 1.0 : 0.0;
+        }
+
+
+
+
+
+
 
 
 
