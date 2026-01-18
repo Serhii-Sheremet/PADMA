@@ -7,4 +7,4 @@ The source code, database, and any other resources included in this repository *
 
 The project is currently published for demonstration and collaboration purposes only.  
 
-© 2017–2025 Serhii Sheremet
+© 2017–2026 Serhii Sheremet
