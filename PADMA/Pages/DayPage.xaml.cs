@@ -5,6 +5,7 @@ using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.UI;
+using PADMA.UI.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -12,7 +13,6 @@ using System.Runtime.CompilerServices;
 
 namespace PADMA.Pages
 {
-    [QueryProperty(nameof(Day), "Day")]
     public partial class DayPage : ContentPage, IQueryAttributable
     {
         private bool _autoCenterRequested;
@@ -93,6 +93,34 @@ namespace PADMA.Pages
 
         public void ApplyQueryAttributes(IDictionary<string, object> query)
         {
+            // New flow: token -> bundle
+            if (query.TryGetValue("token", out var t) && t is string token && !string.IsNullOrWhiteSpace(token))
+            {
+                var store = ServiceLocator.Services.GetService<NavigationDataStore>();
+                if (store != null && store.TryGet(token, out DayNavBundle? bundle) && bundle != null)
+                {
+                    Day = bundle.Day;
+
+                    if (bundle.Overview?.SunriseUtc != null)
+                        SunriseUtc = DateTime.SpecifyKind(bundle.Overview.SunriseUtc.Value, DateTimeKind.Utc);
+
+                    if (bundle.Overview?.SunsetUtc != null)
+                        SunsetUtc = DateTime.SpecifyKind(bundle.Overview.SunsetUtc.Value, DateTimeKind.Utc);
+
+                    // optional: you may keep bundle.Window for future swipe feature
+                    // var window = bundle.Window;
+
+                    ApplyDayNightBackgroundIfPossible();
+                    RenderNakshatraLane();
+                    UpdateStickyForNakshatra(0);
+                    RequestAutoCenter();
+
+                    // optional: store.Remove(token); // если освобождать память сразу
+                    return;
+                }
+            }
+
+            // Backward compatibility (old flow)
             if (query.TryGetValue("Day", out var d) && d is DayItem day)
                 Day = day;
 
@@ -102,14 +130,10 @@ namespace PADMA.Pages
             if (query.TryGetValue("SunsetUtc", out var ss) && ss is DateTime sunsetUtc)
                 SunsetUtc = DateTime.SpecifyKind(sunsetUtc, DateTimeKind.Utc);
 
-            // после получения параметров можно применить фон
             ApplyDayNightBackgroundIfPossible();
-
-            // тут же можно вызвать построение данных/блоков транзитов, уже имея Day
             RenderNakshatraLane();
-            UpdateStickyForNakshatra(0); // старт в начале суток
-
-            RequestAutoCenter(); 
+            UpdateStickyForNakshatra(0);
+            RequestAutoCenter();
         }
 
         private void RequestAutoCenter()

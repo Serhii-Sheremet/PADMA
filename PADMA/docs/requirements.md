@@ -3746,4 +3746,144 @@ Planned:
 
 ---------
 
+# PADMA – Navigation Data Flow & DayOverview Swipe
+
+## Overview
+
+This document describes the recent architectural changes made to PADMA to improve:
+
+- End-to-end data flow between pages (MainPage → DayOverviewPage → DayPage)
+- Reuse of already calculated data (no recomputation)
+- Support for horizontal day-to-day navigation (swipe) in DayOverviewPage
+
+These changes are infrastructure-level and do not alter existing astrological algorithms or calculation logic.
+
+## 1. Problem Statement
+
+Before these changes:
+
+- Heavy domain objects (DayItem, transit data, overview results) were partially passed through Shell navigation.
+- Some data was lost during navigation, forcing UI pages (especially DayPage) to rely on display text instead of structured models/IDs.
+- DayOverviewPage showed a single day only, without the ability to move forward/backward through the already calculated 42-day window.
+
+## 2. NavigationDataStore
+
+### Purpose
+
+`NavigationDataStore` is an in-memory storage used to pass complex navigation payloads between pages without serializing them into Shell query parameters.
+
+This allows:
+
+- Passing rich domain models safely
+- Avoiding recalculation
+- Keeping navigation lightweight (only a token is passed)
+
+### Key Characteristics
+
+- Singleton service (registered in DI)
+- Stores objects by generated string token (GUID)
+- Supports Put / Get / Remove operations
+- Lifetime: application session (in-memory)
+
+### Conceptual API
+```csharp
+string token = store.Put(object);
+T payload = store.GetRequired<T>(token);
+store.Remove(token);
+```
+## 3. DayNavBundle
+
+### Purpose
+
+`DayNavBundle` is a unified navigation payload that represents all data needed by DayPage (and future extensions).
+
+### Structure
+
+- `DayItem Day`
+  - The selected calendar day
+  - Contains Panchanga segments and TransitPack (already calculated on MainPage)
+- `DayOverviewData Overview`
+  - Sunrise/Sunset
+  - Overview stripes and other computed day-level summaries
+- `DayWindowContext Window` (optional)
+  - Full 42-day window
+  - Index of the currently selected day
+  - Enables day-to-day navigation without recomputation
+
+### Design Goal
+
+DayPage becomes a pure consumer of prepared data, not a recalculation point.
+
+## 4. Updated Navigation Flow
+
+### MainPage → DayOverviewPage
+
+- MainPage builds the 42-day window once (CalendarViewModel).
+- A `DayWindowContext` (days + selected index) is stored in NavigationDataStore.
+- Only the selected `DayItem` and a `WindowToken` are passed via navigation.
+
+### DayOverviewPage
+
+- Receives:
+  - Selected `DayItem`
+  - Optional `WindowToken`
+- Retrieves `DayWindowContext` from NavigationDataStore.
+- Loads `DayOverviewData` via DayComputationService (cached, no recomputation).
+- On navigation to DayPage:
+  - Builds a `DayNavBundle`
+  - Stores it in NavigationDataStore
+  - Navigates using a single bundle token.
+
+### DayPage
+
+- Receives only a bundle token.
+- Restores full context (`DayItem`, `OverviewData`, window context).
+- No recalculation is required.
+
+## 5. DayOverview Horizontal Swipe
+
+### Motivation
+
+The 42-day window is already calculated on MainPage.
+
+Horizontal swipe allows:
+
+- Browsing adjacent days quickly
+- Reusing cached overview data
+- Preparing for future gesture-based navigation
+
+### Implementation
+
+- `SwipeView` is used as a gesture detector.
+- Swipe actions are configured with `Mode="Execute"`.
+- Swipe left/right switches the selected index inside `DayWindowContext`.
+- UI is refreshed using cached data (DayComputationService cache).
+
+### Notes
+
+- SwipeView is applied only to the scrollable content area.
+- Action buttons are placed outside SwipeView to avoid visual movement.
+- Visual swipe “reveal” is minimal and can be adjusted later based on real-device UX testing.
+
+## 6. Design Principles Followed
+
+- No changes to Swiss Ephemeris or astrological logic
+- No recalculation of already prepared data
+- Clear separation between:
+  - Calculation
+  - Navigation
+  - Presentation
+- Prepared foundation for:
+  - DayPage deep lanes (planet stripes, tooltips by ID)
+  - Future swipe support in DayPage
+
+## 7. Current Status
+
+- Navigation data flow stabilized
+- DayOverview supports horizontal day navigation
+- DayPage receives full structured context
+
+---------
+
+
 

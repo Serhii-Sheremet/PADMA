@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:PADMA.UI"
     x:Class="PADMA.Pages.DayOverviewPage">
 
-    <!-- ATTENTION:
+        <!-- ATTENTION:
          ConfigBasePage already has ScrollView inside.
          But in the project, child config pages also often put their own ScrollView — it's OK.
          To avoid creating nested ScrollView, just using VerticalStackLayout here. -->
@@ -14,7 +14,24 @@
     <Grid RowDefinitions="*,Auto"
           RowSpacing="0">
 
-        <ScrollView Grid.Row="0">
+        <SwipeView x:Name="DaySwipeView">
+            <SwipeView.LeftItems>
+                <SwipeItems Mode="Execute">
+                    <SwipeItem Invoked="OnSwipePrevDay"
+                   BackgroundColor="Transparent"
+                   Text="" />
+                </SwipeItems>
+            </SwipeView.LeftItems>
+
+            <SwipeView.RightItems>
+                <SwipeItems Mode="Execute">
+                    <SwipeItem Invoked="OnSwipeNextDay"
+                   BackgroundColor="Transparent"
+                   Text="" />
+                </SwipeItems>
+            </SwipeView.RightItems>
+
+            <ScrollView Grid.Row="0">
 
             <!-- ONE root content for ScrollView -->
             <VerticalStackLayout Spacing="0">
@@ -67,8 +84,6 @@
                     </HorizontalStackLayout>
 
                 </Grid>
-
-                
 
                 <!-- Panchanga bars (larger than on the calendar) -->
                 <VerticalStackLayout Spacing="0" Margin="0,0,0,2">
@@ -140,13 +155,16 @@
             </VerticalStackLayout>
         </ScrollView>
 
+    </SwipeView>
+
     <!-- Button for navigating to DayPage -->
-    <Button Grid.Row="1"
-            Margin="12"
-            x:Name="OpenDayDetailsButton"
-            Text="Open Day Details"
-            CornerRadius="10"
-            HeightRequest="34"
-            Clicked="OnOpenDayDetailsClicked" />
+        <Button Grid.Row="1"
+                Margin="12"
+                x:Name="OpenDayDetailsButton"
+                Text="Open Day Details"
+                CornerRadius="10"
+                HeightRequest="34"
+                Clicked="OnOpenDayDetailsClicked" />
+        
     </Grid>
 </ui:ConfigBasePage>

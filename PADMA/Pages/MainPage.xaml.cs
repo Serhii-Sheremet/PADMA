@@ -177,10 +177,33 @@ namespace PADMA.Pages
             // if tapped day is already selected, navigate to DayOverview
             if (Vm.SelectedDay != null && Vm.SelectedDay.Date == tapped.Date)
             {
-                await Shell.Current.GoToAsync("dayOverview", true,
-                        new Dictionary<string, object> { { "Day", tapped } });
+                var navStore = ServiceLocator.Services.GetService<PADMA.UI.Services.NavigationDataStore>();
+
+                string? windowToken = null;
+                if (navStore != null)
+                {
+                    var daysSnapshot = Vm.Days.ToList();
+                    var idx = daysSnapshot.FindIndex(d => d.Date.Date == tapped.Date.Date);
+                    if (idx < 0) idx = 0;
+
+                    var window = new PADMA.UI.Services.DayWindowContext
+                    {
+                        Days = daysSnapshot,
+                        SelectedIndex = idx
+                    };
+
+                    windowToken = navStore.Put(window);
+                }
+
+                var parameters = new Dictionary<string, object>{{ "Day", tapped }};
+
+                if (!string.IsNullOrWhiteSpace(windowToken))
+                    parameters["WindowToken"] = windowToken;
+
+                await Shell.Current.GoToAsync("dayOverview", true, parameters);
                 return;
             }
+
 
             // orderwise, just select the tapped day
             Vm.SelectedDay = tapped;
