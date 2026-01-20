@@ -188,6 +188,7 @@ namespace PADMA.UI.Services
                     data.PlanetStripes.Add(new PlanetStripe
                     {
                         Planet = planet,
+                        DayDate = dayStartLocal,
                         Segments = segments
                     });
                 }
