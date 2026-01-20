@@ -3840,48 +3840,74 @@ DayPage becomes a pure consumer of prepared data, not a recalculation point.
 - Restores full context (`DayItem`, `OverviewData`, window context).
 - No recalculation is required.
 
-## 5. DayOverview Horizontal Swipe
+## 5. DayOverview Horizontal Paging
 
 ### Motivation
 
-The 42-day window is already calculated on MainPage.
+The 42-day window is already calculated on **MainPage** and kept in memory.
 
-Horizontal swipe allows:
+Horizontal paging on **DayOverviewPage** allows:
 
-- Browsing adjacent days quickly
-- Reusing cached overview data
-- Preparing for future gesture-based navigation
+- Smooth, natural day-to-day navigation (true paging, not gesture-triggered refresh)
+- Visual continuity of astrological stripes across adjacent days
+- Full reuse of cached overview data (no recomputation)
+- Clear temporal perception of how transits evolve from day to day
+
+This behavior closely matches the legacy PAD desktop application and expected calendar UX.
 
 ### Implementation
 
-- `SwipeView` is used as a gesture detector.
-- Swipe actions are configured with `Mode="Execute"`.
-- Swipe left/right switches the selected index inside `DayWindowContext`.
-- UI is refreshed using cached data (DayComputationService cache).
+- **`CarouselView`** is used as the core paging mechanism (horizontal orientation).
+- Each carousel item represents **one day** and is bound to a lightweight view-model (`DayOverviewItemVm`):
+  - `Day` (`DayItem`)
+  - `Overview` (`DayOverviewData`, loaded lazily)
+- The initial carousel position is set from `DayWindowContext.SelectedIndex`.
+
+#### Data Loading Strategy
+
+- Overview data is loaded **on demand** when a day becomes current.
+- Neighboring days (±1) are **preloaded asynchronously** to eliminate visual gaps during swipe.
+- All overview requests go through `DayComputationService`, which already provides in-memory caching.
+
+#### Boundary Handling
+
+- Paging is **not circular**.
+- When the user reaches the first or last day of the 42-day window, further swipes in that direction are ignored.
+- Internal safeguards prevent re-entrant layout updates and UI freezes at boundaries.
+
+### UX Characteristics
+
+- True page-to-page movement (neighboring day visibly slides in).
+- No empty or white placeholder screens during swipe.
+- No visual "reveal" artifacts typical for action-based swipe controls.
+- Buttons and fixed UI elements are placed outside the carousel and remain stationary.
 
 ### Notes
 
-- SwipeView is applied only to the scrollable content area.
-- Action buttons are placed outside SwipeView to avoid visual movement.
-- Visual swipe “reveal” is minimal and can be adjusted later based on real-device UX testing.
+- `CarouselView` was chosen specifically to model **time-based paging**, not gesture-triggered commands.
+- The solution is stable on desktop emulators and expected to feel even more natural on real touch devices.
 
 ## 6. Design Principles Followed
 
 - No changes to Swiss Ephemeris or astrological logic
 - No recalculation of already prepared data
+- Strict reuse of cached results
 - Clear separation between:
   - Calculation
   - Navigation
   - Presentation
-- Prepared foundation for:
-  - DayPage deep lanes (planet stripes, tooltips by ID)
-  - Future swipe support in DayPage
+- Architecture aligned with legacy PAD behavior
+- Solid foundation for:
+  - Deep DayPage lanes (planet stripes, Panchanga, Muhurta, etc.)
+  - Tooltip rendering based on IDs instead of display text
+  - Possible future paging on DayPage
 
 ## 7. Current Status
 
 - Navigation data flow stabilized
-- DayOverview supports horizontal day navigation
-- DayPage receives full structured context
+- DayOverview supports smooth horizontal paging via CarouselView
+- Visual continuity between days achieved
+- DayPage receives full structured context and is ready for further development
 
 ---------
 

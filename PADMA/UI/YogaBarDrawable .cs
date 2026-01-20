@@ -77,18 +77,58 @@ public sealed class YogaBarDrawable : IDrawable
         if (string.IsNullOrWhiteSpace(text) || w <= 1 || h <= 1)
             return;
 
+        var drawText = text
+            .Replace("\r", "")
+            .Replace("\n", " ")
+            .Trim();
+
+        // параметры строки (как в PanchangaBarDrawable)
+        float height = h;
+        var font = GFont.Default;
+        var fontSize = Math.Max(10f, height * 0.55f);
+        
+        canvas.Font = font;
+        canvas.FontSize = fontSize; 
+        var oneLineH = fontSize + 2f;
+
+        // центрирование по высоте
+        var yy = y + (h - oneLineH) / 2f;
+
+        var pad = 1f;
+        float xx = x + pad;
+        float xLimit = x + w - pad;
+
         canvas.SaveState();
         canvas.ClipRectangle(x, y, w, h);
 
-        canvas.DrawString(
-            text.Replace("\r", "").Replace("\n", " ").Trim(),
-            x, y,
-            w, h,
-            HorizontalAlignment.Left,
-            VerticalAlignment.Center,
-            TextFlow.ClipBounds);
+        // canvas.FontSize уже установлен
+        // FontColor оставь как есть (у тебя по умолчанию черный, либо можно принудительно)
+        // canvas.FontColor = Colors.Black;
+
+        foreach (var ch in drawText)
+        {
+            var s = ch.ToString();
+
+            var sz = canvas.GetStringSize(s, font, fontSize);
+            var cw = sz.Width;
+            if (cw <= 0.01f) cw = fontSize * 0.3f;
+
+            if (xx + cw > xLimit)
+                break;
+
+            canvas.DrawString(
+                s,
+                xx, yy,
+                cw + 1f, oneLineH,
+                HorizontalAlignment.Left,
+                VerticalAlignment.Center,
+                TextFlow.ClipBounds);
+
+            xx += cw;
+        }
 
         canvas.RestoreState();
     }
+
 
 }

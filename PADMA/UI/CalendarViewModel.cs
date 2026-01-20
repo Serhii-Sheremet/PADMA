@@ -407,7 +407,7 @@ namespace PADMA.UI
                         taraBalaSegments = PanchangaHelper.BuildSegmentsForDay(
                             taraBalaSlices, date, tzInfo, DataCache.Instance,
                             slice => (EColor)slice.ColorId,
-                            slice => $"{slice.TaraBalaId}.{taraById.GetValueOrDefault(slice.TaraBalaId, "")}");
+                            slice => $"{taraById.GetValueOrDefault(slice.TaraBalaId, "")} {slice.TaraBalaPercent}%");
                     }
 
                     if (tithiSlices != null)
