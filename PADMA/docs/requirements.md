@@ -1,6 +1,3 @@
-> Context: This document is used by ChatGPT (GPT-5) for project PADMA continuation.  
-> Always load this file first in a new session to resume context.
-
 # 🪶 PADMA — Project Requirements & Current Implementation  
 
 ---
@@ -11,8 +8,6 @@
 It displays a localized astrological calendar, user configuration pages, and other utilities.  
 All settings, interface texts, and reference data are stored in the embedded SQLite database  
 **`PADMADB.db3`**, which is cached in memory at runtime.
-
----
 
 ## 🧱 Architecture  
 
@@ -35,8 +30,6 @@ All settings, interface texts, and reference data are stored in the embedded SQL
 2. If the database version in table `APP_META` differs from the existing one —  
    → the local database is automatically replaced with the new version.
 
----
-
 ## ⚙️ Core Services
 
 ### 🔸 DatabaseService
@@ -58,7 +51,6 @@ SetLanguage(string code)
 SetFirstDayOfWeek(string code)
 SetAppSettingActive(string groupCode, string settingCode) // universal for any config page
 ```
-
 
 ## ⚙️ AppSettingsService  
 
@@ -84,7 +76,6 @@ ActivateSetting(string groupCode, string settingCode)
 - Ensures data consistency between database and in-memory cache (`DataCache`).  
 - Often used by configuration pages derived from `ConfigBasePage`.  
 
-
 ## 🧰 KeyboardHelper  
 
 **Purpose:**  
@@ -101,7 +92,6 @@ HideKeyboard(View control)
 - Detects the current focused element and dismisses the soft keyboard.  
 - Typically invoked after text entry or form submission within `ProfileDetailPage` and similar pages.  
 - Supports both Android and iOS platforms.  
-
 
 ## 🎨 XAML Converters  
 
@@ -122,9 +112,7 @@ They translate application data into visual UI states such as colors, sizes, or 
 ```xml
 <Label Text="{Binding IsToday, Converter={StaticResource TodayBackgroundConverter}}" />
 ```
-
 All converters are declared as resources in XAML and shared across calendar and configuration pages.
-
 
 ## ⏱️ DateTime Format and Precision
 
@@ -133,11 +121,9 @@ To ensure consistent handling of dates and times across the application and data
 
 **Standard Format:**  
 All date and time values use the standard .NET `DateTime` structure and are stored in SQLite in the format:
-
 ```
 yyyy-MM-dd HH:mm:ss
 ```
-
 **Rules:**
 - Precision is up to **seconds**.  
 - `System.Globalization.CultureInfo.InvariantCulture` is always used when converting to or from text.  
@@ -147,8 +133,6 @@ yyyy-MM-dd HH:mm:ss
   var dateText = profile.DateOfBirth.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
   ```
 - This convention applies to all future modules, including ephemeris and time-based computations.
-
----
 
 ### 🔸 DataCache  
 
@@ -166,8 +150,6 @@ LoadAll(DatabaseService db, string? preferredUiLang = null) // called at startup
 Refresh(DatabaseService db) // called after configuration changes
 ```
 
----
-
 ### 🔸 Localization System  
 
 **Purpose:**  
@@ -182,8 +164,6 @@ Localization.GetLocalizedText("NativeText", DataCache.Instance.CurrentLanguageCo
 Each entry contains a native text and up to four translations (`en`, `uk`, `pl`, `ru`).  
 If a translation is missing — returns the native English string.
 
----
-
 ### 🔸 ServiceLocator  
 
 **Purpose:**  
@@ -194,13 +174,11 @@ Provides a simple global entry point for dependency-injected services (e.g. `Dat
 var db = ServiceLocator.Services.GetService<DatabaseService>();
 ```
 
----
+------
 
 ## 🧩 UI Templates & Layout Standards  
 
 The following templates define visual and structural consistency across all pages.
-
----
 
 ### 🔹 ConfigBasePage  
 
@@ -220,8 +198,6 @@ Provides a common layout for all configuration pages.
 | Instruction text | `InstructionLabelStyle` | Medium font, standard margin |
 | Option labels | `LabelTextStyle` | Used beside radio buttons |
 | Radio buttons | Grouped per configuration option |
-
----
 
 ### 🔹 ConfigurationPage  
 
@@ -262,8 +238,6 @@ MessagingCenter.Send<object>(this, "SettingsChanged");
 Rationale: Xamarin/MAUI MessagingCenter matches by generic sender type.
 Mismatched types (e.g., Send<NodesPage>, Subscribe<object>) won’t deliver the message.
 
----
-
 ### 🔹 MainPage  
 
 **Purpose:**  
@@ -275,7 +249,7 @@ Main calendar view of the application.
 - Main grid — 6×7 bordered day cells.  
   Each cell includes:
   - Day number (top-left).
-  - 6 color bars (transit placeholders).
+  - 6 colored bars.
 
 **Behavior:**
 - Loads current language and first-day-of-week from cache.
@@ -286,8 +260,6 @@ Main calendar view of the application.
   - Month navigation occurs.
 - Uses `ReloadCultureAndRefresh()` for culture updates.
 - Title capitalization follows current culture (`ToTitleCase()`).
-
----
 
 ### 🔹 Common Visual Standards  
 
@@ -303,15 +275,11 @@ Main calendar view of the application.
 | Default padding | 16px |
 | Default spacing | 12px |
 
----
-
 ### 🔹 Future Reuse  
 
 - All new configuration pages must inherit from `ConfigBasePage`.  
 - Non-configuration pages (e.g. reports or charts) must follow the same style and spacing.  
 - Common color and typography palette must remain consistent.
-
----
 
 ## ⚙️ Configuration Pages  
 
@@ -327,8 +295,6 @@ Each page includes:
 **Common confirmation dialog:**
 > “Apply new settings for [setting name]?”
 
----
-
 ### Implemented configuration pages
 
 | Page | GroupCode | Options | Description |
@@ -342,8 +308,6 @@ Each page includes:
 | MrityuBhaga| MRITYUBHAGA | NEQUAL, NLESS, NMORE, NERNST | Chooses Mrityu Bhaga calculation method |
 | Sunrise | SUNRISE | TIP, CENTER | Chooses Sunrise calculation method |
 
----
-
 ### 🔄 Global Behavior  
 
 **Shared logic across pages:**
@@ -352,8 +316,6 @@ Each page includes:
 - `MainPage` listens for the same message and rebuilds its layout.
 - If user navigates back without changes — no message or refresh occurs.
 - Localization applies dynamically to all visible elements on appearance.
-
----
 
 ## 🧾 Database Schema  
 
@@ -367,13 +329,9 @@ Each page includes:
 | LOCATION | Geographic data (limited to predefined entries) |
 | PROFILE | User profiles linked to LOCATION |
 
----
-
 ## 🧩 Architecture Notes
 
 This section summarizes key technical and behavioral conventions that define PADMA’s internal consistency across all MAUI components.
-
----
 
 ### 🔹 Unified Messaging Contract  
 All configuration pages communicate updates using a single `MessagingCenter` event pattern:
@@ -382,12 +340,9 @@ All configuration pages communicate updates using a single `MessagingCenter` eve
 MessagingCenter.Send<object>(this, "SettingsChanged");
 MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ => { ... });
 ```
-
 - Ensures consistent message delivery regardless of page type.  
 - Prevents common MAUI issues with mismatched sender types.  
 - Allows `ConfigurationPage` to listen universally to all child updates.
-
----
 
 ### 🔹 Config Pages Consistency  
 Every configuration page inherits from `ConfigBasePage` and adheres to a unified structure:
@@ -408,13 +363,9 @@ Every configuration page inherits from `ConfigBasePage` and adheres to a unified
   MessagingCenter.Send<object>(this, "SettingsChanged");
   ```
 
----
-
 ### 🔹 Centralized Cache Refresh  
 `DataCache.Instance.Refresh(db)` is invoked **only after confirmed configuration updates**.  
 This avoids unnecessary reloads and ensures the user immediately sees updated texts, settings, or localization changes.
-
----
 
 ### 🔹 Defensive UI Updates  
 `MainPage` and `ConfigurationPage` both use internal flags (e.g. `_hasConfigChanges`) to determine whether UI refreshes are required after returning from a configuration page.
@@ -422,8 +373,6 @@ This avoids unnecessary reloads and ensures the user immediately sees updated te
 - If no settings were changed, navigation returns instantly without rebuilding the calendar.  
 - If changes exist, the calendar and localized interface are refreshed.  
 This optimization significantly improves perceived performance on all platforms.
-
----
 
 ### 🔹 Localization Flow  
 All text localization uses:
@@ -435,14 +384,10 @@ Localization.GetLocalizedText("Native English Text", DataCache.Instance.CurrentL
 - Each localized record must include English, Ukrainian, Polish, and Russian variants.  
 - Dynamic UI elements (titles, labels, buttons) must have `x:Name` assigned for runtime localization updates.
 
----
-
 ### 🔹 Database Versioning  
 The table `APP_META` stores database version info.  
 On app startup, `DatabaseService` compares the deployed and local DB versions and automatically replaces outdated copies from `/Resources/Raw/PADMADB.db3`.  
 This guarantees schema and localization updates propagate without manual intervention.
-
----
 
 ### 🔹 Extension Methods  
 Utility extensions defined in `PADMA/Core/Utilities/Extensions.cs` provide reusable helpers for date/time operations:
@@ -453,12 +398,9 @@ date.StrictBetween(start, end);
 date.ShiftByUtcOffset(offset);
 date.ShiftByDaylightDelta(adjustmentRules);
 ```
-
 These methods standardize temporal logic across astronomical and calendar-related calculations.
 
-### 👤 Profiles feature
-
----
+## 👤 Profiles feature
 
 ### 🎯 Purpose  
 
@@ -469,8 +411,6 @@ personalized data (e.g., location-based information) upon app startup.
 
 Each profile may be marked as **default**,  
 which determines which profile data is automatically used by the **Calendar** page.  
-
----
 
 ### 🧱 Entry Point  
 
@@ -486,8 +426,6 @@ Exit
 
 **File:** `AppShell.xaml`  
 The route `Profiles` is registered in `AppShell.xaml.cs`.  
-
----
 
 ## 🧭 Profiles — Navigation & UI Behavior  
 
@@ -514,7 +452,6 @@ This separation avoids implicit side effects and makes profile behavior predicta
 ```
 ☰  Profiles                              ❌
 ```
-
 **Action Bar (below toolbar):**  
 ```
 [➕ Add new profile]
@@ -558,12 +495,10 @@ Appears only when a profile is selected.
 ```
 ←  [Profile name / New profile]           ❌
 ```
-
 **Action Bar (below toolbar):**  
 ```
 [ 💾 Save ] [ ✏️ Edit ] [ 🗑 Delete ]
 ```
-
 **Button order confirmed:** Save first.
 
 #### 🔹 Modes of operation  
@@ -607,7 +542,6 @@ If no changes exist, they immediately return to the profiles list without prompt
 | Save error | “Failed to save profile. Please try again.” | Shown when a database or validation exception occurs. |
 | Validation alerts | Localized messages per field | Required fields: **Profile Name**, **Date of Birth**, **Place of Birth**, **Place of Living** |
 
-
 Dialogs follow the same visual and logical pattern as those used in `ConfigBasePage`.  
 
 ### 🌍 LocationPage — Location Lookup  
@@ -619,7 +553,6 @@ Searches and selects geographic locations using **Nominatim API**.
 ```
 ←  Location search
 ```
-
 **Behavior:**  
 - User searches a place name (Nominatim API).  
 - Search results show locality, region, country, coordinates.  
@@ -632,7 +565,6 @@ Searches and selects geographic locations using **Nominatim API**.
 - Therefore, this page acts as a **lookup-only** component, not a data editor.  
 
 ### 🧩 Navigation hierarchy  
-
 ```
 AppShell
  ├── MainPage (Calendar)
@@ -714,7 +646,6 @@ Choosing a profile:
 
 All pages in the Profiles feature follow the same localization contract  
 as the rest of PADMA:  
-
 ```csharp
 Localization.GetLocalizedText("Native English Text", DataCache.Instance.CurrentLanguageCode);
 ```
@@ -737,7 +668,7 @@ This architecture ensures clarity, stability, and future extensibility
 To find GPS coordinates for locations the Nominatim API are used
 🔗 https://nominatim.org/release-docs/latest/api/Search/
 
----
+------
 
 # 🌠 Swiss Module — SwissService, SwissAnalysis, SwissUtility, SweConst
 
@@ -745,8 +676,6 @@ To find GPS coordinates for locations the Nominatim API are used
 Implements high-precision astronomical and astrological computations using the Swiss Ephemeris native library.
 All calculations are performed in **UTC (GMT-0) ** and the **sidereal Lahiri** mode by default.
 This module provides the foundation for Tithi, Nitya Yoga, Mrityu Bhaga, and Eclipse analyses used in PADMA.
-
----
 
 ## 🧭 Core Components
 
@@ -760,8 +689,6 @@ This module provides the foundation for Tithi, Nitya Yoga, Mrityu Bhaga, and Ecl
 | `Core/Models/SwissResult.cs` | Output structure with planetary results |
 | `Core/Constants/SweConst.cs` | Constants and flags mirroring Swiss Ephemeris definitions |
 
----
-
 ## ⚙️ Initialization & Platform Integration
 
 - Ephemeris data files (`*.se1`) are stored inside `/Resources/Raw/ephe.zip`.
@@ -771,8 +698,6 @@ This module provides the foundation for Tithi, Nitya Yoga, Mrityu Bhaga, and Ecl
   - **Windows:** via `swedll64.dll` with `AppContext.BaseDirectory/Resources/Raw/ephe/`  
   - **Android:** via `libswe.so` (custom-built from source) with archived `ephe.zip` in `AppContext.BaseDirectory/Resources/Raw/`  
   - **iOS:** to be integrated later with static `libswe.a` (planned)
-
----
 
 ## 🧮 Implemented Calculations
 
@@ -792,7 +717,6 @@ Maps directly to the `PLANET` table in the database.
 | `Rahu` | `"RAHU"` | North Node |
 | `Ketu` | `"KETU"` | South Node |
 | ... | ... | (others as defined in DB) |
-
 
 ### 🔧 Planet ID Mapping
 
@@ -814,8 +738,6 @@ Before performing calculations, `PlanetId` is converted into its Swiss Ephemeris
 SwissUtility.GetPlanetSWEConstByPlanetId(int planetId)
 ```
 
----
-
 ## 🪐 Mapping Table
 
 | EPlanet ID | Planet | Swiss Ephemeris Constant | Notes |
@@ -832,15 +754,11 @@ SwissUtility.GetPlanetSWEConstByPlanetId(int planetId)
 | 10 | Rahu (True Node) | `SE_TRUE_NODE` | Direct Swiss Ephemeris calculation |
 | 11 | Ketu (True Node) | — | Derived as Rahu + 180° |
 
----
-
 **Notes:**  
 - `PlanetId` represents PADMA’s internal model and database linkage.  
 - `SwissPlanetConst` is generated dynamically and never stored in the database.  
 - Ketu (both Mean and True) is not directly computed — its position is derived geometrically as the opposite point of Rahu.  
 - This approach ensures consistent and efficient calculations, aligning with both **Jyotish tradition** and **Swiss Ephemeris standards**.
-
----
 
 ### 🪐 Planet Positions
 
@@ -853,8 +771,6 @@ SwissUtility.GetPlanetSWEConstByPlanetId(int planetId)
 
 **Retrograde detection:**  
 `IsRetrograde = (speed < 0)`
-
----
 
 ### 🌗 Tithi Calculation
 
@@ -870,8 +786,6 @@ Tithi = floor( Normalize(moonLon - sunLon) / 12° ) + 1
 - Each Tithi corresponds to 12° separation between Sun and Moon.  
 - Output: List of (TithiIndex, StartUtc, EndUtc)
 
----
-
 ### 🌞 Nitya Yoga Calculation
 
 `CalculateNityaYogaDataList_London(DateTime startUtc, DateTime endUtc)`
@@ -885,8 +799,6 @@ YogaIndex = floor( YogaAngle / 13°20′ ) + 1
 - Uses `NityaYogaTithiResults` (paired Sun/Moon positions).  
 - Each yoga occupies a 13°20′ arc (13.3333°).
 
----
-
 ### ☠️ Mrityu Bhaga Detection
 
 `CalculateMrityuBhagaDataList_London(int planetId, DateTime fromUtc, DateTime toUtc)` — determines critical zones for each planet within a range.
@@ -894,8 +806,6 @@ YogaIndex = floor( YogaAngle / 13°20′ ) + 1
 - Uses pre-defined angular ranges per planet (degrees or sign+degree).  
 - Flags `PlanetData.IsInMrityuBhaga = true` when longitude falls within danger range.  
 - Output: `List<MrityuBhagaData>` per planet.
-
----
 
 ### 🌑 Eclipse Computation
 
@@ -915,8 +825,6 @@ Uses Swiss Ephemeris functions:
 - `swe_lun_eclipse_when`
 - `swe_sol_eclipse_when_glob`
 
----
-
 ### 🧩 Higher-Level Analysis (SwissAnalysis)
 
 `CalculatePlanetDataList_London(startUtc, endUtc)` —
@@ -928,7 +836,7 @@ Features:
 - Performs binary search via `FindTransitionEpoch()` for exact UTC time
 - Default coordinates: London (`Lon = -0.17, Lat = 51.5`)
 
----
+-------
 
 ## 🧱 Data Models
 
@@ -951,8 +859,6 @@ Features:
 | UtcSecondsOfDay | int | Seconds since UTC midnight |
 | IsCalculationFailed | bool | Error flag |
 
----
-
 ## 🧰 Utilities
 
 `SwissUtility` provides:
@@ -961,8 +867,6 @@ Features:
 - `AdjustForKetu(double)` — adds 180°, wraps to 360°
 - `GetZodiakIdFromDegree()`, `GetNakshatraIdFromDegree()`, `GetPadaIdFromDegree()`
 - `GetNavamsaByNakshatraAndPada()` — database lookup via `DataCache.Padas`
-
----
 
 ## 🧠 Constants (`SweConst`)
 
@@ -979,8 +883,6 @@ Also defines IDs for:
 - Planets (`SE_SUN`..`SE_SATURN`, `SE_MEAN_NODE`, `SE_TRUE_NODE`)
 - Flags for eclipse modes and computation masks.
 
----
-
 ## 🕒 Time Handling
 
 - All computations are in **UTC (GMT+0, London coordinates)**.
@@ -988,17 +890,12 @@ Also defines IDs for:
 - `.NET TimeZoneInfo` and `AdjustmentRules` handle DST.  
 - Date/time strings stored in DB as `"yyyy-MM-dd HH:mm:ss"`.
 
----
-
-
 # 🌄 Ascendant Calculation — SwissService & SwissUtility
 
 ## 📘 Overview
 
 The Ascendant (Lagna) calculation feature has been implemented using the Swiss Ephemeris engine integrated through the SwissService.  
 This module computes the **Ascendant longitude** for any date/time and geographic location, including proper handling of **historical time zones**.
-
----
 
 ## 🧭 Core Components
 
@@ -1008,8 +905,6 @@ This module computes the **Ascendant longitude** for any date/time and geographi
 | `Core/Utilities/SwissUtility.cs` | Provides `CalculateAscendantWithTimeZone` for high-level usage including local time zone conversion. |
 | `Core/Services/TimeZoneService.cs` | Handles historical timezone detection using GeoTimeZone, TimeZoneConverter, and NodaTime. |
 
----
-
 ## ⚙️ External Libraries
 
 | Package | Version | Purpose |
@@ -1017,102 +912,6 @@ This module computes the **Ascendant longitude** for any date/time and geographi
 | `GeoTimeZone` | 6.1.0 | Determines IANA timezone ID by latitude/longitude (offline). |
 | `TimeZoneConverter` | 7.2.0 | Converts between IANA and Windows (.NET) timezone formats. |
 | `NodaTime` | 3.2.2 | Provides historical timezone offsets and date-time conversions. |
-
----
-
-## 🧩 Calculation Flow
-
-### ️⃣ Ascendant Core Calculation (SwissService)
-
-Method:  
-```csharp
-public static double CalculateAscendantForDate(
-    DateTime dateTimeUtc,
-    double latitude,
-    double longitude,
-    double altitude,
-    char hsys = 'O')
-```
-- Inputs are in **UTC**.
-- Performs conversion to Julian Day (`swe_julday`).
-- Activates sidereal Lahiri mode (`swe_set_sid_mode`).
-- Sets topocentric coordinates (`swe_set_topo`).
-- Calls Swiss Ephemeris native function `swe_houses_ex()`.
-
-Result:  
-- Returns **Ascendant ecliptic longitude** in degrees [0–360].
-- Default house system: **‘O’ (Placidus)**.
-
----
-
-### ️⃣ Ascendant with TimeZone Adjustment (SwissUtility)
-
-Method:  
-```csharp
-public static double CalculateAscendantWithTimeZone(
-    DateTime dateUtc,
-    double latitude,
-    double longitude,
-    double altitude,
-    char hsys = 'O')
-```
-- Uses `TimeZoneService` to get historical UTC offset for the coordinates.
-- Converts to local time via NodaTime’s `DateTimeZoneProviders.Tzdb`.
-- Calls `CalculateAscendantForDate` with the corrected UTC time.
-- Returns Ascendant longitude (sidereal, Lahiri).
-
----
-
-## 🕒 Historical Time Zone Logic
-
-### TimeZoneService Methods
-
-| Method | Description |
-|---------|--------------|
-| `GetIanaTimeZoneId(lat, lon)` | Returns IANA zone ID (e.g., "Europe/Kyiv"). |
-| `GetDotNetTimeZoneId(lat, lon)` | Returns equivalent Windows ID. |
-| `GetUtcOffsetHours(date, lat, lon)` | Returns UTC offset (historical) in hours using NodaTime tzdb. |
-
----
-
-## 🔍 Notes
-- Calculation fully respects historical DST and UTC offsets.  
-- Works identically on Windows, Android, and iOS.  
-- Uses sidereal mode **Lahiri** by default.  
-- Returns absolute ecliptic longitude (0–360°), compatible with all PADMA models.  
-- Formatting into degrees/minutes/seconds handled in `FormatDegrees(double degrees)` function (`Core/Utilities/SwissUtility.cs`).
-
----
-
-
-# 🌄 Ascendant Calculation — SwissService & SwissUtility
-
-## 📘 Overview
-
-The Ascendant (Lagna) calculation feature has been implemented using the Swiss Ephemeris engine integrated through the SwissService.  
-This module computes the **Ascendant longitude** for any date/time and geographic location, including proper handling of **historical time zones**.
-
----
-
-## 🧭 Core Components
-
-| File | Description |
-|------|--------------|
-| `Core/Services/SwissService.cs` | Contains the low-level calculation `CalculateAscendantForDate` (core Ascendant computation in UTC). |
-| `Core/Utilities/SwissUtility.cs` | Provides `CalculateAscendantWithTimeZone` for high-level usage including local time zone conversion. |
-| `Core/Services/TimeZoneService.cs` | Handles historical timezone detection using GeoTimeZone, TimeZoneConverter, and NodaTime. |
-
----
-
-## ⚙️ External Libraries
-
-| Package | Version | Purpose |
-|----------|----------|----------|
-| `GeoTimeZone` | 6.1.0 | Determines IANA timezone ID by latitude/longitude (offline). |
-| `TimeZoneConverter` | 7.2.0 | Converts between IANA and Windows (.NET) timezone formats. |
-| `NodaTime` | 3.2.2 | Provides historical timezone offsets and date-time conversions. |
-
----
 
 ## 🧩 Calculation Flow
 
@@ -1137,8 +936,6 @@ Result:
 - Returns **Ascendant ecliptic longitude** in degrees [0–360].
 - Default house system: **‘O’ (Placidus)**.
 
----
-
 ### ️⃣  Ascendant with TimeZone Adjustment (SwissUtility)
 
 Method:  
@@ -1155,8 +952,6 @@ public static double CalculateAscendantWithTimeZone(
 - Calls `CalculateAscendantForDate` with the corrected UTC time.
 - Returns Ascendant longitude (sidereal, Lahiri).
 
----
-
 ## 🕒 Historical Time Zone Logic
 
 ### TimeZoneService Methods
@@ -1167,8 +962,6 @@ public static double CalculateAscendantWithTimeZone(
 | `GetDotNetTimeZoneId(lat, lon)` | Returns equivalent Windows ID. |
 | `GetUtcOffsetHours(date, lat, lon)` | Returns UTC offset (historical) in hours using NodaTime tzdb. |
 
----
-
 ## 🔍 Notes
 - Calculation fully respects historical DST and UTC offsets.  
 - Works identically on Windows, Android, and iOS.  
@@ -1176,22 +969,18 @@ public static double CalculateAscendantWithTimeZone(
 - Returns absolute ecliptic longitude (0–360°), compatible with all PADMA models.  
 - Formatting into degrees/minutes/seconds handled in `FormatDegrees(double degrees)` function (`Core/Utilities/SwissUtility.cs`).
 
----
+-------
 
 ### 🌅 Sunrise and Sunset Calculation
 
 #### **Purpose**
 This module calculates the sunrise and sunset times for a given geographic location and date, respecting user-defined configuration (calculation type: by disc edge or by disc center).
 
----
-
 #### **Main Files**
 - `SwissService.cs` — functions to calculate sunrise and sunset times in UTC.
 - `SwissEphemerisNative.cs` — P/Invoke declaration for the `swe_rise_trans` function.
 - `SweConst.cs` — contains constant definitions used for rise/set calculations (`SE_SUNRISE_TIP`, `SE_SUNRISE_CENTER`, `SE_SUNSET_TIP`, `SE_SUNSET_CENTER`).
 - `TimeZoneService.cs` — universal time conversion service (UTC ↔ Local) based on `.NET TimeZoneInfo` and `AdjustmentRules`.
-
----
 
 #### **SwissService Functions**
 
@@ -1209,8 +998,6 @@ The calculation type is determined by the active configuration:
 public static DateTime CalculateSunsetForDateAndLocation(DateTime date, double latitude, double longitude, double altitude)
 ```
 Calculates the UTC time of sunset for a given date and coordinates.
-
----
 
 #### **TimeZoneService and Time Conversion**
 
@@ -1230,23 +1017,19 @@ Additional helper functions in `TimeZoneService`:
 - `ShiftDateByDaylightDelta()` — applies DST offset when active;
 - `GetAdjustmentDate()` — computes actual transition dates for DST.
 
----
-
 #### **Notes**
 - All Swiss Ephemeris calculations are performed in UTC.  
 - Conversion to local time is handled via `.NET TimeZoneInfo`, ensuring compatibility with system settings on all platforms.  
 - Minor discrepancies (up to ±1 day or even more) may occur for future years due to known limitations of the Windows time zone database.  
 - For historical calculations (e.g., natal charts), `NodaTime` is used — relying on the IANA time zone database for full historical accuracy.
 
----
+--------
 
 ### 🧩 Transit Engine Architecture (PADMA)
 
 #### **Purpose**
 This section defines the new unified data structure for handling all astrological events (transits) within PADMA.  
 The goal is to simplify, optimize, and standardize how all computed Swiss-based entities are stored and rendered in the calendar.
-
----
 
 #### **Background**
 The legacy PAD project used a `Day` class containing ~200 lists of transit-specific calendar objects (e.g., `List<TithiCalendar>`, `List<KaranaCalendar>`, etc.).  
@@ -1255,8 +1038,6 @@ While this approach provided structural clarity, it also caused:
 - Complex data binding for UI;
 - Inefficient cloning between derived and base calendar classes;
 - Difficult extension when adding new transit types.
-
----
 
 ## 1. Overview
 
@@ -1275,8 +1056,6 @@ All output slices are:
 - Time bounded (`StartUtc`, `EndUtc`)
 - Typed (`ETransitKind`)
 - Normalized through a unified interface for use in calendar views (Day, Month, Timeline)
-
----
 
 ## 2. Core Concepts
 
@@ -1297,6 +1076,7 @@ Slices are stored in `Timeline` structures which represent the full computed per
 - **Eclipse**  
 - **Sunrise / Sunset**  
 - **CustomUserTransit**
+- ** etc **
 
 This keeps the system extensible.
 
@@ -1306,8 +1086,6 @@ The Transit Engine uses:
 - Cached domain dictionaries (`DataCache`)
 - User profile information (birth nakshatra, node mode, location)
 - Local sunset/sunrise rules (TimeZoneInfo)
-
----
 
 ## 3. Unified Transit Engine Flow
 
@@ -1330,8 +1108,6 @@ The Transit Engine uses:
 
 5. **DayPage & MainPage** consume filtered slices.
 
----
-
 ## 4. Why Slices?
 
 ### Benefits:
@@ -1341,15 +1117,11 @@ The Transit Engine uses:
 - Infinite extensibility
 - Clean decoupling of “calculation” vs “interpretation”
 
----
-
 ## 5. Integration With PADMA
 
 - All domain tables (`Nakshatra`, `Pada`, `TaraBala`, `Zodiac`, etc.) are loaded into `DataCache` at startup.
 - Transit Engine reads only Ids (never names).
 - All formatting (names, localized strings) happens at the UI/ViewModel layer.
-
----
 
 ## 6. Conclusion
 
@@ -1357,8 +1129,6 @@ The Transit Engine provides:
 - A consistent and powerful method to compute all Vedic astrological timelines.
 - A unified format for consumption in UI.
 - Clear separation between Swiss calculations, business logic, cached dictionary data, and interface rendering.
-
----
 
 ## 7. Planet Transit Builder
 
@@ -1417,7 +1187,7 @@ List<PlanetSlice> chronologically ordered.
 
 ### 7.8. Status: Completed
 
----
+-------
 
 ## 8. Nakshatra Slice — Transit Engine Specification (PADMA)
 
@@ -1481,7 +1251,7 @@ List<NakshatraSlice> chronologically ordered.
 
 ### 8.8. Status: Completed
 
----
+--------
 
 ## 9. Tara-Bala Slice — Transit Engine Specification (PADMA)
 
@@ -1557,7 +1327,7 @@ List<TaraBalaSlice>
 
 ## 9.8. Status: Completed
 
----
+----------
 
 ### 10. Tithi Slice — Transit Engine Specification (PADMA)
 
@@ -1606,7 +1376,7 @@ List<TithiSlice> chronologically ordered.
 
 ### 10.8. Status: Completed
 
----
+---------
 
 ## 11. Karana Slice — Transit Engine Specification (PADMA)
 
@@ -1674,7 +1444,7 @@ List<KaranaSlice> chronologically ordered.
 
 ## 11.7. Status: Completed
 
----
+------
 
 ## 12. Nitya Yoga Slice — Transit Engine Specification (PADMA)
 
@@ -1745,7 +1515,7 @@ List<NityaYogaSlice> chronologically ordered.
 
 ### 12.7. Status: Completed
 
----
+-------
 
 ## 13. Chandra Bala Slice — Transit Engine Specification (PADMA)
 
@@ -1817,7 +1587,7 @@ List<ChandraBalaSlice> chronologically ordered.
 
 ### 13.7. Status: Completed
 
----
+-------
 
 ## 14. YogaSlice Requirements
 
@@ -1980,7 +1750,7 @@ YogaTransitBuilder returns all YogaSlices sorted by StartUtc.
 
 ### 14.8. Status: Completed
 
----
+----------
 
 # 15. SunriseSlice Requirements
 
@@ -2055,7 +1825,7 @@ SunriseTransitBuilder returns all SunriseSlices sorted by SunriseUtc (sunrise of
 
 ## 15.8. Status: Completed
 
----
+---------
 
 # 16. MuhurtaSlice Requirements
 
@@ -2071,7 +1841,6 @@ All Muhurta calculations are based on **Sunrise/Sunset** times obtained from Swi
 ## 16.1.  MuhurtaSlice
 
 All muhurtas are represented by a unified slice model.
-
 ```
 MuhurtaSlice : CalendarSlice
 {
@@ -2185,8 +1954,6 @@ This document describes the architecture and implementation of the Panchanga ren
 
 This document expands the official project requirements with the functionality implemented as of the latest development session.
 
----
-
 # 1. Data Flow Overview
 
 SwissAnalysis → TransitBuilder → DayItem.TithiSegments → PanchangaBar → GraphicsView
@@ -2216,8 +1983,6 @@ SwissAnalysis → TransitBuilder → DayItem.TithiSegments → PanchangaBar → 
 ## 1.5. **PanchangaBar**  
    - Receives Segments + DayDate via bindings.
    - Renders segments in a GraphicsView using single-pass drawing.
-
----
 
 # 2. CalendarViewModel Implementation Summary
 
@@ -3911,5 +3676,75 @@ This behavior closely matches the legacy PAD desktop application and expected ca
 
 ---------
 
+## DayPage Timeline Icons
 
+### Overview
 
+DayPage includes a dedicated **icons column** aligned with the vertical time scale.
+Icons are positioned according to exact event times and rendered on the same
+day/night background as the timeline.
+The icons provide quick visual markers for key daily events without recalculation.
+
+### Implemented Icons
+
+#### 1. Sunrise / Sunset
+
+- Icons:
+  - `sunrise.png`
+  - `sunset.png`
+- Size: **24×24 px**
+- Source of data:
+  - `SunriseUtc`
+  - `SunsetUtc`
+- Positioning:
+  - Converted from UTC to vertical Y-position using the day start anchor.
+  - Centered horizontally within the icons column.
+  - Centered vertically on the exact event time.
+These icons visually mark the beginning and end of daylight on the timeline.
+
+#### 2. Eclipse Icons (Solar / Lunar)
+
+- Icons:
+  - `sun_eclipse.png`
+  - `moon_eclipse.png`
+- Data source:
+  - `DayItem.EclipseId`
+  - `DayItem.EclipseDate`
+  - `DayItem.EclipseIcon`
+- Rendering conditions:
+  - Icon is rendered only if an eclipse exists for the day.
+- Size policy:
+  - Solar eclipse: **20×20 px**
+  - Lunar eclipse: **18×18 px**
+- Positioning:
+  - Vertical position based on `EclipseDate`.
+  - Horizontally centered in the icons column.
+  - Shares the same day/night background logic as sunrise/sunset.
+If multiple icons occur close in time, visual overlap is allowed.
+Detailed timing remains available in DayOverview and tooltips.
+
+### Time-to-Position Mapping
+
+All timeline icons use a unified vertical mapping strategy:
+- Timeline represents **local day time (00:00 – 24:00)**.
+- Conversion flow:
+  1. Local day start (`Day.Date.Date`) is converted to UTC.
+  2. Event UTC time is mapped to minutes relative to this anchor.
+  3. Minutes are converted to pixels using the full timeline height.
+This guarantees consistent placement for all time-based elements.
+
+### Design Notes
+
+- Icons are rendered in a dedicated overlay layer (`IconsLayer`).
+- Background rendering is shared with the time and events columns.
+- Icons do not intercept user input (`InputTransparent = true`).
+- No dynamic resizing or animation is required.
+- The system is extensible for future icons (custom events, planetary markers, etc.).
+
+### Status
+
+- DayPage icons fully implemented.
+- No additional calculations required.
+- Visual consistency with DayOverview ensured.
+
+---------

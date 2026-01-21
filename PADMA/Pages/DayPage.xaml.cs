@@ -4,6 +4,7 @@ using Microsoft.Maui.Controls;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
+using PADMA.Core.Utilities;
 using PADMA.UI;
 using PADMA.UI.Services;
 using System.Collections.ObjectModel;
@@ -111,6 +112,12 @@ namespace PADMA.Pages
                     // var window = bundle.Window;
 
                     ApplyDayNightBackgroundIfPossible();
+
+                    IconsLayer.Children.Clear();
+                    AddIconAtTime(IconsLayer, SunriseUtc, "sunrise.png", 24, 24);
+                    AddIconAtTime(IconsLayer, SunsetUtc, "sunset.png", 24, 24);
+                    AddEclipseIconIfAny();
+
                     RenderNakshatraLane();
                     UpdateStickyForNakshatra(0);
                     RequestAutoCenter();
@@ -250,7 +257,8 @@ namespace PADMA.Pages
             var nightColor = Color.FromArgb("#D7ECFF");
 
             // фон для Time/Events через AbsoluteLayout
-            BuildColumnBackground(TimeBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 40);
+            BuildColumnBackground(IconsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 24);
+            BuildColumnBackground(TimeBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 36);
             BuildColumnBackground(EventsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 80);
 
             // фон для TransitBodyGrid через BoxView
@@ -721,7 +729,79 @@ namespace PADMA.Pages
                 h.Opacity = selected ? 1.0 : 0.0;
         }
 
+        private void AddIconAtTime(
+            AbsoluteLayout layer,
+            DateTime? timeUtc,
+            string iconResource,
+            double columnWidth,
+            double iconSize)
+        {
+            if (!timeUtc.HasValue) 
+                return;
 
+            var tUtc = timeUtc.Value;
+            if (tUtc.Kind == DateTimeKind.Unspecified)
+                tUtc = DateTime.SpecifyKind(tUtc, DateTimeKind.Utc);
+
+            var y = TimeToY(tUtc);
+
+            var img = new Image
+            {
+                Source = iconResource,
+                WidthRequest = iconSize,
+                HeightRequest = iconSize
+            };
+
+            AbsoluteLayout.SetLayoutBounds(
+                img,
+                new Rect(
+                    (columnWidth - iconSize) / 2.0, // центр по ширине колонки
+                    y - iconSize / 2.0,             // центр по времени
+                    iconSize,
+                    iconSize));
+
+            AbsoluteLayout.SetLayoutFlags(img, AbsoluteLayoutFlags.None);
+
+            layer.Children.Add(img);
+        }
+
+        private double TimeToY(DateTime timeUtc)
+        {
+            if (Day == null) return 0;
+
+            TimeZoneInfo tzInfo = TimeZoneInfo.Utc;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            if (ctx?.TimeZoneInfo != null)
+                tzInfo = ctx.TimeZoneInfo;
+
+            var dayStartLocal = Day.Date.Date;
+            var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
+
+            var h = TimelineHeight; 
+
+            return CalendarDrawingHelper.ConvertTimeToPixelsY(h, timeUtc, dayStartUtc);
+        }
+
+        private void AddEclipseIconIfAny()
+        {
+            if (Day == null) return;
+
+            if (Day.EclipseId == null || Day.EclipseId == 0) return;   // если int? / int
+            if (string.IsNullOrWhiteSpace(Day.EclipseIcon)) return;
+
+            // если EclipseDate nullable:
+            if (Day.EclipseDate == null) return;
+
+            var tUtc = Day.EclipseDate.Value;
+
+            // на всякий случай: если Kind не задан — считаем, что это UTC (как у SunriseUtc/SunsetUtc)
+            if (tUtc.Kind == DateTimeKind.Unspecified)
+                tUtc = DateTime.SpecifyKind(tUtc, DateTimeKind.Utc);
+
+            var eclipseSize = Day.EclipseIcon?.Contains("sun", StringComparison.OrdinalIgnoreCase) == true ? 20 : 18;
+            AddIconAtTime(IconsLayer, Day.EclipseDate, Day.EclipseIcon, 24, eclipseSize);
+
+        }
 
 
 

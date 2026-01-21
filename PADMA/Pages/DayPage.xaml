@@ -153,6 +153,8 @@
 
                     <!-- ICONS column -->
                     <Grid Grid.Column="0" WidthRequest="24" BackgroundColor="#F7FBFF" />
+                        <AbsoluteLayout x:Name="IconsBackgroundLayout" BackgroundColor="Transparent" />
+                        <AbsoluteLayout x:Name="IconsLayer" BackgroundColor="Transparent"/>
 
                     <!-- Separator after Icons -->
                     <BoxView Grid.Column="0"

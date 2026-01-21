@@ -167,6 +167,7 @@ namespace PADMA.Pages
 
             var pos = DayCarousel.Position;
             var current = _items?[pos];
+            if (current == null) return;
 
             var bundle = new DayNavBundle
             {
