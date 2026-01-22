@@ -21,7 +21,9 @@ namespace PADMA.Core.Utilities
             TimeZoneInfo tz,
             DataCache cache,
             Func<TSlice, EColor> getColorCode,
-            Func<TSlice, string?>? getText = null)
+            Func<TSlice, string?>? getText = null,
+            Func<TSlice, ETransitKind>? getKind = null,
+            Func<TSlice, int>? getId = null)
             where TSlice : CalendarSlice
         {
             if (slicesUtc == null) throw new ArgumentNullException(nameof(slicesUtc));
@@ -38,6 +40,12 @@ namespace PADMA.Core.Utilities
 
             foreach (var slice in slicesUtc)
             {
+                var sliceStartUtc = slice.StartUtc; // или slice.StartDateUtc / Start
+                var sliceEndUtc = slice.EndUtc;
+
+                var sliceStartLocal = TimeZoneInfo.ConvertTimeFromUtc(sliceStartUtc, tz);
+                var sliceEndLocal = TimeZoneInfo.ConvertTimeFromUtc(sliceEndUtc, tz);
+
                 // convert slice bounds to local time
                 var startLocal = new DateTimeOffset(slice.StartUtc, TimeSpan.Zero).ToOffset(offset);
                 var endLocal = new DateTimeOffset(slice.EndUtc, TimeSpan.Zero).ToOffset(offset);
@@ -70,11 +78,16 @@ namespace PADMA.Core.Utilities
 
                 result.Add(new PanchangaSegment
                 {
+                    TransitStart = sliceStartLocal,
+                    TransitEnd = sliceEndLocal,
                     Start = effStart.LocalDateTime,
                     End = effEnd.LocalDateTime,
                     Color = color,
-                    Text = text
+                    Text = text,
+                    TransitKind = getKind?.Invoke(slice) ?? ETransitKind.Unknown,
+                    TransitId = getId?.Invoke(slice) ?? 0
                 });
+
             }
 
             // sort by start time for consistent UI rendering
@@ -90,9 +103,11 @@ namespace PADMA.Core.Utilities
             TimeZoneInfo tz,
             DataCache cache,
             Func<CalendarSlice, EColor> getColorCode,
-            Func<CalendarSlice, string?>? getText = null)
+            Func<CalendarSlice, string?>? getText = null,
+            Func<CalendarSlice, ETransitKind>? getKind = null,
+            Func<CalendarSlice, int>? getId = null)
         {
-            return BuildSegmentsForDay<CalendarSlice>(slicesUtc, dayLocal, tz, cache, getColorCode, getText);
+            return BuildSegmentsForDay<CalendarSlice>(slicesUtc, dayLocal, tz, cache, getColorCode, getText, getKind, getId);
         }
     }
 }

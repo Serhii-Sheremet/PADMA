@@ -348,12 +348,45 @@
                    HorizontalOptions="Center"
                    WidthRequest="320"
                    MaximumHeightRequest="520">
-                <ScrollView>
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{Binding TooltipTitle}" FontAttributes="Bold" FontSize="14"/>
-                        <Label Text="{Binding TooltipBody}" FontSize="12" LineBreakMode="WordWrap"/>
-                    </VerticalStackLayout>
-                </ScrollView>
+                <Grid RowDefinitions="Auto,Auto,Auto,*"
+                      RowSpacing="6">
+
+                    <!-- Title (always) -->
+                    <Label Grid.Row="0"
+                           Text="{Binding TooltipTitle}"
+                           FontAttributes="Bold"
+                           FontSize="14"
+                           LineBreakMode="WordWrap" />
+
+                    <!-- Range (always) -->
+                    <Label Grid.Row="1"
+                           Text="{Binding TooltipRange}"
+                           FontSize="11"
+                           Opacity="0.75"
+                           LineBreakMode="WordWrap"
+                           Margin="0,0,0,4" />
+
+                    <!-- Divider -->
+                    <BoxView Grid.Row="2"
+                             HeightRequest="1"
+                             Opacity="0.2"
+                             BackgroundColor="Black"
+                             Margin="0,0,0,2" />
+
+                    <!-- Body (0..N blocks) -->
+                    <ScrollView Grid.Row="3">
+                        <VerticalStackLayout Spacing="6"
+                             BindableLayout.ItemsSource="{Binding TooltipBlocks}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding}"
+                                           FontSize="12"
+                                           LineBreakMode="WordWrap" />
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </Grid>
             </Frame>
         </Grid>
 

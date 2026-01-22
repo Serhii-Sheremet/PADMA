@@ -1,6 +1,4 @@
-﻿using Microsoft.Maui.Controls.Shapes;
-using NodaTime;
-using PADMA.Core.Analysis;
+﻿using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
@@ -15,7 +13,7 @@ using System.Numerics;
 using System.Windows.Input;
 
 
-namespace PADMA.UI
+namespace PADMA.UI.ViewModels
 {
     public class CalendarViewModel : INotifyPropertyChanged
     {
@@ -366,7 +364,7 @@ namespace PADMA.UI
             {
                 // If there is no profile/location/time zone, we just build visible days only
                 var firstOfMonth = new DateTime(year, month, 1);
-                int shift = ((7 + (int)firstOfMonth.DayOfWeek - (int)DataCache.Instance.DayOfWeek) % 7);
+                int shift = (7 + (int)firstOfMonth.DayOfWeek - (int)DataCache.Instance.DayOfWeek) % 7;
                 var startDate = firstOfMonth.AddDays(-shift);
 
                 var tmp = new List<DateOnly>();
@@ -380,7 +378,7 @@ namespace PADMA.UI
             foreach (var d in visibleDays)
             {
                 var date = d.ToDateTime(TimeOnly.MinValue);
-                bool isCurrentMonth = (date.Month == month && date.Year == year);
+                bool isCurrentMonth = date.Month == month && date.Year == year;
                 bool isToday = date.Date == DateTime.Today;
                 var planetMarkersText = string.Empty;   
 
@@ -399,7 +397,9 @@ namespace PADMA.UI
                         nakshatraSegments = PanchangaHelper.BuildSegmentsForDay(
                             nakshatraSlices, date, tzInfo, DataCache.Instance,
                             slice => (EColor)slice.ColorId,
-                            slice => $"{slice.NakshatraId}.{nakById.GetValueOrDefault(slice.NakshatraId, "")}");
+                            slice => $"{slice.NakshatraId}.{nakById.GetValueOrDefault(slice.NakshatraId, "")}",
+                            slice => ETransitKind.Nakshatra,
+                            slice => slice.NakshatraId);
                     }
 
                     if (taraBalaSlices != null)
@@ -407,7 +407,9 @@ namespace PADMA.UI
                         taraBalaSegments = PanchangaHelper.BuildSegmentsForDay(
                             taraBalaSlices, date, tzInfo, DataCache.Instance,
                             slice => (EColor)slice.ColorId,
-                            slice => $"{taraById.GetValueOrDefault(slice.TaraBalaId, "")} {slice.TaraBalaPercent}%");
+                            slice => $"{taraById.GetValueOrDefault(slice.TaraBalaId, "")} {slice.TaraBalaPercent}%",
+                            slice => ETransitKind.TaraBala,
+                            slice => slice.TaraBalaId);
                     }
 
                     if (tithiSlices != null)
@@ -415,7 +417,9 @@ namespace PADMA.UI
                         tithiSegments = PanchangaHelper.BuildSegmentsForDay(
                             tithiSlices, date, tzInfo, DataCache.Instance,
                             slice => (EColor)slice.ColorId,
-                            slice => $"{slice.TithiId}.{tithiById.GetValueOrDefault(slice.TithiId, "")}");
+                            slice => $"{slice.TithiId}.{tithiById.GetValueOrDefault(slice.TithiId, "")}",
+                            slice => ETransitKind.Tithi,
+                            slice => slice.TithiId);
                     }
 
                     if (karanaSlices != null)
@@ -423,7 +427,9 @@ namespace PADMA.UI
                         karanaSegments = PanchangaHelper.BuildSegmentsForDay(
                             karanaSlices, date, tzInfo, DataCache.Instance,
                             slice => (EColor)slice.ColorId,
-                            slice => $"{karanaById.GetValueOrDefault(slice.KaranaId, "")}");
+                            slice => $"{karanaById.GetValueOrDefault(slice.KaranaId, "")}",
+                            slice => ETransitKind.Karana,
+                            slice => slice.KaranaId);
                     }
 
                     if (nityaYogaSlices != null)
@@ -431,7 +437,9 @@ namespace PADMA.UI
                         nityaYogaSegments = PanchangaHelper.BuildSegmentsForDay(
                             nityaYogaSlices, date, tzInfo, DataCache.Instance,
                             slice => (EColor)slice.ColorId,
-                            slice => $"{slice.NityaYogaId}.{nityaYogaById.GetValueOrDefault(slice.NityaYogaId, "")}");
+                            slice => $"{slice.NityaYogaId}.{nityaYogaById.GetValueOrDefault(slice.NityaYogaId, "")}",
+                            slice => ETransitKind.NityaYoga,
+                            slice => slice.NityaYogaId);
                     }
 
                     if (chandraBalaSlices != null)
@@ -455,7 +463,9 @@ namespace PADMA.UI
                                 }
 
                                 return string.Format(tplHouse, house);
-                            });
+                            },
+                            slice => ETransitKind.ChandraBala,
+                            slice => slice.HouseNumber);
                     }
 
                     // Preparing planet markers for day

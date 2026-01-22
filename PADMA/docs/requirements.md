@@ -3748,3 +3748,84 @@ This guarantees consistent placement for all time-based elements.
 - Visual consistency with DayOverview ensured.
 
 ---------
+
+
+## DayPage Panchanga Labels and Tooltip (ID-based)
+
+### 1) Segment Metadata in `PanchangaSegment`
+
+`PanchangaSegment` was extended with structured references:
+
+- `TransitKind : ETransitKind`
+- `TransitId   : int`
+
+These fields identify *what* the segment represents (Nakshatra, Tithi, etc.) and *which* entity instance it refers to.
+
+### 2) Populating `TransitKind` and `TransitId` in `PanchangaHelper`
+
+`PanchangaHelper.BuildSegmentsForDay(...)` was updated to accept optional selectors for segment identity:
+
+- `getKind : Func<TSlice, ETransitKind>?`
+- `getId   : Func<TSlice, int>?`
+
+During segment creation, the builder assigns:
+
+- `segment.TransitKind = getKind(slice)` (or `ETransitKind.Unknown` if not provided)
+- `segment.TransitId   = getId(slice)` (or `0` if not provided)
+
+Both the generic and non-generic overloads support these parameters, ensuring all Panchanga segment sources can pass IDs without changing existing callers.
+
+### 3) Calendar Construction: Panchanga (6 lanes)
+
+When building the 42-day window, all six Panchanga lanes were updated to provide:
+
+- the correct `ETransitKind` per slice type,
+- the correct entity ID (e.g., `NakshatraId`, `TithiId`, etc.).
+
+This enables DayPage to render labels and tooltips consistently for all Panchanga lanes.
+
+### 4) DayPage Short Labels (no text parsing)
+
+DayPage label rendering was changed to use segment identity:
+
+- Labels are resolved from `seg.TransitKind` + `seg.TransitId`
+- Localized entities are pulled from `DataCache` (e.g., `NakshatraDescList` filtered by `CurrentLanguageCode`)
+- `seg.Text` is no longer parsed to build labels
+
+Example policy:
+- Nakshatra label uses `"{Id}.{Name}"`
+- (Other Panchanga lanes follow the same ID-based approach.)
+
+### 5) Unified Tooltip Layout (Title + Range + Blocks)
+
+A unified tooltip layout was introduced on DayPage:
+
+- **Title** (larger font): required
+- **Range** (smaller font): required
+- **Blocks** (0..N lines): optional, shown only for non-empty fields
+
+The tooltip height adapts to content. Long descriptions are displayed inside a `ScrollView`.
+
+#### Nakshatra Tooltip (first implemented)
+
+For Nakshatra segments:
+
+- **TooltipTitle**: `"{NakshatraId}.{Name}"`
+- **TooltipRange**: `"{TransitStart:yyyy-MM-dd HH:mm:ss} – {TransitEnd:yyyy-MM-dd HH:mm:ss}"`
+- **TooltipBlocks**: values from `NakshatraDesc` (excluding `LanguageCode` and excluding empty fields)
+
+### 6) Binding / UI Update Notes
+
+`TooltipTitle` and `TooltipRange` were implemented as properties with backing fields that call `OnPropertyChanged()`,
+ensuring UI updates correctly when the tooltip is shown.
+
+`TooltipBlocks` uses `ObservableCollection<string>` to update dynamically.
+
+### Current Status
+
+- Panchanga lane labels on DayPage are ID-based and stable.
+- Nakshatra tooltip is implemented using `NakshatraDesc` localized data.
+- Architecture is ready to extend tooltips to remaining transit kinds (Tithi, TaraBala, Karana, NityaYoga, ChandraBala, etc.).
+
+-----------
+

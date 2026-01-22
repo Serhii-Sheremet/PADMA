@@ -66,19 +66,22 @@ namespace PADMA.Pages
         // чтобы overlay не мешал скроллам когда скрыт
         public bool IsTooltipHiddenInputTransparent => !IsTooltipVisible;
 
-        private string _tooltipTitle = "";
+        private string _tooltipTitle = string.Empty;
         public string TooltipTitle
         {
             get => _tooltipTitle;
-            set { _tooltipTitle = value; OnPropertyChanged(); }
+            set { if (_tooltipTitle == value) return; _tooltipTitle = value; OnPropertyChanged(); }
         }
 
-        private string _tooltipBody = "";
-        public string TooltipBody
+        private string _tooltipRange = string.Empty;
+        public string TooltipRange
         {
-            get => _tooltipBody;
-            set { _tooltipBody = value; OnPropertyChanged(); }
+            get => _tooltipRange;
+            set { if (_tooltipRange == value) return; _tooltipRange = value; OnPropertyChanged(); }
         }
+
+        public ObservableCollection<string> TooltipBlocks { get; }
+            = new ObservableCollection<string>();
 
         private PanchangaSegment? _selectedSegment;
         private VisualElement? _selectedSegmentView;
@@ -408,7 +411,6 @@ namespace PADMA.Pages
 
             }
         }
-
         private void BuildEventsGrid()
         {
             if (EventsGridLayout == null) return;
@@ -490,6 +492,7 @@ namespace PADMA.Pages
 
             // Накшатра = EDVLineName.NAKSHATRA = 2
             RenderPanchangaLane((int)EDVLineName.NAKSHATRA, Day.NakshatraSegments);
+
         }
 
         private void RenderPanchangaLane(int lineId, IList<PanchangaSegment> segments)
@@ -658,19 +661,28 @@ namespace PADMA.Pages
 
         }
 
+        private readonly Dictionary<ETransitKind, Func<PanchangaSegment, string>> _labelResolvers
+            = new()
+        {
+            {
+                ETransitKind.Nakshatra,
+                seg =>
+                {
+                    var nak = GetNakshatraEntity(seg.TransitId);
+                    return nak != null ? $"{nak.NakshatraId}. {nak.ShortName}" : string.Empty;
+                }
+            },
+            
+        };
+
         private string GetSegmentLabelText(PanchangaSegment seg)
         {
-            var text = (seg.Text ?? string.Empty).Trim();
-            if (text.Length == 0) return string.Empty;
+            if (seg == null) return string.Empty;
 
-            // У DayOverview текст часто вида: "HH:mm <Id>.<Name>"
-            // Нам на DayPage время не нужно — оставляем последнюю часть после пробелов.
-            // (если там несколько пробелов/табов — тоже ок)
-            var parts = text.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length > 1)
-                text = parts[^1];
+            if (_labelResolvers.TryGetValue(seg.TransitKind, out var resolver))
+                return resolver(seg);
 
-            return text;
+            return string.Empty;
         }
 
         private void UpdateStickyForNakshatra(double scrollY)
@@ -708,8 +720,13 @@ namespace PADMA.Pages
             }
 
             // 2-й тап по тому же сегменту: открываем тултип
-            TooltipTitle = $"Nakshatra";               // позже: по lineId -> DVLineNameDesc.Name
-            TooltipBody = seg.Text ?? "";             // позже: собираем по Id в разделы
+            switch (lineId)
+            {
+                case (int)EDVLineName.NAKSHATRA:
+                    ShowNakshatraTooltip(seg);
+                    break;
+            }
+
             IsTooltipVisible = true;
         }
 
@@ -803,7 +820,36 @@ namespace PADMA.Pages
 
         }
 
+        private static NakshatraDesc? GetNakshatraEntity(int nakshatraId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.NakshatraDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.NakshatraId == nakshatraId);
+        }
 
+        private void ShowNakshatraTooltip(PanchangaSegment seg)
+        {
+            var nak = GetNakshatraEntity(seg.TransitId);
+            if (nak == null)
+                return;
+
+            TooltipTitle = $"{nak.NakshatraId}.{nak.Name}";
+            TooltipRange = $"{seg.TransitStart:yyyy-MM-dd HH:mm:ss} – {seg.TransitEnd:yyyy-MM-dd HH:mm:ss}";
+
+            TooltipBlocks.Clear();
+
+            void AddIfNotEmpty(string? s)
+            {
+                if (!string.IsNullOrWhiteSpace(s))
+                    TooltipBlocks.Add(s.Trim());
+            }
+
+            AddIfNotEmpty(nak.Ruler);
+            AddIfNotEmpty(nak.Nature);
+            AddIfNotEmpty(nak.Description);
+            AddIfNotEmpty(nak.GoodFor);
+            AddIfNotEmpty(nak.BadFor);
+        }
 
 
 

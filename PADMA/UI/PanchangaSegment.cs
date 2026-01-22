@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Maui.Graphics;
+using PADMA.Core.Enums;
 
 namespace PADMA.UI
 {
@@ -8,8 +9,12 @@ namespace PADMA.UI
     /// </summary>
     public class PanchangaSegment
     {
-        public DateTime Start { get; set; }     // реальное время начала транзита
-        public DateTime End { get; set; }       // реальное время конца транзита
+        public ETransitKind TransitKind { get; set; }
+        public int TransitId { get; set; }
+        public DateTime TransitStart { get; set; }   // full transit start (local)
+        public DateTime TransitEnd { get; set; }   // full transit end (local)
+        public DateTime Start { get; set; }     // effective start within this day
+        public DateTime End { get; set; }       // effective end within this day
         public Color? Color { get; set; }        // цвет этого транзита
         public Color? ColorTop { get; set; }   // optional
         public Color? ColorBottom { get; set; } // optional
