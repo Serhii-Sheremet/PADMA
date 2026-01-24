@@ -347,8 +347,8 @@
                    VerticalOptions="Center"
                    HorizontalOptions="Center"
                    WidthRequest="320"
-                   MaximumHeightRequest="520">
-                <Grid RowDefinitions="Auto,Auto,Auto,*"
+                   MaximumHeightRequest="{Binding TooltipMaxHeight}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto"
                       RowSpacing="6">
 
                     <!-- Title (always) -->
@@ -368,18 +368,19 @@
 
                     <!-- Divider -->
                     <BoxView Grid.Row="2"
+                             IsVisible="{Binding HasTooltipBlocks}"
                              HeightRequest="1"
                              Opacity="0.2"
                              BackgroundColor="Black"
                              Margin="0,0,0,2" />
 
                     <!-- Body (0..N blocks) -->
-                    <ScrollView Grid.Row="3">
+                    <ScrollView Grid.Row="3" IsVisible="{Binding HasTooltipBlocks}" VerticalOptions="Start">
                         <VerticalStackLayout Spacing="6"
                              BindableLayout.ItemsSource="{Binding TooltipBlocks}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate>
-                                    <Label Text="{Binding}"
+                                    <Label FormattedText="{Binding .}"
                                            FontSize="12"
                                            LineBreakMode="WordWrap" />
                                 </DataTemplate>

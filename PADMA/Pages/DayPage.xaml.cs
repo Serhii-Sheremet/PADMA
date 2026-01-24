@@ -56,6 +56,13 @@ namespace PADMA.Pages
             }
         }
 
+        private double _tooltipMaxHeight = 500; // безопасный дефолт
+        public double TooltipMaxHeight
+        {
+            get => _tooltipMaxHeight;
+            set { if (Math.Abs(_tooltipMaxHeight - value) < 0.1) return; _tooltipMaxHeight = value; OnPropertyChanged(); }
+        }
+
         private bool _isTooltipVisible;
         public bool IsTooltipVisible
         {
@@ -80,8 +87,8 @@ namespace PADMA.Pages
             set { if (_tooltipRange == value) return; _tooltipRange = value; OnPropertyChanged(); }
         }
 
-        public ObservableCollection<string> TooltipBlocks { get; }
-            = new ObservableCollection<string>();
+        public ObservableCollection<FormattedString> TooltipBlocks { get; } = new();
+        public bool HasTooltipBlocks => TooltipBlocks.Count > 0;
 
         private PanchangaSegment? _selectedSegment;
         private VisualElement? _selectedSegmentView;
@@ -162,6 +169,18 @@ namespace PADMA.Pages
             });
         }
 
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+
+            // height может быть 0 на ранних проходах layout
+            if (height <= 0)
+                return;
+
+            // 70% высоты страницы Ч комфортно дл€ тултипа
+            TooltipMaxHeight = height * 0.70;
+        }
+
         private void OnTooltipBackdropTapped(object? sender, EventArgs e)
         {
             IsTooltipVisible = false;
@@ -171,6 +190,23 @@ namespace PADMA.Pages
         {
             InitializeComponent();
             BindingContext = this;
+
+            TooltipBlocks.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasTooltipBlocks));
+
+            MessagingCenter.Unsubscribe<object>(this, "SettingsChanged");
+            MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
+            {
+                // €зык уже сохранЄн в Ѕƒ + Refresh вызываетс€ на MainPage или в LanguagePage
+                // тут нам достаточно пересобрать отображаемые колонки
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    BuildTransitColumns();
+                    
+                    // чтобы подписи/содержимое тоже обновились
+                    RenderNakshatraLane();
+                    // (другие Render...Lane аналогично)
+                });
+            });
 
             BuildTransitColumns();
             BuildTimeScale();
@@ -233,6 +269,7 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
+            ResetTooltip();
             // Close DayPage completely and return to calendar
             await Shell.Current.GoToAsync("//main", true);
         }
@@ -664,6 +701,7 @@ namespace PADMA.Pages
         private readonly Dictionary<ETransitKind, Func<PanchangaSegment, string>> _labelResolvers
             = new()
         {
+            // here will be resolvers for all transit lines
             {
                 ETransitKind.Nakshatra,
                 seg =>
@@ -672,6 +710,7 @@ namespace PADMA.Pages
                     return nak != null ? $"{nak.NakshatraId}. {nak.ShortName}" : string.Empty;
                 }
             },
+
             
         };
 
@@ -722,9 +761,13 @@ namespace PADMA.Pages
             // 2-й тап по тому же сегменту: открываем тултип
             switch (lineId)
             {
+                //switch for all lines
+
                 case (int)EDVLineName.NAKSHATRA:
                     ShowNakshatraTooltip(seg);
                     break;
+
+
             }
 
             IsTooltipVisible = true;
@@ -834,25 +877,76 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{nak.NakshatraId}.{nak.Name}";
-            TooltipRange = $"{seg.TransitStart:yyyy-MM-dd HH:mm:ss} Ц {seg.TransitEnd:yyyy-MM-dd HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} Ц {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
 
-            TooltipBlocks.Clear();
-
-            void AddIfNotEmpty(string? s)
-            {
-                if (!string.IsNullOrWhiteSpace(s))
-                    TooltipBlocks.Add(s.Trim());
-            }
-
-            AddIfNotEmpty(nak.Ruler);
-            AddIfNotEmpty(nak.Nature);
-            AddIfNotEmpty(nak.Description);
-            AddIfNotEmpty(nak.GoodFor);
-            AddIfNotEmpty(nak.BadFor);
+            FillTooltipBlocks(nak, NakshatraTooltipFields);
         }
 
+        private static readonly (string NativeLabel, Func<NakshatraDesc, string?> GetValue)[] NakshatraTooltipFields =
+        {
+            ("Ruler",       d => d.Ruler),
+            ("Nature",      d => d.Nature),
+            ("Description", d => d.Description),
+            ("Favorable",   d => d.GoodFor),
+            ("Unfavorable", d => d.BadFor),
+        };
 
+        private void FillTooltipBlocks<T>(
+            T entity,
+            (string NativeLabel, Func<T, string?> GetValue)[] fields)
+        {
+            TooltipBlocks.Clear();
 
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            foreach (var f in fields)
+            {
+                var value = f.GetValue(entity)?.Trim();
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
+
+                var label = Localization.GetLocalizedText(f.NativeLabel, lang);
+
+                var fs = new FormattedString();
+                fs.Spans.Add(new Span
+                {
+                    Text = $"{label}:",
+                    TextDecorations = TextDecorations.Underline
+                });
+                fs.Spans.Add(new Span
+                {
+                    Text = " "
+                });
+                fs.Spans.Add(new Span
+                {
+                    Text = value
+                });
+
+                TooltipBlocks.Add(fs);
+            }
+        }
+        private void ResetTooltip()
+        {
+            IsTooltipVisible = false;
+            TooltipBlocks.Clear();
+            TooltipTitle = string.Empty;
+            TooltipRange = string.Empty;
+
+            // если есть подсветка выбранного сегмента Ч тоже сбросить
+            _selectedSegment = null; // если есть
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            ResetTooltip();
+        }
+
+        protected override void OnDisappearing()
+        {
+            ResetTooltip();
+            base.OnDisappearing();
+        }
 
 
 
