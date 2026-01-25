@@ -959,7 +959,7 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{nak.NakshatraId}.{nak.Name}";
-            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} – {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(nak, NakshatraTooltipFields);
         }
@@ -981,7 +981,7 @@ namespace PADMA.Pages
 
             var pct = TryParsePercent(seg.Text);
             TooltipTitle = pct.HasValue ? $"{tb.Name} {pct.Value}%" : $"{tb.Name}";
-            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} – {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(tb, TaraBalaTooltipFields);
         }
@@ -1016,7 +1016,7 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{ti.TithiId}.{ti.Name}";
-            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} – {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ti, TithiTooltipFields);
         }
@@ -1036,7 +1036,7 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{ka.Name}";
-            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} – {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ka, KaranaTooltipFields);
         }
@@ -1056,7 +1056,7 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{nyd.NityaYogaId}.{nyd.Name}";
-            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} – {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             TooltipBlocks.Clear();
 
@@ -1080,9 +1080,10 @@ namespace PADMA.Pages
 
         private void ShowChandraBalaTooltip(PanchangaSegment seg)
         {
+            TooltipBlocks.Clear();
             var text = StripLeadingTime(seg.Text);
             TooltipTitle = $"{text}";
-            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} – {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
         }
 
         private static string StripLeadingTime(string? text)

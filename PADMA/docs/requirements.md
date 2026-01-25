@@ -3386,13 +3386,21 @@ Each transit lane supports an optional **sticky label**:
 
 Implemented:
 - Dynamic transit lanes
-- Nakshatra lane rendering
+- Implemented several transit lanes
 - Segment separators and labels
 - Sticky labels synchronized with scroll
 - Auto-centering on current time
 
+## Implemented Transit Lanes
+
+-   Nakshatra
+-   Tara Bala
+-   Tithi
+-   Karana
+-   Nitya Yoga
+-   Chandra Bala
+
 Next steps:
-- Context tooltip for transit lines
 - Add remaining Panchanga and transit lanes
 - User-defined event lane (add events feature)
 
@@ -3752,7 +3760,7 @@ This guarantees consistent placement for all time-based elements.
 
 ## DayPage Panchanga Labels and Tooltip (ID-based)
 
-### 1) Segment Metadata in `PanchangaSegment`
+### Segment Metadata in `PanchangaSegment`
 
 `PanchangaSegment` was extended with structured references:
 
@@ -3761,7 +3769,7 @@ This guarantees consistent placement for all time-based elements.
 
 These fields identify *what* the segment represents (Nakshatra, Tithi, etc.) and *which* entity instance it refers to.
 
-### 2) Populating `TransitKind` and `TransitId` in `PanchangaHelper`
+### Populating `TransitKind` and `TransitId` in `PanchangaHelper`
 
 `PanchangaHelper.BuildSegmentsForDay(...)` was updated to accept optional selectors for segment identity:
 
@@ -3775,7 +3783,12 @@ During segment creation, the builder assigns:
 
 Both the generic and non-generic overloads support these parameters, ensuring all Panchanga segment sources can pass IDs without changing existing callers.
 
-### 3) Calendar Construction: Panchanga (6 lanes)
+### PanchangaSegment Time Model
+
+PanchangaSegment uses full local DateTime boundaries: - TransitStart -
+TransitEnd
+
+### Calendar Construction: Panchanga (6 lanes)
 
 When building the 42-day window, all six Panchanga lanes were updated to provide:
 
@@ -3784,7 +3797,7 @@ When building the 42-day window, all six Panchanga lanes were updated to provide
 
 This enables DayPage to render labels and tooltips consistently for all Panchanga lanes.
 
-### 4) DayPage Short Labels (no text parsing)
+### DayPage Short Labels
 
 DayPage label rendering was changed to use segment identity:
 
@@ -3795,8 +3808,9 @@ DayPage label rendering was changed to use segment identity:
 Example policy:
 - Nakshatra label uses `"{Id}.{Name}"`
 - (Other Panchanga lanes follow the same ID-based approach.)
+- In some cases it is easier to parse `seg.Text` to get necessary values 
 
-### 5) Unified Tooltip Layout (Title + Range + Blocks)
+### Unified Tooltip Layout (Title + Range + Blocks)
 
 A unified tooltip layout was introduced on DayPage:
 
@@ -3814,7 +3828,7 @@ For Nakshatra segments:
 - **TooltipRange**: `"{TransitStart:yyyy-MM-dd HH:mm:ss} – {TransitEnd:yyyy-MM-dd HH:mm:ss}"`
 - **TooltipBlocks**: values from `NakshatraDesc` (excluding `LanguageCode` and excluding empty fields)
 
-### 6) Binding / UI Update Notes
+### Binding / UI Update Notes
 
 `TooltipTitle` and `TooltipRange` were implemented as properties with backing fields that call `OnPropertyChanged()`,
 ensuring UI updates correctly when the tooltip is shown.
@@ -3824,8 +3838,9 @@ ensuring UI updates correctly when the tooltip is shown.
 ### Current Status
 
 - Panchanga lane labels on DayPage are ID-based and stable.
-- Nakshatra tooltip is implemented using `NakshatraDesc` localized data.
-- Architecture is ready to extend tooltips to remaining transit kinds (Tithi, TaraBala, Karana, NityaYoga, ChandraBala, etc.).
+- Tooltip is implemented using `...Desc` localized data.
+- Tooltip is implemented for 6 transit lanes (Nakshatra, TaraBala, Tithi, Karana, NityaYoga, ChandraBala)
+- Architecture is ready to extend tooltips to remaining transit kinds .
 
 -----------
 
