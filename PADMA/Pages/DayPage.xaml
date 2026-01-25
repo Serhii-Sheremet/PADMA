@@ -260,15 +260,14 @@
 
             <!-- Sticky overlay (transparent; does NOT shift 00:00 down) -->
             <Grid x:Name="StickyOverlay"
-                  HeightRequest="20"
+                  HeightRequest="14"
                   VerticalOptions="Start"
                   HorizontalOptions="Fill"
                   BackgroundColor="Transparent"
                   InputTransparent="True"
                   Padding="0">
 
-                <!-- Keep left 3 columns aligned, sticky only for transit lanes -->
-                <Grid ColumnDefinitions="Auto,Auto,Auto,*"
+                <Grid ColumnDefinitions="24,36,80,*"
                       ColumnSpacing="0"
                       RowSpacing="0"
                       Padding="0"
@@ -277,40 +276,42 @@
                     <Grid Grid.Column="0" WidthRequest="24" BackgroundColor="Transparent" />
                     <Grid Grid.Column="1" WidthRequest="36" BackgroundColor="Transparent" />
                     <Grid Grid.Column="2" WidthRequest="80" BackgroundColor="Transparent" />
-                    <Grid Grid.Column="3" WidthRequest="80" BackgroundColor="Transparent" />
 
                     <!-- Sticky labels for lanes (synced horizontally with header/body) -->
                     <ScrollView x:Name="TransitStickyScroll"
                                 Grid.Column="3"
                                 Orientation="Horizontal"
+                                HorizontalOptions="Fill"
                                 HorizontalScrollBarVisibility="Never"
                                 VerticalScrollBarVisibility="Never"
                                 Scrolled="OnTransitStickyScrolled"
                                 BackgroundColor="Transparent">
 
                         <HorizontalStackLayout Spacing="0"
-                            HeightRequest="20"
-                            BackgroundColor="Transparent"
-                            BindableLayout.ItemsSource="{Binding TransitColumns}">
+                                   HeightRequest="14"
+                                   BackgroundColor="Transparent"
+                                   BindableLayout.ItemsSource="{Binding TransitColumns}">
 
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate>
                                     <Grid WidthRequest="80"
-                                          HeightRequest="20"
+                                          HeightRequest="14"
                                           Padding="0"
                                           BackgroundColor="Transparent">
 
-                                        <!-- пока тест: можно оставить пустым или поставить (sticky) -->
-                                        <!-- позже сюда будет подставляться текущее значение транзита -->
-                                        <Label Text="{Binding StickyText}"
+                                        <Label WidthRequest="80"
+                                               Text="{Binding StickyText}"
                                                TextColor="Black"
                                                FontSize="10"
                                                FontAttributes="Bold"
                                                Opacity="0.85"
+                                               HorizontalOptions="Fill"
+                                               VerticalOptions="Fill"
                                                HorizontalTextAlignment="Center"
-                                               VerticalTextAlignment="Center"/>
+                                               VerticalTextAlignment="Center"
+                                               LineBreakMode="TailTruncation"
+                                               MaxLines="1"/>
 
-                                        <!-- separator -->
                                         <BoxView WidthRequest="1"
                                                  HorizontalOptions="End"
                                                  VerticalOptions="Fill"
@@ -319,10 +320,12 @@
                                     </Grid>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
+
                         </HorizontalStackLayout>
                     </ScrollView>
                 </Grid>
             </Grid>
+
         </Grid>
 
         <!-- Tooltip Overlay -->

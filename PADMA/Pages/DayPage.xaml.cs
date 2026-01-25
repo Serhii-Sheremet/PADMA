@@ -11,6 +11,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using PADMA.Core.Models.Calendar;
 
 namespace PADMA.Pages
 {
@@ -128,8 +129,8 @@ namespace PADMA.Pages
                     AddIconAtTime(IconsLayer, SunsetUtc, "sunset.png", 24, 24);
                     AddEclipseIconIfAny();
 
-                    RenderNakshatraLane();
-                    UpdateStickyForNakshatra(0);
+                    RenderTransitLane();
+                    UpdateAllSticky(0);
                     RequestAutoCenter();
 
                     // optional: store.Remove(token); // если освобождать пам€ть сразу
@@ -148,8 +149,8 @@ namespace PADMA.Pages
                 SunsetUtc = DateTime.SpecifyKind(sunsetUtc, DateTimeKind.Utc);
 
             ApplyDayNightBackgroundIfPossible();
-            RenderNakshatraLane();
-            UpdateStickyForNakshatra(0);
+            RenderTransitLane();
+            UpdateAllSticky(0);
             RequestAutoCenter();
         }
 
@@ -201,10 +202,9 @@ namespace PADMA.Pages
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     BuildTransitColumns();
-                    
+
                     // чтобы подписи/содержимое тоже обновились
-                    RenderNakshatraLane();
-                    // (другие Render...Lane аналогично)
+                    RenderTransitLane();
                 });
             });
 
@@ -232,10 +232,19 @@ namespace PADMA.Pages
         
         private void OnTimelineScrolled(object? sender, ScrolledEventArgs e)
         {
-            // e.ScrollY Ч это то, что нужно дл€ sticky
-            UpdateStickyForNakshatra(e.ScrollY);
+            UpdateAllSticky(e.ScrollY);
+        }
 
+        private void UpdateAllSticky(double scrollY)
+        {
+            if (Day == null) return;
 
+            UpdateStickyForLane((int)EDVLineName.NAKSHATRA, Day.NakshatraSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.TARABALA, Day.TaraBalaSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.TITHI, Day.TithiSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.KARANA, Day.KaranaSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.NITYAYOGA, Day.NityaYogaSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments, scrollY);
         }
 
         private async Task CenterOnNowIfTodayAsync()
@@ -265,6 +274,17 @@ namespace PADMA.Pages
             if (target > maxTarget) target = maxTarget;
 
             await TimelineScroll.ScrollToAsync(0, target, false);
+            UpdateAllSticky(target);
+
+            Dispatcher.Dispatch(() =>
+            {
+                // заставл€ем MAUI пересчитать размеры/arrange дл€ sticky сло€
+                TransitStickyScroll?.InvalidateMeasure();
+                TransitStickyScroll?.ForceLayout();
+
+                StickyOverlay?.InvalidateMeasure();
+            });
+
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
@@ -523,12 +543,20 @@ namespace PADMA.Pages
             }
         }
 
-        private void RenderNakshatraLane()
+        private void RenderTransitLane()
         {
             if (Day == null) return;
 
-            // Ќакшатра = EDVLineName.NAKSHATRA = 2
+            _highlights.Clear();
+
             RenderPanchangaLane((int)EDVLineName.NAKSHATRA, Day.NakshatraSegments);
+            RenderPanchangaLane((int)EDVLineName.TARABALA, Day.TaraBalaSegments);
+            RenderPanchangaLane((int)EDVLineName.TITHI, Day.TithiSegments);
+            RenderPanchangaLane((int)EDVLineName.KARANA, Day.KaranaSegments);
+            RenderPanchangaLane((int)EDVLineName.NITYAYOGA, Day.NityaYogaSegments);
+            RenderPanchangaLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments);
+
+
 
         }
 
@@ -549,7 +577,6 @@ namespace PADMA.Pages
             if (lane == null) return;
 
             lane.Children.Clear();
-            _highlights.Clear();
 
             var dayStart = Day!.Date;              // 00:00 выбранного дн€ (локально)
             var dayEnd = dayStart.AddDays(1);
@@ -706,12 +733,54 @@ namespace PADMA.Pages
                 ETransitKind.Nakshatra,
                 seg =>
                 {
-                    var nak = GetNakshatraEntity(seg.TransitId);
+                    var nak = PanchangaHelper.GetNakshatraDescEntity(seg.TransitId);
                     return nak != null ? $"{nak.NakshatraId}. {nak.ShortName}" : string.Empty;
                 }
             },
+            {
+                ETransitKind.TaraBala,
+                seg =>
+                {
+                    var tb = PanchangaHelper.GetTaraBalaDescEntity(seg.TransitId);
+                    var pct = TryParsePercent(seg.Text);
+                    return tb != null ? $"{tb.Name} {pct}%" : string.Empty;
+                }
+            },
+            {
+                ETransitKind.Tithi,
+                seg =>
+                {
+                    var ti = PanchangaHelper.GetTithiDescEntity(seg.TransitId);
+                    return ti != null ? $"{ti.TithiId}. {ti.ShortName}" : string.Empty;
+                }
+            },
+            {
+                ETransitKind.Karana,
+                seg =>
+                {
+                    var ka = PanchangaHelper.GetKaranaDescEntity(seg.TransitId);
+                    return ka != null ? $"{ka.Name}" : string.Empty;
+                }
+            },
+            {
+                ETransitKind.NityaYoga,
+                seg =>
+                {
+                    var ny = PanchangaHelper.GetNityaYogaDescEntity(seg.TransitId);
+                    return ny != null ? $"{ny.NityaYogaId}. {ny.Name}" : string.Empty;
+                }
+            },
+            {
+                ETransitKind.ChandraBala,
+                seg =>
+                {
+                    var text = StripLeadingTime(seg.Text);
+                    return $"{text}";
+                }
+            },
 
-            
+
+
         };
 
         private string GetSegmentLabelText(PanchangaSegment seg)
@@ -724,20 +793,21 @@ namespace PADMA.Pages
             return string.Empty;
         }
 
-        private void UpdateStickyForNakshatra(double scrollY)
+        private void UpdateStickyForLane(int lineId, IList<PanchangaSegment> segments, double scrollY)
         {
             if (Day == null) return;
+            if (segments == null || segments.Count == 0) return;
 
             var minute = scrollY / PixelsPerMinute;
             var t = Day.Date.AddMinutes(minute);
 
-            var seg = Day.NakshatraSegments.FirstOrDefault(s => s.Start <= t && t < s.End);
+            var seg = segments.FirstOrDefault(s => s.Start <= t && t < s.End);
             if (seg == null) return;
 
-            var idx = TransitColumns.ToList().FindIndex(c => c.LineId == (int)EDVLineName.NAKSHATRA);
+            var idx = TransitColumns.ToList().FindIndex(c => c.LineId == lineId);
             if (idx < 0) return;
 
-            TransitColumns[idx].StickyText = GetSegmentLabelText(seg);  
+            TransitColumns[idx].StickyText = GetSegmentLabelText(seg);
         }
 
         private void OnSegmentTapped(int lineId, PanchangaSegment seg, VisualElement view)
@@ -767,6 +837,25 @@ namespace PADMA.Pages
                     ShowNakshatraTooltip(seg);
                     break;
 
+                case (int)EDVLineName.TARABALA:
+                    ShowTaraBalaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.TITHI:
+                    ShowTithiTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.KARANA:
+                    ShowKaranaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.NITYAYOGA:
+                    ShowNityaYogaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.CHANDRABALA:
+                    ShowChandraBalaTooltip(seg);
+                    break;
 
             }
 
@@ -863,16 +952,9 @@ namespace PADMA.Pages
 
         }
 
-        private static NakshatraDesc? GetNakshatraEntity(int nakshatraId)
-        {
-            var lang = DataCache.Instance.CurrentLanguageCode;
-            return DataCache.Instance.NakshatraDescList
-                .FirstOrDefault(i => i.LanguageCode == lang && i.NakshatraId == nakshatraId);
-        }
-
         private void ShowNakshatraTooltip(PanchangaSegment seg)
         {
-            var nak = GetNakshatraEntity(seg.TransitId);
+            var nak = PanchangaHelper.GetNakshatraDescEntity(seg.TransitId);
             if (nak == null)
                 return;
 
@@ -891,11 +973,146 @@ namespace PADMA.Pages
             ("Unfavorable", d => d.BadFor),
         };
 
+        private void ShowTaraBalaTooltip(PanchangaSegment seg)
+        {
+            var tb = PanchangaHelper.GetTaraBalaDescEntity(seg.TransitId);
+            if (tb == null)
+                return;
+
+            var pct = TryParsePercent(seg.Text);
+            TooltipTitle = pct.HasValue ? $"{tb.Name} {pct.Value}%" : $"{tb.Name}";
+            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} Ц {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+
+            FillTooltipBlocks(tb, TaraBalaTooltipFields);
+        }
+
+        private static readonly (string NativeLabel, Func<TaraBalaDesc, string?> GetValue)[] TaraBalaTooltipFields =
+        {
+            ("Description", d => d.Description),
+        };
+
+        private static int? TryParsePercent(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            // ищем что-то вроде "75%" или " 75 % "
+            var m = System.Text.RegularExpressions.Regex.Match(
+                text, @"(?<!\d)(\d{1,3})\s*%");
+
+            if (!m.Success)
+                return null;
+
+            if (int.TryParse(m.Groups[1].Value, out var p) && p >= 0 && p <= 100)
+                return p;
+
+            return null;
+        }
+
+        private void ShowTithiTooltip(PanchangaSegment seg)
+        {
+            var ti = PanchangaHelper.GetTithiDescEntity(seg.TransitId);
+            if (ti == null)
+                return;
+
+            TooltipTitle = $"{ti.TithiId}.{ti.Name}";
+            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} Ц {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+
+            FillTooltipBlocks(ti, TithiTooltipFields);
+        }
+
+        private static readonly (string NativeLabel, Func<TithiDesc, string?> GetValue)[] TithiTooltipFields =
+        {
+            ("Ruler",       d => d.Ruler),
+            ("Type",        d => d.Type),
+            ("Favorable",   d => d.GoodFor),
+            ("Unfavorable", d => d.BadFor),
+        };
+
+        private void ShowKaranaTooltip(PanchangaSegment seg)
+        {
+            var ka = PanchangaHelper.GetKaranaDescEntity(seg.TransitId);
+            if (ka == null)
+                return;
+
+            TooltipTitle = $"{ka.Name}";
+            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} Ц {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+
+            FillTooltipBlocks(ka, KaranaTooltipFields);
+        }
+
+        private static readonly (string NativeLabel, Func<KaranaDesc, string?> GetValue)[] KaranaTooltipFields =
+        {
+            ("Ruler",       d => d.Ruler),
+            ("Favorable",   d => d.GoodFor),
+            ("Unfavorable", d => d.BadFor),
+        };
+
+        private void ShowNityaYogaTooltip(PanchangaSegment seg)
+        {
+            var ny = PanchangaHelper.GetNityaYogaEntity(seg.TransitId);
+            var nyd = PanchangaHelper.GetNityaYogaDescEntity(seg.TransitId);
+            if (ny == null || nyd == null)
+                return;
+
+            TooltipTitle = $"{nyd.NityaYogaId}.{nyd.Name}";
+            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} Ц {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+
+            TooltipBlocks.Clear();
+
+            // 1) ”правитель (планета)
+            var rulerName = PanchangaHelper.GetPlanetDescEntity(ny.YogiPlanetId)?.Name;
+            AddTooltipBlock("Ruler", rulerName);
+
+            // 2) Ќакшатра
+            var nakName = PanchangaHelper.GetNakshatraDescEntity(ny.NakshatraId)?.Name;
+            AddTooltipBlock("Nakshatra", nakName);
+
+            FillTooltipBlocks(nyd, NityaYogaTooltipFields, false);
+        }
+
+        private static readonly (string NativeLabel, Func<NityaYogaDesc, string?> GetValue)[] NityaYogaTooltipFields =
+        {
+            ("Deity",       d => d.Deity),
+            ("Meaning",     d => d.Meaning),
+            ("Description", d => d.Description),
+        };
+
+        private void ShowChandraBalaTooltip(PanchangaSegment seg)
+        {
+            var text = StripLeadingTime(seg.Text);
+            TooltipTitle = $"{text}";
+            TooltipRange = $"{seg.TransitStart:dd-MM-yyyy HH:mm:ss} Ц {seg.TransitEnd:dd-MM-yyyy HH:mm:ss}";
+        }
+
+        private static string StripLeadingTime(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            var s = text.Trim();
+
+            var idx = s.IndexOf(' ');
+            if (idx < 0)
+                return s;
+
+            var first = s.Substring(0, idx);
+
+            // провер€ем, что первое "слово" похоже на врем€
+            // допустимы: H:mm, HH:mm, H:mm:ss, HH:mm:ss
+            if (TimeSpan.TryParse(first, out _))
+                return s.Substring(idx + 1).Trim();
+
+            return s;
+        }
+
         private void FillTooltipBlocks<T>(
             T entity,
-            (string NativeLabel, Func<T, string?> GetValue)[] fields)
+            (string NativeLabel, Func<T, string?> GetValue)[] fields,
+             bool clearFirst = true)
         {
-            TooltipBlocks.Clear();
+            if (clearFirst)
+                TooltipBlocks.Clear();
 
             var lang = DataCache.Instance.CurrentLanguageCode;
 
@@ -931,10 +1148,25 @@ namespace PADMA.Pages
             TooltipBlocks.Clear();
             TooltipTitle = string.Empty;
             TooltipRange = string.Empty;
-
-            // если есть подсветка выбранного сегмента Ч тоже сбросить
-            _selectedSegment = null; // если есть
+            
         }
+
+        private void AddTooltipBlock(string nativeLabel, string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return;
+
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            var label = Localization.GetLocalizedText(nativeLabel, lang);
+
+            var fs = new FormattedString();
+            fs.Spans.Add(new Span { Text = $"{label}:", TextDecorations = TextDecorations.Underline });
+            fs.Spans.Add(new Span { Text = " " });
+            fs.Spans.Add(new Span { Text = value.Trim() });
+
+            TooltipBlocks.Add(fs);
+        }
+
 
         protected override void OnAppearing()
         {

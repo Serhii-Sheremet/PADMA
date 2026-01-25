@@ -109,5 +109,57 @@ namespace PADMA.Core.Utilities
         {
             return BuildSegmentsForDay<CalendarSlice>(slicesUtc, dayLocal, tz, cache, getColorCode, getText, getKind, getId);
         }
+
+        public static PlanetDesc? GetPlanetDescEntity(int planetId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.PlanetDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.PlanetId == planetId);
+        }
+
+        public static NakshatraDesc? GetNakshatraDescEntity(int nakshatraId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.NakshatraDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.NakshatraId == nakshatraId);
+        }
+
+        public static TaraBalaDesc? GetTaraBalaDescEntity(int tarabalId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.TaraBalaDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.TaraBalaId == tarabalId);
+        }
+
+        public static TithiDesc? GetTithiDescEntity(int tithiId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.TithiDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.TithiId == tithiId);
+        }
+
+        public static KaranaDesc? GetKaranaDescEntity(int karanaId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.KaranaDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.KaranaId == karanaId);
+        }
+
+        public static NityaYoga? GetNityaYogaEntity(int nityaYogaId)
+        {
+            return DataCache.Instance.NityaYogaList
+                .FirstOrDefault(i => i.Id == nityaYogaId);
+        }
+
+        public static NityaYogaDesc? GetNityaYogaDescEntity(int nityaYogaId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.NityaYogaDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.NityaYogaId == nityaYogaId);
+        }
+
+
+
+
     }
 }
