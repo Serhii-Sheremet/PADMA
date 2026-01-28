@@ -2,6 +2,8 @@ namespace PADMA.UI;
 
 public sealed class MuhurtaOverviewStripe
 {
+    public int MuhurtaId { get; set; } 
+    public int ColorId { get; set; }    
     public string Title { get; set; } = string.Empty;      // ShortName (+ " не образуется")
     public bool IsFormed { get; set; } = true;
 

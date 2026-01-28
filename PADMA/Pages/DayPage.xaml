@@ -365,7 +365,7 @@
                     <Label Grid.Row="1"
                            Text="{Binding TooltipRange}"
                            FontSize="11"
-                           Opacity="0.75"
+                           Opacity="0.85"
                            LineBreakMode="WordWrap"
                            Margin="0,0,0,4" />
 

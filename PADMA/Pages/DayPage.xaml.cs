@@ -21,6 +21,27 @@ namespace PADMA.Pages
         private bool _syncingHorizontalScroll;
         private readonly Dictionary<VisualElement, Border> _highlights = new();
 
+        private DayOverviewData? _overview;
+        public DayOverviewData? Overview
+        {
+            get => _overview;
+            set { _overview = value; OnPropertyChanged(); }
+        }
+
+        private List<MuhurtaOverviewStripe> _muhurtaStripes = new();
+        public List<MuhurtaOverviewStripe> MuhurtaStripes
+        {
+            get => _muhurtaStripes;
+            set { _muhurtaStripes = value; OnPropertyChanged(); }
+        }
+
+        private List<PanchangaSegment> _muhurtaSegments = new();
+        public List<PanchangaSegment> MuhurtaSegments
+        {
+            get => _muhurtaSegments;
+            set { _muhurtaSegments = value; OnPropertyChanged(); }
+        }
+
         public DateTime? SunriseUtc { get; private set; }
         public DateTime? SunsetUtc { get; private set; }
 
@@ -113,11 +134,22 @@ namespace PADMA.Pages
                 {
                     Day = bundle.Day;
 
+                    Overview = bundle.Overview;
+                    MuhurtaStripes = (Overview?.MuhurtaStripes ?? new ObservableCollection<MuhurtaOverviewStripe>())
+                            .Where(s => s.MuhurtaId != 0)      // фильтр Abhijit "не образуетс€"
+                            .ToList();
+
                     if (bundle.Overview?.SunriseUtc != null)
                         SunriseUtc = DateTime.SpecifyKind(bundle.Overview.SunriseUtc.Value, DateTimeKind.Utc);
 
                     if (bundle.Overview?.SunsetUtc != null)
                         SunsetUtc = DateTime.SpecifyKind(bundle.Overview.SunsetUtc.Value, DateTimeKind.Utc);
+
+                    var dayStart = Day!.Date;          
+                    var dayEnd = dayStart.AddDays(1);
+
+                    var overlapColorId = (int)EColor.PINK; 
+                    MuhurtaSegments = BuildMuhurtaSegments(dayStart, dayEnd, MuhurtaStripes, overlapColorId);
 
                     // optional: you may keep bundle.Window for future swipe feature
                     // var window = bundle.Window;
@@ -245,6 +277,9 @@ namespace PADMA.Pages
             UpdateStickyForLane((int)EDVLineName.KARANA, Day.KaranaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.NITYAYOGA, Day.NityaYogaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments, scrollY);
+
+            //UpdateStickyForLane((int)EDVLineName.MUHURTA, MuhurtaSegments, scrollY);
+
         }
 
         private async Task CenterOnNowIfTodayAsync()
@@ -556,7 +591,7 @@ namespace PADMA.Pages
             RenderPanchangaLane((int)EDVLineName.NITYAYOGA, Day.NityaYogaSegments);
             RenderPanchangaLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments);
 
-
+            RenderPanchangaLane((int)EDVLineName.MUHURTA, MuhurtaSegments);
 
         }
 
@@ -637,6 +672,7 @@ namespace PADMA.Pages
                     };
                 }
 
+
                 var wrapper = new Grid
                 {
                     Padding = 0,
@@ -679,14 +715,18 @@ namespace PADMA.Pages
                 AbsoluteLayout.SetLayoutFlags(wrapper, AbsoluteLayoutFlags.None);
                 lane.Children.Add(wrapper);
 
-                // граница перед сегментом (кроме самого первого)
                 // текст в начале сегмента (если он начинаетс€ внутри суток, а не в 00:00)
+                var text = GetSegmentLabelText(seg);
                 if (startMin > 0 && startMin < 1440)
                 {
-                    var text = GetSegmentLabelText(seg);
                     labels.Add((startMin * PixelsPerMinute, text));
                 }
-                
+                // лини€ Ѕ≈« текста в конце сегмента (если не конец суток)
+                if (endMin > 0 && endMin < 1440)
+                {
+                    labels.Add((endMin * PixelsPerMinute, string.Empty));
+                }
+
             }
 
             // separator at segment end (to avoid merging same-color segments)
@@ -703,6 +743,10 @@ namespace PADMA.Pages
                 };
                 AbsoluteLayout.SetLayoutBounds(sep, new Rect(0, y, 80, 1));
                 lane.Children.Add(sep);
+
+                // текст рисуем только если есть что рисовать
+                if (string.IsNullOrWhiteSpace(text))
+                    continue;
 
                 // текст под линией
                 var lbl = new Label
@@ -779,6 +823,28 @@ namespace PADMA.Pages
                 }
             },
 
+            {
+                ETransitKind.Muhurta,
+                seg =>
+                {
+                    var ids = (seg.Text ?? "")
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(s => int.TryParse(s, out var id) ? id : 0)
+                        .Where(id => id > 0)
+                        .Distinct()
+                        .Take(2)
+                        .ToList();
+
+                    if (ids.Count == 0)
+                        ids.Add(seg.TransitId);
+
+                    var n1 = PanchangaHelper.GetMuhurtaDescEntity(ids[0]).ShortName;
+                    if (ids.Count == 1) return n1;
+
+                    var n2 = PanchangaHelper.GetMuhurtaDescEntity(ids[1]).ShortName;
+                    return string.IsNullOrWhiteSpace(n2) ? n1 : $"{n1} {n2}";
+                }
+            },
 
 
         };
@@ -855,6 +921,10 @@ namespace PADMA.Pages
 
                 case (int)EDVLineName.CHANDRABALA:
                     ShowChandraBalaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.MUHURTA:
+                    ShowMuhurtaTooltip(seg);
                     break;
 
             }
@@ -1168,7 +1238,6 @@ namespace PADMA.Pages
             TooltipBlocks.Add(fs);
         }
 
-
         protected override void OnAppearing()
         {
             base.OnAppearing();
@@ -1180,6 +1249,155 @@ namespace PADMA.Pages
             ResetTooltip();
             base.OnDisappearing();
         }
+
+        private static List<PanchangaSegment> BuildMuhurtaSegments(
+            DateTime dayStartLocal,
+            DateTime dayEndLocal,
+            IReadOnlyList<MuhurtaOverviewStripe> stripes,
+            int overlapColorId)
+        {
+            var points = new List<DateTime> { dayStartLocal, dayEndLocal };
+
+            foreach (var it in stripes)
+            {
+                if (it.StartLocal.HasValue) points.Add(it.StartLocal.Value);
+                if (it.EndLocal.HasValue) points.Add(it.EndLocal.Value);
+            }
+
+            points = points.Distinct().OrderBy(x => x).ToList();
+
+            var result = new List<PanchangaSegment>();
+
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                var a = points[i];
+                var b = points[i + 1];
+                if (b <= a) continue;
+
+                var active = stripes
+                    .Where(it => it.StartLocal.HasValue && it.EndLocal.HasValue
+                              && it.StartLocal.Value <= a && b <= it.EndLocal.Value)
+                    .ToList();
+
+                if (active.Count == 0)
+                    continue;
+
+                var id1 = active[0].MuhurtaId;
+                var c1 = active[0].ColorId;
+
+                int colorId;
+                string idsText;
+
+                if (active.Count == 1)
+                {
+                    colorId = c1;
+                    idsText = id1.ToString();
+                }
+                else
+                {
+                    var id2 = active[1].MuhurtaId;
+                    var c2 = active[1].ColorId;
+
+                    idsText = $"{id1},{id2}";
+                    colorId = (c1 == c2) ? c1 : overlapColorId;
+                }
+
+                result.Add(new PanchangaSegment
+                {
+                    TransitId = id1,
+
+                    // важно дл€ tooltip
+                    TransitStart = a,
+                    TransitEnd = b,
+
+                    // важно дл€ RenderPanchangaLane (он использует seg.Start/seg.End)
+                    Start = a,
+                    End = b,
+
+                    Text = idsText,
+                    Color = DataCache.Instance.GetColor((EColor)colorId),
+
+                    // чтобы GetSegmentLabelText заработал
+                    TransitKind = ETransitKind.Muhurta
+                });
+            }
+
+            return result;
+        }
+
+        private void ShowMuhurtaTooltip(PanchangaSegment seg)
+        {
+            // ids: "id1" или "id1,id2"
+            var ids = (seg.Text ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => int.TryParse(s, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .Distinct()
+                .Take(2)
+                .ToList();
+
+            if (ids.Count == 0)
+                ids.Add(seg.TransitId);
+
+            // собрать реальные мухурты из stripes (чтобы корректно сортировать по StartLocal)
+            var items = MuhurtaStripes
+                .Where(s => ids.Contains(s.MuhurtaId) && s.StartLocal.HasValue && s.EndLocal.HasValue)
+                .Select(s => new
+                {
+                    s.MuhurtaId,
+                    Start = s.StartLocal!.Value,
+                    End = s.EndLocal!.Value,
+                    Name = PanchangaHelper.GetMuhurtaDescEntity(s.MuhurtaId).Name
+                })
+                .OrderBy(x => x.Start)
+                .ToList();
+
+            if (items.Count == 0)
+                return;
+
+            // показываем тултип
+            IsTooltipVisible = true;
+            TooltipBlocks.Clear();
+
+            // ѕервый Ч в title/range
+            var first = items[0];
+            TooltipTitle = $"{first.Name}";
+            TooltipRange = $"{first.Start:dd-MM-yyyy HH:mm:ss} Ц {first.End:dd-MM-yyyy HH:mm:ss}";
+
+            // ¬торой Ч как отдельный "мини-блок" ниже
+            if (items.Count > 1)
+            {
+                var second = items[1];
+
+                TooltipBlocks.Add(FsHeader($"{second.Name}"));
+                TooltipBlocks.Add(FsRange($"{second.Start:dd-MM-yyyy HH:mm:ss} Ц {second.End:dd-MM-yyyy HH:mm:ss}"));
+            }
+        }
+
+        private static FormattedString FsHeader(string text)
+        {
+            var fs = new FormattedString();
+            fs.Spans.Add(new Span { Text = text, FontAttributes = FontAttributes.Bold, FontSize = 14 });
+            return fs;
+        }
+
+        private static FormattedString FsRange(string text)
+        {
+            var fs = new FormattedString();
+            fs.Spans.Add(new Span { Text = text, FontSize = 11, TextColor = Color.FromRgba(0, 0, 0, 217) }); // 217/255 ~ 0.85 opacity
+            return fs;
+        }
+
+        private static FormattedString FsBody(string text)
+        {
+            var fs = new FormattedString();
+            fs.Spans.Add(new Span { Text = text, FontSize = 12 });
+            return fs;
+        }
+
+
+
+
 
 
 

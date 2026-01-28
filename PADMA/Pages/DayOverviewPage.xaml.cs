@@ -169,6 +169,8 @@ namespace PADMA.Pages
             var current = _items?[pos];
             if (current == null) return;
 
+            await EnsureOverviewLoadedAsync(current);
+
             var bundle = new DayNavBundle
             {
                 Day = Day,

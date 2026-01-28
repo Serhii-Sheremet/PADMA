@@ -203,7 +203,6 @@ namespace PADMA.UI.Services
                 double alt = 0; // если у профиля есть высота — подставь её
 
                 // SunriseSlice нужен для мухурт (prev/sunrise/sunset/nextSunrise)
-                //var sunriseSlice = SunriseTransitBuilder.Build(dayStartUtc.Date, lat, lon, alt);
                 var dateForLocalDayUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal.AddHours(12), tzInfo);
                 var sunriseSlice = SunriseTransitBuilder.Build(dateForLocalDayUtc, tzInfo, lat, lon, alt);
 
@@ -255,6 +254,9 @@ namespace PADMA.UI.Services
 
                     data.MuhurtaStripes.Add(new MuhurtaOverviewStripe
                     {
+                        MuhurtaId = muhurtaId,
+                        ColorId = GetMuhurtaColorId(muhurtaId),
+
                         Title = shortName,
                         IsFormed = true,
 
@@ -730,6 +732,11 @@ namespace PADMA.UI.Services
         {
             int colorId = DataCache.Instance.MuhurtaList.FirstOrDefault(mu => mu.Id == muhurtaId)?.ColorId ?? 0;
             return DataCache.Instance.GetColor((EColor)colorId);
+        }
+
+        private static int GetMuhurtaColorId(int muhurtaId)
+        {
+            return DataCache.Instance.MuhurtaList.FirstOrDefault(mu => mu.Id == muhurtaId)?.ColorId ?? 0;
         }
 
         private static string GetYogaShortName(int yogaId, string lang)

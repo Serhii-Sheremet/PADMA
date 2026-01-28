@@ -3844,3 +3844,69 @@ ensuring UI updates correctly when the tooltip is shown.
 
 -----------
 
+# 📄 PADMA --- Muhurta Lane Implementation
+
+## 1. Purpose
+
+This document describes the implementation of the Muhurta lane on
+DayPage. The Muhurta lane visualizes auspicious and inauspicious
+intraday time periods, including correct handling of overlapping
+Muhurtas.
+
+## 2. Data Source
+
+Muhurtas are calculated once in DayComputationService and exposed
+through DayOverviewData.MuhurtaStripes.
+
+Each MuhurtaOverviewStripe contains: - MuhurtaId - ColorId -
+DayStartLocal / DayEndLocal - StartLocal / EndLocal
+
+Stripes with MuhurtaId = 0 (Abhijit on Wednesdays) are filtered out
+before use on DayPage.
+
+## 3. Data Transfer
+
+DayOverviewData is transferred to DayPage via DayNavBundle. DayPage
+extracts and filters MuhurtaStripes without recalculation.
+
+## 4. Segment Construction (Intersection)
+
+Overlapping Muhurtas are transformed into non-overlapping
+PanchangaSegments by: - collecting all time boundaries, - splitting the
+day into minimal intervals, - determining active Muhurtas per interval.
+
+Color rules: - single Muhurta → its own color, - overlapping Muhurtas →
+mixed (pink) color.
+
+Each segment stores: - TransitStart / TransitEnd, - TransitId, - Text =
+"id" or "id1,id2", - resolved Color.
+
+## 5. Rendering
+
+The Muhurta lane uses the existing RenderPanchangaLane pipeline: -
+colored blocks, - start and end separator lines, - support for short
+intraday segments.
+
+Sticky labels are disabled for Muhurta lane.
+
+## 6. Tooltip
+
+Tooltips are minimal: - title + time range for a single Muhurta, -
+multiple formatted sections for overlapping Muhurtas, ordered by actual
+start time.
+
+FormattedString is used to render bold headers and secondary range text.
+
+## 7. Design Decisions
+
+-   No new builders or recalculation.
+-   Reuse of MuhurtaOverviewStripe.
+-   Local intersection logic on DayPage.
+-   Visual clarity prioritized.
+
+## 8. Status
+
+Muhurta lane implementation is complete and ready for extension.
+
+---------
+
