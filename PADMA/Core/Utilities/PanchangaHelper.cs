@@ -158,6 +158,13 @@ namespace PADMA.Core.Utilities
                 .FirstOrDefault(i => i.LanguageCode == lang && i.NityaYogaId == nityaYogaId);
         }
 
+        public static YogaDesc? GetYogaDescEntity(int yogaId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.YogaDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.YogaId == yogaId);
+        }
+
         public static MuhurtaDesc? GetMuhurtaDescEntity(int muhurtaId)
         {
             var lang = DataCache.Instance.CurrentLanguageCode;

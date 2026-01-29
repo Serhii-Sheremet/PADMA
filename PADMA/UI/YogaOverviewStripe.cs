@@ -3,7 +3,12 @@ namespace PADMA.UI;
 public sealed class YogaOverviewStripe
 {
     public int YogaId { get; set; }
+    public int ColorId { get; set; }
     public string Title { get; set; } = string.Empty;
+
+    public DayOfWeek Vara { get; set; }
+    public int NakshatraId { get; set; }
+    public int TithiId { get; set; }
 
     public DateTime DayStartLocal { get; set; }   // 00:00 local
     public DateTime DayEndLocal { get; set; }     // 24:00 local

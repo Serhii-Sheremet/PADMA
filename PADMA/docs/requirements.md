@@ -3844,7 +3844,136 @@ ensuring UI updates correctly when the tooltip is shown.
 
 -----------
 
-# 📄 PADMA --- Muhurta Lane Implementation
+# PADMA – DayPage Yoga Lane
+
+This document fixes and describes the final behaviour of **Yoga Day Lane** on **DayPage**. It reflects the current implemented state and should be merged into the main `requirements.md`.
+
+## 1. Purpose
+
+The Yoga Day Lane represents **all Yogas of the day combined into a single timeline lane**.
+Unlike DayOverview (where Yogas may appear as separate stripes), on DayPage Yogas are:
+
+- merged into **one lane**
+- may **overlap in time**
+- visually **interact with each other**
+
+This lane is intended for **visual analysis**, not for raw calculation.
+
+## 2. Input Data
+
+Yoga data is **pre-calculated** and passed to DayPage via navigation bundle. DayPage:
+
+- does **not** perform Swiss calculations
+- does **not** recompute Yogas
+
+Each Yoga segment contains:
+
+- YogaId
+- StartLocal / EndLocal
+- ColorId (semantic meaning: positive / negative / neutral)
+- Vara (weekday)
+- NakshatraId
+- TithiId
+
+## 3. Segment Construction Logic
+
+The Yoga lane is built by **splitting the day timeline into minimal continuous segments**.
+
+### Algorithm
+
+1. Collect all Yoga start/end timestamps within the day
+2. Add day start and day end boundaries
+3. Sort all time points
+4. For each adjacent interval:
+   - Determine the set of active Yogas
+   - If no Yogas are active → no segment
+   - If at least one Yoga is active → create a segment
+
+This supports any number of overlaps (0…N).
+
+## 4. Color Resolution Rules
+
+For each resulting segment:
+
+- If **all active Yogas have the same ColorId** → use that color
+- If **different ColorIds are present** → use `EColor.LIGHTGREEN`
+
+Meaning:
+> Positive and negative Yogas neutralize each other when overlapping.
+No color blending is used.
+
+## 5. Sticky Label Behaviour
+
+Yoga lane uses **sticky labels** with special rules:
+
+- Sticky label text is derived from **all active Yoga names**
+- Names are concatenated with spaces
+- Sticky label:
+  - **appears** when a Yoga segment reaches the top of the visible viewport
+  - **disappears immediately** when the timeline enters a gap (no Yoga segment)
+
+This is critical because Yoga lane may contain gaps.
+
+## 6. Tooltip Architecture
+
+Yoga tooltip is built **entirely dynamically** and does **not** rely on the generic header (Title/Range) used by other transit types.
+
+### Key Principles
+
+- Tooltip is composed of **multiple independent Yoga blocks**
+- No global title or range is shown
+- Each Yoga is rendered as a self-contained block
+
+## 7. Tooltip Block Structure (per Yoga)
+
+Each Yoga block consists of:
+
+1. **Yoga Name** (header)
+2. **Exact time interval**
+3. **Inner divider** directly under the time interval
+4. Body fields:
+   - Vara (localized weekday)
+   - Nakshatra
+   - Tithi
+   - Additional Yoga-specific description fields
+
+### Inner Divider Rule
+
+- Divider width equals **exact width of the time interval text**
+- Implemented via layout using `Auto` column width
+- Divider visually belongs to the Yoga block and does not span the full tooltip width
+
+## 8. Multiple Yoga Blocks
+
+When multiple Yogas are present in one segment:
+
+- Each Yoga is rendered as a separate block
+- Blocks are separated by a **full-width divider** and optional spacer
+
+This visually distinguishes different Yogas while keeping them in one tooltip.
+
+## 9. Design Notes
+
+- DayPage UI never recalculates astrological data
+- Yoga lane behaviour mirrors legacy PAD logic
+- Visualization logic is deterministic and data-driven
+- Tooltip rendering is extensible for future Panchanga entities
+
+## 10. Summary
+
+The Yoga Day Lane on DayPage:
+
+- merges all Yogas into a single interactive timeline
+- correctly handles arbitrary overlaps
+- uses semantic color neutralization
+- provides precise, readable, and structured tooltips
+- faithfully preserves legacy PAD analytical behaviour
+
+This specification reflects the **final implemented behaviour**.
+
+-----------
+
+# PADMA --- Muhurta Lane Implementation
 
 ## 1. Purpose
 

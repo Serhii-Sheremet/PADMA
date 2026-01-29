@@ -1,4 +1,4 @@
-using Microsoft.Maui.Graphics;
+п»їusing Microsoft.Maui.Graphics;
 using Microsoft.Maui.Layouts;
 using Microsoft.Maui.Controls;
 using PADMA.Core.Enums;
@@ -26,6 +26,20 @@ namespace PADMA.Pages
         {
             get => _overview;
             set { _overview = value; OnPropertyChanged(); }
+        }
+
+        private List<YogaOverviewStripe> _yogaStripes = new();
+        public List<YogaOverviewStripe> YogaStripes
+        {
+            get => _yogaStripes;
+            set { _yogaStripes = value; OnPropertyChanged(); }
+        }
+
+        private List<PanchangaSegment> _yogaSegments = new();
+        public List<PanchangaSegment> YogaSegments
+        {
+            get => _yogaSegments;
+            set { _yogaSegments = value; OnPropertyChanged(); }
         }
 
         private List<MuhurtaOverviewStripe> _muhurtaStripes = new();
@@ -63,7 +77,7 @@ namespace PADMA.Pages
             }
         }
 
-        // То, к чему привязывается XAML (Header + Body)
+        // РўРѕ, Рє С‡РµРјСѓ РїСЂРёРІСЏР·С‹РІР°РµС‚СЃСЏ XAML (Header + Body)
         public ObservableCollection<TransitColumnVm> TransitColumns { get; } = new();
 
         private DayItem? _day;
@@ -78,7 +92,7 @@ namespace PADMA.Pages
             }
         }
 
-        private double _tooltipMaxHeight = 500; // безопасный дефолт
+        private double _tooltipMaxHeight = 500; // Р±РµР·РѕРїР°СЃРЅС‹Р№ РґРµС„РѕР»С‚
         public double TooltipMaxHeight
         {
             get => _tooltipMaxHeight;
@@ -92,25 +106,37 @@ namespace PADMA.Pages
             set { _isTooltipVisible = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsTooltipHiddenInputTransparent)); }
         }
 
-        // чтобы overlay не мешал скроллам когда скрыт
+        // С‡С‚РѕР±С‹ overlay РЅРµ РјРµС€Р°Р» СЃРєСЂРѕР»Р»Р°Рј РєРѕРіРґР° СЃРєСЂС‹С‚
         public bool IsTooltipHiddenInputTransparent => !IsTooltipVisible;
+        public bool HasTooltipHeader => !string.IsNullOrWhiteSpace(TooltipTitle) || !string.IsNullOrWhiteSpace(TooltipRange);
+        public bool HasTooltipHeaderAndBlocks => HasTooltipHeader && HasTooltipBlocks;
 
         private string _tooltipTitle = string.Empty;
         public string TooltipTitle
         {
             get => _tooltipTitle;
-            set { if (_tooltipTitle == value) return; _tooltipTitle = value; OnPropertyChanged(); }
+            set { if (_tooltipTitle == value) return; _tooltipTitle = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasTooltipHeader)); }
         }
 
         private string _tooltipRange = string.Empty;
         public string TooltipRange
         {
             get => _tooltipRange;
-            set { if (_tooltipRange == value) return; _tooltipRange = value; OnPropertyChanged(); }
+            set { if (_tooltipRange == value) return; _tooltipRange = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasTooltipHeader)); }
         }
 
-        public ObservableCollection<FormattedString> TooltipBlocks { get; } = new();
-        public bool HasTooltipBlocks => TooltipBlocks.Count > 0;
+        public sealed class TooltipDivider { }
+        public sealed class TooltipInnerDivider { }
+        public sealed class TooltipSpacer
+        {
+            public double Height { get; init; } = 8;
+        }
+        public sealed class TooltipRangeLine
+        {
+            public string Text { get; init; } = string.Empty;
+        }
+        public ObservableCollection<object> TooltipItems { get; } = new();
+        public bool HasTooltipBlocks => TooltipItems.Count > 0;
 
         private PanchangaSegment? _selectedSegment;
         private VisualElement? _selectedSegmentView;
@@ -135,8 +161,11 @@ namespace PADMA.Pages
                     Day = bundle.Day;
 
                     Overview = bundle.Overview;
+                    
+                    YogaStripes = (Overview?.YogaStripes ?? new ObservableCollection<YogaOverviewStripe>()).ToList();
+
                     MuhurtaStripes = (Overview?.MuhurtaStripes ?? new ObservableCollection<MuhurtaOverviewStripe>())
-                            .Where(s => s.MuhurtaId != 0)      // фильтр Abhijit "не образуется"
+                            .Where(s => s.MuhurtaId != 0)      // С„РёР»СЊС‚СЂ Abhijit "РЅРµ РѕР±СЂР°Р·СѓРµС‚СЃСЏ"
                             .ToList();
 
                     if (bundle.Overview?.SunriseUtc != null)
@@ -148,8 +177,8 @@ namespace PADMA.Pages
                     var dayStart = Day!.Date;          
                     var dayEnd = dayStart.AddDays(1);
 
-                    var overlapColorId = (int)EColor.PINK; 
-                    MuhurtaSegments = BuildMuhurtaSegments(dayStart, dayEnd, MuhurtaStripes, overlapColorId);
+                    YogaSegments = BuildYogaSegments(dayStart, dayEnd, YogaStripes);
+                    MuhurtaSegments = BuildMuhurtaSegments(dayStart, dayEnd, MuhurtaStripes);
 
                     // optional: you may keep bundle.Window for future swipe feature
                     // var window = bundle.Window;
@@ -165,7 +194,7 @@ namespace PADMA.Pages
                     UpdateAllSticky(0);
                     RequestAutoCenter();
 
-                    // optional: store.Remove(token); // если освобождать память сразу
+                    // optional: store.Remove(token); // РµСЃР»Рё РѕСЃРІРѕР±РѕР¶РґР°С‚СЊ РїР°РјСЏС‚СЊ СЃСЂР°Р·Сѓ
                     return;
                 }
             }
@@ -192,7 +221,7 @@ namespace PADMA.Pages
 
             Dispatcher.Dispatch(async () =>
             {
-                // дать странице разложиться
+                // РґР°С‚СЊ СЃС‚СЂР°РЅРёС†Рµ СЂР°Р·Р»РѕР¶РёС‚СЊСЃСЏ
                 await Task.Delay(50);
 
                 if (!_autoCenterRequested) return;
@@ -206,11 +235,11 @@ namespace PADMA.Pages
         {
             base.OnSizeAllocated(width, height);
 
-            // height может быть 0 на ранних проходах layout
+            // height РјРѕР¶РµС‚ Р±С‹С‚СЊ 0 РЅР° СЂР°РЅРЅРёС… РїСЂРѕС…РѕРґР°С… layout
             if (height <= 0)
                 return;
 
-            // 70% высоты страницы — комфортно для тултипа
+            // 70% РІС‹СЃРѕС‚С‹ СЃС‚СЂР°РЅРёС†С‹ вЂ” РєРѕРјС„РѕСЂС‚РЅРѕ РґР»СЏ С‚СѓР»С‚РёРїР°
             TooltipMaxHeight = height * 0.70;
         }
 
@@ -224,18 +253,23 @@ namespace PADMA.Pages
             InitializeComponent();
             BindingContext = this;
 
-            TooltipBlocks.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasTooltipBlocks));
+            TooltipItems.CollectionChanged += (_, __) =>
+            {
+                OnPropertyChanged(nameof(HasTooltipBlocks));
+                OnPropertyChanged(nameof(HasTooltipHeader)); // РЅРµ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ, РЅРѕ РЅРµ РјРµС€Р°РµС‚
+                OnPropertyChanged(nameof(HasTooltipHeaderAndBlocks));
+            };
 
             MessagingCenter.Unsubscribe<object>(this, "SettingsChanged");
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
             {
-                // язык уже сохранён в БД + Refresh вызывается на MainPage или в LanguagePage
-                // тут нам достаточно пересобрать отображаемые колонки
+                // СЏР·С‹Рє СѓР¶Рµ СЃРѕС…СЂР°РЅС‘РЅ РІ Р‘Р” + Refresh РІС‹Р·С‹РІР°РµС‚СЃСЏ РЅР° MainPage РёР»Рё РІ LanguagePage
+                // С‚СѓС‚ РЅР°Рј РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїРµСЂРµСЃРѕР±СЂР°С‚СЊ РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹Рµ РєРѕР»РѕРЅРєРё
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     BuildTransitColumns();
 
-                    // чтобы подписи/содержимое тоже обновились
+                    // С‡С‚РѕР±С‹ РїРѕРґРїРёСЃРё/СЃРѕРґРµСЂР¶РёРјРѕРµ С‚РѕР¶Рµ РѕР±РЅРѕРІРёР»РёСЃСЊ
                     RenderTransitLane();
                 });
             });
@@ -257,7 +291,7 @@ namespace PADMA.Pages
             if (dayLocal.Kind == DateTimeKind.Utc)
                 dayLocal = TimeZoneInfo.ConvertTimeFromUtc(dayLocal, tzInfo);
             else
-                dayLocal = dayLocal; // Unspecified считаем уже локальной датой
+                dayLocal = dayLocal; // Unspecified СЃС‡РёС‚Р°РµРј СѓР¶Рµ Р»РѕРєР°Р»СЊРЅРѕР№ РґР°С‚РѕР№
 
             return dayLocal.Date == nowLocal;
         }
@@ -277,8 +311,9 @@ namespace PADMA.Pages
             UpdateStickyForLane((int)EDVLineName.KARANA, Day.KaranaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.NITYAYOGA, Day.NityaYogaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.YOGA, YogaSegments, scrollY);  
+            //UpdateStickyForLane((int)EDVLineName.MUHURTA, MuhurtaSegments, scrollY);  // -- will not be shown
 
-            //UpdateStickyForLane((int)EDVLineName.MUHURTA, MuhurtaSegments, scrollY);
 
         }
 
@@ -293,7 +328,7 @@ namespace PADMA.Pages
 
             var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tzInfo);
 
-            // центрируем только если открыли сегодняшний день
+            // С†РµРЅС‚СЂРёСЂСѓРµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё РѕС‚РєСЂС‹Р»Рё СЃРµРіРѕРґРЅСЏС€РЅРёР№ РґРµРЅСЊ
             if (!IsTodayForProfile(Day)) return;
 
             var minute = nowLocal.TimeOfDay.TotalMinutes;
@@ -313,7 +348,7 @@ namespace PADMA.Pages
 
             Dispatcher.Dispatch(() =>
             {
-                // заставляем MAUI пересчитать размеры/arrange для sticky слоя
+                // Р·Р°СЃС‚Р°РІР»СЏРµРј MAUI РїРµСЂРµСЃС‡РёС‚Р°С‚СЊ СЂР°Р·РјРµСЂС‹/arrange РґР»СЏ sticky СЃР»РѕСЏ
                 TransitStickyScroll?.InvalidateMeasure();
                 TransitStickyScroll?.ForceLayout();
 
@@ -351,12 +386,12 @@ namespace PADMA.Pages
             var dayColor = Color.FromArgb("#EAF6FF");
             var nightColor = Color.FromArgb("#D7ECFF");
 
-            // фон для Time/Events через AbsoluteLayout
+            // С„РѕРЅ РґР»СЏ Time/Events С‡РµСЂРµР· AbsoluteLayout
             BuildColumnBackground(IconsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 24);
             BuildColumnBackground(TimeBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 36);
             BuildColumnBackground(EventsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 80);
 
-            // фон для TransitBodyGrid через BoxView
+            // С„РѕРЅ РґР»СЏ TransitBodyGrid С‡РµСЂРµР· BoxView
             TransitNightBackground.Color = nightColor;
             TransitNightBackground.HeightRequest = TimelineHeight;
             TransitNightBackground.TranslationY = 0;
@@ -481,8 +516,8 @@ namespace PADMA.Pages
                 {
                     var t = TimeSpan.FromMinutes(minute);
 
-                    const double labelHeight = 14;     // под FontSize 11–12 обычно ок
-                    const double labelPaddingTop = 0;  // небольшой зазор над линией
+                    const double labelHeight = 14;     // РїРѕРґ FontSize 11вЂ“12 РѕР±С‹С‡РЅРѕ РѕРє
+                    const double labelPaddingTop = 0;  // РЅРµР±РѕР»СЊС€РѕР№ Р·Р°Р·РѕСЂ РЅР°Рґ Р»РёРЅРёРµР№
 
                     var label = new Label
                     {
@@ -513,7 +548,7 @@ namespace PADMA.Pages
             var totalHeight = totalMinutes * PixelsPerMinute;
             EventsGridLayout.HeightRequest = totalHeight;
 
-            var width = 80.0; // должна совпадать с WidthRequest events-колонки
+            var width = 80.0; // РґРѕР»Р¶РЅР° СЃРѕРІРїР°РґР°С‚СЊ СЃ WidthRequest events-РєРѕР»РѕРЅРєРё
 
             var lineColor = (Color)Application.Current.Resources["TimelineLineColor"];
 
@@ -524,7 +559,7 @@ namespace PADMA.Pages
                 bool isHour = (minute % 60 == 0);
                 bool isHalfHour = (!isHour && minute % 30 == 0);
 
-                // Events grid делаем более мягкой, чем сама шкала
+                // Events grid РґРµР»Р°РµРј Р±РѕР»РµРµ РјСЏРіРєРѕР№, С‡РµРј СЃР°РјР° С€РєР°Р»Р°
                 var opacity = isHour ? 0.85 : (isHalfHour ? 0.85 : 0.85);
 
                 var line = new BoxView
@@ -546,7 +581,7 @@ namespace PADMA.Pages
             TransitColumns.Clear();
             var lang = DataCache.Instance.CurrentLanguageCode;
 
-            // берём все enum-значения < 100 (то есть 1..21), USER=100 не включаем
+            // Р±РµСЂС‘Рј РІСЃРµ enum-Р·РЅР°С‡РµРЅРёСЏ < 100 (С‚Рѕ РµСЃС‚СЊ 1..21), USER=100 РЅРµ РІРєР»СЋС‡Р°РµРј
             var ids = Enum.GetValues(typeof(EDVLineName))
                           .Cast<EDVLineName>()
                           .Select(x => (int)x)
@@ -558,7 +593,7 @@ namespace PADMA.Pages
             foreach (var id in ids)
             {
                 var code = DataCache.Instance.DVLineNameList?.FirstOrDefault(x => x.Id == id)?.Code ?? id.ToString();
-                var desc =DataCache.Instance.DVLineNameDescList?.FirstOrDefault(d => d.DVLineNameId == id && d.LanguageCode == lang) ?? null;
+                var desc = DataCache.Instance.DVLineNameDescList?.FirstOrDefault(d => d.DVLineNameId == id && d.LanguageCode == lang) ?? null;
 
                 var name = desc?.Name;
                 if (string.IsNullOrWhiteSpace(name))
@@ -590,7 +625,7 @@ namespace PADMA.Pages
             RenderPanchangaLane((int)EDVLineName.KARANA, Day.KaranaSegments);
             RenderPanchangaLane((int)EDVLineName.NITYAYOGA, Day.NityaYogaSegments);
             RenderPanchangaLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments);
-
+            RenderPanchangaLane((int)EDVLineName.YOGA, YogaSegments);
             RenderPanchangaLane((int)EDVLineName.MUHURTA, MuhurtaSegments);
 
         }
@@ -599,26 +634,26 @@ namespace PADMA.Pages
         {
             if (TransitColumnsHost == null) return;
 
-            // найдём индекс колонки по LineId
+            // РЅР°Р№РґС‘Рј РёРЅРґРµРєСЃ РєРѕР»РѕРЅРєРё РїРѕ LineId
             var columnIndex = TransitColumns.ToList().FindIndex(c => c.LineId == lineId);
             if (columnIndex < 0) return;
 
-            // получаем визуальный Grid конкретной колонки из хоста
+            // РїРѕР»СѓС‡Р°РµРј РІРёР·СѓР°Р»СЊРЅС‹Р№ Grid РєРѕРЅРєСЂРµС‚РЅРѕР№ РєРѕР»РѕРЅРєРё РёР· С…РѕСЃС‚Р°
             if (columnIndex >= TransitColumnsHost.Children.Count) return;
             if (TransitColumnsHost.Children[columnIndex] is not Grid columnGrid) return;
 
-            // первый child в template — это AbsoluteLayout, который мы добавили
+            // РїРµСЂРІС‹Р№ child РІ template вЂ” СЌС‚Рѕ AbsoluteLayout, РєРѕС‚РѕСЂС‹Р№ РјС‹ РґРѕР±Р°РІРёР»Рё
             var lane = columnGrid.Children.OfType<AbsoluteLayout>().FirstOrDefault();
             if (lane == null) return;
 
             lane.Children.Clear();
 
-            var dayStart = Day!.Date;              // 00:00 выбранного дня (локально)
+            var dayStart = Day!.Date;              // 00:00 РІС‹Р±СЂР°РЅРЅРѕРіРѕ РґРЅСЏ (Р»РѕРєР°Р»СЊРЅРѕ)
             var dayEnd = dayStart.AddDays(1);
             var lineColor = (Color)Application.Current.Resources["TimelineLineColor"];
             var labels = new List<(double y, string text)>();
 
-            // рисуем сегменты
+            // СЂРёСЃСѓРµРј СЃРµРіРјРµРЅС‚С‹
             foreach (var seg in segments)
             {
                 // minutes relative to dayStart (can be <0 or >1440)
@@ -626,7 +661,7 @@ namespace PADMA.Pages
                 var endMin = (seg.End - dayStart).TotalMinutes;
 
                 // clip to [0..1440]
-                if (endMin <= 0 || startMin >= 1440) continue;   // полностью вне суток
+                if (endMin <= 0 || startMin >= 1440) continue;   // РїРѕР»РЅРѕСЃС‚СЊСЋ РІРЅРµ СЃСѓС‚РѕРє
 
                 startMin = Math.Max(0, startMin);
                 endMin = Math.Min(1440, endMin);
@@ -639,7 +674,7 @@ namespace PADMA.Pages
 
                 View block;
 
-                // поддержка "split" (если понадобится, уже есть в PanchangaSegment)
+                // РїРѕРґРґРµСЂР¶РєР° "split" (РµСЃР»Рё РїРѕРЅР°РґРѕР±РёС‚СЃСЏ, СѓР¶Рµ РµСЃС‚СЊ РІ PanchangaSegment)
                 if (seg.IsSplitColor && seg.ColorTop != null && seg.ColorBottom != null)
                 {
                     var splitGrid = new Grid
@@ -672,7 +707,6 @@ namespace PADMA.Pages
                     };
                 }
 
-
                 var wrapper = new Grid
                 {
                     Padding = 0,
@@ -681,7 +715,7 @@ namespace PADMA.Pages
                     ColumnSpacing = 0
                 };
 
-                // 1) фон сегмента
+                // С„РѕРЅ СЃРµРіРјРµРЅС‚Р°
                 if (block is View v)
                 {
                     v.HorizontalOptions = LayoutOptions.Fill;
@@ -689,11 +723,11 @@ namespace PADMA.Pages
                 }
                 wrapper.Children.Add(block);
 
-                // 2) рамка выделения поверх
+                // СЂР°РјРєР° РІС‹РґРµР»РµРЅРёСЏ РїРѕРІРµСЂС…
                 var highlight = new Border
                 {
                     Stroke = new SolidColorBrush(Colors.Gold),
-                    StrokeThickness = 2,          // можно 1, если тонко
+                    StrokeThickness = 2,          // РјРѕР¶РЅРѕ 1, РµСЃР»Рё С‚РѕРЅРєРѕ
                     Background = null,
                     Padding = 0,
                     Margin = 0,
@@ -715,13 +749,13 @@ namespace PADMA.Pages
                 AbsoluteLayout.SetLayoutFlags(wrapper, AbsoluteLayoutFlags.None);
                 lane.Children.Add(wrapper);
 
-                // текст в начале сегмента (если он начинается внутри суток, а не в 00:00)
+                // С‚РµРєСЃС‚ РІ РЅР°С‡Р°Р»Рµ СЃРµРіРјРµРЅС‚Р° (РµСЃР»Рё РѕРЅ РЅР°С‡РёРЅР°РµС‚СЃСЏ РІРЅСѓС‚СЂРё СЃСѓС‚РѕРє, Р° РЅРµ РІ 00:00)
                 var text = GetSegmentLabelText(seg);
                 if (startMin > 0 && startMin < 1440)
                 {
                     labels.Add((startMin * PixelsPerMinute, text));
                 }
-                // линия БЕЗ текста в конце сегмента (если не конец суток)
+                // Р»РёРЅРёСЏ Р‘Р•Р— С‚РµРєСЃС‚Р° РІ РєРѕРЅС†Рµ СЃРµРіРјРµРЅС‚Р° (РµСЃР»Рё РЅРµ РєРѕРЅРµС† СЃСѓС‚РѕРє)
                 if (endMin > 0 && endMin < 1440)
                 {
                     labels.Add((endMin * PixelsPerMinute, string.Empty));
@@ -732,7 +766,7 @@ namespace PADMA.Pages
             // separator at segment end (to avoid merging same-color segments)
             foreach (var (y, text) in labels)
             {
-                // линия
+                // Р»РёРЅРёСЏ
                 var sep = new BoxView
                 {
                     Color = lineColor,
@@ -744,11 +778,11 @@ namespace PADMA.Pages
                 AbsoluteLayout.SetLayoutBounds(sep, new Rect(0, y, 80, 1));
                 lane.Children.Add(sep);
 
-                // текст рисуем только если есть что рисовать
+                // С‚РµРєСЃС‚ СЂРёСЃСѓРµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё РµСЃС‚СЊ С‡С‚Рѕ СЂРёСЃРѕРІР°С‚СЊ
                 if (string.IsNullOrWhiteSpace(text))
                     continue;
 
-                // текст под линией
+                // С‚РµРєСЃС‚ РїРѕРґ Р»РёРЅРёРµР№
                 var lbl = new Label
                 {
                     Text = text,
@@ -756,7 +790,7 @@ namespace PADMA.Pages
                     TextColor = Colors.Black,
                     HorizontalTextAlignment = TextAlignment.Center,
                     Opacity = 0.85,
-                    Margin = new Thickness(2, 1, 2, 0),   // 1px вниз от линии
+                    Margin = new Thickness(2, 1, 2, 0),   // 1px РІРЅРёР· РѕС‚ Р»РёРЅРёРё
                     LineBreakMode = LineBreakMode.TailTruncation,
                     MaxLines = 1,
                     InputTransparent = true,
@@ -822,7 +856,29 @@ namespace PADMA.Pages
                     return $"{text}";
                 }
             },
+            {
+                ETransitKind.Yoga,
+                seg =>
+                {
+                    // seg.Text may contain a comma-separated list of YogaIds (for overlays)
+                    var ids = (seg.Text ?? "")
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(s => int.TryParse(s, out var id) ? id : 0)
+                        .Where(id => id > 0)
+                        .Distinct()
+                        .ToList();
 
+                    if (ids.Count == 0)
+                        ids.Add(seg.TransitId);
+
+                    var names = ids
+                        .Select(id => PanchangaHelper.GetYogaDescEntity(id)?.ShortName)
+                        .Where(n => !string.IsNullOrWhiteSpace(n))
+                        .ToList();
+                     
+                    return string.Join(" ", names);
+                }
+            },
             {
                 ETransitKind.Muhurta,
                 seg =>
@@ -838,11 +894,12 @@ namespace PADMA.Pages
                     if (ids.Count == 0)
                         ids.Add(seg.TransitId);
 
-                    var n1 = PanchangaHelper.GetMuhurtaDescEntity(ids[0]).ShortName;
-                    if (ids.Count == 1) return n1;
+                    var names = ids
+                        .Select(id => PanchangaHelper.GetMuhurtaDescEntity(id)?.ShortName)
+                        .Where(n => !string.IsNullOrWhiteSpace(n))
+                        .ToList();
 
-                    var n2 = PanchangaHelper.GetMuhurtaDescEntity(ids[1]).ShortName;
-                    return string.IsNullOrWhiteSpace(n2) ? n1 : $"{n1} {n2}";
+                    return string.Join(" ", names);
                 }
             },
 
@@ -862,23 +919,35 @@ namespace PADMA.Pages
         private void UpdateStickyForLane(int lineId, IList<PanchangaSegment> segments, double scrollY)
         {
             if (Day == null) return;
-            if (segments == null || segments.Count == 0) return;
+
+            var idx = TransitColumns.ToList().FindIndex(c => c.LineId == lineId);
+            if (idx < 0) return;
+
+            if (segments == null || segments.Count == 0)
+            {
+                TransitColumns[idx].StickyText = string.Empty;
+                return;
+            }
 
             var minute = scrollY / PixelsPerMinute;
             var t = Day.Date.AddMinutes(minute);
 
             var seg = segments.FirstOrDefault(s => s.Start <= t && t < s.End);
-            if (seg == null) return;
 
-            var idx = TransitColumns.ToList().FindIndex(c => c.LineId == lineId);
-            if (idx < 0) return;
+            // Р’РђР–РќРћ: РµСЃР»Рё "РґС‹СЂР°" вЂ” СѓР±РёСЂР°РµРј sticky
+            if (seg == null)
+            {
+                TransitColumns[idx].StickyText = string.Empty;
+                return;
+            }
 
             TransitColumns[idx].StickyText = GetSegmentLabelText(seg);
         }
 
+
         private void OnSegmentTapped(int lineId, PanchangaSegment seg, VisualElement view)
         {
-            // 1-й тап: выделяем
+            // 1-Р№ С‚Р°Рї: РІС‹РґРµР»СЏРµРј
             if (_selectedSegment == null || !ReferenceEquals(_selectedSegment, seg) || _selectedLineId != lineId)
             {
                 ClearSelection();
@@ -889,12 +958,12 @@ namespace PADMA.Pages
 
                 HighlightSelection(view, true);
 
-                // при выборе сегмента тултип закрываем
+                // РїСЂРё РІС‹Р±РѕСЂРµ СЃРµРіРјРµРЅС‚Р° С‚СѓР»С‚РёРї Р·Р°РєСЂС‹РІР°РµРј
                 IsTooltipVisible = false;
                 return;
             }
 
-            // 2-й тап по тому же сегменту: открываем тултип
+            // 2-Р№ С‚Р°Рї РїРѕ С‚РѕРјСѓ Р¶Рµ СЃРµРіРјРµРЅС‚Сѓ: РѕС‚РєСЂС‹РІР°РµРј С‚СѓР»С‚РёРї
             switch (lineId)
             {
                 //switch for all lines
@@ -921,6 +990,10 @@ namespace PADMA.Pages
 
                 case (int)EDVLineName.CHANDRABALA:
                     ShowChandraBalaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.YOGA:
+                    ShowYogaTooltip(seg);
                     break;
 
                 case (int)EDVLineName.MUHURTA:
@@ -974,8 +1047,8 @@ namespace PADMA.Pages
             AbsoluteLayout.SetLayoutBounds(
                 img,
                 new Rect(
-                    (columnWidth - iconSize) / 2.0, // центр по ширине колонки
-                    y - iconSize / 2.0,             // центр по времени
+                    (columnWidth - iconSize) / 2.0, // С†РµРЅС‚СЂ РїРѕ С€РёСЂРёРЅРµ РєРѕР»РѕРЅРєРё
+                    y - iconSize / 2.0,             // С†РµРЅС‚СЂ РїРѕ РІСЂРµРјРµРЅРё
                     iconSize,
                     iconSize));
 
@@ -1005,15 +1078,15 @@ namespace PADMA.Pages
         {
             if (Day == null) return;
 
-            if (Day.EclipseId == null || Day.EclipseId == 0) return;   // если int? / int
+            if (Day.EclipseId == null || Day.EclipseId == 0) return;   // РµСЃР»Рё int? / int
             if (string.IsNullOrWhiteSpace(Day.EclipseIcon)) return;
 
-            // если EclipseDate nullable:
+            // РµСЃР»Рё EclipseDate nullable:
             if (Day.EclipseDate == null) return;
 
             var tUtc = Day.EclipseDate.Value;
 
-            // на всякий случай: если Kind не задан — считаем, что это UTC (как у SunriseUtc/SunsetUtc)
+            // РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№: РµСЃР»Рё Kind РЅРµ Р·Р°РґР°РЅ вЂ” СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ СЌС‚Рѕ UTC (РєР°Рє Сѓ SunriseUtc/SunsetUtc)
             if (tUtc.Kind == DateTimeKind.Unspecified)
                 tUtc = DateTime.SpecifyKind(tUtc, DateTimeKind.Utc);
 
@@ -1029,7 +1102,7 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{nak.NakshatraId}.{nak.Name}";
-            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} вЂ“ {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(nak, NakshatraTooltipFields);
         }
@@ -1051,7 +1124,7 @@ namespace PADMA.Pages
 
             var pct = TryParsePercent(seg.Text);
             TooltipTitle = pct.HasValue ? $"{tb.Name} {pct.Value}%" : $"{tb.Name}";
-            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} вЂ“ {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(tb, TaraBalaTooltipFields);
         }
@@ -1066,7 +1139,7 @@ namespace PADMA.Pages
             if (string.IsNullOrWhiteSpace(text))
                 return null;
 
-            // ищем что-то вроде "75%" или " 75 % "
+            // РёС‰РµРј С‡С‚Рѕ-С‚Рѕ РІСЂРѕРґРµ "75%" РёР»Рё " 75 % "
             var m = System.Text.RegularExpressions.Regex.Match(
                 text, @"(?<!\d)(\d{1,3})\s*%");
 
@@ -1086,7 +1159,7 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{ti.TithiId}.{ti.Name}";
-            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} вЂ“ {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ti, TithiTooltipFields);
         }
@@ -1106,7 +1179,7 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{ka.Name}";
-            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} вЂ“ {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ka, KaranaTooltipFields);
         }
@@ -1126,15 +1199,15 @@ namespace PADMA.Pages
                 return;
 
             TooltipTitle = $"{nyd.NityaYogaId}.{nyd.Name}";
-            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} вЂ“ {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
-            TooltipBlocks.Clear();
+            TooltipItems.Clear();
 
-            // 1) Управитель (планета)
+            // 1) РЈРїСЂР°РІРёС‚РµР»СЊ (РїР»Р°РЅРµС‚Р°)
             var rulerName = PanchangaHelper.GetPlanetDescEntity(ny.YogiPlanetId)?.Name;
             AddTooltipBlock("Ruler", rulerName);
 
-            // 2) Накшатра
+            // 2) РќР°РєС€Р°С‚СЂР°
             var nakName = PanchangaHelper.GetNakshatraDescEntity(ny.NakshatraId)?.Name;
             AddTooltipBlock("Nakshatra", nakName);
 
@@ -1150,10 +1223,10 @@ namespace PADMA.Pages
 
         private void ShowChandraBalaTooltip(PanchangaSegment seg)
         {
-            TooltipBlocks.Clear();
+            TooltipItems.Clear();
             var text = StripLeadingTime(seg.Text);
             TooltipTitle = $"{text}";
-            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} вЂ“ {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
         }
 
         private static string StripLeadingTime(string? text)
@@ -1169,8 +1242,8 @@ namespace PADMA.Pages
 
             var first = s.Substring(0, idx);
 
-            // проверяем, что первое "слово" похоже на время
-            // допустимы: H:mm, HH:mm, H:mm:ss, HH:mm:ss
+            // РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ РїРµСЂРІРѕРµ "СЃР»РѕРІРѕ" РїРѕС…РѕР¶Рµ РЅР° РІСЂРµРјСЏ
+            // РґРѕРїСѓСЃС‚РёРјС‹: H:mm, HH:mm, H:mm:ss, HH:mm:ss
             if (TimeSpan.TryParse(first, out _))
                 return s.Substring(idx + 1).Trim();
 
@@ -1183,7 +1256,7 @@ namespace PADMA.Pages
              bool clearFirst = true)
         {
             if (clearFirst)
-                TooltipBlocks.Clear();
+                TooltipItems.Clear();
 
             var lang = DataCache.Instance.CurrentLanguageCode;
 
@@ -1210,13 +1283,13 @@ namespace PADMA.Pages
                     Text = value
                 });
 
-                TooltipBlocks.Add(fs);
+                TooltipItems.Add(fs);
             }
         }
         private void ResetTooltip()
         {
             IsTooltipVisible = false;
-            TooltipBlocks.Clear();
+            TooltipItems.Clear();
             TooltipTitle = string.Empty;
             TooltipRange = string.Empty;
             
@@ -1235,7 +1308,7 @@ namespace PADMA.Pages
             fs.Spans.Add(new Span { Text = " " });
             fs.Spans.Add(new Span { Text = value.Trim() });
 
-            TooltipBlocks.Add(fs);
+            TooltipItems.Add(fs);
         }
 
         protected override void OnAppearing()
@@ -1253,9 +1326,9 @@ namespace PADMA.Pages
         private static List<PanchangaSegment> BuildMuhurtaSegments(
             DateTime dayStartLocal,
             DateTime dayEndLocal,
-            IReadOnlyList<MuhurtaOverviewStripe> stripes,
-            int overlapColorId)
+            IReadOnlyList<MuhurtaOverviewStripe> stripes)
         {
+            var overlapColorId = (int)EColor.PINK;
             var points = new List<DateTime> { dayStartLocal, dayEndLocal };
 
             foreach (var it in stripes)
@@ -1306,18 +1379,18 @@ namespace PADMA.Pages
                 {
                     TransitId = id1,
 
-                    // важно для tooltip
+                    // РІР°Р¶РЅРѕ РґР»СЏ tooltip
                     TransitStart = a,
                     TransitEnd = b,
 
-                    // важно для RenderPanchangaLane (он использует seg.Start/seg.End)
+                    // РІР°Р¶РЅРѕ РґР»СЏ RenderPanchangaLane (РѕРЅ РёСЃРїРѕР»СЊР·СѓРµС‚ seg.Start/seg.End)
                     Start = a,
                     End = b,
 
                     Text = idsText,
                     Color = DataCache.Instance.GetColor((EColor)colorId),
 
-                    // чтобы GetSegmentLabelText заработал
+                    // С‡С‚РѕР±С‹ GetSegmentLabelText Р·Р°СЂР°Р±РѕС‚Р°Р»
                     TransitKind = ETransitKind.Muhurta
                 });
             }
@@ -1327,7 +1400,7 @@ namespace PADMA.Pages
 
         private void ShowMuhurtaTooltip(PanchangaSegment seg)
         {
-            // ids: "id1" или "id1,id2"
+            // ids: "id1" РёР»Рё "id1,id2"
             var ids = (seg.Text ?? "")
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => int.TryParse(s, out var id) ? id : 0)
@@ -1339,7 +1412,7 @@ namespace PADMA.Pages
             if (ids.Count == 0)
                 ids.Add(seg.TransitId);
 
-            // собрать реальные мухурты из stripes (чтобы корректно сортировать по StartLocal)
+            // СЃРѕР±СЂР°С‚СЊ СЂРµР°Р»СЊРЅС‹Рµ РјСѓС…СѓСЂС‚С‹ РёР· stripes (С‡С‚РѕР±С‹ РєРѕСЂСЂРµРєС‚РЅРѕ СЃРѕСЂС‚РёСЂРѕРІР°С‚СЊ РїРѕ StartLocal)
             var items = MuhurtaStripes
                 .Where(s => ids.Contains(s.MuhurtaId) && s.StartLocal.HasValue && s.EndLocal.HasValue)
                 .Select(s => new
@@ -1355,22 +1428,22 @@ namespace PADMA.Pages
             if (items.Count == 0)
                 return;
 
-            // показываем тултип
+            // РїРѕРєР°Р·С‹РІР°РµРј С‚СѓР»С‚РёРї
             IsTooltipVisible = true;
-            TooltipBlocks.Clear();
+            TooltipItems.Clear();
 
-            // Первый — в title/range
+            // РџРµСЂРІС‹Р№ вЂ” РІ title/range
             var first = items[0];
             TooltipTitle = $"{first.Name}";
-            TooltipRange = $"{first.Start:dd-MM-yyyy HH:mm:ss} – {first.End:dd-MM-yyyy HH:mm:ss}";
+            TooltipRange = $"{first.Start:dd.MM.yyyy HH:mm:ss} вЂ“ {first.End:dd.MM.yyyy HH:mm:ss}";
 
-            // Второй — как отдельный "мини-блок" ниже
+            // Р’С‚РѕСЂРѕР№ вЂ” РєР°Рє РѕС‚РґРµР»СЊРЅС‹Р№ "РјРёРЅРё-Р±Р»РѕРє" РЅРёР¶Рµ
             if (items.Count > 1)
             {
                 var second = items[1];
 
-                TooltipBlocks.Add(FsHeader($"{second.Name}"));
-                TooltipBlocks.Add(FsRange($"{second.Start:dd-MM-yyyy HH:mm:ss} – {second.End:dd-MM-yyyy HH:mm:ss}"));
+                TooltipItems.Add(FsHeader($"{second.Name}"));
+                TooltipItems.Add(FsRange($"{second.Start:dd.MM.yyyy HH:mm:ss} вЂ“ {second.End:dd.MM.yyyy HH:mm:ss}"));
             }
         }
 
@@ -1395,8 +1468,190 @@ namespace PADMA.Pages
             return fs;
         }
 
+        private static List<PanchangaSegment> BuildYogaSegments(
+            DateTime dayStartLocal,
+            DateTime dayEndLocal,
+            IReadOnlyList<YogaOverviewStripe> stripes)
+        {
+            // Build a single overlay lane from multiple yoga stripes.
+            // If active yogas have the same ColorId -> use it.
+            // If there is a mix of ColorId -> use LIGHTGREEN (neutralization).
+
+            var overlapColorId = (int)EColor.LIGHTGREEN;
+
+            // Flatten all yoga time intervals for the day
+            var intervals = new List<(int YogaId, int ColorId, string Title, DateTime Start, DateTime End)>();
+            foreach (var s in stripes)
+            {
+                if (s?.Segments == null || s.Segments.Count == 0)
+                    continue;
+
+                foreach (var seg in s.Segments)
+                {
+                    // clamp to [dayStartLocal, dayEndLocal]
+                    var a = seg.StartLocal < dayStartLocal ? dayStartLocal : seg.StartLocal;
+                    var b = seg.EndLocal > dayEndLocal ? dayEndLocal : seg.EndLocal;
+                    if (b <= a)
+                        continue;
+
+                    intervals.Add((s.YogaId, s.ColorId, s.Title ?? string.Empty, a, b));
+                }
+            }
+
+            if (intervals.Count == 0)
+                return new List<PanchangaSegment>();
+
+            // Collect split points
+            var points = new List<DateTime> { dayStartLocal, dayEndLocal };
+            foreach (var it in intervals)
+            {
+                points.Add(it.Start);
+                points.Add(it.End);
+            }
+
+            points = points.Distinct().OrderBy(x => x).ToList();
+
+            var result = new List<PanchangaSegment>();
+
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                var a = points[i];
+                var b = points[i + 1];
+                if (b <= a) continue;
+
+                // Active yogas that fully cover this sub-interval
+                var active = intervals
+                    .Where(it => it.Start <= a && b <= it.End)
+                    .ToList();
+
+                if (active.Count == 0)
+                    continue;
+
+                var activeIds = active.Select(x => x.YogaId).Distinct().OrderBy(x => x).ToList();
+                var distinctColors = active.Select(x => x.ColorId).Distinct().ToList();
+
+                var colorId = (distinctColors.Count == 1) ? distinctColors[0] : overlapColorId;
+                var idsText = string.Join(",", activeIds);
+                var firstId = activeIds.Count > 0 ? activeIds[0] : 0;
+
+                result.Add(new PanchangaSegment
+                {
+                    TransitId = firstId,
+
+                    // for tooltip: exact overlay interval
+                    TransitStart = a,
+                    TransitEnd = b,
+
+                    // for RenderPanchangaLane
+                    Start = a,
+                    End = b,
+
+                    Text = idsText,
+                    Color = DataCache.Instance.GetColor((EColor)colorId),
+                    TransitKind = ETransitKind.Yoga
+                });
+            }
+
+            return result;
+        }
+
+        private void ShowYogaTooltip(PanchangaSegment seg)
+        {
+            // seg.Text: comma-separated YogaIds (for overlays)
+            var ids = (seg.Text ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => int.TryParse(s, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (ids.Count == 0)
+                ids.Add(seg.TransitId);
+
+            // Find the corresponding Yoga stripes and the concrete intervals that cover this segment
+            var items = YogaStripes
+                .Where(s => ids.Contains(s.YogaId))
+                .Select(s =>
+                {
+                    var cover = s.Segments.FirstOrDefault(x => x.StartLocal <= seg.Start && seg.End <= x.EndLocal);
+                    return new
+                    {
+                        s.YogaId,
+                        s.ColorId,
+                        Vara = s.Vara,
+                        NakshatraId = s.NakshatraId,
+                        TithiId = s.TithiId,
+                        Start = cover?.StartLocal ?? seg.Start,
+                        End = cover?.EndLocal ?? seg.End
+                    };
+                })
+                .OrderBy(x => x.Start)
+                .ToList();
+
+            if (items.Count == 0)
+                return;
+
+            var distinctColors = items.Select(x => x.ColorId).Where(c => c != 0).Distinct().ToList();
+            bool isMixed = distinctColors.Count > 1;
+
+            IsTooltipVisible = true;
+            TooltipTitle = string.Empty;
+            TooltipRange = string.Empty;
+            TooltipItems.Clear();
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                var it = items[i];
+                var yogaItem = PanchangaHelper.GetYogaDescEntity(it.YogaId);
+                if (yogaItem == null) continue;
+
+                TooltipItems.Add(FsHeader(yogaItem.Name));
+                TooltipItems.Add(new TooltipRangeLine { Text = $"{it.Start:dd.MM.yyyy HH:mm:ss} вЂ“ {it.End:dd.MM.yyyy HH:mm:ss}" });
+
+                // Vara
+                var vara = GetVaraName(it.Vara);
+                AddTooltipBlock("Vara", vara);
+
+                // Nakshatra
+                if (it.NakshatraId != 0)
+                {
+                    var nakEntity = PanchangaHelper.GetNakshatraDescEntity(it.NakshatraId);
+                    var nakName = nakEntity != null ? $"{it.NakshatraId}.{nakEntity.Name}" : string.Empty;
+                    AddTooltipBlock("Nakshatra", nakName);
+                }
+
+                // Tithi
+                if (it.TithiId != 0)
+                {
+                    var tiEntity = PanchangaHelper.GetTithiDescEntity(it.TithiId);
+                    var tiName = tiEntity != null ? $"{it.TithiId}.{tiEntity.Name}" : string.Empty;
+                    AddTooltipBlock("Tithi", tiName);
+                }
+
+                FillTooltipBlocks(yogaItem, YogaTooltipFields, clearFirst: false);
+
+                // divider РјРµР¶РґСѓ Р№РѕРіР°РјРё вЂ” РЅРѕ РќР• РїРѕСЃР»Рµ РїРѕСЃР»РµРґРЅРµР№
+                if (i < items.Count - 1)
+                {
+                    TooltipItems.Add(new TooltipDivider());
+                    TooltipItems.Add(new TooltipSpacer { Height = 8 });
+                }
+            }
 
 
+        }
+
+        private string GetVaraName(DayOfWeek dow)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode; // С‚РёРїР° "ru", "pl", "en"
+            var culture = new CultureInfo(lang);
+            return culture.DateTimeFormat.GetDayName(dow);
+        }
+
+        private static readonly (string NativeLabel, Func<YogaDesc, string?> GetValue)[] YogaTooltipFields =
+        {
+            ("Description", d => d.Description)
+        };
 
 
 

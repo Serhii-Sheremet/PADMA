@@ -335,7 +335,7 @@ namespace PADMA.UI.Services
                 var tithiData = SwissAnalysis.CalculateTithiDataList_London(inputStartUtc, inputEndUtc, nodeMode);
                 var tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
 
-                var raw = new List<(int YogaId, string Title, Color Color, DateTime StartLocal, DateTime EndLocal)>();
+                var raw = new List<(int YogaId, string Title, DayOfWeek vara, int NakshatraId, int TithiId, Color Color, DateTime StartLocal, DateTime EndLocal)>();
 
                 // helper local function: add yogas for one vara window
                 void AddYogasForVaraWindow(DayOfWeek vara, DateTime windowStartUtc, DateTime windowEndUtc)
@@ -369,7 +369,7 @@ namespace PADMA.UI.Services
                             if (startLocal < dayStartLocal) startLocal = dayStartLocal;
                             if (endLocal > dayEndLocal) endLocal = dayEndLocal;
 
-                            raw.Add((yogaId, title, color, startLocal, endLocal));
+                            raw.Add((yogaId, title, vara, (int)s.NakshatraCode, s.TithiId, color, startLocal, endLocal));
                         }
                     }
                 }
@@ -397,7 +397,11 @@ namespace PADMA.UI.Services
                         var stripe = new YogaOverviewStripe
                         {
                             YogaId = first.YogaId,
+                            ColorId = YogaSlice.GetYogaColorId(first.YogaId),
                             Title = first.Title,
+                            Vara = first.vara,
+                            NakshatraId = first.NakshatraId,
+                            TithiId = first.TithiId,
                             SegmentColor = first.Color,
                             DayStartLocal = dayStartLocal,
                             DayEndLocal = dayEndLocal,
