@@ -821,7 +821,7 @@ namespace PADMA.Pages
                 {
                     var tb = PanchangaHelper.GetTaraBalaDescEntity(seg.TransitId);
                     var pct = TryParsePercent(seg.Text);
-                    return tb != null ? $"{tb.Name} {pct}%" : string.Empty;
+                    return tb != null ? $"{tb.ShortName} {pct}%" : string.Empty;
                 }
             },
             {
@@ -1643,9 +1643,15 @@ namespace PADMA.Pages
 
         private string GetVaraName(DayOfWeek dow)
         {
-            var lang = DataCache.Instance.CurrentLanguageCode; // типа "ru", "pl", "en"
+            var lang = DataCache.Instance.CurrentLanguageCode;
             var culture = new CultureInfo(lang);
-            return culture.DateTimeFormat.GetDayName(dow);
+
+            var name = culture.DateTimeFormat.GetDayName(dow);
+
+            if (string.IsNullOrEmpty(name))
+                return name;
+
+            return char.ToUpper(name[0], culture) + name.Substring(1);
         }
 
         private static readonly (string NativeLabel, Func<YogaDesc, string?> GetValue)[] YogaTooltipFields =

@@ -2,12 +2,7 @@
 
   <PropertyGroup>
     <!-- Обновлённые целевые фреймворки -->
-    <TargetFrameworks>
-      net9.0-android;
-      net9.0-ios;
-      net9.0-maccatalyst;
-      net9.0-windows10.0.19041.0
-    </TargetFrameworks>
+    <TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
     <RootNamespace>PADMA</RootNamespace>
@@ -18,7 +13,7 @@
 
     <!-- App info -->
     <ApplicationTitle>PADMA</ApplicationTitle>
-    <ApplicationId>com.companyname.padma</ApplicationId>
+    <ApplicationId>com.sheremet.padma</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
@@ -34,6 +29,20 @@
 
     <!-- Убираем предупреждение о старых workload’ах -->
     <NoWarn>$(NoWarn);NETSDK1202</NoWarn>
+  </PropertyGroup>
+	
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+  	<AndroidPackageFormat>apk</AndroidPackageFormat>
+  </PropertyGroup>
+  
+  <!-- Debug: для эмулятора (x86_64) -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' AND '$(Configuration)' == 'Debug'">
+  	<AndroidSupportedAbis>x86_64;x86</AndroidSupportedAbis>
+  </PropertyGroup>
+  
+  <!-- Release: для реальных телефонов (ARM) -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' AND '$(Configuration)' == 'Release'">
+  	<AndroidSupportedAbis>arm64-v8a;armeabi-v7a</AndroidSupportedAbis>
   </PropertyGroup>
 
   <ItemGroup>
