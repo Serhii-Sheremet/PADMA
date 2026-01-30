@@ -15,11 +15,17 @@
           RowSpacing="0">
 
         <CarouselView x:Name="DayCarousel"
-                  Loop="False"
-                  Grid.Row="0"
-                  IsSwipeEnabled="True"
-                  ItemsLayout="Horizontal"
-                  PositionChanged="OnCarouselPositionChanged">
+              Loop="False"
+              Grid.Row="0"
+              IsSwipeEnabled="True"
+              PositionChanged="OnCarouselPositionChanged">
+
+            <CarouselView.ItemsLayout>
+                <LinearItemsLayout Orientation="Horizontal"
+                       SnapPointsType="MandatorySingle"
+                       SnapPointsAlignment="Center" />
+            </CarouselView.ItemsLayout>
+
             <CarouselView.ItemTemplate>
                 <DataTemplate>
 
@@ -59,8 +65,9 @@
                                         HorizontalOptions="Start"
                                         VerticalOptions="Center">
                                     <Label Text= "{Binding Overview.SunriseLabelText}"
-                                           Opacity="0.75" />
+                                           FontSize="12" />
                                     <Label Text="{Binding Overview.SunriseText}"
+                                           FontSize="12"
                                            FontAttributes="Bold" />
                                 </HorizontalStackLayout>
 
@@ -70,8 +77,9 @@
                                         HorizontalOptions="End"
                                         VerticalOptions="Center">
                                     <Label Text="{Binding Overview.SunsetLabelText}"
-                                           Opacity="0.75" />
+                                           FontSize="12" />
                                     <Label Text="{Binding Overview.SunsetText}"
+                                           FontSize="12"
                                            FontAttributes="Bold" />
                                 </HorizontalStackLayout>
 

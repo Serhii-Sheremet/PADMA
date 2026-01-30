@@ -89,18 +89,40 @@ public sealed class MuhurtaBarDrawable : IDrawable
         if (string.IsNullOrWhiteSpace(text) || w <= 1 || h <= 1)
             return;
 
-        // Обрезка по bounds, без wrapping (как у тебя в PanchangaBarDrawable)
+        var s = text.Replace("\r", "").Replace("\n", " ").Trim();
+        if (s.Length == 0)
+            return;
+
         canvas.SaveState();
         canvas.ClipRectangle(x, y, w, h);
 
-        canvas.DrawString(
-            text.Replace("\r", "").Replace("\n", " ").Trim(),
-            x, y,
-            w, h,
-            HorizontalAlignment.Left,
-            VerticalAlignment.Center,
-            TextFlow.ClipBounds);
+        // Вертикальное центрирование одной строки
+        var oneLineH = canvas.GetStringSize("Ay", font, fontSize).Height;
+        var baselineY = y + (h - oneLineH) / 2f;
+
+        // Рисуем строго в одну строку: посимвольно, пока влазит
+        float cx = x;
+        for (int i = 0; i < s.Length; i++)
+        {
+            var ch = s[i].ToString();
+            var sz = canvas.GetStringSize(ch, font, fontSize);
+
+            // небольшой safety-pad (как в Panchanga)
+            if (cx + sz.Width > x + w - 1f)
+                break;
+
+            canvas.DrawString(
+                ch,
+                cx, baselineY,
+                sz.Width, oneLineH,
+                HorizontalAlignment.Left,
+                VerticalAlignment.Top,
+                TextFlow.ClipBounds);
+
+            cx += sz.Width;
+        }
 
         canvas.RestoreState();
     }
+
 }
