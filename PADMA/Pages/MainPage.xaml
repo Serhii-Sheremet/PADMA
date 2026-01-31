@@ -6,6 +6,12 @@
              xmlns:controls="clr-namespace:Plugin.Maui.Calendar.Controls;assembly=Plugin.Maui.Calendar"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit">
 
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <ui:CalendarCellHeightConverter x:Key="CalendarCellHeightConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <Shell.TitleView>
         <Grid Padding="0" VerticalOptions="Center">
             <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
@@ -90,15 +96,13 @@
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="ui:DayItem">
-                    <Border
-                        HeightRequest="{Binding Source={x:Reference CalendarCollection},
-                                                 Path=Height,
-                                                 Converter={StaticResource HeightToCellHeightConverter}}"
-                        Stroke="Black"
-                        StrokeThickness="0.5"
-                        Padding="0"
-                        HorizontalOptions="FillAndExpand"
-                        VerticalOptions="FillAndExpand">
+                    <Border>
+                        <Border.HeightRequest>
+                            <MultiBinding Converter="{StaticResource CalendarCellHeightConverter}">
+                                <Binding Source="{x:Reference CalendarCollection}" Path="Width" />
+                                <Binding Source="{x:Reference CalendarCollection}" Path="Height" />
+                            </MultiBinding>
+                        </Border.HeightRequest>
 
                         <Border.Background>
                             <MultiBinding Converter="{StaticResource DayCellBackgroundConverter}">

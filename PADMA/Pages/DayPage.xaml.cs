@@ -92,11 +92,18 @@ namespace PADMA.Pages
             }
         }
 
-        private double _tooltipMaxHeight = 500; // безопасный дефолт
+        private double _tooltipMaxHeight = 500;
         public double TooltipMaxHeight
         {
             get => _tooltipMaxHeight;
             set { if (Math.Abs(_tooltipMaxHeight - value) < 0.1) return; _tooltipMaxHeight = value; OnPropertyChanged(); }
+        }
+
+        private double _tooltipMaxWidth = 520;
+        public double TooltipMaxWidth
+        {
+            get => _tooltipMaxWidth;
+            set { if (Math.Abs(_tooltipMaxWidth - value) < 0.1) return; _tooltipMaxWidth = value; OnPropertyChanged(); }
         }
 
         private bool _isTooltipVisible;
@@ -239,8 +246,12 @@ namespace PADMA.Pages
             if (height <= 0)
                 return;
 
-            // 70% высоты страницы — комфортно для тултипа
-            TooltipMaxHeight = height * 0.70;
+            // 65% высоты страницы — комфортно для тултипа
+            TooltipMaxHeight = height * 0.65;
+
+            // ширина 80% экрана, но не шире 520 и не уже 300
+            var w = width * 0.80;
+            TooltipMaxWidth = Math.Max(300, Math.Min(520, w));
         }
 
         private void OnTooltipBackdropTapped(object? sender, EventArgs e)
@@ -686,8 +697,8 @@ namespace PADMA.Pages
                         }
                     };
 
-                    var top = new BoxView { Color = seg.ColorTop, Opacity = 0.95 };
-                    var bottom = new BoxView { Color = seg.ColorBottom, Opacity = 0.95 };
+                    var top = new BoxView { Color = seg.ColorTop };
+                    var bottom = new BoxView { Color = seg.ColorBottom };
 
                     splitGrid.Children.Add(top);
                     splitGrid.Children.Add(bottom);
@@ -702,8 +713,7 @@ namespace PADMA.Pages
                 {
                     block = new BoxView
                     {
-                        Color = seg.Color ?? Colors.Transparent,
-                        Opacity = 0.95
+                        Color = seg.Color ?? Colors.Transparent
                     };
                 }
 
