@@ -1,8 +1,10 @@
-﻿using Microsoft.Maui.Graphics;
+﻿using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Layouts;
-using Microsoft.Maui.Controls;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
+using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI;
@@ -11,7 +13,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using PADMA.Core.Models.Calendar;
 
 namespace PADMA.Pages
 {
@@ -55,6 +56,15 @@ namespace PADMA.Pages
             get => _muhurtaSegments;
             set { _muhurtaSegments = value; OnPropertyChanged(); }
         }
+
+        // -------  Planet segments  -------
+        private List<PanchangaSegment> _sunSegments = new();
+        public List<PanchangaSegment> SunSegments
+        {
+            get => _sunSegments;
+            set { _sunSegments = value; OnPropertyChanged(); }
+        }
+
 
         public DateTime? SunriseUtc { get; private set; }
         public DateTime? SunsetUtc { get; private set; }
@@ -170,11 +180,11 @@ namespace PADMA.Pages
                 if (store != null && store.TryGet(token, out DayNavBundle? bundle) && bundle != null)
                 {
                     Day = bundle.Day;
+                    var transitPack = Day?.TransitPack;
 
                     Overview = bundle.Overview;
                     
                     YogaStripes = (Overview?.YogaStripes ?? new ObservableCollection<YogaOverviewStripe>()).ToList();
-
                     MuhurtaStripes = (Overview?.MuhurtaStripes ?? new ObservableCollection<MuhurtaOverviewStripe>())
                             .Where(s => s.MuhurtaId != 0)      // фильтр Abhijit "не образуется"
                             .ToList();
@@ -191,8 +201,13 @@ namespace PADMA.Pages
                     YogaSegments = BuildYogaSegments(dayStart, dayEnd, YogaStripes);
                     MuhurtaSegments = BuildMuhurtaSegments(dayStart, dayEnd, MuhurtaStripes);
 
-                    // optional: you may keep bundle.Window for future swipe feature
-                    // var window = bundle.Window;
+                    List<PlanetSlice> sunSlices = new List<PlanetSlice>();
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.SUN, out var slices) && slices != null)
+                    {
+                        sunSlices = slices.ToList();
+                    }
+                    SunSegments = BuildPlanetSegments(EPlanet.SUN, dayStart, dayEnd, sunSlices);
+
 
                     ApplyDayNightBackgroundIfPossible();
 
@@ -322,10 +337,10 @@ namespace PADMA.Pages
             UpdateStickyForLane((int)EDVLineName.KARANA, Day.KaranaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.NITYAYOGA, Day.NityaYogaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments, scrollY);
-            UpdateStickyForLane((int)EDVLineName.YOGA, YogaSegments, scrollY);  
+            UpdateStickyForLane((int)EDVLineName.YOGA, YogaSegments, scrollY);
             //UpdateStickyForLane((int)EDVLineName.MUHURTA, MuhurtaSegments, scrollY);  // -- will not be shown
 
-
+            UpdateStickyForLane((int)EDVLineName.SUNPADA, SunSegments, scrollY);
         }
 
         private async Task CenterOnNowIfTodayAsync()
@@ -365,7 +380,6 @@ namespace PADMA.Pages
 
                 StickyOverlay?.InvalidateMeasure();
             });
-
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
@@ -546,7 +560,6 @@ namespace PADMA.Pages
                     AbsoluteLayout.SetLayoutFlags(label, AbsoluteLayoutFlags.None);
                     TimeScaleLayout.Children.Add(label);
                 }
-
             }
         }
         private void BuildEventsGrid()
@@ -560,19 +573,16 @@ namespace PADMA.Pages
             EventsGridLayout.HeightRequest = totalHeight;
 
             var width = 80.0; // должна совпадать с WidthRequest events-колонки
-
             var lineColor = (Color)Application.Current.Resources["TimelineLineColor"];
 
             for (int minute = 0; minute <= totalMinutes; minute += StepMinutes)
             {
                 var y = minute * PixelsPerMinute;
-
                 bool isHour = (minute % 60 == 0);
                 bool isHalfHour = (!isHour && minute % 30 == 0);
 
                 // Events grid делаем более мягкой, чем сама шкала
                 var opacity = isHour ? 0.85 : (isHalfHour ? 0.85 : 0.85);
-
                 var line = new BoxView
                 {
                     Color = lineColor,
@@ -638,6 +648,8 @@ namespace PADMA.Pages
             RenderPanchangaLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments);
             RenderPanchangaLane((int)EDVLineName.YOGA, YogaSegments);
             RenderPanchangaLane((int)EDVLineName.MUHURTA, MuhurtaSegments);
+
+            RenderPanchangaLane((int)EDVLineName.SUNPADA, SunSegments);
 
         }
 
@@ -911,6 +923,15 @@ namespace PADMA.Pages
                 }
             },
 
+            {
+                ETransitKind.Planet,
+                seg =>
+                {
+                    //var p = PanchangaHelper.GetPlanetDescEntity(seg.);
+                    return string.Empty; // p != null ? $"{p.Name}" : string.Empty;
+                }
+            },
+
 
         };
 
@@ -1006,6 +1027,10 @@ namespace PADMA.Pages
 
                 case (int)EDVLineName.MUHURTA:
                     ShowMuhurtaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.SUNPADA:
+                    //ShowSunPadaTooltip(seg);
                     break;
 
             }
@@ -1669,7 +1694,91 @@ namespace PADMA.Pages
             ("Description", d => d.Description)
         };
 
+        private List<PanchangaSegment> BuildPlanetSegments(
+            EPlanet planet,
+            DateTime dayStartLocal,
+            DateTime dayEndLocal,
+            IReadOnlyList<PlanetSlice> slices)
+        {
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            TimeZoneInfo? tzInfo = ctx.TimeZoneInfo; ;
+            var segments = new List<PanchangaSegment>();
+            var transitMode = DataCache.Instance.GetActiveTransitSettings();
 
+            foreach (var s in slices)
+            {
+                var startUtc = DateTime.SpecifyKind(s.StartUtc, DateTimeKind.Utc);
+                var endUtc = DateTime.SpecifyKind(s.EndUtc, DateTimeKind.Utc);
+
+                // 2) переводим в local
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tzInfo);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(endUtc, tzInfo);
+
+                // клипуем в рамки суток
+                if (endLocal <= dayStartLocal || startLocal >= dayEndLocal) continue;
+                if (startLocal < dayStartLocal) startLocal = dayStartLocal;
+                if (endLocal > dayEndLocal) endLocal = dayEndLocal;
+
+                var seg = new PanchangaSegment
+                {
+                    Start = startLocal,
+                    End = endLocal,
+                    TransitKind = ETransitKind.Planet,
+                    TransitId = s.PlanetId,
+                    TransitStart = s.StartUtc,
+                    TransitEnd = s.EndUtc,
+                    Text = string.Empty
+                };
+                ApplyTransitColorsForSlice(seg, s, transitMode);
+                segments.Add(seg);
+            }
+            return segments;
+        }
+
+        private static void ApplyTransitColorsForSlice(PanchangaSegment seg, PlanetSlice slice, EAppSetting transitMode)
+        {
+            Color moonColor = DataCache.Instance.GetColor(slice.MoonColorCode);
+            Color lagnaColor = DataCache.Instance.GetColor(slice.LagnaColorCode);
+            ApplyTransitColors(seg, moonColor, lagnaColor, transitMode);
+        }
+
+        private static void ApplyTransitColors(
+            PanchangaSegment seg,
+            Color moonColor,
+            Color lagnaColor,
+            EAppSetting transitMode)
+        {
+            switch (transitMode)
+            {
+                case EAppSetting.TRANZITMOON:
+                    seg.IsSplitColor = false;
+                    seg.Color = moonColor;
+                    seg.ColorTop = null;
+                    seg.ColorBottom = null;
+                    break;
+
+                case EAppSetting.TRANZITLAGNA:
+                    seg.IsSplitColor = false;
+                    seg.Color = lagnaColor;
+                    seg.ColorTop = null;
+                    seg.ColorBottom = null;
+                    break;
+
+                case EAppSetting.TRANZITMOONANDLAGNA:
+                    seg.IsSplitColor = true;
+                    seg.Color = null;
+                    seg.ColorTop = moonColor;
+                    seg.ColorBottom = lagnaColor;
+                    break;
+
+                default:
+                    seg.IsSplitColor = false;
+                    seg.Color = moonColor;
+                    seg.ColorTop = null;
+                    seg.ColorBottom = null;
+                    break;
+            }
+        }
 
 
 

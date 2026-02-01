@@ -110,6 +110,13 @@ namespace PADMA.Core.Utilities
             return BuildSegmentsForDay<CalendarSlice>(slicesUtc, dayLocal, tz, cache, getColorCode, getText, getKind, getId);
         }
 
+        public static ZodiacDesc GetZodiacDescEntity(int zodiacId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.ZodiacDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.ZodiacId == zodiacId);
+        }
+
         public static PlanetDesc? GetPlanetDescEntity(int planetId)
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
