@@ -142,6 +142,10 @@ namespace PADMA.Pages
         {
             public string Text { get; init; } = string.Empty;
         }
+        public sealed class TooltipRangeLinePlain
+        {
+            public string Text { get; init; } = string.Empty;
+        }
         public ObservableCollection<object> TooltipItems { get; } = new();
         public bool HasTooltipBlocks => TooltipItems.Count > 0;
 
@@ -246,12 +250,8 @@ namespace PADMA.Pages
             if (height <= 0)
                 return;
 
-            // 65% высоты страницы — комфортно для тултипа
-            TooltipMaxHeight = height * 0.65;
-
-            // ширина 80% экрана, но не шире 520 и не уже 300
-            var w = width * 0.80;
-            TooltipMaxWidth = Math.Max(300, Math.Min(520, w));
+            TooltipMaxHeight = height * (width > height ? 0.85 : 0.70);
+            TooltipMaxWidth = Math.Max(300, Math.Min(520, width * 0.92));
         }
 
         private void OnTooltipBackdropTapped(object? sender, EventArgs e)
@@ -780,7 +780,6 @@ namespace PADMA.Pages
                 var sep = new BoxView
                 {
                     Color = lineColor,
-                    Opacity = 0.85,
                     HeightRequest = 1,
                     InputTransparent = true,
                     ZIndex = 10
@@ -799,7 +798,6 @@ namespace PADMA.Pages
                     FontSize = 10,
                     TextColor = Colors.Black,
                     HorizontalTextAlignment = TextAlignment.Center,
-                    Opacity = 0.85,
                     Margin = new Thickness(2, 1, 2, 0),   // 1px вниз от линии
                     LineBreakMode = LineBreakMode.TailTruncation,
                     MaxLines = 1,
@@ -1429,8 +1427,7 @@ namespace PADMA.Pages
                 {
                     s.MuhurtaId,
                     Start = s.StartLocal!.Value,
-                    End = s.EndLocal!.Value,
-                    Name = PanchangaHelper.GetMuhurtaDescEntity(s.MuhurtaId).Name
+                    End = s.EndLocal!.Value
                 })
                 .OrderBy(x => x.Start)
                 .ToList();
@@ -1438,22 +1435,25 @@ namespace PADMA.Pages
             if (items.Count == 0)
                 return;
 
-            // показываем тултип
             IsTooltipVisible = true;
+            TooltipTitle = string.Empty;
+            TooltipRange = string.Empty;
             TooltipItems.Clear();
 
-            // Первый — в title/range
-            var first = items[0];
-            TooltipTitle = $"{first.Name}";
-            TooltipRange = $"{first.Start:dd.MM.yyyy HH:mm:ss} – {first.End:dd.MM.yyyy HH:mm:ss}";
-
-            // Второй — как отдельный "мини-блок" ниже
-            if (items.Count > 1)
+            for (int i = 0; i < items.Count; i++)
             {
-                var second = items[1];
+                var it = items[i];
+                var muItem = PanchangaHelper.GetMuhurtaDescEntity(it.MuhurtaId);
+                if (muItem == null) continue;
 
-                TooltipItems.Add(FsHeader($"{second.Name}"));
-                TooltipItems.Add(FsRange($"{second.Start:dd.MM.yyyy HH:mm:ss} – {second.End:dd.MM.yyyy HH:mm:ss}"));
+                TooltipItems.Add(FsHeader(muItem.Name));
+                TooltipItems.Add(new TooltipRangeLinePlain { Text = $"{it.Start:dd.MM.yyyy HH:mm:ss} – {it.End:dd.MM.yyyy HH:mm:ss}" });
+
+                if (i < items.Count - 1)
+                {
+                    TooltipItems.Add(new TooltipDivider());
+                    TooltipItems.Add(new TooltipSpacer { Height = 8 });
+                }
             }
         }
 

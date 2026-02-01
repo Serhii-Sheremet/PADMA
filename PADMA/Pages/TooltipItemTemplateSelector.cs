@@ -8,12 +8,14 @@ public class TooltipItemTemplateSelector : DataTemplateSelector
     public DataTemplate? DividerTemplate { get; set; }
     public DataTemplate? InnerDividerTemplate { get; set; }
     public DataTemplate? SpacerTemplate { get; set; }
+    public DataTemplate? RangePlainTemplate { get; set; }
     public DataTemplate? RangeTemplate { get; set; }
 
     protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
     {
         return item switch
         {
+            TooltipRangeLinePlain => RangePlainTemplate ?? RangeTemplate ?? TextTemplate!,
             TooltipRangeLine => RangeTemplate ?? TextTemplate!,
             TooltipInnerDivider => InnerDividerTemplate ?? DividerTemplate ?? TextTemplate!,
             TooltipDivider => DividerTemplate ?? TextTemplate!,

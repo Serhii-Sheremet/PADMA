@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:PADMA.Pages"
     x:Class="PADMA.Pages.DayPage"
+    x:Name="DayPageRoot"
     BackgroundColor="#F7FBFF">
 
     <Shell.BackButtonBehavior>
@@ -46,6 +47,15 @@
                          Margin="0" />
             </DataTemplate>
 
+            <DataTemplate x:Key="TooltipRangePlainTemplate">
+                <Label Text="{Binding Text}"
+                       FontSize="12"
+                       Opacity="0.85"
+                       LineBreakMode="NoWrap"
+                       MaxLines="1"
+                       Margin="0,0,0,2" />
+            </DataTemplate>
+
             <DataTemplate x:Key="TooltipRangeTemplate">
                 <!-- Auto-колонка подстраивается под ширину текста Range -->
                 <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" Margin="0,0,0,2">
@@ -68,6 +78,7 @@
 
             <local:TooltipItemTemplateSelector x:Key="TooltipItemTemplateSelector"
                                                TextTemplate="{StaticResource TooltipTextTemplate}"
+                                               RangePlainTemplate="{StaticResource TooltipRangePlainTemplate}"
                                                RangeTemplate="{StaticResource TooltipRangeTemplate}"
                                                DividerTemplate="{StaticResource TooltipDividerTemplate}"
                                                InnerDividerTemplate="{StaticResource TooltipInnerDividerTemplate}"
@@ -366,7 +377,7 @@
                                                TextColor="Black"
                                                FontSize="10"
                                                FontAttributes="Bold"
-                                               Opacity="0.85"
+                                               Opacity="0.75"
                                                HorizontalOptions="Fill"
                                                VerticalOptions="Fill"
                                                HorizontalTextAlignment="Center"
@@ -412,10 +423,10 @@
                    Margin="18"
                    HorizontalOptions="Center"
                    VerticalOptions="Center"
-                   MaximumWidthRequest="{Binding TooltipMaxWidth}"
-                   MaximumHeightRequest="{Binding TooltipMaxHeight}">
-                
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                   MaximumHeightRequest="{Binding Source={x:Reference DayPageRoot}, Path=TooltipMaxHeight}"
+                   MaximumWidthRequest="{Binding Source={x:Reference DayPageRoot}, Path=TooltipMaxWidth}">
+
+                <Grid RowDefinitions="Auto,Auto,Auto,*"
                       RowSpacing="6">
 
                     <!-- Title -->
