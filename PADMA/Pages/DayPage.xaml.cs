@@ -9,6 +9,7 @@ using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI;
 using PADMA.UI.Services;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -64,7 +65,55 @@ namespace PADMA.Pages
             get => _sunSegments;
             set { _sunSegments = value; OnPropertyChanged(); }
         }
-
+        private List<PanchangaSegment> _moonSegments = new();
+        public List<PanchangaSegment> MoonSegments
+        {
+            get => _moonSegments;
+            set { _moonSegments = value; OnPropertyChanged(); }
+        }
+        private List<PanchangaSegment> _marsSegments = new();
+        public List<PanchangaSegment> MarsSegments
+        {
+            get => _marsSegments;
+            set { _marsSegments = value; OnPropertyChanged(); }
+        }
+        private List<PanchangaSegment> _mercurySegments = new();
+        public List<PanchangaSegment> MercurySegments
+        {
+            get => _mercurySegments;
+            set { _mercurySegments = value; OnPropertyChanged(); }
+        }
+        private List<PanchangaSegment> _jupiterSegments = new();
+        public List<PanchangaSegment> JupiterSegments
+        {
+            get => _jupiterSegments;
+            set { _jupiterSegments = value; OnPropertyChanged(); }
+        }
+        private List<PanchangaSegment> _venusSegments = new();
+        public List<PanchangaSegment> VenusSegments
+        {
+            get => _venusSegments;
+            set { _venusSegments = value; OnPropertyChanged(); }
+        }
+        private List<PanchangaSegment> _saturnSegments = new();
+        public List<PanchangaSegment> SaturnSegments
+        {
+            get => _saturnSegments;
+            set { _saturnSegments = value; OnPropertyChanged(); }
+        }
+        private List<PanchangaSegment> _rahuSegments = new();
+        public List<PanchangaSegment> RahuSegments
+        {
+            get => _rahuSegments;
+            set { _rahuSegments = value; OnPropertyChanged(); }
+        }
+        private List<PanchangaSegment> _ketuSegments = new();
+        public List<PanchangaSegment> KetuSegments
+        {
+            get => _ketuSegments;
+            set { _ketuSegments = value; OnPropertyChanged(); }
+        }
+        // ---------------------------------
 
         public DateTime? SunriseUtc { get; private set; }
         public DateTime? SunsetUtc { get; private set; }
@@ -201,13 +250,53 @@ namespace PADMA.Pages
                     YogaSegments = BuildYogaSegments(dayStart, dayEnd, YogaStripes);
                     MuhurtaSegments = BuildMuhurtaSegments(dayStart, dayEnd, MuhurtaStripes);
 
-                    List<PlanetSlice> sunSlices = new List<PlanetSlice>();
-                    if (transitPack != null && transitPack.TryGetValue(EPlanet.SUN, out var slices) && slices != null)
+                    // -------- Planet segments ------------------------
+                    IReadOnlyList<PlanetSlice> sunSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.SUN, out sunSlices) && sunSlices != null)
                     {
-                        sunSlices = slices.ToList();
+                        SunSegments = BuildPlanetSegments(EPlanet.SUN, dayStart, dayEnd, sunSlices);
                     }
-                    SunSegments = BuildPlanetSegments(EPlanet.SUN, dayStart, dayEnd, sunSlices);
-
+                    IReadOnlyList<PlanetSlice> moonSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.MOON, out moonSlices) && moonSlices != null)
+                    {
+                        MoonSegments = BuildPlanetSegments(EPlanet.MOON, dayStart, dayEnd, moonSlices);
+                    }
+                    IReadOnlyList<PlanetSlice> marsSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.MARS, out marsSlices) && marsSlices != null)
+                    {
+                        MarsSegments = BuildPlanetSegments(EPlanet.MARS, dayStart, dayEnd, marsSlices);
+                    }
+                    IReadOnlyList<PlanetSlice> mercurySlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.MERCURY, out mercurySlices) && mercurySlices != null)
+                    {
+                        MercurySegments = BuildPlanetSegments(EPlanet.MERCURY, dayStart, dayEnd, mercurySlices);
+                    }
+                    IReadOnlyList<PlanetSlice> jupiterSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.JUPITER, out jupiterSlices) && jupiterSlices != null)
+                    {
+                        JupiterSegments = BuildPlanetSegments(EPlanet.JUPITER, dayStart, dayEnd, jupiterSlices);
+                    }
+                    IReadOnlyList<PlanetSlice> venusSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.VENUS, out venusSlices) && venusSlices != null)
+                    {
+                        VenusSegments = BuildPlanetSegments(EPlanet.VENUS, dayStart, dayEnd, venusSlices);
+                    }
+                    IReadOnlyList<PlanetSlice> saturnSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.SATURN, out saturnSlices) && saturnSlices != null)
+                    {
+                        SaturnSegments = BuildPlanetSegments(EPlanet.SATURN, dayStart, dayEnd, saturnSlices);
+                    }
+                    IReadOnlyList<PlanetSlice> rahuSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.RAHU, out rahuSlices) && rahuSlices != null)
+                    {
+                        RahuSegments = BuildPlanetSegments(EPlanet.RAHU, dayStart, dayEnd, rahuSlices);
+                    }
+                    IReadOnlyList<PlanetSlice> ketuSlices;
+                    if (transitPack != null && transitPack.TryGetValue(EPlanet.KETU, out ketuSlices) && ketuSlices != null)
+                    {
+                        KetuSegments = BuildPlanetSegments(EPlanet.KETU, dayStart, dayEnd, ketuSlices);
+                    }
+                    // -------------------------------------------------
 
                     ApplyDayNightBackgroundIfPossible();
 
@@ -341,6 +430,15 @@ namespace PADMA.Pages
             //UpdateStickyForLane((int)EDVLineName.MUHURTA, MuhurtaSegments, scrollY);  // -- will not be shown
 
             UpdateStickyForLane((int)EDVLineName.SUNPADA, SunSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.MOONPADA, MoonSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.MARSPADA, MarsSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.MERCURYPADA, MercurySegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.JUPITERPADA, JupiterSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.VENUSPADA, VenusSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.SATURNPADA, SaturnSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.RAHUPADA, RahuSegments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.KETUPADA, KetuSegments, scrollY);
+
         }
 
         private async Task CenterOnNowIfTodayAsync()
@@ -650,6 +748,15 @@ namespace PADMA.Pages
             RenderPanchangaLane((int)EDVLineName.MUHURTA, MuhurtaSegments);
 
             RenderPanchangaLane((int)EDVLineName.SUNPADA, SunSegments);
+            RenderPanchangaLane((int)EDVLineName.MOONPADA, MoonSegments);
+            RenderPanchangaLane((int)EDVLineName.MARSPADA, MarsSegments);
+            RenderPanchangaLane((int)EDVLineName.MERCURYPADA, MercurySegments);
+            RenderPanchangaLane((int)EDVLineName.JUPITERPADA, JupiterSegments);
+            RenderPanchangaLane((int)EDVLineName.VENUSPADA, VenusSegments);
+            RenderPanchangaLane((int)EDVLineName.SATURNPADA, SaturnSegments);
+            RenderPanchangaLane((int)EDVLineName.RAHUPADA, RahuSegments);
+            RenderPanchangaLane((int)EDVLineName.KETUPADA, KetuSegments);
+
 
         }
 
@@ -782,7 +889,6 @@ namespace PADMA.Pages
                 {
                     labels.Add((endMin * PixelsPerMinute, string.Empty));
                 }
-
             }
 
             // separator at segment end (to avoid merging same-color segments)
@@ -927,8 +1033,7 @@ namespace PADMA.Pages
                 ETransitKind.Planet,
                 seg =>
                 {
-                    //var p = PanchangaHelper.GetPlanetDescEntity(seg.);
-                    return string.Empty; // p != null ? $"{p.Name}" : string.Empty;
+                    return seg.Text; 
                 }
             },
 
@@ -972,7 +1077,6 @@ namespace PADMA.Pages
 
             TransitColumns[idx].StickyText = GetSegmentLabelText(seg);
         }
-
 
         private void OnSegmentTapped(int lineId, PanchangaSegment seg, VisualElement view)
         {
@@ -1030,7 +1134,39 @@ namespace PADMA.Pages
                     break;
 
                 case (int)EDVLineName.SUNPADA:
-                    //ShowSunPadaTooltip(seg);
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.MOONPADA:
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.MARSPADA:
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.MERCURYPADA:
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.JUPITERPADA:
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.VENUSPADA:
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.SATURNPADA:
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.RAHUPADA:
+                    ShowPlanetPadaTooltip(seg);
+                    break;
+
+                case (int)EDVLineName.KETUPADA:
+                    ShowPlanetPadaTooltip(seg);
                     break;
 
             }
@@ -1710,7 +1846,7 @@ namespace PADMA.Pages
                 var startUtc = DateTime.SpecifyKind(s.StartUtc, DateTimeKind.Utc);
                 var endUtc = DateTime.SpecifyKind(s.EndUtc, DateTimeKind.Utc);
 
-                // 2) переводим в local
+                // переводим в local
                 var startLocal = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tzInfo);
                 var endLocal = TimeZoneInfo.ConvertTimeFromUtc(endUtc, tzInfo);
 
@@ -1719,6 +1855,8 @@ namespace PADMA.Pages
                 if (startLocal < dayStartLocal) startLocal = dayStartLocal;
                 if (endLocal > dayEndLocal) endLocal = dayEndLocal;
 
+                Color color = GetPadaColor(s.NakshatraId, s.PadaId);
+                string text = PreparePlanetSegmentText(s);
                 var seg = new PanchangaSegment
                 {
                     Start = startLocal,
@@ -1727,60 +1865,46 @@ namespace PADMA.Pages
                     TransitId = s.PlanetId,
                     TransitStart = s.StartUtc,
                     TransitEnd = s.EndUtc,
-                    Text = string.Empty
+                    Text = text,
+                    Color = color
                 };
-                ApplyTransitColorsForSlice(seg, s, transitMode);
+                
                 segments.Add(seg);
             }
             return segments;
         }
 
-        private static void ApplyTransitColorsForSlice(PanchangaSegment seg, PlanetSlice slice, EAppSetting transitMode)
+        private string PreparePlanetSegmentText(PlanetSlice slice)
         {
-            Color moonColor = DataCache.Instance.GetColor(slice.MoonColorCode);
-            Color lagnaColor = DataCache.Instance.GetColor(slice.LagnaColorCode);
-            ApplyTransitColors(seg, moonColor, lagnaColor, transitMode);
+            int padaNum = SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
+            string text = $"{PanchangaHelper.GetNakshatraDescEntity(slice.NakshatraId).ShortName} {padaNum.ToString()}{GetLocalizedPadaChar()}";
+            return text;
         }
 
-        private static void ApplyTransitColors(
-            PanchangaSegment seg,
-            Color moonColor,
-            Color lagnaColor,
-            EAppSetting transitMode)
+        private Color GetPadaColor(int nakshatraId, int padaId)
         {
-            switch (transitMode)
+            int padaNumber = SwissUtility.GetPadaNumberByPadaId(padaId);
+            int colorId = DataCache.Instance.PadaList.FirstOrDefault(i => i.PadaNumber == padaNumber && i.NakshatraId == nakshatraId).ColorId;
+            return DataCache.Instance.GetColor((EColor)colorId);
+        }
+
+        private string GetLocalizedPadaChar()
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            switch (lang)
             {
-                case EAppSetting.TRANZITMOON:
-                    seg.IsSplitColor = false;
-                    seg.Color = moonColor;
-                    seg.ColorTop = null;
-                    seg.ColorBottom = null;
-                    break;
-
-                case EAppSetting.TRANZITLAGNA:
-                    seg.IsSplitColor = false;
-                    seg.Color = lagnaColor;
-                    seg.ColorTop = null;
-                    seg.ColorBottom = null;
-                    break;
-
-                case EAppSetting.TRANZITMOONANDLAGNA:
-                    seg.IsSplitColor = true;
-                    seg.Color = null;
-                    seg.ColorTop = moonColor;
-                    seg.ColorBottom = lagnaColor;
-                    break;
-
-                default:
-                    seg.IsSplitColor = false;
-                    seg.Color = moonColor;
-                    seg.ColorTop = null;
-                    seg.ColorBottom = null;
-                    break;
+                case "en": return "P";
+                case "uk": return "П"; 
+                case "pl": return "P";
+                case "ru": return "П";
             }
+            return string.Empty;
         }
 
-
+        private void ShowPlanetPadaTooltip(PanchangaSegment seg)
+        {
+            // To Do: implement planet pada tooltip
+        }
 
 
 
