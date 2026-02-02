@@ -1837,7 +1837,7 @@ namespace PADMA.Pages
             IReadOnlyList<PlanetSlice> slices)
         {
             var ctx = DataCache.Instance.ProfileContextService.Current;
-            TimeZoneInfo? tzInfo = ctx.TimeZoneInfo; ;
+            TimeZoneInfo? tzInfo = ctx.TimeZoneInfo;
             var segments = new List<PanchangaSegment>();
             var transitMode = DataCache.Instance.GetActiveTransitSettings();
 
@@ -1845,6 +1845,15 @@ namespace PADMA.Pages
             {
                 var startUtc = DateTime.SpecifyKind(s.StartUtc, DateTimeKind.Utc);
                 var endUtc = DateTime.SpecifyKind(s.EndUtc, DateTimeKind.Utc);
+
+                // FIX: последний slice может быть нулевой длительности (EndUtc == StartUtc)
+                // Тогда для отрисовки текущего транзита растягиваем его до конца суток.
+                if (endUtc <= startUtc)
+                {
+                    // dayEndLocal -> UTC в таймзоне профиля
+                    var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
+                    endUtc = dayEndUtc;
+                }
 
                 // переводим в local
                 var startLocal = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tzInfo);
@@ -1857,7 +1866,7 @@ namespace PADMA.Pages
 
                 Color color = GetPadaColor(s.NakshatraId, s.PadaId);
                 string text = PreparePlanetSegmentText(s);
-                var seg = new PanchangaSegment
+                segments.Add(new PanchangaSegment
                 {
                     Start = startLocal,
                     End = endLocal,
@@ -1867,9 +1876,7 @@ namespace PADMA.Pages
                     TransitEnd = s.EndUtc,
                     Text = text,
                     Color = color
-                };
-                
-                segments.Add(seg);
+                });
             }
             return segments;
         }
@@ -1903,8 +1910,155 @@ namespace PADMA.Pages
 
         private void ShowPlanetPadaTooltip(PanchangaSegment seg)
         {
-            // To Do: implement planet pada tooltip
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            var ctx = DataCache.Instance.ProfileContextService?.Current;
+            TimeZoneInfo? tzInfo = ctx.TimeZoneInfo;
+
+            // seg.TransitId для планетных линий = PlanetId
+            var planet = (EPlanet)seg.TransitId;
+
+            var day = Day;
+            var transitPack = day?.TransitPack;
+            if (transitPack == null)
+                return;
+
+            if (!transitPack.TryGetValue(planet, out var slices) || slices == null || slices.Count == 0)
+                return;
+
+            // Найдем slice, по которому был построен сегмент
+            var slice = slices.FirstOrDefault(s =>
+                s.StartUtc == seg.TransitStart && s.EndUtc == seg.TransitEnd);
+
+            // fallback: если по равенству не нашлось (на всякий случай)
+            if (slice == null)
+            {
+                var t = seg.TransitStart;
+                slice = slices.FirstOrDefault(s => s.StartUtc <= t && s.EndUtc >= t);
+                if (slice == null)
+                    return;
+            }
+
+            // переводим в local
+            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitStart, tzInfo);
+            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitEnd, tzInfo);
+
+            // Заголовок и диапазон – в стиле остальных тултипов
+            var pName = PanchangaHelper.GetPlanetDescEntity((int)planet)?.Name ?? planet.ToString();
+            TooltipTitle = pName;
+            TooltipRange = $"{startLocal:dd.MM.yyyy HH:mm:ss} – {endLocal:dd.MM.yyyy HH:mm:ss}";
+
+            TooltipItems.Clear();
+
+            // ---- Блок 1: Zodiac / Nakshatra / Pada / Navamsa ----
+            var zodiacName = PanchangaHelper.GetZodiacDescEntity(slice.ZodiacId)?.Name;
+            var nak = PanchangaHelper.GetNakshatraDescEntity(slice.NakshatraId);
+            var nakText = nak != null ? $"{nak.NakshatraId}.{nak.Name}" : string.Empty;
+
+            // Pada number (1..4) из PadaId (1..108)
+            int padaNum = SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
+
+            // Navamsa zodiac + exaltation mark
+            int navZodId = slice.NavamsaZodiacId;
+            var navName = PanchangaHelper.GetZodiacDescEntity(navZodId)?.Name;
+
+            // ExaltationUtility.GetPlanetExaltation ожидает EZodiac
+            string eventSymbol = string.Empty;
+            if (navZodId >= 1 && navZodId <= 12)
+            {
+                var exNow = ExaltationUtility.GetPlanetExaltation(planet, (EZodiac)navZodId);
+                if (exNow == EExaltation.EXALTATION) eventSymbol = "↑";
+                else if (exNow == EExaltation.DEBILITATION) eventSymbol = "↓";
+                else eventSymbol = string.Empty;
+            }
+
+            AddTooltipBlock("Zodiac", zodiacName);
+            AddTooltipBlock("Nakshatra", nakText);
+            AddTooltipBlock("Pada", padaNum.ToString());
+            AddTooltipBlock("Navamsa", $"{navName}{eventSymbol}");
+
+            // ---- Блок 2: Special Navamsa / Bad Navamsa / Drekkana ----
+
+            // Pada entity (из 108)
+            var pEntity = DataCache.Instance.PadaList.FirstOrDefault(p => p.Id == slice.PadaId);
+            string specNav = pEntity != null ? PlanetTooltipUtility.GetSpecNavamsha(pEntity) : string.Empty;
+            specNav = specNav?.Trim().TrimStart(',').Trim();
+
+            if (!string.IsNullOrWhiteSpace(specNav))
+                AddTooltipBlock("Special Navamsa", specNav);
+
+            // Birth pada from Moon
+            int birthPadaMoonId = ctx.BirthPadaMoonId;
+
+            // Birth pada from Lagna
+            int birthPadaLagnaId = SwissUtility.GetPadaNumberByPadaId(ctx.BirthLagnaId);
+
+            // Bad Navamsa / Drekkana
+            Func<string, string> L = key => Localization.GetLocalizedText(key, lang);
+            string badNav = PlanetTooltipUtility.GetBadNavamsha(slice.PadaId, birthPadaMoonId, birthPadaLagnaId, L);
+            badNav = (badNav ?? string.Empty).Trim().TrimEnd(',').Trim();
+            if (!string.IsNullOrWhiteSpace(badNav))
+                AddTooltipBlock("Bad Navamsa", badNav);
+
+            var dList = PlanetTooltipUtility.GetBadDrekkanaList(slice.PadaId, birthPadaMoonId, birthPadaLagnaId);
+            if (dList != null && dList.Count > 0)
+            {
+                // В PAD это было "16 Drekkana from Natal Moon, 22 Drekkana from Lagna..."
+                // Тут сделаем одной строкой.
+                var parts = new List<string>();
+                foreach (var de in dList)
+                {
+                    var suffix = de.IsLagna
+                        ? Localization.GetLocalizedText("Drekkana from Lagna", lang)
+                        : Localization.GetLocalizedText("Drekkana from Natal Moon", lang);
+
+                    parts.Add($"{de.Drekkana} {suffix}");
+                }
+
+                AddTooltipBlock("Drekkana", string.Join(", ", parts));
+            }
+
+            // ---- Блок 3: House + Vedha ----
+            var tranzitSetting = DataCache.Instance.GetActiveTransitSettings(); // TRANZITMOON / TRANZITLAGNA / TRANZITMOONANDLAGNA
+
+            bool useLagna = tranzitSetting == EAppSetting.TRANZITLAGNA;
+            int dom = useLagna ? slice.HouseFromLagna : slice.HouseFromMoon;
+
+            AddTooltipBlock(useLagna ? "House from Lagna" : "House from Moon", dom.ToString());
+
+            // Transit + Vedha
+            var tr = DataCache.Instance.TransitList.FirstOrDefault(t => t.PlanetId == slice.PlanetId && t.House == dom);
+            if (tr != null)
+            {
+                // Vedha list
+                if (!string.IsNullOrWhiteSpace(tr.Vedha) && int.TryParse(tr.Vedha, out int vedhaDom))
+                {
+                    var nodeType = slice.NodeType; // уже есть в slice
+                    var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(slice, transitPack, vedhaDom, useLagna, nodeType);
+
+                    if (vedhaList != null && vedhaList.Count > 0)
+                    {
+                        var vParts = new List<string>();
+                        foreach (var ve in vedhaList)
+                        {
+                            var vpName = PanchangaHelper.GetPlanetDescEntity((int)ve.PlanetCode)?.Name ?? ve.PlanetCode.ToString();
+                            vParts.Add($"{vpName} ({ve.DateStart:dd.MM.yyyy HH:mm:ss} – {ve.DateEnd:dd.MM.yyyy HH:mm:ss})");
+                        }
+
+                        AddTooltipBlock("Vedha from", string.Join(", ", vParts));
+                    }
+                }
+
+                // Transit description
+                var trDesc = DataCache.Instance.TransitDescList.FirstOrDefault(d => d.TransitId == tr.Id && d.LanguageCode == lang);
+                if (trDesc != null && !string.IsNullOrWhiteSpace(trDesc.Description))
+                    AddTooltipBlock("Description", trDesc.Description);
+            }
         }
+
+
+
+
+
 
 
 

@@ -29,7 +29,7 @@ namespace PADMA.Core.Models.Calendar
         public int NakshatraId { get; set; }
 
         /// <summary>
-        /// Pada 1–4.
+        /// Pada 1–108.
         /// </summary>
         public int PadaId { get; set; }
 
