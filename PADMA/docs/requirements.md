@@ -4039,3 +4039,149 @@ Muhurta lane implementation is complete and ready for extension.
 
 ---------
 
+# Planets Tooltip (DayPage)
+
+## Overview
+
+The **Planets Tooltip** is displayed on **DayPage** when a user taps a planet transit segment.
+It provides detailed contextual information about the current planetary transit.
+
+The implementation **does not introduce new astrological algorithms** and strictly reuses:
+- Swiss Ephemeris–based calculations already present in PADMA
+- Precomputed `PlanetSlice` data from `TransitPack`
+- Cached reference data loaded at application startup (`DataCache`)
+
+The tooltip is assembled dynamically in `DayPage.xaml.cs` and rendered using the same
+UI mechanism as other Panchanga tooltips (Nakshatra, Tithi, Yoga, etc.).
+
+## Trigger Conditions
+
+The Planet Pada Tooltip is shown when:
+- A user taps on a **planet transit segment** on `DayPage`
+- The tapped segment has `TransitKind = Planet`
+- The same segment is tapped twice (selection + tooltip pattern)
+
+Entry point:
+- `ShowPlanetPadaTooltip(PanchangaSegment seg)`
+
+## Data Sources
+
+### Primary Data
+- `PanchangaSegment`
+  - `TransitId` → PlanetId
+  - `TransitStart`, `TransitEnd` (UTC)
+- `PlanetSlice` (from `Day.TransitPack`)
+  - `PlanetId`
+  - `ZodiacId`
+  - `NakshatraId`
+  - `PadaId` (**Pada.Id from 108 padas**)
+  - `NavamsaZodiacId`
+  - `HouseFromMoon`
+  - `HouseFromLagna`
+  - `StartUtc`, `EndUtc`
+  - `NodeType`
+
+### Cached Reference Data (DataCache)
+- `PlanetDescList`
+- `ZodiacDescList`
+- `NakshatraDescList`
+- `PadaList`
+- `SpecialNavamsaDescList`
+- `TransitList`
+- `TransitDescList`
+
+### Profile Context
+- `BirthPadaMoonId`
+- Active timezone
+- Active transit mode:
+  - `TRANZITMOON`
+  - `TRANZITLAGNA`
+  - `TRANZITMOONANDLAGNA`
+
+## Time Handling
+
+- All `PlanetSlice` and `TransitPack` times are stored in **UTC**
+- Tooltip display times are converted to **profile local time**
+- Conversion is performed explicitly in `DayPage` using `TimeZoneInfo.ConvertTimeFromUtc`
+
+## Tooltip Structure
+
+The tooltip consists of **multiple logical blocks**, rendered sequentially.
+
+### 1. Header
+- **Title**: Planet name
+- **Range**: Local time range of the current planet slice
+
+### 2. Position Block
+Displays the current planetary position:
+
+- Zodiac sign
+- Nakshatra (formatted as `Id.Name`)
+- Pada number (1–4)
+- Navamsa:
+  - Zodiac name
+  - Exaltation / debilitation marker (via `ExaltationUtility`)
+
+### 3. Navamsa Qualities Block
+Derived from the current `Pada`:
+
+- **Special Navamsa**
+  - Parsed from `Pada.SpecialNavamsa`
+  - Names resolved via `SpecialNavamsaDescList`
+- **Bad Navamsa**
+  - Calculated positionally relative to:
+    - Natal Moon Pada
+    - Natal Lagna Pada
+- **Drekkana**
+  - Calculated positionally (Moon and Lagna based)
+  - Uses `Pada.Drekkana` and cyclic 108-pada ordering
+
+All calculations reuse legacy PAD algorithms, ported as utility helpers.
+
+### 4. House & Transit Description Block
+
+Transit interpretation depends on the active transit setting:
+
+#### TRANZITMOON
+- House from Moon
+- Transit description for `(PlanetId, HouseFromMoon)`
+
+#### TRANZITLAGNA
+- House from Lagna
+- Transit description for `(PlanetId, HouseFromLagna)`
+
+#### TRANZITMOONANDLAGNA
+- House from Moon + corresponding transit description
+- House from Lagna + corresponding transit description
+
+Both descriptions are shown sequentially.
+
+### 5. Vedha Block 
+
+- Calculated **once**, using the primary transit mode (Moon or Lagna)
+- Uses:
+  - `Transit.Vedha` value
+  - Precomputed `PlanetSlice` house positions
+- Intersections are calculated in UTC and displayed in local time
+- Vedha is rendered **at the end of the tooltip**
+
+## Design Principles
+
+- No recalculation of ephemeris data at tooltip time
+- All heavy computations are done during transit building
+- Tooltip logic is purely compositional and read-only
+- Strict adherence to legacy PAD behavior
+- No duplication of domain logic in UI layer
+
+## Implementation Notes
+
+- Helper logic is located in `PlanetTooltipUtility`
+- Domain entities (`VedhaEntity`, `DrekkanaEntity`) are placed in `PADMA.Core.Models`
+- Localization keys are passed as string identifiers and resolved at UI level
+- Tooltip blocks are added using existing `AddTooltipBlock` mechanism
+
+## Status
+
+- Planet Pada Tooltip is fully functional
+
+------
