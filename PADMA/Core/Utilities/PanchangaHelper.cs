@@ -179,7 +179,12 @@ namespace PADMA.Core.Utilities
                 .FirstOrDefault(i => i.LanguageCode == lang && i.MuhurtaId == muhurtaId);
         }
 
-
+        public static TransitDesc? GetTransitDescEntity(int transitId)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.TransitDescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.TransitId == transitId);
+        }
 
 
     }

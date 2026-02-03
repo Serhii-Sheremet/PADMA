@@ -2017,19 +2017,37 @@ namespace PADMA.Pages
                 AddTooltipBlock("Drekkana", string.Join(", ", parts));
             }
 
-            // ---- Блок 3: House + Vedha ----
+            // ---- Блок 3: House + Transit description ----
             var tranzitSetting = DataCache.Instance.GetActiveTransitSettings(); // TRANZITMOON / TRANZITLAGNA / TRANZITMOONANDLAGNA
-
             bool useLagna = tranzitSetting == EAppSetting.TRANZITLAGNA;
+
+            // helper: вывести дом + описание для выбранного режима (Moon/Lagna)
+            void AddHouseAndTransitDesc(bool forLagna)
+            {
+                int domX = forLagna ? slice.HouseFromLagna : slice.HouseFromMoon;
+                AddTooltipBlock(forLagna ? "House from Lagna" : "House from Moon", domX.ToString());
+
+                var trX = DataCache.Instance.TransitList.First(t => t.PlanetId == slice.PlanetId && t.House == domX);
+                var trDescX = PanchangaHelper.GetTransitDescEntity(trX.Id).Description;
+                AddTooltipBlock("Transit Description", trDescX);
+            }
+
+            if (tranzitSetting == EAppSetting.TRANZITMOONANDLAGNA)
+            {
+                AddHouseAndTransitDesc(forLagna: false);
+                AddHouseAndTransitDesc(forLagna: true);
+            }
+            else
+            {
+                AddHouseAndTransitDesc(forLagna: useLagna);
+            }
+
             int dom = useLagna ? slice.HouseFromLagna : slice.HouseFromMoon;
+            var tr = DataCache.Instance.TransitList.First(t => t.PlanetId == slice.PlanetId && t.House == dom);
 
-            AddTooltipBlock(useLagna ? "House from Lagna" : "House from Moon", dom.ToString());
-
-            // Transit + Vedha
-            var tr = DataCache.Instance.TransitList.FirstOrDefault(t => t.PlanetId == slice.PlanetId && t.House == dom);
+            // ---- Блок 4: Vedha ----
             if (tr != null)
             {
-                // Vedha list
                 if (!string.IsNullOrWhiteSpace(tr.Vedha) && int.TryParse(tr.Vedha, out int vedhaDom))
                 {
                     var nodeType = slice.NodeType; // уже есть в slice
@@ -2047,15 +2065,9 @@ namespace PADMA.Pages
                         AddTooltipBlock("Vedha from", string.Join(", ", vParts));
                     }
                 }
-
-                // Transit description
-                var trDesc = DataCache.Instance.TransitDescList.FirstOrDefault(d => d.TransitId == tr.Id && d.LanguageCode == lang);
-                if (trDesc != null && !string.IsNullOrWhiteSpace(trDesc.Description))
-                    AddTooltipBlock("Description", trDesc.Description);
             }
+
         }
-
-
 
 
 
