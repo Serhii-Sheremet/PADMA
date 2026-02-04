@@ -165,6 +165,20 @@ namespace PADMA.Pages
             set { if (Math.Abs(_tooltipMaxWidth - value) < 0.1) return; _tooltipMaxWidth = value; OnPropertyChanged(); }
         }
 
+        private double _tooltipBodyMaxHeight = 300;
+        public double TooltipBodyMaxHeight
+        {
+            get => _tooltipBodyMaxHeight;
+            set { if (Math.Abs(_tooltipBodyMaxHeight - value) < 0.1) return; _tooltipBodyMaxHeight = value; OnPropertyChanged(); }
+        }
+
+        private double _tooltipBodyHeight = -1; // -1 = Auto
+        public double TooltipBodyHeight
+        {
+            get => _tooltipBodyHeight;
+            set { if (Math.Abs(_tooltipBodyHeight - value) < 0.1) return; _tooltipBodyHeight = value; OnPropertyChanged(); }
+        }
+
         private bool _isTooltipVisible;
         public bool IsTooltipVisible
         {
@@ -349,13 +363,30 @@ namespace PADMA.Pages
         protected override void OnSizeAllocated(double width, double height)
         {
             base.OnSizeAllocated(width, height);
-
-            // height может быть 0 на ранних проходах layout
-            if (height <= 0)
-                return;
+            if (height <= 0) return;
 
             TooltipMaxHeight = height * (width > height ? 0.85 : 0.70);
             TooltipMaxWidth = Math.Max(300, Math.Min(520, width * 0.92));
+
+            const double headerReserve = 150; // Title+Range+Divider+Padding
+            TooltipBodyMaxHeight = Math.Max(80, TooltipMaxHeight - headerReserve);
+
+            // пересчёт HeightRequest после смены ориентации
+            UpdateTooltipBodyHeight();
+        }
+
+        private void UpdateTooltipBodyHeight()
+        {
+            if (!IsTooltipVisible) return;
+            if (!HasTooltipBlocks) { TooltipBodyHeight = -1; return; }
+            if (TooltipBodyStack == null) return;
+
+            double availableWidth = Math.Max(0, TooltipMaxWidth - 40);
+
+            var size = TooltipBodyStack.Measure(availableWidth, double.PositiveInfinity);
+            var desired = size.Height;
+
+            TooltipBodyHeight = Math.Min(desired, TooltipBodyMaxHeight);
         }
 
         private void OnTooltipBackdropTapped(object? sender, EventArgs e)
@@ -1035,9 +1066,7 @@ namespace PADMA.Pages
                 {
                     return seg.Text; 
                 }
-            },
-
-
+            }
         };
 
         private string GetSegmentLabelText(PanchangaSegment seg)
@@ -1274,6 +1303,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(nak, NakshatraTooltipFields);
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private static readonly (string NativeLabel, Func<NakshatraDesc, string?> GetValue)[] NakshatraTooltipFields =
@@ -1296,6 +1327,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(tb, TaraBalaTooltipFields);
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private static readonly (string NativeLabel, Func<TaraBalaDesc, string?> GetValue)[] TaraBalaTooltipFields =
@@ -1331,6 +1364,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ti, TithiTooltipFields);
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private static readonly (string NativeLabel, Func<TithiDesc, string?> GetValue)[] TithiTooltipFields =
@@ -1351,6 +1386,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ka, KaranaTooltipFields);
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private static readonly (string NativeLabel, Func<KaranaDesc, string?> GetValue)[] KaranaTooltipFields =
@@ -1381,6 +1418,8 @@ namespace PADMA.Pages
             AddTooltipBlock("Nakshatra", nakName);
 
             FillTooltipBlocks(nyd, NityaYogaTooltipFields, false);
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private static readonly (string NativeLabel, Func<NityaYogaDesc, string?> GetValue)[] NityaYogaTooltipFields =
@@ -1396,6 +1435,8 @@ namespace PADMA.Pages
             var text = StripLeadingTime(seg.Text);
             TooltipTitle = $"{text}";
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private static string StripLeadingTime(string? text)
@@ -1616,6 +1657,8 @@ namespace PADMA.Pages
                     TooltipItems.Add(new TooltipSpacer { Height = 8 });
                 }
             }
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private static FormattedString FsHeader(string text)
@@ -1808,8 +1851,8 @@ namespace PADMA.Pages
                     TooltipItems.Add(new TooltipSpacer { Height = 8 });
                 }
             }
-
-
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
         private string GetVaraName(DayOfWeek dow)
@@ -1971,7 +2014,7 @@ namespace PADMA.Pages
                 else eventSymbol = string.Empty;
             }
 
-            AddTooltipBlock("Zodiac", zodiacName);
+            AddTooltipBlock("Zodiac Sign", zodiacName);
             AddTooltipBlock("Nakshatra", nakText);
             AddTooltipBlock("Pada", padaNum.ToString());
             AddTooltipBlock("Navamsa", $"{navName}{eventSymbol}");
@@ -1990,7 +2033,7 @@ namespace PADMA.Pages
             int birthPadaMoonId = ctx.BirthPadaMoonId;
 
             // Birth pada from Lagna
-            int birthPadaLagnaId = SwissUtility.GetPadaNumberByPadaId(ctx.BirthLagnaId);
+            int birthPadaLagnaId = ctx.BirthPadaLagnaId; 
 
             // Bad Navamsa / Drekkana
             Func<string, string> L = key => Localization.GetLocalizedText(key, lang);
@@ -2050,8 +2093,25 @@ namespace PADMA.Pages
             {
                 if (!string.IsNullOrWhiteSpace(tr.Vedha) && int.TryParse(tr.Vedha, out int vedhaDom))
                 {
-                    var nodeType = slice.NodeType; // уже есть в slice
-                    var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(slice, transitPack, vedhaDom, useLagna, nodeType);
+                    var nodeType = slice.NodeType; 
+                    //var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(slice, transitPack, vedhaDom, useLagna, nodeType);
+                                                   
+                    var planetKey = (EPlanet)slice.PlanetId;
+                    var slicesForPlanet = transitPack[planetKey];
+
+                    var (rangeStartUtc, rangeEndUtc) =
+                        PlanetTooltipUtility.GetContinuousHouseRangeUtc(slicesForPlanet, seg.TransitStart, useLagna);
+
+                    var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(
+                        targetPlanetId: slice.PlanetId,
+                        targetStartUtc: rangeStartUtc,
+                        targetEndUtc: rangeEndUtc,
+                        transitPack: transitPack,
+                        vedhaDom: vedhaDom,
+                        isLagna: useLagna,
+                        nodeType: nodeType);
+
+                    vedhaList = PlanetTooltipUtility.MergeVedhaIntervals(vedhaList);
 
                     if (vedhaList != null && vedhaList.Count > 0)
                     {
@@ -2059,14 +2119,19 @@ namespace PADMA.Pages
                         foreach (var ve in vedhaList)
                         {
                             var vpName = PanchangaHelper.GetPlanetDescEntity((int)ve.PlanetCode)?.Name ?? ve.PlanetCode.ToString();
-                            vParts.Add($"{vpName} ({ve.DateStart:dd.MM.yyyy HH:mm:ss} – {ve.DateEnd:dd.MM.yyyy HH:mm:ss})");
+
+                            var veStartLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(ve.DateStart, DateTimeKind.Utc), tzInfo);
+                            var veEndLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(ve.DateEnd, DateTimeKind.Utc), tzInfo);
+
+                            vParts.Add($"{vpName} ({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
                         }
 
                         AddTooltipBlock("Vedha from", string.Join(", ", vParts));
                     }
                 }
             }
-
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
 

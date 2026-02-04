@@ -426,7 +426,7 @@
                    MaximumHeightRequest="{Binding Source={x:Reference DayPageRoot}, Path=TooltipMaxHeight}"
                    MaximumWidthRequest="{Binding Source={x:Reference DayPageRoot}, Path=TooltipMaxWidth}">
 
-                <Grid RowDefinitions="Auto,Auto,Auto,*"
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto"
                       RowSpacing="6">
 
                     <!-- Title -->
@@ -457,11 +457,13 @@
                     <!-- Body (0..N blocks) -->
                     <ScrollView Grid.Row="3"
                                 IsVisible="{Binding HasTooltipBlocks}"
-                                VerticalOptions="Fill"
+                                VerticalOptions="Start"
+                                HeightRequest="{Binding Source={x:Reference DayPageRoot}, Path=TooltipBodyHeight}"
                                 VerticalScrollBarVisibility="Never">
-                        <VerticalStackLayout Spacing="6"
-                                BindableLayout.ItemsSource="{Binding TooltipItems}"
-                                BindableLayout.ItemTemplateSelector="{StaticResource TooltipItemTemplateSelector}" />
+                        <VerticalStackLayout x:Name="TooltipBodyStack"
+                                             Spacing="6"
+                                             BindableLayout.ItemsSource="{Binding TooltipItems}"
+                                             BindableLayout.ItemTemplateSelector="{StaticResource TooltipItemTemplateSelector}" />
                     </ScrollView>
 
                 </Grid>

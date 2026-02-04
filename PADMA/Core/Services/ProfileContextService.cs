@@ -37,7 +37,7 @@ public sealed class ProfileContextService : IProfileContextService
             var nodeMode = DataCache.Instance.GetActiveNodeSetting();
 
             // Data by birth location
-            int birthZodiacMoonId = 1, birthNakshatraMoonId = 1, birthPadaMoonId = 1, lagnaId = 1;
+            int birthZodiacMoonId = 1, birthNakshatraMoonId = 1, birthPadaMoonId = 1, lagnaId = 1, birthPadaLagnaId = 1;
             double birthLat = 0, birthLon = 0, acendent = 0;
             double livingLat = 0, livingLon = 0;
             string LivingTzId = string.Empty;
@@ -56,6 +56,7 @@ public sealed class ProfileContextService : IProfileContextService
                 char hsys = 'O'; // Placidus
                 bdPlanetData = SwissAnalysis.CalculatePlanetPositionsForDate(localBirthDate, birthLat, birthLon, nodeMode);
                 acendent = SwissService.CalculateAscendantForDate(localBirthDate, birthLat, birthLon, 0, hsys);
+                birthPadaLagnaId = SwissUtility.GetPadaIdFromDegree(acendent);
             }
 
             // Timezone by living location
@@ -90,6 +91,7 @@ public sealed class ProfileContextService : IProfileContextService
                 BirthNakshatraMoonId: birthNakshatraMoonId,
                 BirthPadaMoonId: birthPadaMoonId,
                 BirthLagnaId: lagnaId,
+                BirthPadaLagnaId: birthPadaLagnaId,
                 BirthPlanetDataList: bdPlanetData,
                 nodeMode
             );

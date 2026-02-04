@@ -24,6 +24,7 @@ public sealed record ProfileTransitContext(
     int BirthNakshatraMoonId,
     int BirthPadaMoonId,
     int BirthLagnaId,
+    int BirthPadaLagnaId,
 
     // Planets data at birth
     List<PlanetData> BirthPlanetDataList,

@@ -239,5 +239,155 @@ namespace PADMA.Core.Utilities
 
             return vList;
         }
+
+        public static List<VedhaEntity> PrepareVedhaPlanetList(
+            int targetPlanetId,
+            DateTime targetStartUtc,
+            DateTime targetEndUtc,
+            IReadOnlyDictionary<EPlanet, IReadOnlyList<PlanetSlice>> transitPack,
+            int vedhaDom,
+            bool isLagna,
+            EAppSetting nodeType)
+        {
+            var vList = new List<VedhaEntity>();
+            var targetPlanet = (EPlanet)targetPlanetId;
+
+            foreach (var kvp in transitPack)
+            {
+                var vedhaPlanet = kvp.Key;
+
+                if (vedhaPlanet == targetPlanet) continue;
+                if (!CheckIfVedhaExist(targetPlanet, vedhaPlanet)) continue;
+
+                var slices = kvp.Value;
+                if (slices == null || slices.Count == 0) continue;
+
+                foreach (var s in slices)
+                {
+                    int dom = isLagna ? s.HouseFromLagna : s.HouseFromMoon;
+                    if (dom != vedhaDom) continue;
+
+                    var (from, to) = GetIntersection(targetStartUtc, targetEndUtc, s.StartUtc, s.EndUtc);
+                    if (from == default && to == default) continue;
+
+                    vList.Add(new VedhaEntity
+                    {
+                        PlanetCode = vedhaPlanet,
+                        DateStart = from,
+                        DateEnd = to
+                    });
+                }
+            }
+
+            return vList;
+        }
+
+        public static (DateTime StartUtc, DateTime EndUtc) GetContinuousHouseRangeUtc(
+            IReadOnlyList<PlanetSlice> slices,
+            DateTime tapUtc,
+            bool isLagna)
+        {
+            if (slices == null || slices.Count == 0)
+                return (tapUtc, tapUtc);
+
+            // найдЄм slice, который покрывает tapUtc
+            int idx = -1;
+            for (int i = 0; i < slices.Count; i++)
+            {
+                if (slices[i].StartUtc <= tapUtc && tapUtc < slices[i].EndUtc)
+                {
+                    idx = i;
+                    break;
+                }
+            }
+
+            // fallback: если tapUtc на границе EndUtc, попробуем <=
+            if (idx < 0)
+            {
+                for (int i = 0; i < slices.Count; i++)
+                {
+                    if (slices[i].StartUtc <= tapUtc && tapUtc <= slices[i].EndUtc)
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+            }
+
+            if (idx < 0)
+                return (slices[0].StartUtc, slices[0].EndUtc);
+
+            var anchor = slices[idx];
+            int dom = isLagna ? anchor.HouseFromLagna : anchor.HouseFromMoon;
+
+            DateTime start = anchor.StartUtc;
+            DateTime end = anchor.EndUtc;
+
+            // назад
+            for (int i = idx - 1; i >= 0; i--)
+            {
+                var s = slices[i];
+                int sDom = isLagna ? s.HouseFromLagna : s.HouseFromMoon;
+                if (sDom != dom) break;
+                if (s.EndUtc != start) break;
+                start = s.StartUtc;
+            }
+
+            // вперЄд
+            for (int i = idx + 1; i < slices.Count; i++)
+            {
+                var s = slices[i];
+                int sDom = isLagna ? s.HouseFromLagna : s.HouseFromMoon;
+                if (sDom != dom) break;
+                if (s.StartUtc != end) break;
+                end = s.EndUtc;
+            }
+
+            return (start, end);
+        }
+
+        public static List<VedhaEntity> MergeVedhaIntervals(List<VedhaEntity> list)
+        {
+            if (list == null || list.Count == 0) return list;
+
+            // группируем по планете и сортируем по времени
+            var result = new List<VedhaEntity>();
+
+            foreach (var g in list
+                .GroupBy(x => x.PlanetCode)
+                .OrderBy(x => (int)x.Key))
+            {
+                var ordered = g.OrderBy(x => x.DateStart).ToList();
+
+                var cur = ordered[0];
+
+                for (int i = 1; i < ordered.Count; i++)
+                {
+                    var n = ordered[i];
+
+                    // если стыкуютс€ (или почти стыкуютс€) Ч склеиваем
+                    if (n.DateStart <= cur.DateEnd) // можно расширить до +1 сек если надо
+                    {
+                        if (n.DateEnd > cur.DateEnd)
+                            cur.DateEnd = n.DateEnd;
+                    }
+                    else
+                    {
+                        result.Add(cur);
+                        cur = n;
+                    }
+                }
+
+                result.Add(cur);
+            }
+
+            return result;
+        }
+
+
+
+
+
+
     }
 }
