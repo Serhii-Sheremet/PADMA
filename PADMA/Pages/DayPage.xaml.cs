@@ -19,6 +19,7 @@ namespace PADMA.Pages
 {
     public partial class DayPage : ContentPage, IQueryAttributable
     {
+        private bool _isClosing;
         private bool _autoCenterRequested;
         private bool _syncingHorizontalScroll;
         private readonly Dictionary<VisualElement, Border> _highlights = new();
@@ -511,13 +512,57 @@ namespace PADMA.Pages
             });
         }
 
+        private async Task CloseAsync()
+        {
+            if (_isClosing) return;
+            _isClosing = true;
+
+            try
+            {
+                // Close DayPage completely and return to calendar
+                await Shell.Current.GoToAsync("//main");
+            }
+            finally
+            {
+                _isClosing = false;
+            }
+        }
+
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             ResetTooltip();
+
+            await CloseAsync();
             // Close DayPage completely and return to calendar
-            await Shell.Current.GoToAsync("//main", true);
+            //await Shell.Current.GoToAsync("//main", true);
         }
-        
+
+        protected override bool OnBackButtonPressed()
+        {
+            // Нельзя давать Shell "pop" назад на DayOverview — это и ломает carousel.
+            Dispatcher.Dispatch(async () =>
+            {
+                if (_isClosing) return;
+
+                var title = L("Close this screen?");
+                var message = L("Do you want to close the Day screen?");
+                var okText = L("Yes");
+                var cancel = L("No");
+
+                var ok = await DisplayAlert(title, message, okText, cancel);
+                if (ok)
+                    await CloseAsync();
+            });
+
+            return true; // мы обработали, стандартный Back отменяем
+        }
+
+        private string L(string nativeEn)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return Localization.GetLocalizedText(nativeEn, lang);
+        }
+
         private void ApplyDayNightBackgroundIfPossible()
         {
             if (SunriseUtc == null || SunsetUtc == null)

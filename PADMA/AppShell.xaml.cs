@@ -1,13 +1,18 @@
-﻿using PADMA.Pages;
-using PADMA.Core.Services;
+﻿using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.Pages;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 
 namespace PADMA;
 
 public partial class AppShell : Shell, INotifyPropertyChanged
 {
+    public ICommand ExitCommand { get; }
+
+    private bool _isExiting;
+
     private string _flyoutCalendarTitle = "Calendar";
     public string FlyoutCalendarTitle
     {
@@ -62,8 +67,32 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         Routing.RegisterRoute(nameof(MrityuBhagaPage), typeof(MrityuBhagaPage));
         Routing.RegisterRoute(nameof(SunrisePage), typeof(SunrisePage));
 
-        
-        
+        ExitCommand = new Command(async () =>
+        {
+            if (_isExiting) return;
+
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            string L(string nativeEn) => Localization.GetLocalizedText(nativeEn, lang);
+
+            var ok = await DisplayAlert(
+                L("Exit Application?"),
+                L("Do you want to exit PADMA Application?"),
+                L("Yes"),
+                L("No"));
+
+            if (!ok) return;
+
+            _isExiting = true;
+            try
+            {
+                AppCloser.Close();
+            }
+            finally
+            {
+                _isExiting = false;
+            }
+        });
+
     }
 
     public void RefreshFlyoutTitles()
@@ -96,10 +125,10 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         await Shell.Current.GoToAsync("ConfigurationPage");
     }
 
-    private async void OnExitClicked(object sender, EventArgs e)
+    private async void OnExitMenuItemClicked(object sender, EventArgs e)
     {
-        // Закрыть приложение (поведение зависит от платформы)
-        await Application.Current.MainPage.DisplayAlert("Exit", "Closing app...", "OK");
-        Application.Current.Quit();
+        if (ExitCommand?.CanExecute(null) == true)
+            ExitCommand.Execute(null);
     }
+
 }

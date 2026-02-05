@@ -2,7 +2,8 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:pages="clr-namespace:PADMA.Pages"
-    x:Class="PADMA.AppShell">
+    x:Class="PADMA.AppShell"
+    x:Name="RootShell">
 
     <!-- Главная страница -->
     <FlyoutItem Title="{Binding FlyoutCalendarTitle}" Route="main">
@@ -19,10 +20,9 @@
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>
 
-    <!-- Выход -->
-    <FlyoutItem Title="{Binding FlyoutExitTitle}" Route="exit">
-        <ShellContent ContentTemplate="{DataTemplate pages:ExitPage}" />
-    </FlyoutItem>
+    <!-- Exit as a command (no page) -->
+    <MenuItem Text="{Binding FlyoutExitTitle}"
+          Clicked="OnExitMenuItemClicked" />
 
     <!-- Вложенные маршруты -->
     <ShellContent Route="dayOverview" ContentTemplate="{DataTemplate pages:DayOverviewPage}" />

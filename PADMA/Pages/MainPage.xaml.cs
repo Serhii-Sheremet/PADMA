@@ -232,6 +232,26 @@ namespace PADMA.Pages
                 Vm.SetMonthYear(dt.Value.Year, dt.Value.Month);
         }
 
+        protected override bool OnBackButtonPressed()
+        {
+            Dispatcher.Dispatch(async () =>
+            {
+                var lang = DataCache.Instance.CurrentLanguageCode;
+                string L(string nativeEn) => Localization.GetLocalizedText(nativeEn, lang);
+
+                var ok = await DisplayAlert(
+                    L("Exit application?"),
+                    L("Do you want to exit PADMA?"),
+                    L("Yes"),
+                    L("No"));
+
+                if (ok)
+                    AppCloser.Close();
+            });
+
+            return true;
+        }
+
 
 
     }
