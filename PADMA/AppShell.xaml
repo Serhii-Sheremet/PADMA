@@ -5,22 +5,22 @@
     x:Class="PADMA.AppShell">
 
     <!-- Главная страница -->
-    <FlyoutItem Title="Calendar" Route="main">
+    <FlyoutItem Title="{Binding FlyoutCalendarTitle}" Route="main">
         <ShellContent ContentTemplate="{DataTemplate pages:MainPage}" />
     </FlyoutItem>
 
     <!-- Профили -->
-    <FlyoutItem Title="Profiles" Route="profiles">
+    <FlyoutItem Title="{Binding FlyoutProfilesTitle}" Route="profiles">
         <ShellContent ContentTemplate="{DataTemplate pages:ProfilesPage}" />
     </FlyoutItem>
 
     <!-- Настройки -->
-    <FlyoutItem Title="Settings" Route="settings">
+    <FlyoutItem Title="{Binding FlyoutSettingsTitle}" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>
 
     <!-- Выход -->
-    <FlyoutItem Title="Exit" Route="exit">
+    <FlyoutItem Title="{Binding FlyoutExitTitle}" Route="exit">
         <ShellContent ContentTemplate="{DataTemplate pages:ExitPage}" />
     </FlyoutItem>
 

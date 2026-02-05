@@ -2033,20 +2033,18 @@ namespace PADMA.Pages
             int birthPadaMoonId = ctx.BirthPadaMoonId;
 
             // Birth pada from Lagna
-            int birthPadaLagnaId = ctx.BirthPadaLagnaId; 
+            int birthPadaLagnaId = ctx.BirthPadaLagnaId;
 
-            // Bad Navamsa / Drekkana
+            // Bad Navamsa (Malefic Navamsa) / Drekkana
             Func<string, string> L = key => Localization.GetLocalizedText(key, lang);
             string badNav = PlanetTooltipUtility.GetBadNavamsha(slice.PadaId, birthPadaMoonId, birthPadaLagnaId, L);
             badNav = (badNav ?? string.Empty).Trim().TrimEnd(',').Trim();
             if (!string.IsNullOrWhiteSpace(badNav))
-                AddTooltipBlock("Bad Navamsa", badNav);
+                AddTooltipBlock("Malefic Navamsa", badNav);
 
             var dList = PlanetTooltipUtility.GetBadDrekkanaList(slice.PadaId, birthPadaMoonId, birthPadaLagnaId);
             if (dList != null && dList.Count > 0)
             {
-                // В PAD это было "16 Drekkana from Natal Moon, 22 Drekkana from Lagna..."
-                // Тут сделаем одной строкой.
                 var parts = new List<string>();
                 foreach (var de in dList)
                 {

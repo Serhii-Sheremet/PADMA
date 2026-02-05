@@ -4182,6 +4182,6 @@ Both descriptions are shown sequentially.
 
 ## Status
 
-- Planet Pada Tooltip is fully functional
+- Planet Tooltip is fully functional
 
 ------

@@ -42,6 +42,9 @@ namespace PADMA.Pages
             {
                 dayService?.InvalidateAll();
                 _needsRefreshAfterConfig = true;
+
+                if (Shell.Current is AppShell shell)
+                    shell.RefreshFlyoutTitles();
             });
             
             MessagingCenter.Unsubscribe<object>(this, "ProfileChanged");
