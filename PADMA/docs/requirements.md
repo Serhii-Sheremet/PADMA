@@ -4185,3 +4185,118 @@ Both descriptions are shown sequentially.
 - Planet Tooltip is fully functional
 
 ------
+
+# Hora (Planetary Hours)
+
+## Overview
+Hora represents planetary hours calculated for a given local day and displayed as a dedicated transit lane on DayPage.  
+Each Hora segment is rendered as a colored block corresponding to its ruling planet and labeled with the localized planet name.
+
+PADMA supports three Hora calculation modes, controlled by AppSettings (GroupCode = "HORA"):
+
+- HORADAYNIGHT – 12 daylight horas + 12 night horas (based on sunrise and sunset)
+- HORAEQUAL – 24 equal horas between sunrise and next sunrise
+- HORAFROM6 – 24 equal horas starting from 06:00 local time
+
+Hora is implemented as a first-class transit kind:
+`ETransitKind.Hora = 23`
+
+## Core Model
+
+### HoraSlice
+File: Core/Models/Calendar/HoraSlice.cs
+```
+public sealed class HoraSlice : CalendarSlice
+{
+    public EHoraPlanet PlanetCode { get; set; }
+    public EColor ColorCode { get; set; }
+    public bool IsDayLightHora { get; set; }
+
+    public HoraSlice()
+    {
+        Kind = ETransitKind.Hora;
+    }
+}
+```
+## Planet Order
+
+SUN → VENUS → MERCURY → MOON → SATURN → JUPITER → MARS
+
+Starting planet by weekday:
+
+Sunday    → Sun  
+Monday    → Moon  
+Tuesday   → Mars  
+Wednesday → Mercury  
+Thursday  → Jupiter  
+Friday    → Venus  
+Saturday  → Saturn  
+
+## Builder
+
+File: Core/TransitBuilder/HoraTransitBuilder.cs
+Main entry point:
+```
+BuildForLocalDay(
+    DateTime dayLocal,
+    TimeZoneInfo tzInfo,
+    double latitude,
+    double longitude,
+    double altitude
+)
+```
+Responsibilities:
+- Convert local day boundaries to UTC
+- Obtain SunriseSlice
+- Read active HORA AppSetting
+- Dispatch to proper calculation method
+- Return List<HoraSlice> in UTC
+- Filter slices to those intersecting local civil day
+
+## Calculation Modes
+
+### HORADAYNIGHT (12+12)
+- Day = sunrise → sunset / 12
+- Night = sunset → next sunrise / 12
+- Previous and current astro-days generated (48 slices)
+- Filtered to civil day
+
+### HORAEQUAL
+- sunrise → next sunrise / 24
+- Previous and current periods generated
+- Filtered to civil day
+
+### HORAFROM6
+- From 06:00 local, step = 1 hour
+- Previous and current days generated
+- Converted to UTC and filtered
+
+## Localization
+
+HoraPlanet → EPlanet mapping via HoraPlanetMapper  
+PlanetId resolved from DataCache.PlanetList  
+Localized name via PanchangaHelper.GetPlanetDescEntity
+
+## DayPage Integration
+
+- HoraTransitBuilder.BuildForLocalDay(...)
+- PanchangaHelper.BuildSegmentsForDay(...)
+- includeStartTimeInText = false
+- Assigned to HoraSegments
+
+## Rendering
+
+RenderPanchangaLane(EDVLineName.HORA, HoraSegments)
+Sticky label enabled
+
+## Tooltip
+
+Title: Planet name  
+Range: dd.MM.yyyy HH:mm:ss – dd.MM.yyyy HH:mm:ss
+
+## Result
+
+Hora is profile-aware, timezone-aware and fully configurable via AppSettings.
+
+---------
+

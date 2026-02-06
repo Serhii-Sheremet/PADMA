@@ -23,7 +23,8 @@ namespace PADMA.Core.Utilities
             Func<TSlice, EColor> getColorCode,
             Func<TSlice, string?>? getText = null,
             Func<TSlice, ETransitKind>? getKind = null,
-            Func<TSlice, int>? getId = null)
+            Func<TSlice, int>? getId = null,
+            bool includeStartTimeInText = true)
             where TSlice : CalendarSlice
         {
             if (slicesUtc == null) throw new ArgumentNullException(nameof(slicesUtc));
@@ -72,7 +73,7 @@ namespace PADMA.Core.Utilities
                     // если сегмент начался НЕ в самом начале дня, то добавляем время
                     if (startLocal > dayStartLocal.AddSeconds(1)) // маленький допуск
                     {
-                        text = $"{startLocal:HH:mm} {core}";
+                        text = includeStartTimeInText ? $"{startLocal:HH:mm} {core}" : $"{ core}";
                     }
                 }
 

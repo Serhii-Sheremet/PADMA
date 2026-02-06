@@ -2,7 +2,6 @@
 {
     public enum EHoraPlanet
     {
-        NULL = 0,
         SUN = 1,
         VENUS = 2,
         MERCURY = 3,

@@ -47,7 +47,7 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         BindingContext = this;
         RefreshFlyoutTitles();
 
-        // Регистрируем маршруты
+        // Регистрируем маршруты ProfilesPage, ProfileDetailPage и LocationSearchPage 
         Routing.RegisterRoute(nameof(ProfilesPage), typeof(ProfilesPage));
         Routing.RegisterRoute(nameof(ProfileDetailPage), typeof(ProfileDetailPage));
         Routing.RegisterRoute(nameof(LocationSearchPage), typeof(LocationSearchPage));
@@ -92,7 +92,6 @@ public partial class AppShell : Shell, INotifyPropertyChanged
                 _isExiting = false;
             }
         });
-
     }
 
     public void RefreshFlyoutTitles()

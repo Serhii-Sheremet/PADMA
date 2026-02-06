@@ -72,7 +72,6 @@ public static class MauiProgram
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddSingleton<DayPage>();
         builder.Services.AddSingleton<ConfigurationPage>();
-        builder.Services.AddSingleton<ExitPage>();
         builder.Services.AddSingleton<AppSettingsService>();
         builder.Services.AddSingleton<NominatimService>();
         builder.Services.AddSingleton<NavigationDataStore>();

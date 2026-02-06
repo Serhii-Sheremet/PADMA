@@ -1,15 +1,12 @@
-﻿using Microsoft.Maui.Controls;
-using Microsoft.Maui.Controls.Shapes;
-using Microsoft.Maui.Graphics;
-using Microsoft.Maui.Layouts;
+﻿using Microsoft.Maui.Layouts;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
+using PADMA.Core.TransitBuilder;
 using PADMA.Core.Utilities;
 using PADMA.UI;
 using PADMA.UI.Services;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -29,6 +26,13 @@ namespace PADMA.Pages
         {
             get => _overview;
             set { _overview = value; OnPropertyChanged(); }
+        }
+
+        private List<PanchangaSegment> _horaSegments = new();
+        public List<PanchangaSegment> HoraSegments
+        {
+            get => _horaSegments;
+            set { _horaSegments = value; OnPropertyChanged(); }
         }
 
         private List<YogaOverviewStripe> _yogaStripes = new();
@@ -265,6 +269,46 @@ namespace PADMA.Pages
                     YogaSegments = BuildYogaSegments(dayStart, dayEnd, YogaStripes);
                     MuhurtaSegments = BuildMuhurtaSegments(dayStart, dayEnd, MuhurtaStripes);
 
+                    var ctx = DataCache.Instance.ProfileContextService.Current;
+                    if (ctx?.TimeZoneInfo != null)
+                    {
+                        var tz = ctx.TimeZoneInfo;
+
+                        // Day.Date считается локальной датой (00:00)
+                        var dayLocal = Day!.Date;
+                        if (dayLocal.Kind == DateTimeKind.Utc)
+                            dayLocal = TimeZoneInfo.ConvertTimeFromUtc(dayLocal, tz);
+
+                        var horaSlices = HoraTransitBuilder.BuildForLocalDay(
+                            dayLocal.Date,
+                            tz,
+                            ctx.LivingLat,
+                            ctx.LivingLon,
+                            altitude: 0);
+
+                        // text = локализованное имя планеты
+                        HoraSegments = PanchangaHelper.BuildSegmentsForDay(
+                            horaSlices,
+                            dayLocal.Date,
+                            tz,
+                            DataCache.Instance,
+                            getColorCode: s => s.ColorCode,
+                            getText: s =>
+                            {
+                                var planet = HoraPlanetMapper.ToPlanet(s.PlanetCode);
+
+                                var planetId = DataCache.Instance.PlanetList
+                                    .FirstOrDefault(p => p.PlanetCode == planet.ToString())?.Id ?? 0;
+
+                                return planetId > 0
+                                    ? PanchangaHelper.GetPlanetDescEntity(planetId)?.Name ?? string.Empty
+                                    : planet.ToString();
+                            },
+                            getKind: s => ETransitKind.Hora,
+                            includeStartTimeInText: false
+                        );
+                    }
+
                     // -------- Planet segments ------------------------
                     IReadOnlyList<PlanetSlice> sunSlices;
                     if (transitPack != null && transitPack.TryGetValue(EPlanet.SUN, out sunSlices) && sunSlices != null)
@@ -460,6 +504,7 @@ namespace PADMA.Pages
             UpdateStickyForLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.YOGA, YogaSegments, scrollY);
             //UpdateStickyForLane((int)EDVLineName.MUHURTA, MuhurtaSegments, scrollY);  // -- will not be shown
+            UpdateStickyForLane((int)EDVLineName.HORA, HoraSegments, scrollY);
 
             UpdateStickyForLane((int)EDVLineName.SUNPADA, SunSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.MOONPADA, MoonSegments, scrollY);
@@ -531,36 +576,19 @@ namespace PADMA.Pages
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             ResetTooltip();
-
             await CloseAsync();
-            // Close DayPage completely and return to calendar
-            //await Shell.Current.GoToAsync("//main", true);
         }
 
         protected override bool OnBackButtonPressed()
         {
-            // Нельзя давать Shell "pop" назад на DayOverview — это и ломает carousel.
+            // Нельзя давать Shell "pop" назад на DayOverview — это ломает carousel.
             Dispatcher.Dispatch(async () =>
             {
                 if (_isClosing) return;
-
-                var title = L("Close this screen?");
-                var message = L("Do you want to close the Day screen?");
-                var okText = L("Yes");
-                var cancel = L("No");
-
-                var ok = await DisplayAlert(title, message, okText, cancel);
-                if (ok)
-                    await CloseAsync();
+                await CloseAsync();
             });
 
             return true; // мы обработали, стандартный Back отменяем
-        }
-
-        private string L(string nativeEn)
-        {
-            var lang = DataCache.Instance.CurrentLanguageCode;
-            return Localization.GetLocalizedText(nativeEn, lang);
         }
 
         private void ApplyDayNightBackgroundIfPossible()
@@ -822,6 +850,7 @@ namespace PADMA.Pages
             RenderPanchangaLane((int)EDVLineName.CHANDRABALA, Day.ChandraBalaSegments);
             RenderPanchangaLane((int)EDVLineName.YOGA, YogaSegments);
             RenderPanchangaLane((int)EDVLineName.MUHURTA, MuhurtaSegments);
+            RenderPanchangaLane((int)EDVLineName.HORA, HoraSegments);
 
             RenderPanchangaLane((int)EDVLineName.SUNPADA, SunSegments);
             RenderPanchangaLane((int)EDVLineName.MOONPADA, MoonSegments);
@@ -1104,6 +1133,13 @@ namespace PADMA.Pages
                     return string.Join(" ", names);
                 }
             },
+            {
+                ETransitKind.Hora,
+                seg =>
+                {
+                    return seg.Text;
+                }
+            },
 
             {
                 ETransitKind.Planet,
@@ -1206,6 +1242,11 @@ namespace PADMA.Pages
                 case (int)EDVLineName.MUHURTA:
                     ShowMuhurtaTooltip(seg);
                     break;
+
+                case (int)EDVLineName.HORA:
+                    ShowHoraTooltip(seg);
+                    break;
+                    
 
                 case (int)EDVLineName.SUNPADA:
                     ShowPlanetPadaTooltip(seg);
@@ -2177,7 +2218,15 @@ namespace PADMA.Pages
             Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
+        private void ShowHoraTooltip(PanchangaSegment seg)
+        {
+            TooltipItems.Clear();
+            TooltipTitle = seg.Text ?? string.Empty;
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+        }
 
 
 
