@@ -4300,3 +4300,193 @@ Hora is profile-aware, timezone-aware and fully configurable via AppSettings.
 
 ---------
 
+
+# Muhurta30 and Ghati60
+
+## Overview
+Muhurta30 and Ghati60 are time-division based Panchanga entities displayed as dedicated transit lanes on DayPage.
+
+Both systems use the same configuration group:
+
+GroupCode = "MUHURTAGHATI"
+
+and support three calculation modes:
+
+- MUHURTAGHATIDAYNIGHT  – based on sunrise/sunset (day + night)
+- MUHURTAGHATIEQUAL     – equal divisions from sunrise to next sunrise
+- MUHURTAGHATIFROM6    – equal divisions from 06:00 local time
+
+Muhurta30 divides a period into **30 parts**.  
+Ghati60 divides a period into **60 parts**.
+
+Both follow identical architectural patterns and differ only by the number of divisions and source tables.
+
+## Transit Kinds
+```
+ETransitKind.Muhurta30 = 24
+ETransitKind.Ghati60  = 25
+```
+
+## Core Slice Models
+
+### Muhurta30Slice
+File: Core/Models/Calendar/Muhurta30Slice.cs
+```
+public sealed class Muhurta30Slice : CalendarSlice
+{
+    public int Muhurta30Id { get; set; }
+    public int ColorId { get; set; }
+
+    public Muhurta30Slice()
+    {
+        Kind = ETransitKind.Muhurta30;
+    }
+}
+```
+
+### Ghati60Slice
+File: Core/Models/Calendar/Ghati60Slice.cs
+```
+public sealed class Ghati60Slice : CalendarSlice
+{
+    public int Ghati60Id { get; set; }
+    public int ColorId { get; set; }
+    public bool IsDayLightGhati { get; set; }
+
+    public Ghati60Slice()
+    {
+        Kind = ETransitKind.Ghati60;
+    }
+}
+```
+## Data Sources
+
+Loaded into DataCache:
+
+- Muhurta30List
+- Muhurta30DescList
+- Ghati60List
+- Ghati60DescList
+
+Localization helpers:
+```
+PanchangaHelper.GetMuhurta30DescEntity(int muhurta30Id)
+PanchangaHelper.GetGhati60DescDescEntity(int ghati60Id)
+```
+
+## Transit Builders
+
+Files:
+
+- Core/TransitBuilder/Muhurta30TransitBuilder.cs
+- Core/TransitBuilder/Ghati60TransitBuilder.cs
+
+Main entry point (both):
+```
+BuildForLocalDay(
+    DateTime dayLocal,
+    TimeZoneInfo tzInfo,
+    double latitude,
+    double longitude,
+    double altitude
+)
+```
+Responsibilities:
+- Convert local day boundaries to UTC
+- Obtain SunriseSlice via SunriseTransitBuilder
+- Read active MUHURTAGHATI AppSetting
+- Build slices according to selected mode
+- Filter slices intersecting local civil day
+- Return List of slices in UTC
+
+## Calculation Modes
+
+### 1) MUHURTAGHATIDAYNIGHT
+
+Muhurta30:
+- Night before sunrise divided into 15 parts (IDs 16–30)
+- Day (sunrise → sunset) divided into 15 parts (IDs 1–15)
+- Night after sunset divided into 15 parts (IDs 16–30)
+
+Ghati60:
+- Night before sunrise divided into 30 parts (IDs 31–60)
+- Day divided into 30 parts (IDs 1–30)
+- Night after sunset divided into 30 parts (IDs 31–60)
+
+Slices for previous + current astro-periods are generated and then filtered to civil day.
+
+### 2) MUHURTAGHATIEQUAL
+
+Muhurta30:
+- sunrise → next sunrise divided into 30 equal parts
+
+Ghati60:
+- sunrise → next sunrise divided into 60 equal parts
+
+Previous and current periods are both generated (buffer) and filtered to civil day.
+
+### 3) MUHURTAGHATIFROM6
+
+Muhurta30:
+- 06:00 local → 06:00 next day divided into 30 equal parts
+
+Ghati60:
+- 06:00 local → 06:00 next day divided into 60 equal parts
+
+Previous and current periods are generated and filtered to civil day.
+
+This mode does not depend on sunrise.
+
+## Integration into DayPage
+
+1) Call builder:
+```
+Muhurta30TransitBuilder.BuildForLocalDay(...)
+Ghati60TransitBuilder.BuildForLocalDay(...)
+```
+
+2) Convert slices to segments:
+```
+PanchangaHelper.BuildSegmentsForDay(
+    slices,
+    dayLocal.Date,
+    tz,
+    DataCache.Instance,
+    getColorCode,
+    getText,
+    getKind,
+    includeStartTimeInText:false,
+    getId
+)
+```
+Where:
+- getText for Muhurta30 → ShortName
+- getText for Ghati60   → ShortName
+- getId returns Muhurta30Id or Ghati60Id
+
+3) Assign to:
+```
+Muhurta30Segments
+Ghati60Segments
+```
+
+## Rendering
+```
+RenderPanchangaLane(EDVLineName.MUHURTA30, Muhurta30Segments);
+RenderPanchangaLane(EDVLineName.GHTATI60, Ghati60Segments);
+```
+Sticky labels enabled for both.
+
+## Tooltip
+
+Muhurta30 & Ghati60:
+
+- Title: Name
+- Range: dd.MM.yyyy HH:mm:ss – dd.MM.yyyy HH:mm:ss
+- Body: Description
+
+## Result
+
+Muhurta30 and Ghati60 are fully profile-aware, timezone-aware, configurable via AppSettings, and implemented using the same Slice → Builder → Segment → Lane architecture as other PADMA transit systems.
+
+--------

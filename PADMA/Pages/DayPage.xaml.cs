@@ -35,6 +35,20 @@ namespace PADMA.Pages
             set { _horaSegments = value; OnPropertyChanged(); }
         }
 
+        private List<PanchangaSegment> _muhurta30Segments = new();
+        public List<PanchangaSegment> Muhurta30Segments
+        {
+            get => _muhurta30Segments;
+            set { _muhurta30Segments = value; OnPropertyChanged(); }
+        }
+
+        private List<PanchangaSegment> _ghati60Segments = new();
+        public List<PanchangaSegment> Ghati60Segments
+        {
+            get => _ghati60Segments;
+            set { _ghati60Segments = value; OnPropertyChanged(); }
+        }
+
         private List<YogaOverviewStripe> _yogaStripes = new();
         public List<YogaOverviewStripe> YogaStripes
         {
@@ -269,6 +283,7 @@ namespace PADMA.Pages
                     YogaSegments = BuildYogaSegments(dayStart, dayEnd, YogaStripes);
                     MuhurtaSegments = BuildMuhurtaSegments(dayStart, dayEnd, MuhurtaStripes);
 
+                    // ---- Hora segments (локальные, зависят от TZ профиля) ----
                     var ctx = DataCache.Instance.ProfileContextService.Current;
                     if (ctx?.TimeZoneInfo != null)
                     {
@@ -308,8 +323,69 @@ namespace PADMA.Pages
                             includeStartTimeInText: false
                         );
                     }
+                    // ------------------------------------------------------------
 
-                    // -------- Planet segments ------------------------
+                    // ---- Muhurta30 segments (локальные, зависят от TZ профиля) ----
+                    if (ctx?.TimeZoneInfo != null)
+                    {
+                        var tz = ctx.TimeZoneInfo;
+
+                        var dayLocal = Day!.Date;
+                        if (dayLocal.Kind == DateTimeKind.Utc)
+                            dayLocal = TimeZoneInfo.ConvertTimeFromUtc(dayLocal, tz);
+
+                        var slices = Muhurta30TransitBuilder.BuildForLocalDay(
+                            dayLocal.Date,
+                            tz,
+                            ctx.LivingLat,
+                            ctx.LivingLon,
+                            altitude: 0);
+
+                        Muhurta30Segments = PanchangaHelper.BuildSegmentsForDay(
+                            slices,
+                            dayLocal.Date,
+                            tz,
+                            DataCache.Instance,
+                            getColorCode: s => (EColor)s.ColorId,
+                            getText: s => $"{s.Muhurta30Id}.{PanchangaHelper.GetMuhurta30DescEntity(s.Muhurta30Id)?.ShortName}" ?? string.Empty,
+                            getKind: s => ETransitKind.Muhurta30,
+                            includeStartTimeInText: false,
+                            getId: s => s.Muhurta30Id
+                        );
+                    }
+                    // ------------------------------------------------------------
+
+                    // ---- Ghati60 segments (локальные, зависят от TZ профиля) ----
+                    if (ctx?.TimeZoneInfo != null)
+                    {
+                        var tz = ctx.TimeZoneInfo;
+
+                        var dayLocal = Day!.Date;
+                        if (dayLocal.Kind == DateTimeKind.Utc)
+                            dayLocal = TimeZoneInfo.ConvertTimeFromUtc(dayLocal, tz);
+
+                        var slices = Ghati60TransitBuilder.BuildForLocalDay(
+                            dayLocal.Date,
+                            tz,
+                            ctx.LivingLat,
+                            ctx.LivingLon,
+                            altitude: 0);
+
+                        Ghati60Segments = PanchangaHelper.BuildSegmentsForDay(
+                            slices,
+                            dayLocal.Date,
+                            tz,
+                            DataCache.Instance,
+                            getColorCode: s => (EColor)s.ColorId,
+                            getText: s => $"{s.Ghati60Id}.{ PanchangaHelper.GetGhati60DescDescEntity(s.Ghati60Id)?.ShortName}" ?? string.Empty,
+                            getKind: s => ETransitKind.Ghati60,
+                            includeStartTimeInText: false,
+                            getId: s => s.Ghati60Id
+                        );
+                    }
+                    // ------------------------------------------------------------
+
+                    // --------- Planet segments ----------------------------------
                     IReadOnlyList<PlanetSlice> sunSlices;
                     if (transitPack != null && transitPack.TryGetValue(EPlanet.SUN, out sunSlices) && sunSlices != null)
                     {
@@ -505,7 +581,8 @@ namespace PADMA.Pages
             UpdateStickyForLane((int)EDVLineName.YOGA, YogaSegments, scrollY);
             //UpdateStickyForLane((int)EDVLineName.MUHURTA, MuhurtaSegments, scrollY);  // -- will not be shown
             UpdateStickyForLane((int)EDVLineName.HORA, HoraSegments, scrollY);
-
+            UpdateStickyForLane((int)EDVLineName.MUHURTA30, Muhurta30Segments, scrollY);
+            UpdateStickyForLane((int)EDVLineName.GHATI60, Ghati60Segments, scrollY);
             UpdateStickyForLane((int)EDVLineName.SUNPADA, SunSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.MOONPADA, MoonSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.MARSPADA, MarsSegments, scrollY);
@@ -515,7 +592,6 @@ namespace PADMA.Pages
             UpdateStickyForLane((int)EDVLineName.SATURNPADA, SaturnSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.RAHUPADA, RahuSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.KETUPADA, KetuSegments, scrollY);
-
         }
 
         private async Task CenterOnNowIfTodayAsync()
@@ -851,7 +927,8 @@ namespace PADMA.Pages
             RenderPanchangaLane((int)EDVLineName.YOGA, YogaSegments);
             RenderPanchangaLane((int)EDVLineName.MUHURTA, MuhurtaSegments);
             RenderPanchangaLane((int)EDVLineName.HORA, HoraSegments);
-
+            RenderPanchangaLane((int)EDVLineName.MUHURTA30, Muhurta30Segments);
+            RenderPanchangaLane((int)EDVLineName.GHATI60, Ghati60Segments);
             RenderPanchangaLane((int)EDVLineName.SUNPADA, SunSegments);
             RenderPanchangaLane((int)EDVLineName.MOONPADA, MoonSegments);
             RenderPanchangaLane((int)EDVLineName.MARSPADA, MarsSegments);
@@ -861,8 +938,6 @@ namespace PADMA.Pages
             RenderPanchangaLane((int)EDVLineName.SATURNPADA, SaturnSegments);
             RenderPanchangaLane((int)EDVLineName.RAHUPADA, RahuSegments);
             RenderPanchangaLane((int)EDVLineName.KETUPADA, KetuSegments);
-
-
         }
 
         private void RenderPanchangaLane(int lineId, IList<PanchangaSegment> segments)
@@ -1140,7 +1215,20 @@ namespace PADMA.Pages
                     return seg.Text;
                 }
             },
-
+            {
+                ETransitKind.Muhurta30,
+                seg =>
+                {
+                    return seg.Text;
+                }
+            },
+            {
+                ETransitKind.Ghati60,
+                seg =>
+                {
+                    return seg.Text;
+                }
+            },
             {
                 ETransitKind.Planet,
                 seg =>
@@ -1246,7 +1334,14 @@ namespace PADMA.Pages
                 case (int)EDVLineName.HORA:
                     ShowHoraTooltip(seg);
                     break;
-                    
+
+                case (int)EDVLineName.MUHURTA30:
+                    ShowMuhurta30Tooltip(seg);
+                    break;
+
+                case (int)EDVLineName.GHATI60:
+                    ShowGhati60Tooltip(seg);
+                    break;
 
                 case (int)EDVLineName.SUNPADA:
                     ShowPlanetPadaTooltip(seg);
@@ -2228,6 +2323,44 @@ namespace PADMA.Pages
             Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
 
+        private void ShowMuhurta30Tooltip(PanchangaSegment seg)
+        {
+            var m30desc = PanchangaHelper.GetMuhurta30DescEntity(seg.TransitId);
+            if (m30desc == null) return;
+
+            TooltipTitle = m30desc.Name;
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+            
+            TooltipItems.Clear();
+            FillTooltipBlocks(m30desc, Muhurta30TooltipFields, false);
+
+            UpdateTooltipBodyHeight();
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+        }
+
+        private static readonly (string NativeLabel, Func<Muhurta30Desc, string?> GetValue)[] Muhurta30TooltipFields =
+        {
+            ("Description", d => d.Description),
+        };
+
+        private void ShowGhati60Tooltip(PanchangaSegment seg)
+        {
+            var gdesc = PanchangaHelper.GetGhati60DescDescEntity(seg.TransitId);
+            if (gdesc == null) return;
+
+            TooltipTitle = gdesc.Name;
+            TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
+
+            TooltipItems.Clear();
+            FillTooltipBlocks(gdesc, Ghati60TooltipFields, false);
+
+            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+        }
+
+        private static readonly (string NativeLabel, Func<Ghati60Desc, string?> GetValue)[] Ghati60TooltipFields =
+        {
+            ("Description", d => d.Description),
+        };
 
 
 

@@ -187,6 +187,20 @@ namespace PADMA.Core.Utilities
                 .FirstOrDefault(i => i.LanguageCode == lang && i.TransitId == transitId);
         }
 
+        public static Muhurta30Desc? GetMuhurta30DescEntity(int muhurta30Id)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.Muhurta30DescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.Muhurta30Id == muhurta30Id);
+        }
+
+        public static Ghati60Desc? GetGhati60DescDescEntity(int ghati60Id)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            return DataCache.Instance.Ghati60DescList
+                .FirstOrDefault(i => i.LanguageCode == lang && i.Ghati60Id == ghati60Id);
+        }
+
 
     }
 }

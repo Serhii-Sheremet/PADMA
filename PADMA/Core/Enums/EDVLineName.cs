@@ -13,7 +13,7 @@
         MUHURTA             = 9,
         HORA                = 10,
         MUHURTA30           = 11,
-        GHTATI60            = 12,
+        GHATI60             = 12,
         SUNPADA             = 13,
         MOONPADA            = 14,
         MARSPADA            = 15,

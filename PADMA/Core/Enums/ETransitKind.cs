@@ -24,6 +24,8 @@ namespace PADMA.Core.Enums
         Yoga = 21,
         Muhurta = 22,
         Hora = 23,
+        Muhurta30 = 24,
+        Ghati60 = 25,
 
         CustomUserTransit = 100
     }
