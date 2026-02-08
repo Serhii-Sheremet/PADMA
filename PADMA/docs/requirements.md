@@ -4490,3 +4490,155 @@ Muhurta30 & Ghati60:
 Muhurta30 and Ghati60 are fully profile-aware, timezone-aware, configurable via AppSettings, and implemented using the same Slice → Builder → Segment → Lane architecture as other PADMA transit systems.
 
 --------
+
+# User Events (Appointments) – Model & Storage Specification
+
+This section describes the data model and storage rules for **User Events (Appointments)** in PADMA.
+It is based on legacy PAD behavior and adapted for mobile UI (DayPage time scale).
+
+## 1. Purpose
+
+User Events represent personal appointments and notes created by the user inside the daily timeline (DayPage).
+They:
+
+- Are attached to a specific profile
+- Have start and end date/time
+- Are displayed as colored segments in the Events column on DayPage
+- Can later be used for:
+  - DayPage visualization
+  - Calendar day indicators (triangle in month cell)
+  - Notifications / reminders
+
+## 2. Database Table
+
+Existing legacy-compatible table:
+```sql
+CREATE TABLE IF NOT EXISTS "USER_EVENTS" (
+    "ID"        INTEGER,
+    "PROFILEID" INTEGER,
+    "DATESTART" VARCHAR(20),
+    "DATEEND"   VARCHAR(20),
+    "NAME"      TEXT,
+    "MESSAGE"   TEXT,
+    "ARGBVALUE" INTEGER,
+    PRIMARY KEY("ID" AUTOINCREMENT),
+    FOREIGN KEY("PROFILEID") REFERENCES "PROFILE"("ID")
+);
+```
+This table is reused without structural changes.
+
+## 3. Date/Time Storage Format
+
+DATESTART and DATEEND are stored as strings using the following format:
+```
+yyyy-MM-dd HH:mm:ss
+```
+Example:
+```
+2026-02-08 13:15:00
+```
+Characteristics:
+
+- Exactly 19 characters
+- Lexicographically sortable
+- Culture-invariant
+- Represents **local time of the active profile**
+
+At this stage, no UTC conversion is performed in the database.
+Timezone handling is applied only when scheduling notifications in the future.
+
+## 4. Conceptual Model (C#)
+
+```csharp
+public sealed class UserEvent
+{
+    public int Id { get; set; }
+    public int ProfileId { get; set; }
+
+    // Stored in DB as string (yyyy-MM-dd HH:mm:ss)
+    public string DateStart { get; set; } = "";
+    public string DateEnd   { get; set; } = "";
+
+    public string Name { get; set; } = "";
+    public string Message { get; set; } = "";
+    public int ArgbValue { get; set; }
+
+    // Convenience properties
+    public DateTime StartLocal => UserEventDateHelper.Parse(DateStart);
+    public DateTime EndLocal   => UserEventDateHelper.Parse(DateEnd);
+}
+```
+
+Helper:
+
+```csharp
+public static class UserEventDateHelper
+{
+    public const string DbFormat = "yyyy-MM-dd HH:mm:ss";
+
+    public static string ToDbString(DateTime dt) =>
+        dt.ToString(DbFormat, CultureInfo.InvariantCulture);
+
+    public static DateTime Parse(string s) =>
+        DateTime.ParseExact(s, DbFormat, CultureInfo.InvariantCulture);
+}
+```
+
+## 5. Service Responsibilities
+
+A dedicated service manages User Events:
+
+```csharp
+public interface IUserEventService
+{
+    Task<List<UserEvent>> GetEventsForDayAsync(int profileId, DateTime dayLocal);
+    Task<int> InsertAsync(UserEvent ev);
+    Task UpdateAsync(UserEvent ev);
+    Task DeleteAsync(int id);
+}
+```
+
+## 6. Loading Events for a Day
+
+An event belongs to a day if it **intersects** with that day interval.
+
+Definitions:
+```
+dayStart = YYYY-MM-DD 00:00:00
+dayEnd   = next day 00:00:00
+```
+
+SQL condition:
+```sql
+SELECT *
+FROM USER_EVENTS
+WHERE PROFILEID = ?
+  AND DATESTART < :dayEnd
+  AND DATEEND   > :dayStart
+ORDER BY DATESTART;
+```
+
+This allows:
+- Events fully inside the day
+- Events starting before midnight and ending after midnight
+- Long events spanning multiple days
+
+## 7. Relation to UI
+
+- Events are displayed only on the DayPage for the selected day
+- Visual position is calculated from:
+  - Minutes from start of day
+  - PixelsPerMinute value used by DayPage timeline
+- Color is taken from ARGBVALUE
+- Title (NAME) may be shown inside segment if space allows
+
+## 8. Future Usage
+
+The same stored events will later be used for:
+
+- Month calendar day indicator (triangle in cell)
+- Tooltip with list of events for the day
+- Notification scheduling (reminders)
+- Possible repeating events (future extension)
+
+-----

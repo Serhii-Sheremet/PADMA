@@ -18,6 +18,7 @@ namespace PADMA.UI
         public DateTime? EclipseDate { get; set; } // локальная дата дня (00:00) в TZ профиля
         public string? EclipseIcon { get; set; }
         public bool HasEclipse => !string.IsNullOrEmpty(EclipseIcon);
+        public bool HasUserEvents { get; set; }
 
         public string PlanetMarkersText { get; set; } = string.Empty;
 

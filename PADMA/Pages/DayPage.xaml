@@ -253,12 +253,33 @@
                              Opacity="0.85"/>
 
                     <!-- USER EVENTS column -->
-                    <Grid Grid.Column="2" WidthRequest="80" BackgroundColor="#F7FBFF" >
-                        <AbsoluteLayout x:Name="EventsBackgroundLayout" BackgroundColor="Transparent" />
+                    <Grid Grid.Column="2" WidthRequest="80" BackgroundColor="Transparent">
+
+                        <!-- Backgrounds (same idea as TransitBodyGrid) -->
+                        <BoxView x:Name="EventsNightBackground"
+                                 BackgroundColor="Transparent"
+                                 HorizontalOptions="Fill"
+                                 VerticalOptions="Fill" />
+
+                        <BoxView x:Name="EventsDayBackground"
+                                 BackgroundColor="Transparent"
+                                 HorizontalOptions="Fill"
+                                 VerticalOptions="Start" />
+
+                        <!-- grid lines -->
                         <AbsoluteLayout x:Name="EventsGridLayout" BackgroundColor="Transparent" />
+
+                        <!-- segments + selection -->
+                        <AbsoluteLayout x:Name="EventsBackgroundLayout" BackgroundColor="Transparent">
+                            <AbsoluteLayout.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnEventsBackgroundTapped" />
+                            </AbsoluteLayout.GestureRecognizers>
+                        </AbsoluteLayout>
+
                     </Grid>
 
-                <!-- Separator after Events -->
+
+                    <!-- Separator after Events -->
                     <BoxView Grid.Column="2"
                              WidthRequest="1"
                              HorizontalOptions="End"
@@ -468,6 +489,100 @@
 
                 </Grid>
             </Frame>
+        </Grid>
+
+        <!-- User Event Editor Overlay (Appointments) -->
+        <Grid x:Name="UserEventOverlay"
+              IsVisible="False"
+              InputTransparent="False"
+              Grid.RowSpan="4"
+              Grid.ColumnSpan="4"
+              BackgroundColor="Transparent">
+
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnUserEventOverlayTapped" />
+            </Grid.GestureRecognizers>
+
+            <!-- Backdrop: blocks taps, does NOT close -->
+            <BoxView BackgroundColor="#80000000" >
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnUserEventOverlayTapped" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <!-- Editor card -->
+            <Border x:Name="UserEventCard"
+                    BackgroundColor="White"
+                    StrokeThickness="1"
+                    Stroke="#22000000"
+                    Padding="12"
+                    Margin="18"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    MaximumWidthRequest="420">
+
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+
+                <!-- ВАЖНО: пустой TapGesture, чтобы не пробрасывать на overlay -->
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer />
+                </Border.GestureRecognizers>
+
+                <!-- контент: Header, TimePickers, Title, Message, ColorPalette, Buttons -->
+                <Grid RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="10">
+
+                    <!-- Header -->
+                    <Label Grid.Row="0"
+                           x:Name="UserEventHeader"
+                           FontAttributes="Bold"
+                           FontSize="14" />
+
+                    <!-- Time + Title + Description (small) -->
+                    <VerticalStackLayout Grid.Row="1" Spacing="8">
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <TimePicker x:Name="StartTimePicker" Grid.Column="0" />
+                            <TimePicker x:Name="EndTimePicker" Grid.Column="1" />
+                        </Grid>
+
+                        <Entry x:Name="TitleEntry" Placeholder="Title" />
+
+                        <!-- 3–4 lines area -->
+                        <Editor x:Name="MessageEditor"
+                                Placeholder="Description"
+                                AutoSize="TextChanges"
+                                HeightRequest="96" />
+                    </VerticalStackLayout>
+
+                    <!-- Bottom fixed: palette + buttons -->
+                    <VerticalStackLayout Grid.Row="2" Spacing="10">
+
+                        <HorizontalStackLayout x:Name="ColorPalette" Spacing="10" />
+
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                              ColumnSpacing="10">
+
+                            <Button x:Name="DeleteButton"
+                                    Grid.Column="0"
+                                    Text="Delete"
+                                    Clicked="OnUserEventDelete" />
+
+                            <BoxView Grid.Column="1" Opacity="0" />
+
+                            <Button Grid.Column="2"
+                                    Text="Cancel"
+                                    Clicked="OnUserEventCancel" />
+
+                            <Button Grid.Column="3"
+                                    Text="OK"
+                                    Clicked="OnUserEventOk" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
         </Grid>
 
 

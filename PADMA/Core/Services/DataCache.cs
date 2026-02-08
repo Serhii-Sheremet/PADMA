@@ -87,7 +87,8 @@ namespace PADMA.Core.Services
         public string CurrentLanguageCode { get; private set; } = "en";
         public DayOfWeek DayOfWeek { get; private set; } = DayOfWeek.Monday;
 
-
+        // --- User Events Cache ---
+        public UserEventsWindowCache UserEventsWindowCache { get; private set; }
 
 
         /// <summary>
@@ -109,8 +110,6 @@ namespace PADMA.Core.Services
 
             // First day of week setting
             DayOfWeek = db.GetFirstDayOfWeekFromDb();
-
-
 
             // Colors
             ColorList = db.GetColors();
@@ -188,7 +187,8 @@ namespace PADMA.Core.Services
             // Locations
             LocationList = db.GetLocations().ToList();
 
-
+            // User events cache
+            UserEventsWindowCache = new UserEventsWindowCache(db);
 
         }
 

@@ -208,7 +208,6 @@ namespace PADMA.Pages
                 return;
             }
 
-
             // orderwise, just select the tapped day
             Vm.SelectedDay = tapped;
         }
@@ -241,14 +240,13 @@ namespace PADMA.Pages
 
                 var ok = await DisplayAlert(
                     L("Exit application?"),
-                    L("Do you want to exit PADMA?"),
+                    L("Do you want to exit PADMA Application?"),
                     L("Yes"),
                     L("No"));
 
                 if (ok)
                     AppCloser.Close();
             });
-
             return true;
         }
 

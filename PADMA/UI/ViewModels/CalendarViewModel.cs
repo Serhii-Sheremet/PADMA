@@ -295,6 +295,15 @@ namespace PADMA.UI.ViewModels
                 var bufferStartUtc = bufferStart.UtcDateTime;
                 var bufferEndUtc = bufferEnd.UtcDateTime;
 
+                var windowStart = bufferStart.DateTime;                 // local (profile TZ) day 00:00
+                var windowEndExclusive = bufferEnd.AddDays(1).DateTime; // local (profile TZ) next day 00:00
+                var cache = DataCache.Instance.UserEventsWindowCache;
+
+                if (!cache.IsLoadedFor(ctx.ProfileId, windowStart, windowEndExclusive))
+                {
+                    cache.LoadWindow(ctx.ProfileId, windowStart, windowEndExclusive);
+                }
+
                 // ---- Swiss: PlanetData calculation ----
                 var sunData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SUN, bufferStartUtc, bufferEndUtc, nodeMode);
                 var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc, nodeMode);
@@ -380,6 +389,15 @@ namespace PADMA.UI.ViewModels
                 var date = d.ToDateTime(TimeOnly.MinValue);
                 bool isCurrentMonth = date.Month == month && date.Year == year;
                 bool isToday = date.Date == DateTime.Today;
+                bool hasUserEvents = false;
+                var evCache = DataCache.Instance.UserEventsWindowCache;
+                if (profile != null && ctx != null && evCache != null)
+                {
+                    // date is local-day key (00:00)
+                    hasUserEvents = evCache.HasEvents(date);
+                    if (hasUserEvents)
+                        System.Diagnostics.Debug.WriteLine($"[PADMA] Has user events: {date:yyyy-MM-dd}");
+                }
                 var planetMarkersText = string.Empty;   
 
                 IList<PanchangaSegment> nakshatraSegments = new List<PanchangaSegment>();
@@ -526,6 +544,7 @@ namespace PADMA.UI.ViewModels
                     DayNumber = date.Day,
                     IsCurrentMonth = isCurrentMonth,
                     IsToday = isToday,
+                    HasUserEvents = hasUserEvents,
                     EclipseId = eclipseId,
                     EclipseDate = eclipseDate,    
                     EclipseIcon = eclipseIcon,

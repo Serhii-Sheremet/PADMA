@@ -113,6 +113,7 @@
                         </Border.Background>
 
                         <Grid RowDefinitions="*,2*"
+                              ColumnDefinitions="*,Auto"
                               RowSpacing="0"
                               ColumnSpacing="0"
                               Padding="0"
@@ -127,14 +128,31 @@
                                    Margin="2,2,0,0"
                                    TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
 
-                            <Image Grid.Row="0" Grid.Column="1"
-                                   Source="{Binding EclipseIcon}"
-                                   IsVisible="{Binding HasEclipse}"
-                                   HorizontalOptions="End"
-                                   VerticalOptions="Start"
-                                   Margin="0,2,16,0"
-                                   WidthRequest="16"
-                                   HeightRequest="16" />
+                            <!-- Top-right overlay icons -->
+                            <Grid Grid.Row="0" Grid.Column="1"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill"
+                                  InputTransparent="True">
+
+                                <!-- Eclipse icon -->
+                                <Image Source="{Binding EclipseIcon}"
+                                       IsVisible="{Binding HasEclipse}"
+                                       HorizontalOptions="End"
+                                       VerticalOptions="Start"
+                                       Margin="0,2,16,0"
+                                       WidthRequest="16"
+                                       HeightRequest="16" />
+
+                                <!-- User events triangle -->
+                                <Path IsVisible="{Binding HasUserEvents}"
+                                      HorizontalOptions="End"
+                                      VerticalOptions="Start"
+                                      WidthRequest="10"
+                                      HeightRequest="10"
+                                      Fill="#1E90FF"
+                                      Data="M 0,0 L 10,0 L 10,10 Z"
+                                      Margin="0,2,2,0" />
+                            </Grid>
 
                             <!-- Planet markers (shown between day number and panchanga bars) -->
                             <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
@@ -150,6 +168,7 @@
 
 
                             <Grid Grid.Row="1"
+                                  Grid.ColumnSpan="2"
                                   RowDefinitions="*,*,*,*,*,*"
                                   VerticalOptions="FillAndExpand"
                                   HorizontalOptions="FillAndExpand"

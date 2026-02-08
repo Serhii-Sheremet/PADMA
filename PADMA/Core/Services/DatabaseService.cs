@@ -1526,6 +1526,129 @@ namespace PADMA.Core.Services
 
         #endregion
 
+        #region User Events (Appointments)
+
+        /// <summary>
+        /// Returns all user events for a given profile that intersect the specified local day.
+        /// dayLocal is interpreted in profile local time.
+        /// </summary>
+        public List<UserEvent> GetUserEventsForDay(int profileId, DateTime dayLocal)
+        {
+            try
+            {
+                _connection.CreateTable<UserEvent>();
+
+                var dayStart = new DateTime(dayLocal.Year, dayLocal.Month, dayLocal.Day, 0, 0, 0);
+                var dayEnd = dayStart.AddDays(1);
+
+                var dayStartStr = UserEventDateHelper.ToDbString(dayStart);
+                var dayEndStr = UserEventDateHelper.ToDbString(dayEnd);
+
+                const string sql = @"
+                                   SELECT
+                                       ID        as Id,
+                                       PROFILEID as ProfileId,
+                                       DATESTART as DateStartString,
+                                       DATEEND   as DateEndString,
+                                       NAME      as Name,
+                                       MESSAGE   as Message,
+                                       ARGBVALUE as ArgbValue
+                                   FROM USER_EVENTS
+                                   WHERE PROFILEID = ?
+                                     AND DATESTART < ?
+                                     AND DATEEND   > ?
+                                   ORDER BY DATESTART;";
+
+                return _connection.Query<UserEvent>(sql, profileId, dayEndStr, dayStartStr);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB GetUserEventsForDay error: {ex.Message}");
+                return new List<UserEvent>();
+            }
+        }
+
+        public int InsertUserEvent(UserEvent ev)
+        {
+            try
+            {
+                _connection.CreateTable<UserEvent>();
+                return _connection.Insert(ev);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB InsertUserEvent error: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public bool UpdateUserEvent(UserEvent ev)
+        {
+            try
+            {
+                _connection.CreateTable<UserEvent>();
+                return _connection.Update(ev) > 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB UpdateUserEvent error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public bool DeleteUserEvent(int id)
+        {
+            try
+            {
+                _connection.Execute("DELETE FROM USER_EVENTS WHERE ID = ?", id);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB DeleteUserEvent error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public List<UserEvent> GetUserEventsForRange(int profileId, DateTime rangeStartLocal, DateTime rangeEndLocal)
+        {
+            try
+            {
+                _connection.CreateTable<UserEvent>();
+
+                // Normalize to seconds (optional, but consistent)
+                var start = new DateTime(rangeStartLocal.Year, rangeStartLocal.Month, rangeStartLocal.Day, 0, 0, 0);
+                var end = new DateTime(rangeEndLocal.Year, rangeEndLocal.Month, rangeEndLocal.Day, 0, 0, 0);
+
+                var startStr = UserEventDateHelper.ToDbString(start);
+                var endStr = UserEventDateHelper.ToDbString(end);
+
+                const string sql = @"
+                                   SELECT
+                                       ID        as Id,
+                                       PROFILEID as ProfileId,
+                                       DATESTART as DateStartString,
+                                       DATEEND   as DateEndString,
+                                       NAME      as Name,
+                                       MESSAGE   as Message,
+                                       ARGBVALUE as ArgbValue
+                                   FROM USER_EVENTS
+                                   WHERE PROFILEID = ?
+                                     AND DATESTART < ?
+                                     AND DATEEND   > ?
+                                   ORDER BY DATESTART;";
+
+                return _connection.Query<UserEvent>(sql, profileId, endStr, startStr);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] DB GetUserEventsForRange error: {ex.Message}");
+                return new List<UserEvent>();
+            }
+        }
+
+
+        #endregion
 
 
 

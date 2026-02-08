@@ -38,5 +38,15 @@ namespace PADMA.Core.Utilities
             return minutes * height / 1440.0;
         }
 
+        public static Color ColorFromArgbInt(int argb)
+        {
+            byte a = (byte)((argb >> 24) & 0xFF);
+            byte r = (byte)((argb >> 16) & 0xFF);
+            byte g = (byte)((argb >> 8) & 0xFF);
+            byte b = (byte)(argb & 0xFF);
+
+            return Color.FromRgba(r, g, b, a);
+        }
+
     }
 }

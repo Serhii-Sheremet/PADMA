@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Layouts;
+using Microsoft.VisualBasic;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
@@ -245,6 +246,19 @@ namespace PADMA.Pages
         private VisualElement? _selectedSegmentView;
         private int _selectedLineId;
 
+        private bool _eventsSizeChangedHooked;
+        private UserEvent? _selectedUserEvent;
+        private int? _selectedSlotStartMin;   // minute of day (0..1439), multiple of 15
+        private int? _selectedSlotEndMin;     // start+15 typically
+        private string? _lastSelectionKey;    // for "second tap"
+        private UserEvent? _editingEvent;
+        private int _editingArgb;
+
+        private readonly Dictionary<int, Frame> _eventFramesById = new();
+        private BoxView? _slotSelectionBox;
+        private bool _overlayLayoutAdjusted;
+        private double _lastW, _lastH;
+
         private void ApplyLocalizedLabels()
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
@@ -262,6 +276,11 @@ namespace PADMA.Pages
                 if (store != null && store.TryGet(token, out DayNavBundle? bundle) && bundle != null)
                 {
                     Day = bundle.Day;
+                    if (Day != null)
+                    {
+                        BuildEventsSegments(Day.Date);
+                    }
+                    
                     var transitPack = Day?.TransitPack;
 
                     Overview = bundle.Overview;
@@ -494,6 +513,14 @@ namespace PADMA.Pages
 
             // пересчёт HeightRequest после смены ориентации
             UpdateTooltipBodyHeight();
+
+            if (Math.Abs(width - _lastW) < 0.5 && Math.Abs(height - _lastH) < 0.5)
+                return;
+
+            _lastW = width;
+            _lastH = height;
+
+            AdjustUserEventOverlayLayout(width, height);
         }
 
         private void UpdateTooltipBodyHeight()
@@ -518,6 +545,19 @@ namespace PADMA.Pages
         public DayPage()
         {
             InitializeComponent();
+            if (!_eventsSizeChangedHooked)
+            {
+                _eventsSizeChangedHooked = true;
+
+                EventsBackgroundLayout.SizeChanged += (_, __) =>
+                {
+                    if (Day == null) return;
+                    if (EventsBackgroundLayout.Width <= 0) return;
+
+                    BuildEventsSegments(Day.Date);
+                };
+            }
+
             BindingContext = this;
 
             TooltipItems.CollectionChanged += (_, __) =>
@@ -692,7 +732,17 @@ namespace PADMA.Pages
             // фон для Time/Events через AbsoluteLayout
             BuildColumnBackground(IconsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 24);
             BuildColumnBackground(TimeBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 36);
-            BuildColumnBackground(EventsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 80);
+            //BuildColumnBackground(EventsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 80);
+
+
+            // фон для Events column через BoxView
+            EventsNightBackground.BackgroundColor = nightColor;
+            EventsNightBackground.HeightRequest = TimelineHeight;
+            EventsNightBackground.TranslationY = 0;
+
+            EventsDayBackground.BackgroundColor = dayColor;
+            EventsDayBackground.HeightRequest = Math.Max(0, ySunset - ySunrise);
+            EventsDayBackground.TranslationY = ySunrise;
 
             // фон для TransitBodyGrid через BoxView
             TransitNightBackground.Color = nightColor;
@@ -702,6 +752,7 @@ namespace PADMA.Pages
             TransitDayBackground.Color = dayColor;
             TransitDayBackground.HeightRequest = Math.Max(0, ySunset - ySunrise);
             TransitDayBackground.TranslationY = ySunrise;
+
         }
 
         private void BuildColumnBackground(
@@ -1278,6 +1329,10 @@ namespace PADMA.Pages
 
         private void OnSegmentTapped(int lineId, PanchangaSegment seg, VisualElement view)
         {
+            ClearEventsSelectionVisuals();
+            CloseUserEventOverlay();
+            _lastSelectionKey = null;
+
             // 1-й тап: выделяем
             if (_selectedSegment == null || !ReferenceEquals(_selectedSegment, seg) || _selectedLineId != lineId)
             {
@@ -2361,6 +2416,400 @@ namespace PADMA.Pages
         {
             ("Description", d => d.Description),
         };
+
+        private List<UserEvent> LoadUserEventsForDay(DateTime dayLocal)
+        {
+            return DataCache.Instance.UserEventsWindowCache?.GetEventsForDay(dayLocal)
+                   ?? new List<UserEvent>();
+        }
+
+        private void BuildEventsSegments(DateTime dayDate)
+        {
+            EventsBackgroundLayout.Children.Clear();
+
+            var dayLocal = new DateTime(dayDate.Year, dayDate.Month, dayDate.Day, 0, 0, 0);
+            var dayEnd = dayLocal.AddDays(1);
+
+            var events = DataCache.Instance.UserEventsWindowCache?.GetEventsForDay(dayLocal)
+                         ?? new List<UserEvent>();
+
+            if (events.Count == 0)
+                return;
+
+            // Column width base
+            var totalWidth = EventsBackgroundLayout.Width;
+            if (totalWidth <= 0)
+                totalWidth = 80; // your Events column width
+
+            // Optional: clamp intervals for overlap calculation (recommended)
+            var placed = UserEventOverlapHelper.AssignColumnsForDay(events, dayLocal);
+
+            foreach (var p in placed)
+            {
+                var ev = p.Event;
+
+                var start = ev.StartLocal < dayLocal ? dayLocal : ev.StartLocal;
+                var end = ev.EndLocal > dayEnd ? dayEnd : ev.EndLocal;
+                if (end <= start) continue;
+
+                var startMin = (start - dayLocal).TotalMinutes;
+                var endMin = (end - dayLocal).TotalMinutes;
+
+                var top = startMin * PixelsPerMinute;
+                var height = Math.Max(2, (endMin - startMin) * PixelsPerMinute);
+
+                var colWidth = totalWidth / p.ColumnCount;
+                var left = p.ColumnIndex * colWidth;
+
+                var frame = new Frame
+                {
+                    Padding = new Thickness(2, 1),
+                    CornerRadius = 4,
+                    HasShadow = false,
+                    BackgroundColor = CalendarDrawingHelper.ColorFromArgbInt(ev.ArgbValue),
+                    BorderColor = Colors.Transparent,
+                    Content = new Label
+                    {
+                        Text = ev.Name,
+                        FontSize = 10,
+                        LineBreakMode = LineBreakMode.TailTruncation,
+                        MaxLines = 2,
+                        TextColor = Colors.White
+                    }
+                };
+
+                var tap = new TapGestureRecognizer();
+                tap.Tapped += (_, __) => OnUserEventTapped(ev);
+                frame.GestureRecognizers.Add(tap);
+                _eventFramesById[ev.Id] = frame;
+
+                AbsoluteLayout.SetLayoutBounds(frame, new Rect(left, top, colWidth, height));
+                AbsoluteLayout.SetLayoutFlags(frame, AbsoluteLayoutFlags.None);
+
+                EventsBackgroundLayout.Children.Add(frame);
+            }
+        }
+
+        private void OnEventsBackgroundTapped(object? sender, TappedEventArgs e)
+        {
+            if (Day == null) return;
+
+            ClearSelection();
+            IsTooltipVisible = false;
+
+            // получаем Y координату тапа (самый простой путь — через e.GetPosition)
+            // В MAUI TapGestureRecognizer: e.GetPosition((VisualElement)sender)
+            var pos = e.GetPosition(EventsBackgroundLayout);
+            if (pos == null) return;
+
+            var y = pos.Value.Y;
+
+            // переводим в минуты
+            var minute = (int)Math.Floor(y / PixelsPerMinute);
+
+            // ограничиваем 0..1439
+            minute = Math.Max(0, Math.Min(1439, minute));
+
+            // округление вниз к 15 минутам
+            var startMin = (minute / 15) * 15;
+            var endMin = Math.Min(startMin + 15, 1440);
+
+            SelectSlot(startMin, endMin);
+
+            var key = $"slot:{startMin}";
+            if (_lastSelectionKey == key)
+            {
+                // второй тап по тому же слоту -> открыть editor создания
+                OpenUserEventEditorForSlot(startMin, endMin);
+            }
+
+            _lastSelectionKey = key;
+        }
+
+        private void OnUserEventTapped(UserEvent ev)
+        {
+            ClearSelection();
+            IsTooltipVisible = false;
+            
+            SelectUserEvent(ev);
+            var key = $"ev:{ev.Id}";
+            if (_lastSelectionKey == key)
+            {
+                // второй тап по тому же событию -> открыть editor редактирования
+                OpenUserEventEditorForExisting(ev);
+            }
+
+            _lastSelectionKey = key;
+        }
+
+        private void SelectUserEvent(UserEvent ev)
+        {
+            ClearEventsSelectionVisuals();
+
+            _selectedUserEvent = ev;
+            _selectedSlotStartMin = null;
+            _selectedSlotEndMin = null;
+
+            if (_eventFramesById.TryGetValue(ev.Id, out var frame))
+                frame.BorderColor = Colors.Gold;  // золотая рамка как у тебя
+        }
+
+        private void SelectSlot(int startMin, int endMin)
+        {
+            ClearEventsSelectionVisuals();
+
+            _selectedUserEvent = null;
+            _selectedSlotStartMin = startMin;
+            _selectedSlotEndMin = endMin;
+
+            var top = startMin * PixelsPerMinute;
+            var height = Math.Max(2, (endMin - startMin) * PixelsPerMinute);
+
+            var width = EventsBackgroundLayout.Width;
+            if (width <= 0) width = 80;
+
+            _slotSelectionBox = new BoxView
+            {
+                Color = Color.FromRgba(255, 247, 214, 0.55f), // мягкий кремовый
+                InputTransparent = true
+            };
+
+            AbsoluteLayout.SetLayoutBounds(_slotSelectionBox, new Rect(0, top, width, height));
+            AbsoluteLayout.SetLayoutFlags(_slotSelectionBox, AbsoluteLayoutFlags.None);
+
+            EventsBackgroundLayout.Children.Add(_slotSelectionBox);
+        }
+
+        private void ClearEventsSelectionVisuals()
+        {
+            // снять рамки с event frames
+            foreach (var kv in _eventFramesById)
+                kv.Value.BorderColor = Colors.Transparent;
+
+            // убрать слот-selection
+            if (_slotSelectionBox != null)
+            {
+                EventsBackgroundLayout.Children.Remove(_slotSelectionBox);
+                _slotSelectionBox = null;
+            }
+
+        }
+
+        private const int DefaultEventArgb = unchecked((int)0xFF4CAF50); // зелёный (Material Green 500)
+        private void OpenUserEventEditorForSlot(int startMin, int endMin)
+        {
+            if (Day == null) return;
+
+            var dayLocal = new DateTime(Day.Date.Year, Day.Date.Month, Day.Date.Day, 0, 0, 0);
+
+            var start = dayLocal.AddMinutes(startMin);
+            var end = dayLocal.AddMinutes(endMin);
+
+            _editingEvent = null; // поле
+            ShowUserEventOverlay(start, end, name: "", message: "", argb: DefaultEventArgb);
+        }
+
+        private void OpenUserEventEditorForExisting(UserEvent ev)
+        {
+            _editingEvent = ev;
+
+            ShowUserEventOverlay(ev.StartLocal, ev.EndLocal, ev.Name, ev.Message, ev.ArgbValue);
+        }
+
+        private void ShowUserEventOverlay(DateTime start, DateTime end, string name, string message, int argb)
+        {
+            UserEventOverlay.IsVisible = true;
+
+            UserEventHeader.Text = _editingEvent == null ? "New appointment" : "Edit appointment";
+
+            StartTimePicker.Time = start.TimeOfDay;
+            EndTimePicker.Time = end.TimeOfDay;
+
+            TitleEntry.Text = name;
+            MessageEditor.Text = message;
+
+            _editingArgb = argb;
+            BuildColorPalette(argb);
+
+            DeleteButton.IsVisible = _editingEvent != null;
+        }
+
+        private readonly int[] _eventColors =
+        {
+            unchecked((int)0xFF4CAF50), // green
+            unchecked((int)0xFF2196F3), // blue
+            unchecked((int)0xFFFF9800), // orange
+            unchecked((int)0xFFF44336), // red
+            unchecked((int)0xFF9C27B0), // purple
+            unchecked((int)0xFF00BCD4), // cyan
+            unchecked((int)0xFFFFEB3B)  // yellow
+        };
+
+        private void BuildColorPalette(int selectedArgb)
+        {
+            ColorPalette.Children.Clear();
+
+            foreach (var argb in _eventColors)
+            {
+                var frame = new Frame
+                {
+                    WidthRequest = 28,
+                    HeightRequest = 28,
+                    CornerRadius = 14,
+                    Padding = 0,
+                    HasShadow = false,
+                    BackgroundColor = CalendarDrawingHelper.ColorFromArgbInt(argb),
+                    BorderColor = argb == selectedArgb ? Colors.Black : Colors.Transparent
+                };
+
+                var tap = new TapGestureRecognizer();
+                tap.Tapped += (_, __) =>
+                {
+                    _editingArgb = argb;
+
+                    // refresh borders
+                    foreach (var child in ColorPalette.Children)
+                    {
+                        if (child is Frame f)
+                            f.BorderColor = Colors.Transparent;
+                    }
+
+                    frame.BorderColor = Colors.Black;
+                };
+
+                frame.GestureRecognizers.Add(tap);
+                ColorPalette.Children.Add(frame);
+            }
+        }
+
+        private void OnUserEventCancel(object sender, EventArgs e)
+        {
+            CloseUserEventOverlay();
+        }
+
+        private void OnUserEventOk(object sender, EventArgs e)
+        {
+            SaveUserEventFromEditor();
+        }
+
+        private void OnUserEventDelete(object sender, EventArgs e)
+        {
+            if (_editingEvent == null)
+                return;
+
+            var db = ServiceLocator.Services.GetService(typeof(DatabaseService)) as DatabaseService;
+            if (db == null)
+                return;
+
+            db.DeleteUserEvent(_editingEvent.Id);
+
+            DataCache.Instance.UserEventsWindowCache?.Invalidate();
+
+            CloseUserEventOverlay();
+
+            if (Day != null)
+                BuildEventsSegments(Day.Date);
+        }
+
+        private void CloseUserEventOverlay()
+        {
+            UserEventOverlay.IsVisible = false;
+            _editingEvent = null;
+        }
+
+        private void SaveUserEventFromEditor()
+        {
+            if (Day == null)
+                return;
+
+            var db = ServiceLocator.Services.GetService(typeof(DatabaseService)) as DatabaseService;
+            if (db == null)
+                return;
+
+            var dayLocal = new DateTime(Day.Date.Year, Day.Date.Month, Day.Date.Day, 0, 0, 0);
+
+            var start = dayLocal.Add(StartTimePicker.Time);
+            var end = dayLocal.Add(EndTimePicker.Time);
+
+            // safety: if user picked end <= start, force +15 min
+            if (end <= start)
+                end = start.AddMinutes(15);
+
+            if (_editingEvent == null)
+            {
+                // CREATE
+                var ev = new UserEvent
+                {
+                    ProfileId = DataCache.Instance.ProfileContextService.Current.ProfileId,
+                    StartLocal = start,
+                    EndLocal = end,
+                    Name = TitleEntry.Text ?? string.Empty,
+                    Message = MessageEditor.Text ?? string.Empty,
+                    ArgbValue = _editingArgb
+                };
+
+                db.InsertUserEvent(ev);
+            }
+            else
+            {
+                // UPDATE
+                _editingEvent.StartLocal = start;
+                _editingEvent.EndLocal = end;
+                _editingEvent.Name = TitleEntry.Text ?? string.Empty;
+                _editingEvent.Message = MessageEditor.Text ?? string.Empty;
+                _editingEvent.ArgbValue = _editingArgb;
+
+                db.UpdateUserEvent(_editingEvent);
+            }
+
+            DataCache.Instance.UserEventsWindowCache?.Invalidate();
+
+            CloseUserEventOverlay();
+            BuildEventsSegments(Day.Date);
+        }
+
+        private void HideKeyboard()
+        {
+            if (this.Handler?.MauiContext == null)
+                return;
+
+            // Unfocus whatever currently has focus
+            if (Microsoft.Maui.Controls.Application.Current?.MainPage is Page page)
+            {
+                var focused = page.GetVisualTreeDescendants().OfType<VisualElement>().FirstOrDefault(v => v.IsFocused);
+                focused?.Unfocus();
+            }
+
+            // плюс явно снимаем с наших полей
+            TitleEntry?.Unfocus();
+            MessageEditor?.Unfocus();
+            StartTimePicker?.Unfocus();
+            EndTimePicker?.Unfocus();
+        }
+
+        private void OnUserEventOverlayTapped(object sender, TappedEventArgs e)
+        {
+            HideKeyboard();
+        }
+
+        private void AdjustUserEventOverlayLayout(double width, double height)
+        {
+            if (UserEventCard == null || MessageEditor == null) return;
+
+            // landscape if width > height
+            bool isLandscape = width > height;
+
+            // Editor height: portrait bigger, landscape smaller
+            MessageEditor.HeightRequest = isLandscape ? 64 : 96;
+
+            // Limit card height so it never goes out of screen
+            // Keep margins: 18 top/bottom + a little safety
+            var maxCardHeight = Math.Max(200, height - 60);
+            UserEventCard.MaximumHeightRequest = maxCardHeight;
+
+            // Optional: slightly reduce padding in landscape
+            UserEventCard.Padding = isLandscape ? new Thickness(10) : new Thickness(12);
+        }
 
 
 
