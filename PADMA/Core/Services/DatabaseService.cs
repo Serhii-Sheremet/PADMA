@@ -1,9 +1,10 @@
-﻿using SQLite;
-using PADMA.Core.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
+﻿using PADMA.Core.Models;
+using SQLite;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
 namespace PADMA.Core.Services
 {
@@ -236,7 +237,7 @@ namespace PADMA.Core.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] GetProfiles error: {ex.Message}");
+                Debug.WriteLine($"[PADMA] GetProfiles error: {ex.Message}");
                 return new List<Profile>();
             }
         }
@@ -1536,8 +1537,6 @@ namespace PADMA.Core.Services
         {
             try
             {
-                _connection.CreateTable<UserEvent>();
-
                 var dayStart = new DateTime(dayLocal.Year, dayLocal.Month, dayLocal.Day, 0, 0, 0);
                 var dayEnd = dayStart.AddDays(1);
 
@@ -1545,39 +1544,133 @@ namespace PADMA.Core.Services
                 var dayEndStr = UserEventDateHelper.ToDbString(dayEnd);
 
                 const string sql = @"
-                                   SELECT
-                                       ID        as Id,
-                                       PROFILEID as ProfileId,
-                                       DATESTART as DateStartString,
-                                       DATEEND   as DateEndString,
-                                       NAME      as Name,
-                                       MESSAGE   as Message,
-                                       ARGBVALUE as ArgbValue
-                                   FROM USER_EVENTS
-                                   WHERE PROFILEID = ?
-                                     AND DATESTART < ?
-                                     AND DATEEND   > ?
-                                   ORDER BY DATESTART;";
+                        SELECT
+                            ID        as Id,
+                            PROFILEID as ProfileId,
+                            DATESTART as DATESTART,
+                            DATEEND   as DATEEND,
+                            NAME      as Name,
+                            MESSAGE   as Message,
+                            ARGBVALUE as ArgbValue
+                        FROM USER_EVENTS
+                        WHERE PROFILEID = ?
+                          AND DATESTART < ?
+                          AND DATEEND   > ?
+                        ORDER BY DATESTART;";
 
-                return _connection.Query<UserEvent>(sql, profileId, dayEndStr, dayStartStr);
+                var rows = _connection.Query<UserEventRow>(sql, profileId, dayEndStr, dayStartStr);
+
+                var result = new List<UserEvent>(rows.Count);
+                foreach (var r in rows)
+                {
+                    var ev = new UserEvent
+                    {
+                        Id = r.Id,
+                        ProfileId = r.ProfileId,
+                        StartLocal = UserEventDateHelper.TryParse(r.DATESTART),
+                        EndLocal = UserEventDateHelper.TryParse(r.DATEEND),
+                        Name = r.Name ?? string.Empty,
+                        Message = r.Message ?? string.Empty,
+                        ArgbValue = r.ArgbValue
+                    };
+                    result.Add(ev);
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] DB GetUserEventsForDay error: {ex.Message}");
+                Debug.WriteLine($"[PADMA] DB GetUserEventsForDay error: {ex}");
                 return new List<UserEvent>();
             }
+        }
+
+        public List<UserEvent> GetUserEventsForRange(int profileId, DateTime windowStartLocal, DateTime windowEndExclusiveLocal)
+        {
+            try
+            {
+                var startStr = UserEventDateHelper.ToDbString(windowStartLocal);
+                var endStr = UserEventDateHelper.ToDbString(windowEndExclusiveLocal);
+
+                const string sql = @"
+                    SELECT
+                        ID        as Id,
+                        PROFILEID as ProfileId,
+                        DATESTART as DATESTART,
+                        DATEEND   as DATEEND,
+                        NAME      as Name,
+                        MESSAGE   as Message,
+                        ARGBVALUE as ArgbValue
+                    FROM USER_EVENTS
+                    WHERE PROFILEID = ?
+                      AND DATESTART < ?
+                      AND DATEEND   > ?
+                    ORDER BY DATESTART;";
+
+                var rows = _connection.Query<UserEventRow>(sql, profileId, endStr, startStr);
+
+                var result = new List<UserEvent>(rows.Count);
+                foreach (var r in rows)
+                {
+                    result.Add(new UserEvent
+                    {
+                        Id = r.Id,
+                        ProfileId = r.ProfileId,
+                        StartLocal = UserEventDateHelper.TryParse(r.DATESTART),
+                        EndLocal = UserEventDateHelper.TryParse(r.DATEEND),
+                        Name = r.Name ?? string.Empty,
+                        Message = r.Message ?? string.Empty,
+                        ArgbValue = r.ArgbValue
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[PADMA] DB GetUserEventsForRange error: {ex}");
+                return new List<UserEvent>();
+            }
+        }
+
+        private sealed class UserEventRow
+        {
+            public int Id { get; set; }
+            public int ProfileId { get; set; }
+            public string DATESTART { get; set; } = "";
+            public string DATEEND { get; set; } = "";
+            public string Name { get; set; } = "";
+            public string Message { get; set; } = "";
+            public int ArgbValue { get; set; }
         }
 
         public int InsertUserEvent(UserEvent ev)
         {
             try
             {
-                _connection.CreateTable<UserEvent>();
-                return _connection.Insert(ev);
+                const string sql = @"
+                        INSERT INTO USER_EVENTS (PROFILEID, DATESTART, DATEEND, NAME, MESSAGE, ARGBVALUE)
+                        VALUES (?, ?, ?, ?, ?, ?);";
+
+                var startStr = UserEventDateHelper.ToDbString(ev.StartLocal);
+                var endStr = UserEventDateHelper.ToDbString(ev.EndLocal);
+
+                _connection.Execute(sql,
+                    ev.ProfileId,
+                    startStr,
+                    endStr,
+                    ev.Name ?? string.Empty,
+                    ev.Message ?? string.Empty,
+                    ev.ArgbValue);
+
+                // получить последний ID
+                var newId = _connection.ExecuteScalar<int>("SELECT last_insert_rowid();");
+                ev.Id = newId;
+                return newId;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] DB InsertUserEvent error: {ex.Message}");
+                Debug.WriteLine($"[PADMA] DB InsertUserEvent error: {ex}");
                 return 0;
             }
         }
@@ -1586,12 +1679,28 @@ namespace PADMA.Core.Services
         {
             try
             {
-                _connection.CreateTable<UserEvent>();
-                return _connection.Update(ev) > 0;
+                const string sql = @"
+                        UPDATE USER_EVENTS
+                           SET DATESTART = ?,
+                               DATEEND   = ?,
+                               NAME      = ?,
+                               MESSAGE   = ?,
+                               ARGBVALUE = ?
+                         WHERE ID = ?;";
+
+                _connection.Execute(sql,
+                    UserEventDateHelper.ToDbString(ev.StartLocal),
+                    UserEventDateHelper.ToDbString(ev.EndLocal),
+                    ev.Name ?? string.Empty,
+                    ev.Message ?? string.Empty,
+                    ev.ArgbValue,
+                    ev.Id);
+
+                return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] DB UpdateUserEvent error: {ex.Message}");
+                Debug.WriteLine($"[PADMA] DB UpdateUserEvent error: {ex}");
                 return false;
             }
         }
@@ -1605,47 +1714,11 @@ namespace PADMA.Core.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] DB DeleteUserEvent error: {ex.Message}");
+                Debug.WriteLine($"[PADMA] DB DeleteUserEvent error: {ex.Message}");
                 return false;
             }
         }
 
-        public List<UserEvent> GetUserEventsForRange(int profileId, DateTime rangeStartLocal, DateTime rangeEndLocal)
-        {
-            try
-            {
-                _connection.CreateTable<UserEvent>();
-
-                // Normalize to seconds (optional, but consistent)
-                var start = new DateTime(rangeStartLocal.Year, rangeStartLocal.Month, rangeStartLocal.Day, 0, 0, 0);
-                var end = new DateTime(rangeEndLocal.Year, rangeEndLocal.Month, rangeEndLocal.Day, 0, 0, 0);
-
-                var startStr = UserEventDateHelper.ToDbString(start);
-                var endStr = UserEventDateHelper.ToDbString(end);
-
-                const string sql = @"
-                                   SELECT
-                                       ID        as Id,
-                                       PROFILEID as ProfileId,
-                                       DATESTART as DateStartString,
-                                       DATEEND   as DateEndString,
-                                       NAME      as Name,
-                                       MESSAGE   as Message,
-                                       ARGBVALUE as ArgbValue
-                                   FROM USER_EVENTS
-                                   WHERE PROFILEID = ?
-                                     AND DATESTART < ?
-                                     AND DATEEND   > ?
-                                   ORDER BY DATESTART;";
-
-                return _connection.Query<UserEvent>(sql, profileId, endStr, startStr);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] DB GetUserEventsForRange error: {ex.Message}");
-                return new List<UserEvent>();
-            }
-        }
 
 
         #endregion

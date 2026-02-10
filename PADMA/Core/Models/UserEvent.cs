@@ -19,7 +19,7 @@ namespace PADMA.Core.Models
         public string DateStartString
         {
             get => StartLocal.ToString(UserEventDateHelper.DbFormat, CultureInfo.InvariantCulture);
-            set => StartLocal = UserEventDateHelper.TryParse(value);
+            set =>  StartLocal = UserEventDateHelper.TryParse(value);
         }
 
         // Stored in DB as TEXT/VARCHAR(20) in format "yyyy-MM-dd HH:mm:ss"

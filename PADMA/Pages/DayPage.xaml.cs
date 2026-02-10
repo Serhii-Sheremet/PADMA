@@ -2727,6 +2727,7 @@ namespace PADMA.Pages
                 return;
 
             var dayLocal = new DateTime(Day.Date.Year, Day.Date.Month, Day.Date.Day, 0, 0, 0);
+            int profileId = DataCache.Instance.ProfileContextService.Current.ProfileId;
 
             var start = dayLocal.Add(StartTimePicker.Time);
             var end = dayLocal.Add(EndTimePicker.Time);
@@ -2740,7 +2741,7 @@ namespace PADMA.Pages
                 // CREATE
                 var ev = new UserEvent
                 {
-                    ProfileId = DataCache.Instance.ProfileContextService.Current.ProfileId,
+                    ProfileId = profileId,
                     StartLocal = start,
                     EndLocal = end,
                     Name = TitleEntry.Text ?? string.Empty,
@@ -2768,28 +2769,9 @@ namespace PADMA.Pages
             BuildEventsSegments(Day.Date);
         }
 
-        private void HideKeyboard()
-        {
-            if (this.Handler?.MauiContext == null)
-                return;
-
-            // Unfocus whatever currently has focus
-            if (Microsoft.Maui.Controls.Application.Current?.MainPage is Page page)
-            {
-                var focused = page.GetVisualTreeDescendants().OfType<VisualElement>().FirstOrDefault(v => v.IsFocused);
-                focused?.Unfocus();
-            }
-
-            // плюс явно снимаем с наших полей
-            TitleEntry?.Unfocus();
-            MessageEditor?.Unfocus();
-            StartTimePicker?.Unfocus();
-            EndTimePicker?.Unfocus();
-        }
-
         private void OnUserEventOverlayTapped(object sender, TappedEventArgs e)
         {
-            HideKeyboard();
+            KeyboardHelper.HideKeyboard();
         }
 
         private void AdjustUserEventOverlayLayout(double width, double height)

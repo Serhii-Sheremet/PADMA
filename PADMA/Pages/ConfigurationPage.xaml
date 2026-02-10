@@ -50,7 +50,7 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- 2) Busy overlay -->
+        <!--  Busy overlay -->
         <Grid
             IsVisible="{Binding IsBusy, FallbackValue=False}"
             InputTransparent="False"
