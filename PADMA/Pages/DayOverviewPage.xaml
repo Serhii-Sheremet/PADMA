@@ -168,6 +168,29 @@
                 CornerRadius="10"
                 HeightRequest="34"
                 Clicked="OnOpenDayDetailsClicked" />
-        
+
+        <!--  Busy overlay -->
+        <Grid IsVisible="{Binding IsBusy, FallbackValue=False}"
+              InputTransparent="False"
+              BackgroundColor="#80000000"
+              ZIndex="999">
+
+            <VerticalStackLayout
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="12">
+
+                <ActivityIndicator
+                    IsRunning="True"
+                    WidthRequest="48"
+                    HeightRequest="48" />
+
+                <Label Text="{Binding BusyText}"
+                       TextColor="White"
+                       FontSize="Medium"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+
     </Grid>
 </ui:ConfigBasePage>

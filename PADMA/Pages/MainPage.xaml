@@ -147,10 +147,10 @@
                                 <Path IsVisible="{Binding HasUserEvents}"
                                       HorizontalOptions="End"
                                       VerticalOptions="Start"
-                                      WidthRequest="10"
-                                      HeightRequest="10"
+                                      WidthRequest="15"
+                                      HeightRequest="15"
                                       Fill="#1E90FF"
-                                      Data="M 0,0 L 10,0 L 10,10 Z"
+                                      Data="M 0,0 L 15,0 L 15,15 Z"
                                       Margin="0,2,2,0" />
                             </Grid>
 

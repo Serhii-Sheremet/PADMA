@@ -44,6 +44,30 @@ namespace PADMA.Pages
             }
         }
 
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy == value) return;
+                _isBusy = value;
+                OnPropertyChanged(nameof(IsBusy));
+            }
+        }
+
+        private string _busyText = "Please waitЕ";
+        public string BusyText
+        {
+            get => _busyText;
+            set
+            {
+                if (_busyText == value) return;
+                _busyText = value;
+                OnPropertyChanged(nameof(BusyText));
+            }
+        }
+
         public DayOverviewPage()
         {
             InitializeComponent();
@@ -52,6 +76,17 @@ namespace PADMA.Pages
             _dayService = ServiceLocator.Services.GetService<IDayComputationService>()
                 ?? throw new InvalidOperationException("IDayComputationService is not registered");
 
+        }
+
+        private async Task RunBusyAsync(string text, Func<Task> action)
+        {
+            BusyText = text;
+            IsBusy = true;
+
+            await Task.Yield(); // дать UI шанс отрисовать overlay
+
+            try { await action(); }
+            finally { IsBusy = false; }
         }
 
         private void BuildCarousel()
@@ -161,27 +196,33 @@ namespace PADMA.Pages
         {
             if (Day == null) return;
 
-            var store = ServiceLocator.Services.GetService<NavigationDataStore>();
-            if (store == null)
-                throw new InvalidOperationException("NavigationDataStore is not registered");
-
-            var pos = DayCarousel.Position;
-            var current = _items?[pos];
-            if (current == null) return;
-
-            await EnsureOverviewLoadedAsync(current);
-
-            var bundle = new DayNavBundle
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            await RunBusyAsync(Localization.GetLocalizedText(_busyText, lang), async () =>
             {
-                Day = Day,
-                Overview = current?.Overview,
-                Window = _window
-            };
+                var store = ServiceLocator.Services.GetService<NavigationDataStore>();
+                if (store == null)
+                    throw new InvalidOperationException("NavigationDataStore is not registered");
 
-            var token = store.Put(bundle);
+                var pos = DayCarousel.Position;
+                var current = _items?[pos];
+                if (current == null) return;
 
-            await Shell.Current.GoToAsync("day", true,
-                new Dictionary<string, object> { { "token", token } });
+                await EnsureOverviewLoadedAsync(current);
+
+                var bundle = new DayNavBundle
+                {
+                    Day = Day,
+                    Overview = current?.Overview,
+                    Window = _window
+                };
+
+                var token = store.Put(bundle);
+
+                await Shell.Current.GoToAsync("day", true,
+                    new Dictionary<string, object> { { "token", token } });
+                
+                await Task.Yield();
+            });
         }
 
         private void OnCarouselPositionChanged(object sender, PositionChangedEventArgs e)
