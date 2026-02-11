@@ -14,7 +14,8 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
 
-        SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF1cXmhLYVJ+WmFZfVhgfF9EaFZVRGYuP1ZhSXxVdkdiWH9WcnxRRmdUUkR9XEA=");
+        //SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF1cXmhLYVJ+WmFZfVhgfF9EaFZVRGYuP1ZhSXxVdkdiWH9WcnxRRmdUUkR9XEA="); // -- trial for 7 days --
+        SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWX1fcXVXQ2BdWUBxWERWYEs=");
 
         builder.UseMauiApp<App>().ConfigureFonts(fonts =>
         {
