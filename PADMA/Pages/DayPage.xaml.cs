@@ -254,10 +254,43 @@ namespace PADMA.Pages
         private UserEvent? _editingEvent;
         private int _editingArgb;
 
+        private bool _userEventEditorIsEdit;    // редактируем существующий?
+        private int? _editingUserEventId;       // ID редактируемого (если есть)
+
+        private string _origTitle = string.Empty;
+        private string _origMessage = string.Empty;
+        private TimeSpan _origStartTime;
+        private TimeSpan _origEndTime;
+        private int _origArgb;
+
         private readonly Dictionary<int, Frame> _eventFramesById = new();
         private BoxView? _slotSelectionBox;
         private bool _overlayLayoutAdjusted;
         private double _lastW, _lastH;
+
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy == value) return;
+                _isBusy = value;
+                OnPropertyChanged(nameof(IsBusy));
+            }
+        }
+
+        private string _busyText = "Please wait…";
+        public string BusyText
+        {
+            get => _busyText;
+            set
+            {
+                if (_busyText == value) return;
+                _busyText = value;
+                OnPropertyChanged(nameof(BusyText));
+            }
+        }
 
         private void ApplyLocalizedLabels()
         {
@@ -678,15 +711,20 @@ namespace PADMA.Pages
             if (_isClosing) return;
             _isClosing = true;
 
-            try
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
             {
-                // Close DayPage completely and return to calendar
-                await Shell.Current.GoToAsync("//main");
-            }
-            finally
-            {
-                _isClosing = false;
-            }
+                try
+                {
+                    // Close DayPage completely and return to calendar
+                    await Shell.Current.GoToAsync("//main");
+                }
+                finally
+                {
+                    _isClosing = false;
+                }
+                await Task.Yield();
+            });
         }
 
         private async void OnCloseClicked(object sender, EventArgs e)
@@ -2613,14 +2651,54 @@ namespace PADMA.Pages
         {
             _editingEvent = ev;
 
+            // заполняем UI как сейчас...
+            TitleEntry.Text = ev.Name ?? string.Empty;
+            MessageEditor.Text = ev.Message ?? string.Empty;
+            StartTimePicker.Time = ev.StartLocal.TimeOfDay;
+            EndTimePicker.Time = ev.EndLocal.TimeOfDay;
+            _editingArgb = ev.ArgbValue;
+            // + подсветка выбранного цвета
+
+            // снимаем оригиналы
+            _origTitle = (ev.Name ?? string.Empty);
+            _origMessage = (ev.Message ?? string.Empty);
+            _origStartTime = ev.StartLocal.TimeOfDay;
+            _origEndTime = ev.EndLocal.TimeOfDay;
+            _origArgb = ev.ArgbValue;
+
             ShowUserEventOverlay(ev.StartLocal, ev.EndLocal, ev.Name, ev.Message, ev.ArgbValue);
         }
+
+        private string L(string nativeText)
+        {
+            return Localization.GetLocalizedText(nativeText, DataCache.Instance.CurrentLanguageCode);
+        }
+
+        private void ApplyUserEventOverlayLocalization()
+        {
+            // placeholders
+            TitleEntry.Placeholder = L("Title");
+            MessageEditor.Placeholder = L("Description");
+
+            // labels
+            if (ColorLabel != null)
+                ColorLabel.Text = L("Color");
+
+            // buttons
+            DeleteButton.Text = L("Delete");
+            CancelButton.Text = L("Cancel");
+            OkButton.Text = L("OK"); 
+
+            // header отдельно: New note / Edit note
+        }
+
 
         private void ShowUserEventOverlay(DateTime start, DateTime end, string name, string message, int argb)
         {
             UserEventOverlay.IsVisible = true;
 
-            UserEventHeader.Text = _editingEvent == null ? "New appointment" : "Edit appointment";
+            UserEventHeader.Text = _editingEvent == null ? L("New note") : L("Edit note");
+            ApplyUserEventOverlayLocalization();
 
             StartTimePicker.Time = start.TimeOfDay;
             EndTimePicker.Time = end.TimeOfDay;
@@ -2629,7 +2707,12 @@ namespace PADMA.Pages
             MessageEditor.Text = message;
 
             _editingArgb = argb;
-            BuildColorPalette(argb);
+            //BuildColorPalette(argb);
+            
+            var c = CalendarDrawingHelper.ColorFromArgbInt(_editingArgb);
+            ColorPreviewBorder.BackgroundColor = c;
+            EventColorPicker.SelectedColor = c;
+
 
             DeleteButton.IsVisible = _editingEvent != null;
         }
@@ -2645,6 +2728,7 @@ namespace PADMA.Pages
             unchecked((int)0xFFFFEB3B)  // yellow
         };
 
+        /*
         private void BuildColorPalette(int selectedArgb)
         {
             ColorPalette.Children.Clear();
@@ -2681,6 +2765,7 @@ namespace PADMA.Pages
                 ColorPalette.Children.Add(frame);
             }
         }
+        */
 
         private void OnUserEventCancel(object sender, EventArgs e)
         {
@@ -2703,12 +2788,14 @@ namespace PADMA.Pages
 
             db.DeleteUserEvent(_editingEvent.Id);
 
-            DataCache.Instance.UserEventsWindowCache?.Invalidate();
+            var cache = DataCache.Instance.UserEventsWindowCache;
+            cache?.Invalidate();
+            cache?.ReloadLastWindow();
 
             CloseUserEventOverlay();
+            BuildEventsSegments(Day.Date);
 
-            if (Day != null)
-                BuildEventsSegments(Day.Date);
+            MessagingCenter.Send<object>(this, "UserEventsChanged");
         }
 
         private void CloseUserEventOverlay()
@@ -2729,12 +2816,41 @@ namespace PADMA.Pages
             var dayLocal = new DateTime(Day.Date.Year, Day.Date.Month, Day.Date.Day, 0, 0, 0);
             int profileId = DataCache.Instance.ProfileContextService.Current.ProfileId;
 
-            var start = dayLocal.Add(StartTimePicker.Time);
-            var end = dayLocal.Add(EndTimePicker.Time);
+            // читаем UI
+            var startTime = StartTimePicker.Time;
+            var endTime = EndTimePicker.Time;
+
+            var start = dayLocal.Add(startTime);
+            var end = dayLocal.Add(endTime);
 
             // safety: if user picked end <= start, force +15 min
             if (end <= start)
+            {
                 end = start.AddMinutes(15);
+                // можно ещё обновить EndTimePicker.Time = end.TimeOfDay; (по желанию)
+                endTime = end.TimeOfDay;
+            }
+
+            var title = (TitleEntry.Text ?? string.Empty);
+            var message = (MessageEditor.Text ?? string.Empty);
+            var argb = _editingArgb;
+
+            // --- ВАЖНО: если это EDIT и ничего не изменилось — просто закрываем ---
+            if (_editingEvent != null)
+            {
+                bool noChanges =
+                    title == _origTitle &&
+                    message == _origMessage &&
+                    startTime == _origStartTime &&
+                    endTime == _origEndTime &&
+                    argb == _origArgb;
+
+                if (noChanges)
+                {
+                    CloseUserEventOverlay();
+                    return;
+                }
+            }
 
             if (_editingEvent == null)
             {
@@ -2744,9 +2860,9 @@ namespace PADMA.Pages
                     ProfileId = profileId,
                     StartLocal = start,
                     EndLocal = end,
-                    Name = TitleEntry.Text ?? string.Empty,
-                    Message = MessageEditor.Text ?? string.Empty,
-                    ArgbValue = _editingArgb
+                    Name = title,
+                    Message = message,
+                    ArgbValue = argb
                 };
 
                 db.InsertUserEvent(ev);
@@ -2756,18 +2872,37 @@ namespace PADMA.Pages
                 // UPDATE
                 _editingEvent.StartLocal = start;
                 _editingEvent.EndLocal = end;
-                _editingEvent.Name = TitleEntry.Text ?? string.Empty;
-                _editingEvent.Message = MessageEditor.Text ?? string.Empty;
-                _editingEvent.ArgbValue = _editingArgb;
+                _editingEvent.Name = title;
+                _editingEvent.Message = message;
+                _editingEvent.ArgbValue = argb;
 
                 db.UpdateUserEvent(_editingEvent);
             }
 
-            DataCache.Instance.UserEventsWindowCache?.Invalidate();
+            var cache = DataCache.Instance.UserEventsWindowCache;
+            cache?.Invalidate();
+            cache?.ReloadLastWindow();
 
             CloseUserEventOverlay();
             BuildEventsSegments(Day.Date);
+
+            MessagingCenter.Send<object>(this, "UserEventsChanged");
         }
+
+        private void OnColorPreviewTapped(object sender, EventArgs e)
+        {
+            // Перед открытием — выставим текущий цвет, чтобы picker стартовал правильно
+            EventColorPicker.SelectedColor = CalendarDrawingHelper.ColorFromArgbInt(_editingArgb);
+            EventColorPicker.IsOpen = true;
+        }
+
+        private void OnEventColorChanged(object sender, Syncfusion.Maui.Inputs.ColorChangedEventArgs e)
+        {
+            // e.NewColor — выбранный (после Apply, если кнопки видимы)
+            _editingArgb = CalendarDrawingHelper.ColorToArgbInt(e.NewColor);
+            ColorPreviewBorder.BackgroundColor = e.NewColor;
+        }
+
 
         private void OnUserEventOverlayTapped(object sender, TappedEventArgs e)
         {
@@ -2793,6 +2928,16 @@ namespace PADMA.Pages
             UserEventCard.Padding = isLandscape ? new Thickness(10) : new Thickness(12);
         }
 
+        private async Task RunBusyAsync(string text, Func<Task> action)
+        {
+            BusyText = text;
+            IsBusy = true;
+
+            await Task.Yield(); // дать UI шанс отрисовать overlay
+
+            try { await action(); }
+            finally { IsBusy = false; }
+        }
 
 
     }

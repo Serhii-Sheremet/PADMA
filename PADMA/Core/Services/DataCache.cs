@@ -1,8 +1,9 @@
 ﻿using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
-using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
+using System.Resources;
+using Syncfusion.Maui.Inputs;
 
 namespace PADMA.Core.Services
 {
@@ -189,6 +190,29 @@ namespace PADMA.Core.Services
 
             // User events cache
             UserEventsWindowCache = new UserEventsWindowCache(db);
+
+        }
+
+        public void ApplyLocalization()
+        {
+            // получаем culture
+            string cultureCode = GetCurrentCultureCode(CurrentLanguageCode);
+
+            var ci = new CultureInfo(cultureCode);
+
+            CultureInfo.DefaultThreadCurrentUICulture = ci;
+            CultureInfo.DefaultThreadCurrentCulture = ci;
+            CultureInfo.CurrentUICulture = ci;
+            CultureInfo.CurrentCulture = ci;
+
+            // подключаем ресурсы Syncfusion ColorPicker
+            // 2) подключаем ресурсы (ВАЖНО: base name должен быть точный)
+            var rm = new ResourceManager("PADMA.Resources.SfColorPicker", typeof(App).Assembly);
+            SfColorPickerResources.ResourceManager = rm;
+
+            // 3) диагностика (временно)
+            var testApply = rm.GetString("Apply", ci);
+            System.Diagnostics.Debug.WriteLine($"SfColorPicker Apply test = '{testApply}' culture={ci.Name}");
 
         }
 

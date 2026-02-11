@@ -56,6 +56,13 @@ namespace PADMA.Pages
                 UpdateDaysHeader();
             });
 
+            MessagingCenter.Unsubscribe<object>(this, "UserEventsChanged");
+            MessagingCenter.Subscribe<object>(this, "UserEventsChanged", _ =>
+            {
+                Vm?.RebuildCurrentMonth(); // пересоберёт Days, и HasUserEvents подтянется из кеша
+                UpdateDaysHeader();
+            });
+
             AddToolbarButtons();
             UpdateDaysHeader();
         }

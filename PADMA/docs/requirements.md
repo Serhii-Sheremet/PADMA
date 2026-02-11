@@ -4491,14 +4491,18 @@ Muhurta30 and Ghati60 are fully profile-aware, timezone-aware, configurable via 
 
 --------
 
-# User Events (Appointments) – Model & Storage Specification
+# User Notes (Events) – Model, Storage & DayPage Interaction Specification
 
-This section describes the data model and storage rules for **User Events (Appointments)** in PADMA.
-It is based on legacy PAD behavior and adapted for mobile UI (DayPage time scale).
+This section describes the data model, storage rules, caching strategy, and DayPage UI interaction
+for **User Notes (Events)** in PADMA.
+
+User Notes are personal time-based records created by the user directly on the DayPage timeline.
+They originate from legacy PAD behavior and are adapted for mobile interaction.
 
 ## 1. Purpose
 
-User Events represent personal appointments and notes created by the user inside the daily timeline (DayPage).
+User Notes represent personal observations, notes, or reminders attached to a specific date/time.
+
 They:
 
 - Are attached to a specific profile
@@ -4507,17 +4511,19 @@ They:
 - Can later be used for:
   - DayPage visualization
   - Calendar day indicators (triangle in month cell)
-  - Notifications / reminders
+  - Tooltip preview of daily notes
+  - Notification / reminder scheduling
 
 ## 2. Database Table
 
-Existing legacy-compatible table:
+Existing legacy-compatible table (no structural changes):
+
 ```sql
 CREATE TABLE IF NOT EXISTS "USER_EVENTS" (
     "ID"        INTEGER,
     "PROFILEID" INTEGER,
-    "DATESTART" VARCHAR(20),
-    "DATEEND"   VARCHAR(20),
+    "DATESTART" TEXT,
+    "DATEEND"   TEXT,
     "NAME"      TEXT,
     "MESSAGE"   TEXT,
     "ARGBVALUE" INTEGER,
@@ -4525,27 +4531,21 @@ CREATE TABLE IF NOT EXISTS "USER_EVENTS" (
     FOREIGN KEY("PROFILEID") REFERENCES "PROFILE"("ID")
 );
 ```
-This table is reused without structural changes.
 
 ## 3. Date/Time Storage Format
 
-DATESTART and DATEEND are stored as strings using the following format:
+DATESTART and DATEEND are stored as strings using format:
 ```
 yyyy-MM-dd HH:mm:ss
 ```
-Example:
-```
-2026-02-08 13:15:00
-```
 Characteristics:
-
 - Exactly 19 characters
-- Lexicographically sortable
 - Culture-invariant
-- Represents **local time of the active profile**
+- Lexicographically sortable
+- Represents **local time of active profile**
+- No UTC conversion at DB level
 
-At this stage, no UTC conversion is performed in the database.
-Timezone handling is applied only when scheduling notifications in the future.
+Timezone conversion will be applied later only for notification scheduling.
 
 ## 4. Conceptual Model (C#)
 
@@ -4555,7 +4555,6 @@ public sealed class UserEvent
     public int Id { get; set; }
     public int ProfileId { get; set; }
 
-    // Stored in DB as string (yyyy-MM-dd HH:mm:ss)
     public string DateStart { get; set; } = "";
     public string DateEnd   { get; set; } = "";
 
@@ -4563,7 +4562,6 @@ public sealed class UserEvent
     public string Message { get; set; } = "";
     public int ArgbValue { get; set; }
 
-    // Convenience properties
     public DateTime StartLocal => UserEventDateHelper.Parse(DateStart);
     public DateTime EndLocal   => UserEventDateHelper.Parse(DateEnd);
 }
@@ -4584,61 +4582,127 @@ public static class UserEventDateHelper
 }
 ```
 
-## 5. Service Responsibilities
+## 5. Window Cache
 
-A dedicated service manages User Events:
+User Notes are loaded through a window-based cache:
+
+`UserEventsWindowCache`
+
+Responsibilities:
+
+- Load all events for:
+  - profileId
+  - windowStartLocal
+  - windowEndExclusiveLocal
+- Build index: DayStart → List<UserEvent>
+- Provide fast access:
 
 ```csharp
-public interface IUserEventService
-{
-    Task<List<UserEvent>> GetEventsForDayAsync(int profileId, DateTime dayLocal);
-    Task<int> InsertAsync(UserEvent ev);
-    Task UpdateAsync(UserEvent ev);
-    Task DeleteAsync(int id);
-}
+bool HasEvents(DateTime dayLocal)
+List<UserEvent> GetEventsForDay(DateTime dayLocal)
 ```
 
-## 6. Loading Events for a Day
+Cache lifecycle:
 
-An event belongs to a day if it **intersects** with that day interval.
+- After insert/update/delete:
+  - Invalidate()
+  - ReloadLastWindow()
 
-Definitions:
+## 6. Relation to Calendar
+
+CalendarViewModel queries:
 ```
-dayStart = YYYY-MM-DD 00:00:00
-dayEnd   = next day 00:00:00
+UserEventsWindowCache.HasEvents(day)
 ```
-
-SQL condition:
-```sql
-SELECT *
-FROM USER_EVENTS
-WHERE PROFILEID = ?
-  AND DATESTART < :dayEnd
-  AND DATEEND   > :dayStart
-ORDER BY DATESTART;
+If true → draw triangle marker inside month cell.
+Calendar is refreshed via MessagingCenter event:
+```
+"UserEventsChanged"
 ```
 
-This allows:
-- Events fully inside the day
-- Events starting before midnight and ending after midnight
-- Long events spanning multiple days
+## 7. DayPage Visualization
 
-## 7. Relation to UI
+- Notes displayed in **Events column**
+- Vertical position based on:
+  - minutes from day start
+  - PixelsPerMinute
+- Height based on duration
+- Color from ARGBVALUE
+- Title displayed if space allows
 
-- Events are displayed only on the DayPage for the selected day
-- Visual position is calculated from:
-  - Minutes from start of day
-  - PixelsPerMinute value used by DayPage timeline
-- Color is taken from ARGBVALUE
-- Title (NAME) may be shown inside segment if space allows
+Overlapping events:
 
-## 8. Future Usage
+- Column-based layout
+- UserEventOverlapHelper assigns:
+  - ColumnIndex
+  - ColumnCount
 
-The same stored events will later be used for:
+## 8. DayPage Interaction Rules
 
-- Month calendar day indicator (triangle in cell)
-- Tooltip with list of events for the day
-- Notification scheduling (reminders)
-- Possible repeating events (future extension)
+### Tap on empty Events area
+- Computes minute position from Y
+- Rounds to 15 minutes
+- Selects slot
+- Second tap on same slot → Create Note
 
------
+### Tap on existing note
+- First tap → Select
+- Second tap → Edit Note
+
+## 9. Note Editor Overlay
+
+Overlay contains:
+
+- Header: New note / Edit note
+- Start TimePicker
+- End TimePicker
+- Title Entry
+- Description Editor
+- Color preview bar
+- Buttons: Delete, Cancel, OK
+
+Behavior:
+
+- Create → Insert
+- Edit → Update
+- Delete → Delete
+- If no changes on Edit + OK → close only
+
+Safety rule:
+
+- If End <= Start → End = Start + 15 minutes
+
+## 10. Color Selection
+
+- Single preview bar shows current color
+- Tap opens SfColorPicker popup
+- Color applies immediately
+- Stored as ARGB int
+
+## 11. Localization
+
+Overlay texts resolved via:
+```
+Localization.GetLocalizedText(nativeText, langCode)
+```
+
+## 12. Messaging & Refresh
+
+After any change:
+
+- Reload cache window
+- Rebuild Events column
+- Send:
+```
+MessagingCenter.Send("UserEventsChanged")
+```
+
+## 13. Future Extensions
+
+- Reminders / notifications
+- Multi-day notes
+- Drag & resize
+- Repeating notes
+- Tooltip preview from calendar
+
+------

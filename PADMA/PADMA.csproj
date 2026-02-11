@@ -69,10 +69,11 @@
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.120" />
     <PackageReference Include="Plugin.Maui.Calendar" Version="2.0.12" />
 
-    <!-- SQLite -->
+    <!-- Packages -->
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	<PackageReference Include="NodaTime" Version="3.2.2" />
 	<PackageReference Include="GeoTimeZone" Version="6.1.0" />
+	<PackageReference Include="Syncfusion.Maui.Inputs" Version="32.2.4" />
 	<PackageReference Include="TimeZoneConverter" Version="7.2.0" />
 
     <!-- Logging -->

@@ -395,8 +395,6 @@ namespace PADMA.UI.ViewModels
                 {
                     // date is local-day key (00:00)
                     hasUserEvents = evCache.HasEvents(date);
-                    if (hasUserEvents)
-                        System.Diagnostics.Debug.WriteLine($"[PADMA] Has user events: {date:yyyy-MM-dd}");
                 }
                 var planetMarkersText = string.Empty;   
 

@@ -4,6 +4,8 @@ using PADMA.Core.Services;
 using PADMA.UI.Services;
 using PADMA.Pages;
 using CommunityToolkit.Maui;
+using Syncfusion.Maui.Core.Hosting;
+using Syncfusion.Licensing;
 
 namespace PADMA;
 public static class MauiProgram
@@ -11,12 +13,17 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
+
+        SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF1cXmhLYVJ+WmFZfVhgfF9EaFZVRGYuP1ZhSXxVdkdiWH9WcnxRRmdUUkR9XEA=");
+
         builder.UseMauiApp<App>().ConfigureFonts(fonts =>
         {
             fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
         }).UseMauiCommunityToolkit();
         
+        builder.ConfigureSyncfusionCore();
+
         // === Новый механизм автообновления базы ===
         var dbFileName = "PADMADB.db3";
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, dbFileName);

@@ -48,5 +48,14 @@ namespace PADMA.Core.Utilities
             return Color.FromRgba(r, g, b, a);
         }
 
+        public static int ColorToArgbInt(Color c)
+        {
+            byte a = (byte)(c.Alpha * 255);
+            byte r = (byte)(c.Red * 255);
+            byte g = (byte)(c.Green * 255);
+            byte b = (byte)(c.Blue * 255);
+            return (a << 24) | (r << 16) | (g << 8) | b;
+        }
+
     }
 }

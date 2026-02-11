@@ -97,6 +97,7 @@ public sealed class ProfileContextService : IProfileContextService
             );
 
             Current = ctx;
+            DataCache.Instance.ApplyLocalization();
             return ctx;
         }
         finally

@@ -197,7 +197,7 @@ namespace PADMA.Pages
             if (Day == null) return;
 
             var lang = DataCache.Instance.CurrentLanguageCode;
-            await RunBusyAsync(Localization.GetLocalizedText(_busyText, lang), async () =>
+            await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
             {
                 var store = ServiceLocator.Services.GetService<NavigationDataStore>();
                 if (store == null)

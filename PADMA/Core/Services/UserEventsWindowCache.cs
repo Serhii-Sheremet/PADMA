@@ -47,9 +47,21 @@ namespace PADMA.Core.Services
         {
             _events.Clear();
             _byDay.Clear();
-            _profileId = 0;
-            _windowStart = DateTime.MinValue;
-            _windowEndExclusive = DateTime.MinValue;
+            // НЕ сбрасываем _profileId/_windowStart/_windowEndExclusive
+            //_profileId = 0;
+            //_windowStart = DateTime.MinValue;
+            //_windowEndExclusive = DateTime.MinValue;
+        }
+
+        public void ReloadLastWindow()
+        {
+            if (_profileId == 0)
+                return;
+
+            if (_windowStart == DateTime.MinValue || _windowEndExclusive == DateTime.MinValue)
+                return;
+
+            LoadWindow(_profileId, _windowStart, _windowEndExclusive);
         }
 
         public bool HasEvents(DateTime dayLocal)
