@@ -5,13 +5,9 @@ using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
 using PADMA.Core.TransitBuilder;
 using PADMA.Core.Utilities;
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
-using System.Numerics;
-using System.Windows.Input;
-
 
 namespace PADMA.UI.ViewModels
 {

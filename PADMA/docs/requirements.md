@@ -4706,3 +4706,227 @@ MessagingCenter.Send("UserEventsChanged")
 - Tooltip preview from calendar
 
 ------
+
+# User Notes – Local Notifications (Reminder Service) Specification
+
+This section defines the **first implementation stage** of local notifications for **User Notes** (USER_EVENTS).
+The goal is to provide a reliable “remind me before start time” behavior even when PADMA is not open,
+using **OS scheduled local notifications**.
+
+This is a **global (app-wide / profile-wide)** reminder setting. Per-note overrides are out of scope for this stage.
+
+## 1. Goal and Scope (Stage 1)
+
+### Goal
+- Schedule local notifications for upcoming User Notes based on a **global reminder offset**
+  (e.g., 5/15/30 minutes before the note start).
+
+### Scope (included)
+- Global reminder setting stored in `APPSETTING` under a dedicated `GROUPCODE`.
+- A background-safe scheduling approach: notifications are scheduled with the OS, not by polling.
+- Refresh scheduling on “convenient occasions” (app start, notes changed, profile changed).
+- Horizon window scheduling: **7 days ahead**.
+- Safety limit: **max 64 notifications** for the active profile within the horizon.
+
+### Out of scope (later)
+- Per-note reminder toggle/offset.
+- Repeating events.
+- Advanced notification channels/tones customization UI.
+- Cross-device sync.
+
+## 2. Global Reminder Setting (APPSETTING)
+
+### 2.1 Database table
+Existing table (no structural changes):
+```sql
+CREATE TABLE IF NOT EXISTS APPSETTING
+(
+    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+    GROUPCODE TEXT,
+    SETTINGCODE TEXT,
+    ACTIVE SMALLINT
+);
+```
+
+### 2.2 New setting group
+Use a dedicated group:
+- `GROUPCODE = 'NOTEREMINDER'`
+
+### 2.3 New options (enum + DB rows)
+`ID` corresponds to `EAppSetting` values.
+
+Recommended `SETTINGCODE` values:
+- `OFF`
+- `MIN5`
+- `MIN15`
+- `MIN30`
+
+Default:
+- `OFF` is active.
+
+### 2.4 Effective reminder minutes
+The active option maps to an offset:
+- `OFF` → `null` (no notifications)
+- `MIN5` → `5`
+- `MIN15` → `15`
+- `MIN30` → `30`
+
+A helper method should return `int? reminderMinutes`.
+
+## 3. Notification Scheduling Strategy
+
+### 3.1 Why scheduling (not polling)
+Local notifications must work when:
+- PADMA is not running,
+- the process is suspended,
+- the device is in power saving mode.
+
+Therefore, notifications must be scheduled with the OS.
+
+### 3.2 Scheduling horizon and limits
+- Horizon: **7 days ahead** (configurable constant).
+- Maximum notifications within horizon for a profile: **64** (configurable constant).
+- Notes beyond horizon are not scheduled until a future refresh occurs.
+
+### 3.3 Refresh triggers (“convenient occasions”)
+The service must refresh reminders when any of the following happens:
+
+1) App start (after profile context is ready)
+2) Notes changed:
+   - triggered via `MessagingCenter` topic: `"UserEventsChanged"`
+3) Profile changed:
+   - existing project topic (e.g., `"ProfileChanged"`)
+4) Reminder setting changed:
+   - later, when a settings UI is added (topic depends on existing settings workflow)
+
+## 4. Service Design
+
+### 4.1 Service name and location
+Create a dedicated service, e.g.:
+- `UserNoteReminderService` (Core/Services or UI/Services depending on your layering)
+
+### 4.2 Public API (recommended)
+```csharp
+public interface IUserNoteReminderService
+{
+    Task RefreshAsync(CancellationToken ct = default);
+    Task CancelAllAsync(CancellationToken ct = default);
+}
+```
+
+### 4.3 Dependencies
+The service should depend on:
+- `DatabaseService` (load USER_EVENTS for a date range)
+- `ProfileContextService` (active profile + timezone)
+- `AppSettingsService` or DataCache setting accessor (active NOTEREMINDER option)
+- A notification adapter (see section 5)
+
+### 4.4 Concurrency rules
+- Prevent overlapping refreshes (use `SemaphoreSlim`).
+- If a refresh is already running, new refresh requests may be ignored or coalesced.
+
+## 5. Notification Provider (Implementation Choice)
+
+### 5.1 Preferred library (Stage 1)
+Use **Plugin.LocalNotification** for .NET MAUI (Android/iOS) to reduce platform-specific code.
+
+Provider capabilities required:
+- Schedule a notification at a specific local datetime
+- Cancel a scheduled notification by ID
+- Optionally request permissions
+
+### 5.2 Abstraction layer
+Even when using a library, wrap it with an internal interface:
+
+```csharp
+public interface ILocalNotificationProvider
+{
+    Task<bool> EnsurePermissionsAsync();
+    Task ScheduleAsync(int notificationId, DateTime fireTimeLocal, string title, string body);
+    Task CancelAsync(int notificationId);
+    Task CancelManyAsync(IEnumerable<int> notificationIds);
+}
+```
+
+This keeps PADMA flexible if you later switch libraries or add native implementations.
+
+## 6. Scheduling Rules
+
+### 6.1 Time basis
+- USER_EVENTS are stored in **profile local time**.
+- Notification fire time is computed in the same local time basis.
+
+`fireTimeLocal = note.StartLocal - reminderMinutes`
+
+### 6.2 Skip rules
+A note should not schedule a notification if:
+- `reminderMinutes` is `null` (OFF)
+- `fireTimeLocal <= nowLocal` (already in the past)
+- `note.StartLocal` is outside the scheduling horizon
+- notification count limit is reached
+
+### 6.3 Notification ID strategy
+Stage 1 assumes **one notification per note**.
+Recommended stable mapping:
+- `notificationId = note.Id`
+
+This enables update/cancel by note ID.
+
+If future extensions require multiple notifications per note, the ID strategy must evolve (e.g., hashing or ID ranges).
+
+### 6.4 Message content (Stage 1)
+- Title: localized constant, e.g. `"PADMA"` or `"Reminder"` (to be defined later)
+- Body: use note name if present; else a fallback localized text (e.g., `"Note"`)
+
+Localization for notification strings is a separate subtask.
+
+## 7. Refresh Algorithm (Reference)
+
+1) Determine active profile ID and timezone.
+2) Read global reminder minutes from `APPSETTING` group `NOTEREMINDER`.
+3) If OFF → `CancelAllAsync()` and exit.
+4) Compute:
+   - `nowLocal`
+   - `windowEndExclusiveLocal = nowLocal.Date.AddDays(HORIZON_DAYS + 1)`
+5) Load notes from DB for `[nowLocal, windowEndExclusiveLocal)`.
+6) Build the target set of notifications (up to MAX_COUNT).
+7) Cancel outdated notifications and schedule the new ones.
+   - Simplest Stage 1 approach: **cancel and reschedule** everything in the horizon on every refresh.
+8) Persist nothing new in DB at this stage.
+
+## 8. Integration Points
+
+### 8.1 App startup
+After `ProfileContextService.Current` is ready, call:
+
+- `await userNoteReminderService.RefreshAsync();`
+
+### 8.2 Notes changed
+On `"UserEventsChanged"`:
+- Call `RefreshAsync()` (coalesced)
+
+### 8.3 Profile changed
+On profile change event/topic:
+- Call `RefreshAsync()` for the active profile.
+- Stage 1 may ignore cross-profile cleanup unless required.
+
+## 9. Platform Notes (High-level)
+
+- Android 13+ requires runtime permission for posting notifications.
+- iOS requires explicit user permission request.
+- OS behavior may delay exact timing; this is acceptable for reminders.
+
+Exact permission handling and UX prompts should be implemented in the provider.
+
+## 10. Future Extensions
+
+- Settings UI page for NOTEREMINDER group.
+- Per-note reminder override:
+  - add fields to USER_EVENTS or a separate table
+  - extend note editor UI
+- Notification channel selection, sound/vibration options.
+- Repeat rules.
+- Multi-day notes reminder logic.
+
+---------
+

@@ -14,7 +14,6 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
 
-        //SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF1cXmhLYVJ+WmFZfVhgfF9EaFZVRGYuP1ZhSXxVdkdiWH9WcnxRRmdUUkR9XEA="); // -- trial for 7 days --
         SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWX1fcXVXQ2BdWUBxWERWYEs=");
 
         builder.UseMauiApp<App>().ConfigureFonts(fonts =>
@@ -25,7 +24,7 @@ public static class MauiProgram
         
         builder.ConfigureSyncfusionCore();
 
-        // === Новый механизм автообновления базы ===
+        // === Механизм автообновления базы ===
         var dbFileName = "PADMADB.db3";
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, dbFileName);
         // Копируем новую базу из ресурсов во временную директорию
@@ -53,12 +52,11 @@ public static class MauiProgram
             if (localVersion == null || localVersion != newVersion)
             {
                 needReplace = true;
-                //System.Diagnostics.Debug.WriteLine($"[DB] Updating local DB from version {localVersion ?? "none"} to {newVersion}");
             }
         }
         catch (Exception ex)
         {
-            //System.Diagnostics.Debug.WriteLine($"[DB] Version check failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[DB] Version check failed: {ex.Message}");
             needReplace = true; // если ошибка — заменяем базу
         }
 

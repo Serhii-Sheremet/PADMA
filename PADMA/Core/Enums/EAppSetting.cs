@@ -24,6 +24,10 @@
         WEEKSUNDAY = 20,
         WEEKMONDAY = 21,
         SUNRISETIP = 22,
-        SUNRISECENTER = 23
+        SUNRISECENTER = 23,
+        NOTEREMINDEROFF = 24,
+        NOTEREMINDER5MIN = 25,
+        NOTEREMINDER15MIN = 26,
+        NOTEREMINDER30MIN = 27
     }
 }
