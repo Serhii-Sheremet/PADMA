@@ -20,7 +20,7 @@ namespace PADMA.Pages
         private bool _autoCenterRequested;
         private bool _syncingHorizontalScroll;
         private readonly Dictionary<VisualElement, Border> _highlights = new();
-
+        
         private DayOverviewData? _overview;
         public DayOverviewData? Overview
         {
@@ -290,6 +290,8 @@ namespace PADMA.Pages
                 OnPropertyChanged(nameof(BusyText));
             }
         }
+
+        public string NotesLabel => Localization.GetLocalizedText("Notes", DataCache.Instance.CurrentLanguageCode);
 
         private void ApplyLocalizedLabels()
         {
@@ -606,6 +608,7 @@ namespace PADMA.Pages
                 // тут нам достаточно пересобрать отображаемые колонки
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
+                    OnPropertyChanged(nameof(NotesLabel));
                     BuildTransitColumns();
 
                     // чтобы подписи/содержимое тоже обновились

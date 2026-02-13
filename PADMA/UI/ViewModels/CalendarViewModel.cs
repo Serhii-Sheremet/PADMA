@@ -71,11 +71,49 @@ namespace PADMA.UI.ViewModels
             }
         }
 
+        public sealed class NotesOverlayItem
+        {
+            public string Text { get; set; } = "";
+            public Color BackgroundColor { get; set; } = Colors.LightGray;
+        }
+
+        private bool _isNotesOverlayVisible;
+        public bool IsNotesOverlayVisible
+        {
+            get => _isNotesOverlayVisible;
+            set { _isNotesOverlayVisible = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotesOverlayHiddenInputTransparent)); }
+        }
+
+        public bool IsNotesOverlayHiddenInputTransparent => !IsNotesOverlayVisible;
+
+        private string _notesOverlayTitle = "";
+        public string NotesOverlayTitle
+        {
+            get => _notesOverlayTitle;
+            set { _notesOverlayTitle = value; OnPropertyChanged(); }
+        }
+
+        public ObservableCollection<NotesOverlayItem> NotesOverlayItems { get; } = new();
+
         private string _activeProfileDisplay = string.Empty;
         public string ActiveProfileDisplay
         {
             get => _activeProfileDisplay;
             set { _activeProfileDisplay = value; OnPropertyChanged(); }
+        }
+
+        private double _notesOverlayMaxHeight = 400;
+        public double NotesOverlayMaxHeight
+        {
+            get => _notesOverlayMaxHeight;
+            set { _notesOverlayMaxHeight = value; OnPropertyChanged(); }
+        }
+
+        private double _notesOverlayListMaxHeight = 280;
+        public double NotesOverlayListMaxHeight
+        {
+            get => _notesOverlayListMaxHeight;
+            set { _notesOverlayListMaxHeight = value; OnPropertyChanged(); }
         }
 
         private string _activeLocationTimeZoneDisplay = string.Empty;
@@ -205,6 +243,35 @@ namespace PADMA.UI.ViewModels
         public void RebuildCurrentMonth()
         {
             RefreshCalendar();              // will rebuild Days on the current Year/Month
+        }
+
+        public void HideNotesOverlay()
+        {
+            IsNotesOverlayVisible = false;
+        }
+
+        public void ShowNotesOverlayForDay(DateTime dayLocal)
+        {
+            var notesLabel = Localization.GetLocalizedText("Notes", DataCache.Instance.CurrentLanguageCode);
+
+            NotesOverlayTitle = $"{notesLabel} • {dayLocal:dd.MM.yyyy}";
+
+            NotesOverlayItems.Clear();
+
+            var events = DataCache.Instance.UserEventsWindowCache.GetEventsForDay(dayLocal.Date);
+            foreach (var ev in events.OrderBy(e => e.StartLocal))
+            {
+                var from = ev.StartLocal.ToString("HH:mm");
+                var to = ev.EndLocal.ToString("HH:mm");
+
+                NotesOverlayItems.Add(new NotesOverlayItem
+                {
+                    Text = $"{ev.Name}: {from} - {to}",
+                    BackgroundColor = CalendarDrawingHelper.ColorFromArgbInt(ev.ArgbValue)
+                });
+            }
+
+            IsNotesOverlayVisible = NotesOverlayItems.Count > 0;
         }
 
         /// <summary>

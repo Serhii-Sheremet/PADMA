@@ -19,6 +19,10 @@ public partial class App : Application
         {
             await SwissService.InitializeEphemerisPathAsync();
             await DataCache.Instance.RebuildProfileContextAsync();
+
+            var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>();
+            if (reminder != null)
+                await reminder.RefreshAsync();
         }
         catch (Exception ex)
         {

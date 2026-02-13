@@ -29,6 +29,7 @@
 
     <!-- Убираем предупреждение о старых workload’ах -->
     <NoWarn>$(NoWarn);NETSDK1202</NoWarn>
+	<SkipValidateMauiImplicitPackageReferences>true</SkipValidateMauiImplicitPackageReferences>
   </PropertyGroup>
 	
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
@@ -63,13 +64,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Переход на MAUI 9 -->   
+    <!-- Packages -->  
     <PackageReference Include="CommunityToolkit.Maui" Version="12.1.0" />   
-    <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.120" />
-    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.120" />
     <PackageReference Include="Plugin.Maui.Calendar" Version="2.0.12" />
-
-    <!-- Packages -->
+	<PackageReference Include="Plugin.LocalNotification" Version="10.1.8" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	<PackageReference Include="NodaTime" Version="3.2.2" />
 	<PackageReference Include="GeoTimeZone" Version="6.1.0" />
@@ -104,6 +102,9 @@
     <MauiXaml Update="Pages\MrityuPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\MuhurtasPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\NodesPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\NotificationsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\ProfileDetailPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

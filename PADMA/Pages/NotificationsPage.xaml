@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ui:ConfigBasePage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
+    x:Class="PADMA.Pages.NotificationsPage">
+
+  <ScrollView>
+    <VerticalStackLayout Padding="16" Spacing="16">
+
+      <!-- Заголовок страницы -->
+      <Label x:Name="HeaderLabel"
+             Style="{StaticResource PageTitleStyle}"
+             HorizontalOptions="Start" />
+
+      <!-- Радиокнопки -->
+      <Grid ColumnSpacing="12" RowSpacing="16"
+            ColumnDefinitions="Auto,*"
+            RowDefinitions="Auto,Auto,Auto,Auto">
+
+        <!-- Вариант 1 -->
+        <RadioButton x:Name="OffRadioButton"
+                     Grid.Row="0" Grid.Column="0"
+                     GroupName="NOTEREMINDER"
+                     CheckedChanged="OnRadioButtonCheckedChanged" />
+        <Label x:Name="OffLabel"
+               Grid.Row="0" Grid.Column="1"
+               VerticalOptions="Center"
+               Style="{StaticResource LabelTextStyle}" />
+
+        <!-- Вариант 2 -->
+        <RadioButton x:Name="min5RadioButton"
+                     Grid.Row="1" Grid.Column="0"
+                     GroupName="NOTEREMINDER"
+                     CheckedChanged="OnRadioButtonCheckedChanged" />
+        <Label x:Name="min5Label"
+               Grid.Row="1" Grid.Column="1"
+               VerticalOptions="Center"
+               Style="{StaticResource LabelTextStyle}" />
+
+        <!-- Вариант 3 -->
+        <RadioButton x:Name="min15RadioButton"
+                     Grid.Row="2" Grid.Column="0"
+                     GroupName="NOTEREMINDER"
+                     CheckedChanged="OnRadioButtonCheckedChanged" />
+        <Label x:Name="min15Label"
+               Grid.Row="2" Grid.Column="1"
+               VerticalOptions="Center"
+               Style="{StaticResource LabelTextStyle}" />
+
+        <!-- Вариант 4 -->
+        <RadioButton x:Name="min30RadioButton"
+                     Grid.Row="3" Grid.Column="0"
+                     GroupName="NOTEREMINDER"
+                     CheckedChanged="OnRadioButtonCheckedChanged" />
+        <Label x:Name="min30Label"
+               Grid.Row="3" Grid.Column="1"
+               VerticalOptions="Center"
+               Style="{StaticResource LabelTextStyle}" />
+      </Grid>
+
+    </VerticalStackLayout>
+  </ScrollView>
+</ui:ConfigBasePage>

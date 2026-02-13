@@ -132,7 +132,7 @@
                             <Grid Grid.Row="0" Grid.Column="1"
                                   HorizontalOptions="Fill"
                                   VerticalOptions="Fill"
-                                  InputTransparent="True">
+                                  InputTransparent="False">
 
                                 <!-- Eclipse icon -->
                                 <Image Source="{Binding EclipseIcon}"
@@ -143,7 +143,7 @@
                                        WidthRequest="16"
                                        HeightRequest="16" />
 
-                                <!-- User events triangle -->
+                                <!-- User events triangle (tap target) -->
                                 <Path IsVisible="{Binding HasUserEvents}"
                                       HorizontalOptions="End"
                                       VerticalOptions="Start"
@@ -151,7 +151,11 @@
                                       HeightRequest="15"
                                       Fill="#1E90FF"
                                       Data="M 0,0 L 15,0 L 15,15 Z"
-                                      Margin="0,2,2,0" />
+                                      Margin="0,2,2,0">
+                                    <Path.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnNotesTriangleTapped" />
+                                    </Path.GestureRecognizers>
+                                </Path>
                             </Grid>
 
                             <!-- Planet markers (shown between day number and panchanga bars) -->
@@ -211,6 +215,55 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <!-- Notes Overlay -->
+        <Grid x:Name="NotesOverlay"
+              Grid.RowSpan="99"
+              IsVisible="{Binding IsNotesOverlayVisible}"
+              InputTransparent="{Binding IsNotesOverlayHiddenInputTransparent}"
+              BackgroundColor="#80000000"
+              HorizontalOptions="Fill"
+              VerticalOptions="Fill">
+
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnNotesOverlayBackdropTapped"/>
+            </Grid.GestureRecognizers>
+
+            <Frame Padding="12"
+                   CornerRadius="14"
+                   HasShadow="True"
+                   BackgroundColor="White"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   WidthRequest="320"
+                   MaximumHeightRequest="{Binding NotesOverlayMaxHeight}">
+
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding NotesOverlayTitle}"
+                           FontAttributes="Bold"
+                           FontSize="14"
+                           HorizontalOptions="Center" />
+
+                    <ScrollView  MaximumHeightRequest="{Binding NotesOverlayListMaxHeight}">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding NotesOverlayItems}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Border StrokeThickness="0"
+                                            Padding="8"
+                                            Margin="0,0,0,6"
+                                            BackgroundColor="{Binding BackgroundColor}">
+                                        <Label Text="{Binding Text}"
+                                               FontSize="12"
+                                               TextColor="Black"
+                                               LineBreakMode="TailTruncation" />
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
 
         <!-- Busy overlay: appears during calculations and blocks the UI -->
         <Grid

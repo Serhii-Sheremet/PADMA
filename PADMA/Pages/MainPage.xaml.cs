@@ -88,6 +88,19 @@ namespace PADMA.Pages
                     UpdateDaysHeader();
                 });
             }
+
+        }
+
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+
+            if (BindingContext is CalendarViewModel vm && height > 0)
+            {
+                // 70% экрана под карточку, остальное - поля/заголовок/воздух
+                vm.NotesOverlayMaxHeight = height * 0.7;
+                vm.NotesOverlayListMaxHeight = height * 0.45;
+            }
         }
 
         private void AddToolbarButtons()
@@ -255,6 +268,20 @@ namespace PADMA.Pages
                     AppCloser.Close();
             });
             return true;
+        }
+
+        private void OnNotesTriangleTapped(object sender, EventArgs e)
+        {
+            if (Vm == null) return;
+            if (sender is not BindableObject bo) return;
+            if (bo.BindingContext is not DayItem day) return;
+
+            Vm.ShowNotesOverlayForDay(day.Date);
+        }
+
+        private void OnNotesOverlayBackdropTapped(object sender, EventArgs e)
+        {
+            Vm?.HideNotesOverlay();
         }
 
 

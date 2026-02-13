@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using CommunityToolkit.Maui;
 using Microsoft.Maui;
 using PADMA.Core.Services;
-using PADMA.UI.Services;
 using PADMA.Pages;
-using CommunityToolkit.Maui;
-using Syncfusion.Maui.Core.Hosting;
+using PADMA.UI.Services;
+using Plugin.LocalNotification;
 using Syncfusion.Licensing;
+using Syncfusion.Maui.Core.Hosting;
+using System.IO;
 
 namespace PADMA;
 public static class MauiProgram
@@ -16,11 +17,15 @@ public static class MauiProgram
 
         SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWX1fcXVXQ2BdWUBxWERWYEs=");
 
-        builder.UseMauiApp<App>().ConfigureFonts(fonts =>
-        {
-            fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-            fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-        }).UseMauiCommunityToolkit();
+        builder
+            .UseMauiApp<App>()
+            .UseLocalNotification()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            })
+            .UseMauiCommunityToolkit();
         
         builder.ConfigureSyncfusionCore();
 
@@ -81,7 +86,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppSettingsService>();
         builder.Services.AddSingleton<NominatimService>();
         builder.Services.AddSingleton<NavigationDataStore>();
-
+        builder.Services.AddSingleton<ILocalNotificationProvider, PluginLocalNotificationProvider>();
+        builder.Services.AddSingleton<IUserNoteReminderService, UserNoteReminderService>();
         builder.Services.AddSingleton<IDayComputationService, DayComputationService>();
 
         var app = builder.Build();

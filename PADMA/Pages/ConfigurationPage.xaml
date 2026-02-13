@@ -47,6 +47,10 @@
                         Text="Sunrise calculation"
                         Clicked="OnSunriseClicked" />
 
+                <Button x:Name="btnNotifications"
+                        Text="Notifications"
+                        Clicked="OnNotificationsClicked" />
+
             </VerticalStackLayout>
         </ScrollView>
 

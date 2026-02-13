@@ -4918,7 +4918,11 @@ On profile change event/topic:
 
 Exact permission handling and UX prompts should be implemented in the provider.
 
-## 10. Future Extensions
+## 10. Status
+
+Stage 1 is compeleted.
+
+## 11. Future Extensions
 
 - Settings UI page for NOTEREMINDER group.
 - Per-note reminder override:

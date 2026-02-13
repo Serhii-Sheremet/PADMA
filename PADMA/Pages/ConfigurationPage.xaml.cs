@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using Plugin.LocalNotification;
 
 namespace PADMA.Pages
 {
@@ -78,6 +79,7 @@ namespace PADMA.Pages
             btnMuhurta.Text = Localization.GetLocalizedText("30 Muhurtas (60 Ghatis)", lang);
             btnMrityuBhaga.Text = Localization.GetLocalizedText("Mrityu Bhaga", lang);
             btnSunrise.Text = Localization.GetLocalizedText("Sunrise calculation", lang);
+            btnNotifications.Text = Localization.GetLocalizedText("Notifications", lang);
         }
 
         private async Task ShowSettingsUpdatedMessage()
@@ -150,6 +152,11 @@ namespace PADMA.Pages
         private async void OnSunriseClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("SunrisePage");
+        }
+
+        private async void OnNotificationsClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("NotificationsPage");
         }
     }
 }
