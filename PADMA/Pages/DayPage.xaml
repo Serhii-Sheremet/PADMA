@@ -2,7 +2,6 @@
 <ContentPage
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:inputs="clr-namespace:Syncfusion.Maui.Inputs;assembly=Syncfusion.Maui.Inputs"
     xmlns:local="clr-namespace:PADMA.Pages"
     x:Class="PADMA.Pages.DayPage"
     x:Name="DayPageRoot"
@@ -13,7 +12,10 @@
     </Shell.BackButtonBehavior>
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="✕" Priority="0" Order="Primary" Clicked="OnCloseClicked" />
+        <ToolbarItem IconImageSource="close_icon.png"
+                 Priority="0"
+                 Order="Primary"
+                 Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
 
     <ContentPage.Resources>
@@ -562,43 +564,7 @@
                     <!-- Bottom fixed: palette + buttons -->
                     <VerticalStackLayout Grid.Row="2" Spacing="10">
 
-                        <!-- Color -->
-                        <Grid ColumnDefinitions="Auto,*"
-                              ColumnSpacing="10"
-                              HorizontalOptions="FillAndExpand">
-
-                            <Label x:Name="ColorLabel"
-                                   Text="Color"
-                                   VerticalOptions="Center" />
-
-                            <!-- Preview полоска -->
-                            <Border x:Name="ColorPreviewBorder"
-                                    Grid.Column="1"
-                                    HeightRequest="28"
-                                    HorizontalOptions="FillAndExpand"
-                                    VerticalOptions="Center"
-                                    StrokeThickness="1"
-                                    Stroke="#22000000"
-                                    BackgroundColor="LightGray">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="6"/>
-                                </Border.StrokeShape>
-
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnColorPreviewTapped" />
-                                </Border.GestureRecognizers>
-                            </Border>
-
-                            <!-- SfColorPicker держим в визуальном дереве, но не занимаем место -->
-                            <inputs:SfColorPicker x:Name="EventColorPicker"
-                                                  Grid.ColumnSpan="2"
-                                                  IsOpen="False"
-                                                  IsActionButtonsVisible="False"
-                                                  ColorChanged="OnEventColorChanged"
-                                                  HeightRequest="1"
-                                                  Opacity="0.01" />
-                        </Grid>
+                        <HorizontalStackLayout x:Name="ColorPalette" Spacing="10" Margin="10" />
 
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                               ColumnSpacing="10">

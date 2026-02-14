@@ -772,8 +772,6 @@ namespace PADMA.Pages
             // фон для Time/Events через AbsoluteLayout
             BuildColumnBackground(IconsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 24);
             BuildColumnBackground(TimeBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 36);
-            //BuildColumnBackground(EventsBackgroundLayout, ySunrise, ySunset, dayColor, nightColor, 80);
-
 
             // фон для Events column через BoxView
             EventsNightBackground.BackgroundColor = nightColor;
@@ -1197,7 +1195,6 @@ namespace PADMA.Pages
                 AbsoluteLayout.SetLayoutBounds(lbl, new Rect(2, y + 1, 76, 16));
                 lane.Children.Add(lbl);
             }
-
         }
 
         private readonly Dictionary<ETransitKind, Func<PanchangaSegment, string>> _labelResolvers
@@ -1473,9 +1470,7 @@ namespace PADMA.Pages
                 case (int)EDVLineName.KETUPADA:
                     ShowPlanetPadaTooltip(seg);
                     break;
-
             }
-
             IsTooltipVisible = true;
         }
 
@@ -1778,7 +1773,6 @@ namespace PADMA.Pages
             TooltipItems.Clear();
             TooltipTitle = string.Empty;
             TooltipRange = string.Empty;
-            
         }
 
         private void AddTooltipBlock(string nativeLabel, string? value)
@@ -1880,7 +1874,6 @@ namespace PADMA.Pages
                     TransitKind = ETransitKind.Muhurta
                 });
             }
-
             return result;
         }
 
@@ -2041,7 +2034,6 @@ namespace PADMA.Pages
                     TransitKind = ETransitKind.Yoga
                 });
             }
-
             return result;
         }
 
@@ -2296,8 +2288,6 @@ namespace PADMA.Pages
             AddTooltipBlock("Navamsa", $"{navName}{eventSymbol}");
 
             // ---- Блок 2: Special Navamsa / Bad Navamsa / Drekkana ----
-
-            // Pada entity (из 108)
             var pEntity = DataCache.Instance.PadaList.FirstOrDefault(p => p.Id == slice.PadaId);
             string specNav = pEntity != null ? PlanetTooltipUtility.GetSpecNavamsha(pEntity) : string.Empty;
             specNav = specNav?.Trim().TrimStart(',').Trim();
@@ -2330,7 +2320,6 @@ namespace PADMA.Pages
 
                     parts.Add($"{de.Drekkana} {suffix}");
                 }
-
                 AddTooltipBlock("Drekkana", string.Join(", ", parts));
             }
 
@@ -2514,7 +2503,7 @@ namespace PADMA.Pages
                         FontSize = 10,
                         LineBreakMode = LineBreakMode.TailTruncation,
                         MaxLines = 2,
-                        TextColor = Colors.White
+                        TextColor = Colors.Black
                     }
                 };
 
@@ -2610,11 +2599,18 @@ namespace PADMA.Pages
 
             _slotSelectionBox = new BoxView
             {
-                Color = Color.FromRgba(255, 247, 214, 0.55f), // мягкий кремовый
+                Color = Color.FromRgb(255, 253, 240), // почти белый, очень деликатный
                 InputTransparent = true
             };
 
-            AbsoluteLayout.SetLayoutBounds(_slotSelectionBox, new Rect(0, top, width, height));
+            const double inset = 1.0;
+
+            var x = inset;                 
+            var y = top + inset;
+            var w = Math.Max(0, width - inset * 2);
+            var h = Math.Max(0, height - inset * 2);
+
+            AbsoluteLayout.SetLayoutBounds(_slotSelectionBox, new Rect(x, y, w, h));
             AbsoluteLayout.SetLayoutFlags(_slotSelectionBox, AbsoluteLayoutFlags.None);
 
             EventsBackgroundLayout.Children.Add(_slotSelectionBox);
@@ -2632,7 +2628,6 @@ namespace PADMA.Pages
                 EventsBackgroundLayout.Children.Remove(_slotSelectionBox);
                 _slotSelectionBox = null;
             }
-
         }
 
         private const int DefaultEventArgb = unchecked((int)0xFF4CAF50); // зелёный (Material Green 500)
@@ -2682,18 +2677,11 @@ namespace PADMA.Pages
             TitleEntry.Placeholder = L("Title");
             MessageEditor.Placeholder = L("Description");
 
-            // labels
-            if (ColorLabel != null)
-                ColorLabel.Text = L("Color");
-
             // buttons
             DeleteButton.Text = L("Delete");
             CancelButton.Text = L("Cancel");
             OkButton.Text = L("OK"); 
-
-            // header отдельно: New note / Edit note
         }
-
 
         private void ShowUserEventOverlay(DateTime start, DateTime end, string name, string message, int argb)
         {
@@ -2709,28 +2697,22 @@ namespace PADMA.Pages
             MessageEditor.Text = message;
 
             _editingArgb = argb;
-            //BuildColorPalette(argb);
-            
-            var c = CalendarDrawingHelper.ColorFromArgbInt(_editingArgb);
-            ColorPreviewBorder.BackgroundColor = c;
-            EventColorPicker.SelectedColor = c;
-
+            BuildColorPalette(argb);
 
             DeleteButton.IsVisible = _editingEvent != null;
         }
 
         private readonly int[] _eventColors =
         {
-            unchecked((int)0xFF4CAF50), // green
-            unchecked((int)0xFF2196F3), // blue
-            unchecked((int)0xFFFF9800), // orange
-            unchecked((int)0xFFF44336), // red
-            unchecked((int)0xFF9C27B0), // purple
-            unchecked((int)0xFF00BCD4), // cyan
-            unchecked((int)0xFFFFEB3B)  // yellow
+            unchecked((int)0xFFA8D5A2), // pastel green
+            unchecked((int)0xFFA7C7E7), // pastel blue
+            unchecked((int)0xFFFFD6A5), // pastel orange
+            unchecked((int)0xFFFFADAD), // pastel red/pink
+            unchecked((int)0xFFD7B5E8), // pastel purple
+            unchecked((int)0xFFA0E7E5), // pastel cyan
+            unchecked((int)0xFFFFF3B0)  // pastel yellow
         };
 
-        /*
         private void BuildColorPalette(int selectedArgb)
         {
             ColorPalette.Children.Clear();
@@ -2767,7 +2749,6 @@ namespace PADMA.Pages
                 ColorPalette.Children.Add(frame);
             }
         }
-        */
 
         private void OnUserEventCancel(object sender, EventArgs e)
         {
@@ -2891,20 +2872,10 @@ namespace PADMA.Pages
             MessagingCenter.Send<object>(this, "UserEventsChanged");
         }
 
-        private void OnColorPreviewTapped(object sender, EventArgs e)
-        {
-            // Перед открытием — выставим текущий цвет, чтобы picker стартовал правильно
-            EventColorPicker.SelectedColor = CalendarDrawingHelper.ColorFromArgbInt(_editingArgb);
-            EventColorPicker.IsOpen = true;
-        }
-
         private void OnEventColorChanged(object sender, Syncfusion.Maui.Inputs.ColorChangedEventArgs e)
         {
-            // e.NewColor — выбранный (после Apply, если кнопки видимы)
             _editingArgb = CalendarDrawingHelper.ColorToArgbInt(e.NewColor);
-            ColorPreviewBorder.BackgroundColor = e.NewColor;
         }
-
 
         private void OnUserEventOverlayTapped(object sender, TappedEventArgs e)
         {
