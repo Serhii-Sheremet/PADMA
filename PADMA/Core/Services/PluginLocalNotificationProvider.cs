@@ -1,4 +1,5 @@
 using Plugin.LocalNotification;
+using System.Diagnostics;
 
 namespace PADMA.Core.Services;
 
@@ -15,19 +16,27 @@ public sealed class PluginLocalNotificationProvider : ILocalNotificationProvider
 
     public async Task ScheduleAsync(int notificationId, DateTime fireTimeLocal, string title, string body)
     {
+        // Plugin/AlarmManager ждЄт локальное врем€ устройства.
+        var local = fireTimeLocal;
+
+        // ¬ј∆Ќќ: приходит Unspecified Ч считаем это Local.
+        if (local.Kind == DateTimeKind.Unspecified)
+            local = DateTime.SpecifyKind(local, DateTimeKind.Local);
+        else
+            local = local.ToLocalTime();
+
         var request = new NotificationRequest
         {
             NotificationId = notificationId,
             Title = title,
-            Description = body,
-            Schedule =
-            {
-                NotifyTime = fireTimeLocal
-            }
+            Description = body
         };
+
+        request.Schedule.NotifyTime = local;
 
         await LocalNotificationCenter.Current.Show(request);
     }
+
 
     public Task CancelAsync(int notificationId)
     {

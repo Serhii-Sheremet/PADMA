@@ -1,3 +1,4 @@
+using Plugin.LocalNotification;
 using System.Diagnostics;
 
 namespace PADMA.Core.Services;
@@ -101,16 +102,18 @@ public sealed class UserNoteReminderService : IUserNoteReminderService
             if (!ok)
                 return;
 
-            // “екст пока минимальный (локализаци€ строк Ч отдельна€ подзадача, по требовани€м это ок)
-            const string title = "PADMA";
+            // “екст сообщени€
+            const string title = "Personal Astrological Diary";
 
             foreach (var item in planned)
             {
                 ct.ThrowIfCancellationRequested();
 
-                var body = string.IsNullOrWhiteSpace(item.Note.Name)
-                    ? "Reminder"
-                    : item.Note.Name;
+                var from = item.Note.StartLocal.ToString("HH:mm");
+                var to = item.Note.EndLocal.ToString("HH:mm");
+
+                var name = string.IsNullOrWhiteSpace(item.Note.Name) ? "Reminder" : item.Note.Name;
+                var body = $"{from}Ц{to} Х {name}";
 
                 // notificationId = note.Id (по требовани€м Stage 1)
                 await _provider.ScheduleAsync(item.Note.Id, item.FireTimeLocal, title, body);
