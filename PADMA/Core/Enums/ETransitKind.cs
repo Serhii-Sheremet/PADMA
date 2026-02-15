@@ -18,6 +18,7 @@ namespace PADMA.Core.Enums
         ChandraBala = 7,
         MrityuBhaga = 8,
         Eclipse = 9,
+        Lagna = 10,
 
         // Solar cycles
         Sunrise = 20,

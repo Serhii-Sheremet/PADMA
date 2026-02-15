@@ -77,6 +77,13 @@ namespace PADMA.Pages
             set { _muhurtaSegments = value; OnPropertyChanged(); }
         }
 
+        private List<PanchangaSegment> _lagnaSegments = new();
+        public List<PanchangaSegment> LagnaSegments
+        {
+            get => _lagnaSegments;
+            set { _lagnaSegments = value; OnPropertyChanged(); }
+        }
+
         // -------  Planet segments  -------
         private List<PanchangaSegment> _sunSegments = new();
         public List<PanchangaSegment> SunSegments
@@ -438,6 +445,18 @@ namespace PADMA.Pages
                     }
                     // ------------------------------------------------------------
 
+                    // --------- Lagna segments ----------------------------------
+                    var lagnaSlices = Day?.LagnaSlices;
+                    if (lagnaSlices != null && lagnaSlices.Count > 0)
+                    {
+                        LagnaSegments = BuildLagnaSegments(dayStart, dayEnd, lagnaSlices);
+                    }
+                    else
+                    {
+                        LagnaSegments = new List<PanchangaSegment>();
+                    }
+                    // -----------------------------------------------------------
+
                     // --------- Planet segments ----------------------------------
                     IReadOnlyList<PlanetSlice> sunSlices;
                     if (transitPack != null && transitPack.TryGetValue(EPlanet.SUN, out sunSlices) && sunSlices != null)
@@ -647,6 +666,7 @@ namespace PADMA.Pages
         {
             if (Day == null) return;
 
+            //UpdateStickyForLane((int)EDVLineName.LAGNA, LagnaSegments, scrollY); // -- will not be shown
             UpdateStickyForLane((int)EDVLineName.NAKSHATRA, Day.NakshatraSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.TARABALA, Day.TaraBalaSegments, scrollY);
             UpdateStickyForLane((int)EDVLineName.TITHI, Day.TithiSegments, scrollY);
@@ -1007,6 +1027,7 @@ namespace PADMA.Pages
 
             _highlights.Clear();
 
+            RenderPanchangaLane((int)EDVLineName.LAGNA, LagnaSegments);
             RenderPanchangaLane((int)EDVLineName.NAKSHATRA, Day.NakshatraSegments);
             RenderPanchangaLane((int)EDVLineName.TARABALA, Day.TaraBalaSegments);
             RenderPanchangaLane((int)EDVLineName.TITHI, Day.TithiSegments);
@@ -1202,6 +1223,10 @@ namespace PADMA.Pages
         {
             // here will be resolvers for all transit lines
             {
+                ETransitKind.Lagna,
+                seg => seg.Text
+            },
+            {
                 ETransitKind.Nakshatra,
                 seg =>
                 {
@@ -1269,7 +1294,7 @@ namespace PADMA.Pages
                         .Select(id => PanchangaHelper.GetYogaDescEntity(id)?.ShortName)
                         .Where(n => !string.IsNullOrWhiteSpace(n))
                         .ToList();
-                     
+
                     return string.Join(" ", names);
                 }
             },
@@ -1321,7 +1346,7 @@ namespace PADMA.Pages
                 ETransitKind.Planet,
                 seg =>
                 {
-                    return seg.Text; 
+                    return seg.Text;
                 }
             }
         };
@@ -1390,6 +1415,9 @@ namespace PADMA.Pages
             switch (lineId)
             {
                 //switch for all lines
+                case (int)EDVLineName.LAGNA:
+                    ShowLagnaPadaTooltip(seg);
+                    break;
 
                 case (int)EDVLineName.NAKSHATRA:
                     ShowNakshatraTooltip(seg);
@@ -2376,6 +2404,24 @@ namespace PADMA.Pages
 
                     vedhaList = PlanetTooltipUtility.MergeVedhaIntervals(vedhaList);
 
+                    var dayStartLocal = DateTime.SpecifyKind(Day.Date.Date, DateTimeKind.Unspecified);
+                    var dayEndLocal = dayStartLocal.AddDays(1);
+
+                    var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
+                    var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
+
+                    static DateTime AsUtc(DateTime dt) =>
+                        dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+
+                    vedhaList = vedhaList
+                        .Where(v =>
+                        {
+                            var s = AsUtc(v.DateStart);
+                            var e = AsUtc(v.DateEnd);
+                            return e > dayStartUtc && s < dayEndUtc; // есть пересечение с сутками
+                        })
+                        .ToList();
+
                     if (vedhaList != null && vedhaList.Count > 0)
                     {
                         var vParts = new List<string>();
@@ -2445,6 +2491,137 @@ namespace PADMA.Pages
         {
             ("Description", d => d.Description),
         };
+
+        private List<PanchangaSegment> BuildLagnaSegments(
+            DateTime dayStartLocal,
+            DateTime dayEndLocal,
+            IReadOnlyList<LagnaSlice> slices)
+        {
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            TimeZoneInfo? tzInfo = ctx.TimeZoneInfo;
+
+            var segments = new List<PanchangaSegment>();
+
+            foreach (var s in slices)
+            {
+                var startUtc = DateTime.SpecifyKind(s.StartUtc, DateTimeKind.Utc);
+                var endUtc = DateTime.SpecifyKind(s.EndUtc, DateTimeKind.Utc);
+
+                // на всякий случай: если последний slice нулевой — растягиваем до конца суток
+                if (endUtc <= startUtc)
+                {
+                    var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
+                    endUtc = dayEndUtc;
+                }
+
+                // UTC -> local
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tzInfo);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(endUtc, tzInfo);
+
+                // клипуем в рамки суток
+                if (endLocal <= dayStartLocal || startLocal >= dayEndLocal) continue;
+                if (startLocal < dayStartLocal) startLocal = dayStartLocal;
+                if (endLocal > dayEndLocal) endLocal = dayEndLocal;
+
+                Color color = GetPadaColor(s.NakshatraId, s.PadaId);
+
+                int padaNum = SwissUtility.GetPadaNumberByPadaId(s.PadaId);
+                var nakShort = PanchangaHelper.GetNakshatraDescEntity(s.NakshatraId)?.ShortName ?? string.Empty;
+                string nakText = nakShort.Length > 5 ? nakShort[..5] : nakShort; 
+                string text = $"{s.ZodiacId}-{nakText}-{padaNum}-{s.NavamsaZodiacId}";
+
+                segments.Add(new PanchangaSegment
+                {
+                    Start = startLocal,
+                    End = endLocal,
+                    TransitKind = ETransitKind.Lagna,
+                    TransitId = s.PadaId, // для лагны в TransitId храним PadaId
+                    TransitStart = s.StartUtc,
+                    TransitEnd = s.EndUtc,
+                    Text = text,
+                    Color = color
+                });
+            }
+
+            return segments;
+        }
+
+        private void ShowLagnaPadaTooltip(PanchangaSegment seg)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            var ctx = DataCache.Instance.ProfileContextService?.Current;
+            TimeZoneInfo? tzInfo = ctx.TimeZoneInfo;
+
+            var day = Day;
+            var slices = day?.LagnaSlices;
+            if (slices == null || slices.Count == 0) return;
+
+            // Найдём slice по старт/энд (как у планет)
+            var slice = slices.FirstOrDefault(s => s.StartUtc == seg.TransitStart && s.EndUtc == seg.TransitEnd);
+            if (slice == null)
+            {
+                // fallback по включению времени
+                var t = seg.TransitStart;
+                slice = slices.FirstOrDefault(s => s.StartUtc <= t && s.EndUtc >= t);
+                if (slice == null) return;
+            }
+
+            // local range
+            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitStart, tzInfo);
+            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitEnd, tzInfo);
+
+            TooltipTitle = Localization.GetLocalizedText("Lagna", lang); 
+            TooltipRange = $"{startLocal:dd.MM.yyyy HH:mm:ss} – {endLocal:dd.MM.yyyy HH:mm:ss}";
+
+            TooltipItems.Clear();
+
+            var zodiacName = PanchangaHelper.GetZodiacDescEntity(slice.ZodiacId)?.Name;
+            var nak = PanchangaHelper.GetNakshatraDescEntity(slice.NakshatraId);
+            var nakText = nak != null ? $"{nak.NakshatraId}.{nak.Name}" : string.Empty;
+
+            int padaNum = SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
+
+            var navName = PanchangaHelper.GetZodiacDescEntity(slice.NavamsaZodiacId)?.Name;
+
+            AddTooltipBlock("Zodiac Sign", zodiacName);
+            AddTooltipBlock("Nakshatra", nakText);
+            AddTooltipBlock("Pada", padaNum.ToString());
+            AddTooltipBlock("Navamsa", $"{navName}");
+
+            // optional: Special / Malefic Navamsa + Drekkana (как у планет)
+            var pEntity = DataCache.Instance.PadaList.FirstOrDefault(p => p.Id == slice.PadaId);
+            string specNav = pEntity != null ? PlanetTooltipUtility.GetSpecNavamsha(pEntity) : string.Empty;
+            specNav = specNav?.Trim().TrimStart(',').Trim();
+            if (!string.IsNullOrWhiteSpace(specNav))
+                AddTooltipBlock("Special Navamsa", specNav);
+
+            if (ctx != null)
+            {
+                int birthPadaMoonId = ctx.BirthPadaMoonId;
+                int birthPadaLagnaId = ctx.BirthPadaLagnaId;
+                Func<string, string> L = key => Localization.GetLocalizedText(key, lang);
+
+                string badNav = PlanetTooltipUtility.GetBadNavamsha(slice.PadaId, birthPadaMoonId, birthPadaLagnaId, L);
+                badNav = (badNav ?? string.Empty).Trim().TrimEnd(',').Trim();
+                if (!string.IsNullOrWhiteSpace(badNav))
+                    AddTooltipBlock("Malefic Navamsa", badNav);
+
+                var dList = PlanetTooltipUtility.GetBadDrekkanaList(slice.PadaId, birthPadaMoonId, birthPadaLagnaId);
+                if (dList != null && dList.Count > 0)
+                {
+                    var parts = new List<string>();
+                    foreach (var de in dList)
+                    {
+                        var suffix = de.IsLagna
+                            ? Localization.GetLocalizedText("Drekkana from Lagna", lang)
+                            : Localization.GetLocalizedText("Drekkana from Natal Moon", lang);
+
+                        parts.Add($"{de.Drekkana} {suffix}");
+                    }
+                    AddTooltipBlock("Drekkana", string.Join(", ", parts));
+                }
+            }
+        }
 
         private List<UserEvent> LoadUserEventsForDay(DateTime dayLocal)
         {

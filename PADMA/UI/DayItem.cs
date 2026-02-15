@@ -30,5 +30,7 @@ namespace PADMA.UI
         public IList<PanchangaSegment> ChandraBalaSegments { get; set; } = new List<PanchangaSegment>();
 
         public Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>? TransitPack { get; set; }
+
+        public IReadOnlyList<LagnaSlice>? LagnaSlices { get; set; }
     }
 }

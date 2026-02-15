@@ -1935,12 +1935,6 @@ Uses the interval **previousSunrise → sunrise**.
 ## 16.7. Status: Completed
 
 ----------------
-----------------
-
- TBD: Here will be the continuation for TransitBuilders that are not ready yet
-
-----------------
-----------------
 
 # PADMA Transit Rendering – PanchangaBar & CalendarViewModel Integration
 
@@ -4834,4 +4828,187 @@ Stage 1 implemented and verified (Android emulator).
 
 -------
 
+# Lagna (Ascendant) Transit Support --- DayPage
 
+This section describes the implementation of **Lagna (Ascendant) transit
+support** in PADMA, including data models, Swiss calculations, slice
+generation, calendar integration, and DayPage rendering.
+
+The Lagna transit is treated as a planet-like dynamic entity whose
+longitude changes continuously and produces time slices based on **Pada
+changes**.\
+Average density is \~108 slices per day (one per Pada).
+
+## 1. Purpose
+
+The Lagna transit stripe provides a continuous timeline of:
+
+-   Zodiac sign of Ascendant
+-   Nakshatra of Ascendant
+-   Pada of Ascendant
+-   Navamsa of Ascendant
+
+This information is displayed as the **first transit stripe on DayPage**
+and behaves similarly to planetary stripes.
+
+## 2. Data Model
+
+### LagnaData
+
+Represents a single time point of Lagna state.
+
+Fields:
+-   DateTimeUtc : DateTime\
+-   Longitude : double\
+-   ZodiacId : int\
+-   NakshatraId : int\
+-   PadaId : int\
+-   NavamsaZodiacId : int
+
+Location:
+-   PADMA/Core/Models/LagnaData.cs
+
+### LagnaSlice
+
+Calendar slice derived from LagnaData.
+
+Fields:
+-   StartUtc : DateTime\
+-   EndUtc : DateTime\
+-   ZodiacId : int\
+-   NakshatraId : int\
+-   PadaId : int\
+-   NavamsaZodiacId : int\
+-   Kind = ETransitKind.Lagna
+
+Location:
+-   PADMA/Core/Models/Calendar/LagnaSlice.cs
+
+## 3. Swiss Calculation (Ascendant)
+
+Ascendant longitude is calculated strictly in **UTC** using Swiss
+Ephemeris:
+
+SwissService.CalculateAscendantForDate(\
+DateTime utcDate,\
+double latitude,\
+double longitude,\
+double altitude,\
+char hsys\
+)
+
+Important rule:
+-   No timezone conversion is applied inside Swiss calculations.
+-   Timezone is applied only at UI level (UTC → local).
+
+## 4. LagnaData Calculation
+
+Method:
+SwissAnalysis.CalculateLagnaDataList(\
+DateTime startUtc,\
+DateTime endUtc,\
+double latitude,\
+double longitude,\
+double altitude,\
+char hsys\
+)
+
+Algorithm:
+1.  Iterate from startUtc to endUtc with step = 120 seconds.
+2.  For each step:
+    -   Calculate Ascendant longitude.
+    -   Derive ZodiacId, NakshatraId, PadaId.
+    -   Derive NavamsaZodiacId from Nakshatra + Pada.
+3.  When state change detected (Zodiac/Nakshatra/Pada):
+    -   Binary-search transition moment to 1-second precision.
+4.  Add LagnaData entry at each transition.
+
+Result:
+Ordered list of LagnaData transition points.
+
+Location:
+-   PADMA/Core/Analysis/SwissAnalysis.cs
+
+## 5. LagnaSlice Builder
+
+Method:
+LagnaTransitBuilder.BuildLagnaSlices(List`<LagnaData>`)
+
+Logic:
+For each LagnaData\[i\]:
+
+-   StartUtc = LagnaData\[i\].DateTimeUtc\
+-   EndUtc = LagnaData\[i+1\].DateTimeUtc (or same if last)
+
+Produces ordered list of LagnaSlice.
+
+Location:
+-   PADMA/Core/TransitBuilder/LagnaTransitBuilder.cs
+
+## 6. Calendar Integration
+
+During calendar window calculation:
+1.  LagnaData is calculated for full buffer window.
+2.  LagnaSlices are built once.
+3.  For each DayItem, only slices intersecting local day are assigned:
+
+Condition:
+slice.EndUtc \> dayStartUtc\
+AND\
+slice.StartUtc \< dayEndUtc
+
+Stored in:
+DayItem.LagnaSlices
+
+## 7. DayPage Rendering
+
+### Stripe
+
+-   Lagna is rendered as the **first transit stripe**.
+-   Uses ETransitKind.Lagna.
+-   Sticky labels enabled.
+
+### Segment Construction
+
+Each LagnaSlice produces one PanchangaSegment:
+
+-   Start = local(StartUtc)
+-   End = local(EndUtc)
+-   TransitKind = Lagna
+-   TransitId = PadaId
+-   Color = derived from NakshatraId + PadaId
+
+Segment Text Format:
+`<ZodiacId>`-`<NakShort5>`-`<PadaNumber>`-`<NavamsaZodiacId>`
+
+Example:
+3-MRIGA-2-7
+
+## 8. Tooltip (Lagna Segment)
+
+Displayed fields:
+-   Zodiac Sign
+-   Nakshatra
+-   Pada
+-   Navamsa
+-   Special Navamsa (if any)
+-   Malefic Navamsa (relative to natal Moon and natal Lagna)
+-   Drekkana information
+
+## 9. Architectural Notes
+
+-   Lagna is NOT part of EPlanet.
+-   Lagna is a standalone transit type: ETransitKind.Lagna.
+-   Lagna slices are passed separately from TransitPack (planet
+    dictionary).
+-   All Swiss math is UTC-only.
+-   All timezone handling is UI-level only.
+
+
+## 10. Result
+
+DayPage now provides a complete dynamic Ascendant timeline alongside all
+planetary and Panchanga stripes, completing the functional scope of the
+page.
+
+------------

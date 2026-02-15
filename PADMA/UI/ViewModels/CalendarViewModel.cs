@@ -300,6 +300,7 @@ namespace PADMA.UI.ViewModels
             List<PlanetSlice>? saturnSlices = null;
             List<PlanetSlice>? rahuSlices = null;
             List<PlanetSlice>? ketuSlices = null;
+            List<LagnaSlice>? lagnaSlices = null;
 
             Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>? transitPack = null;
             Dictionary<DateTime, EclipseData> eclipseByLocalDay = null;
@@ -378,6 +379,9 @@ namespace PADMA.UI.ViewModels
                 var rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHU, bufferStartUtc, bufferEndUtc, nodeMode);
                 var ketuData = rahuData?.Select(d => SwissAnalysis.CalculateKetuData(d)).ToList();
 
+                // ---- Swiss: LagnaData calculation ----
+                var lagnaData = SwissAnalysis.CalculateLagnaDataList(bufferStartUtc, bufferEndUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
+
                 // ---- SWISS: Calculate Eclipse Data ---- 
                 var eclipsesData = SwissAnalysis.CalculateEclipses_London(bufferStartUtc, bufferEndUtc);
 
@@ -408,6 +412,9 @@ namespace PADMA.UI.ViewModels
                 rahuSlices = PlanetTransitBuilder.BuildPlanetSlices(rahuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
                 ketuSlices = PlanetTransitBuilder.BuildPlanetSlices(ketuData, birthNakshatraMoonId, birthZodiacMoonId, birthLagnaId, nodeMode);
 
+                // ---- Lagna slices ----
+                lagnaSlices = LagnaTransitBuilder.BuildLagnaSlices(lagnaData);
+
                 // ---- Preparing TransitPack dictionary ----
                 transitPack = new Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>
                 {
@@ -419,7 +426,7 @@ namespace PADMA.UI.ViewModels
                     { EPlanet.JUPITER, jupiterSlices },
                     { EPlanet.SATURN, saturnSlices },
                     { EPlanet.RAHU, rahuSlices },
-                    { EPlanet.KETU, ketuSlices }
+                    { EPlanet.KETU, ketuSlices },
                 };
 
                 // ---- Preparing Eclipces dictionary ----
@@ -467,6 +474,7 @@ namespace PADMA.UI.ViewModels
                 IList<PanchangaSegment> karanaSegments = new List<PanchangaSegment>();
                 IList<PanchangaSegment> nityaYogaSegments = new List<PanchangaSegment>();
                 IList<PanchangaSegment> chandraBalaSegments = new List<PanchangaSegment>();
+                List<LagnaSlice> lagnaForDay = new List<LagnaSlice>();
 
                 if (profile != null && tzInfo != null)
                 {
@@ -580,6 +588,10 @@ namespace PADMA.UI.ViewModels
 
                     // Final planet markers string
                     planetMarkersText = string.Join(' ', markers);
+
+                    lagnaForDay = (lagnaSlices ?? Enumerable.Empty<LagnaSlice>())
+                        .Where(s => s.EndUtc > dayStartUtc && s.StartUtc < dayEndUtc)
+                        .ToList();
                 }
 
                 // Eclipse data for the day (if any)
@@ -616,10 +628,9 @@ namespace PADMA.UI.ViewModels
                     KaranaSegments = karanaSegments,
                     NityaYogaSegments = nityaYogaSegments,
                     ChandraBalaSegments = chandraBalaSegments,
-                    TransitPack = transitPack
+                    TransitPack = transitPack,
+                    LagnaSlices = lagnaForDay
                 });
-
-                
             }
             
             OnPropertyChanged(nameof(Days));

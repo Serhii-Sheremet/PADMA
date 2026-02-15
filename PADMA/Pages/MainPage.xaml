@@ -125,7 +125,7 @@
                                    FontAttributes="Bold"
                                    HorizontalOptions="Start"
                                    VerticalOptions="Start"
-                                   Margin="2,2,0,0"
+                                   Margin="1,1,0,0"
                                    TextColor="{Binding IsCurrentMonth, Converter={StaticResource BoolToColorConverter}}" />
 
                             <!-- Top-right overlay icons -->
@@ -139,7 +139,7 @@
                                        IsVisible="{Binding HasEclipse}"
                                        HorizontalOptions="End"
                                        VerticalOptions="Start"
-                                       Margin="0,2,20,0"
+                                       Margin="0,2,18,0"
                                        WidthRequest="16"
                                        HeightRequest="16" />
 

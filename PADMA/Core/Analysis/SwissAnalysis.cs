@@ -645,9 +645,106 @@ namespace PADMA.Core.Analysis
 
             return result;
         }
-        
 
-        
+        public static List<LagnaData> CalculateLagnaDataList(
+            DateTime startUtc,
+            DateTime endUtc,
+            double latitude,
+            double longitude,
+            double altitude,
+            char hsys = 'O')
+        {
+            var results = new List<LagnaData>();
+
+            int startEpoch = DateTimeToEpoch(startUtc);
+            int endEpoch = DateTimeToEpoch(endUtc);
+            int currentEpoch = startEpoch;
+
+            int stepSeconds = 120; // лагна меняет паду часто, 2 минуты безопасно
+            var prevData = CalculateLagnaData(EpochToDateTime(currentEpoch), latitude, longitude, altitude, hsys);
+            results.Add(prevData);
+
+            while (currentEpoch < endEpoch)
+            {
+                currentEpoch += stepSeconds;
+                var newData = CalculateLagnaData(EpochToDateTime(currentEpoch), latitude, longitude, altitude, hsys);
+
+                if (HasLagnaStateChanged(prevData, newData))
+                {
+                    int preciseEpoch = FindLagnaTransitionEpoch(
+                        prevData, newData,
+                        currentEpoch - stepSeconds, currentEpoch,
+                        latitude, longitude, altitude, hsys);
+
+                    var preciseData = CalculateLagnaData(EpochToDateTime(preciseEpoch), latitude, longitude, altitude, hsys);
+
+                    results.Add(preciseData);
+                    prevData = preciseData;
+                    currentEpoch = preciseEpoch;
+                }
+            }
+
+            return results;
+        }
+
+        private static bool HasLagnaStateChanged(LagnaData a, LagnaData b)
+        {
+            return a.ZodiacId != b.ZodiacId
+                || a.NakshatraId != b.NakshatraId
+                || a.PadaId != b.PadaId;
+        }
+
+        private static int FindLagnaTransitionEpoch(
+            LagnaData fromState,
+            LagnaData toState,
+            int startEpoch,
+            int endEpoch,
+            double latitude,
+            double longitude,
+            double altitude,
+            char hsys)
+        {
+            if (endEpoch - startEpoch <= 1)
+                return endEpoch;
+
+            int midEpoch = startEpoch + (endEpoch - startEpoch) / 2;
+            var midData = CalculateLagnaData(EpochToDateTime(midEpoch), latitude, longitude, altitude, hsys);
+
+            if (HasLagnaStateChanged(fromState, midData))
+                return FindLagnaTransitionEpoch(fromState, midData, startEpoch, midEpoch, latitude, longitude, altitude, hsys);
+            else
+                return FindLagnaTransitionEpoch(midData, toState, midEpoch, endEpoch, latitude, longitude, altitude, hsys);
+        }
+
+        private static LagnaData CalculateLagnaData(
+            DateTime utcDate,
+            double latitude,
+            double longitude,
+            double altitude,
+            char hsys)
+        {
+            double lon = SwissService.CalculateAscendantForDate(utcDate, latitude, longitude, altitude, hsys);
+
+            int zodiacId = SwissUtility.GetZodiacIdFromDegree(lon);
+            int nakshatraId = SwissUtility.GetNakshatraIdFromDegree(lon);
+            int padaId = SwissUtility.GetPadaIdFromDegree(lon);
+
+            int padaNumber = SwissUtility.GetPadaNumberByPadaId(padaId);
+            int navamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(nakshatraId, padaNumber);
+
+            return new LagnaData
+            {
+                DateTimeUtc = utcDate,
+                Longitude = lon,
+                ZodiacId = zodiacId,
+                NakshatraId = nakshatraId,
+                PadaId = padaId,
+                NavamsaZodiacId = navamsaZodiacId
+            };
+        }
+
+
+
 
     }
 }

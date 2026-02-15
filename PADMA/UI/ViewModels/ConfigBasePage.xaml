@@ -19,7 +19,7 @@
                    FontAttributes="Bold"
                    TextColor="#222"
                    HorizontalOptions="Center"
-                   Margin="0,10,0,10" />
+                   Margin="10,10,0,10" />
 
             <!-- Здесь появится контент дочерней страницы -->
             <ContentPresenter />
