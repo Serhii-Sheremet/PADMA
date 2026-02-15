@@ -138,8 +138,8 @@ namespace PADMA.UI.Services
 
                 data.EclipseIcon = baseDay.EclipseId.Value switch
                 {
-                    (int)EEclipse.SUNECLIPSE => "sun_eclipse.png",
-                    (int)EEclipse.MOONECLIPSE => "moon_eclipse.png",
+                    (int)EEclipse.SUNECLIPSE => "solar_eclipse_24.png",
+                    (int)EEclipse.MOONECLIPSE => "lunar_eclipse_24.png",
                     _ => string.Empty
                 };
                 // show local time of eclipse moment

@@ -605,8 +605,8 @@ namespace PADMA.UI.ViewModels
                 {
                     eclipseIcon = eclipse.EclipseId switch
                     {
-                        (int)EEclipse.SUNECLIPSE => "sun_eclipse.png",
-                        (int)EEclipse.MOONECLIPSE => "moon_eclipse.png",
+                        (int)EEclipse.SUNECLIPSE => "solar_eclipse_24.png",
+                        (int)EEclipse.MOONECLIPSE => "lunar_eclipse_24.png",
                         _ => null
                     };
                 }

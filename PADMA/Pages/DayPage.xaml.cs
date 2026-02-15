@@ -508,8 +508,8 @@ namespace PADMA.Pages
                     ApplyDayNightBackgroundIfPossible();
 
                     IconsLayer.Children.Clear();
-                    AddIconAtTime(IconsLayer, SunriseUtc, "sunrise.png", 24, 24);
-                    AddIconAtTime(IconsLayer, SunsetUtc, "sunset.png", 24, 24);
+                    AddIconAtTime(IconsLayer, SunriseUtc, "sunrise_24.png", 24, 24, anchorY: 24 * 0.65);
+                    AddIconAtTime(IconsLayer, SunsetUtc, "sunrise_24.png", 24, 24, anchorY: 24 * 0.65);
                     AddEclipseIconIfAny();
 
                     RenderTransitLane();
@@ -1523,7 +1523,8 @@ namespace PADMA.Pages
             DateTime? timeUtc,
             string iconResource,
             double columnWidth,
-            double iconSize)
+            double iconSize,
+            double anchorY = -1)
         {
             if (!timeUtc.HasValue) 
                 return;
@@ -1541,16 +1542,17 @@ namespace PADMA.Pages
                 HeightRequest = iconSize
             };
 
+            if (anchorY < 0) anchorY = iconSize / 2.0; // по умолчанию — центр
+
             AbsoluteLayout.SetLayoutBounds(
                 img,
                 new Rect(
-                    (columnWidth - iconSize) / 2.0, // центр по ширине колонки
-                    y - iconSize / 2.0,             // центр по времени
+                    (columnWidth - iconSize) / 2.0,
+                    y - anchorY,     
                     iconSize,
                     iconSize));
-
+            
             AbsoluteLayout.SetLayoutFlags(img, AbsoluteLayoutFlags.None);
-
             layer.Children.Add(img);
         }
 
@@ -1587,9 +1589,7 @@ namespace PADMA.Pages
             if (tUtc.Kind == DateTimeKind.Unspecified)
                 tUtc = DateTime.SpecifyKind(tUtc, DateTimeKind.Utc);
 
-            var eclipseSize = Day.EclipseIcon?.Contains("sun", StringComparison.OrdinalIgnoreCase) == true ? 20 : 18;
-            AddIconAtTime(IconsLayer, Day.EclipseDate, Day.EclipseIcon, 24, eclipseSize);
-
+            AddIconAtTime(IconsLayer, Day.EclipseDate, Day.EclipseIcon, 24, 22);
         }
 
         private void ShowNakshatraTooltip(PanchangaSegment seg)

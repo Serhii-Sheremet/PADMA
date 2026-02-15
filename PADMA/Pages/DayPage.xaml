@@ -229,7 +229,7 @@
                       BackgroundColor="#F7FBFF">
 
                     <!-- ICONS column -->
-                    <Grid Grid.Column="0" WidthRequest="24" BackgroundColor="#F7FBFF" />
+                    <Grid Grid.Column="0" WidthRequest="24" BackgroundColor="#F7FBFF" HorizontalOptions="Center" />
                         <AbsoluteLayout x:Name="IconsBackgroundLayout" BackgroundColor="Transparent" />
                         <AbsoluteLayout x:Name="IconsLayer" BackgroundColor="Transparent"/>
 
