@@ -2807,7 +2807,7 @@ namespace PADMA.Pages
             }
         }
 
-        private const int DefaultEventArgb = unchecked((int)0xFF4CAF50); // зелёный (Material Green 500)
+        private const int DefaultEventArgb = unchecked((int)0xFFA8D5A2); // pastel green
         private void OpenUserEventEditorForSlot(int startMin, int endMin)
         {
             if (Day == null) return;
@@ -2924,6 +2924,67 @@ namespace PADMA.Pages
 
                 frame.GestureRecognizers.Add(tap);
                 ColorPalette.Children.Add(frame);
+            }
+        }
+
+        private bool _timeSyncInProgress;
+        private static readonly TimeSpan MinDuration = TimeSpan.FromMinutes(15);
+
+        private void OnStartTimeChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(TimePicker.Time)) return;
+            if (_timeSyncInProgress) return;
+
+            try
+            {
+                _timeSyncInProgress = true;
+
+                var start = StartTimePicker.Time;
+                var end = EndTimePicker.Time;
+
+                if (start >= end)
+                {
+                    var newEnd = start + MinDuration;
+
+                    // если нельзя выходить за сутки — зажимаем в 23:59
+                    if (newEnd.TotalMinutes >= 24 * 60)
+                        newEnd = new TimeSpan(23, 59, 0);
+
+                    EndTimePicker.Time = newEnd;
+                }
+            }
+            finally
+            {
+                _timeSyncInProgress = false;
+            }
+        }
+
+        private void OnEndTimeChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(TimePicker.Time)) return;
+            if (_timeSyncInProgress) return;
+
+            try
+            {
+                _timeSyncInProgress = true;
+
+                var start = StartTimePicker.Time;
+                var end = EndTimePicker.Time;
+
+                if (end <= start)
+                {
+                    var newStart = end - MinDuration;
+
+                    // если нельзя уходить ниже 00:00 — зажимаем
+                    if (newStart < TimeSpan.Zero)
+                        newStart = TimeSpan.Zero;
+
+                    StartTimePicker.Time = newStart;
+                }
+            }
+            finally
+            {
+                _timeSyncInProgress = false;
             }
         }
 

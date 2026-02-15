@@ -1,21 +1,11 @@
 ﻿using CommunityToolkit.Maui;
-using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Extensions;
-using CommunityToolkit.Maui.Views;
-using GeoTimeZone;
-using NodaTime;
-using PADMA.Core.Analysis;
-using PADMA.Core.Enums;
-using PADMA.Core.Models;
-using PADMA.Core.Native;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI;
 using PADMA.UI.Services;
 using PADMA.UI.ViewModels;
 using System.Globalization;
-using System.Linq;
-using System.Threading;
 
 namespace PADMA.Pages
 {
@@ -23,6 +13,7 @@ namespace PADMA.Pages
     {
         private CalendarViewModel Vm => BindingContext as CalendarViewModel;
         private bool _needsRefreshAfterConfig = false;
+        private bool _notificationsPermissionChecked;
 
         public MainPage()
         {
@@ -70,6 +61,35 @@ namespace PADMA.Pages
         protected override void OnAppearing()
         {
             base.OnAppearing();
+
+            if (!_notificationsPermissionChecked)
+            {
+                _notificationsPermissionChecked = true;
+
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    #if ANDROID
+                        try
+                        {
+                            var status = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
+                            if (status != PermissionStatus.Granted)
+                                await Permissions.RequestAsync<Permissions.PostNotifications>();
+                        }
+                        catch { }
+                    #endif
+
+                    try
+                    {
+                        var provider = ServiceLocator.Services.GetService<ILocalNotificationProvider>();
+                        if (provider != null)
+                            await provider.EnsurePermissionsAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[PADMA] EnsurePermissions error: {ex.Message}");
+                    }
+                });
+            }
 
             if (_needsRefreshAfterConfig)
             {
@@ -201,7 +221,7 @@ namespace PADMA.Pages
             // if tapped day is already selected, navigate to DayOverview
             if (Vm.SelectedDay != null && Vm.SelectedDay.Date == tapped.Date)
             {
-                var navStore = ServiceLocator.Services.GetService<PADMA.UI.Services.NavigationDataStore>();
+                var navStore = ServiceLocator.Services.GetService<NavigationDataStore>();
 
                 string? windowToken = null;
                 if (navStore != null)
@@ -210,7 +230,7 @@ namespace PADMA.Pages
                     var idx = daysSnapshot.FindIndex(d => d.Date.Date == tapped.Date.Date);
                     if (idx < 0) idx = 0;
 
-                    var window = new PADMA.UI.Services.DayWindowContext
+                    var window = new DayWindowContext
                     {
                         Days = daysSnapshot,
                         SelectedIndex = idx

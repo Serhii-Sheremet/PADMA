@@ -548,8 +548,12 @@
                     <VerticalStackLayout Grid.Row="1" Spacing="8">
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <TimePicker x:Name="StartTimePicker" Grid.Column="0" />
-                            <TimePicker x:Name="EndTimePicker" Grid.Column="1" />
+                            <TimePicker x:Name="StartTimePicker" 
+                                        Grid.Column="0" 
+                                        PropertyChanged="OnStartTimeChanged"/>
+                            <TimePicker x:Name="EndTimePicker" 
+                                        Grid.Column="1" 
+                                        PropertyChanged="OnEndTimeChanged"/>
                         </Grid>
 
                         <Entry x:Name="TitleEntry" Placeholder="Title" />

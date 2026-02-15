@@ -1,5 +1,4 @@
 using Plugin.LocalNotification;
-using System.Diagnostics;
 
 namespace PADMA.Core.Services;
 
