@@ -127,7 +127,6 @@ public sealed class UserNoteReminderService : IUserNoteReminderService
 
     private static int? GetReminderMinutesFromCache()
     {
-        // В AppSettingsList уже есть IDs 24..27 (EAppSetting.NOTEREMINDER...)
         var s = DataCache.Instance.AppSettingsList
             .FirstOrDefault(x => x.GroupCode == "NOTEREMINDER" && x.Active == 1);
 

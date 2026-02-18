@@ -3,6 +3,7 @@ using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
+using PADMA.Core.Analysis;
 
 namespace PADMA.Core.Utilities
 {
@@ -246,7 +247,6 @@ namespace PADMA.Core.Utilities
             DateTime targetEndUtc,
             IReadOnlyDictionary<EPlanet, IReadOnlyList<PlanetSlice>> transitPack,
             int vedhaDom,
-            bool isLagna,
             EAppSetting nodeType)
         {
             var vList = new List<VedhaEntity>();
@@ -264,23 +264,45 @@ namespace PADMA.Core.Utilities
 
                 foreach (var s in slices)
                 {
-                    int dom = isLagna ? s.HouseFromLagna : s.HouseFromMoon;
+                    // Vedha ТОЛЬКО от натальной Луны
+                    int dom = s.HouseFromMoon;
                     if (dom != vedhaDom) continue;
 
                     var (from, to) = GetIntersection(targetStartUtc, targetEndUtc, s.StartUtc, s.EndUtc);
                     if (from == default && to == default) continue;
 
+                    var anchorUtc = from;
+                    
+                    DateTime zStartUtc;
+                    DateTime zEndUtc;
+                    try
+                    {
+                        (zStartUtc, zEndUtc) = SwissAnalysis.GetZodiacBoundariesCached((int)vedhaPlanet, s.ZodiacId, anchorUtc, nodeType);
+                    }
+                    catch
+                    {
+                        zStartUtc = from;
+                        zEndUtc = to;
+                    }
+
+                    if (zEndUtc <= zStartUtc)
+                    {
+                        zStartUtc = from;
+                        zEndUtc = to;
+                    }
+
                     vList.Add(new VedhaEntity
                     {
                         PlanetCode = vedhaPlanet,
-                        DateStart = from,
-                        DateEnd = to
+                        DateStart = zStartUtc,
+                        DateEnd = zEndUtc
                     });
                 }
             }
 
             return vList;
         }
+
 
         public static (DateTime StartUtc, DateTime EndUtc) GetContinuousHouseRangeUtc(
             IReadOnlyList<PlanetSlice> slices,

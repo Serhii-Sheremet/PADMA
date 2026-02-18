@@ -77,7 +77,6 @@ namespace PADMA.Core.Services
             _initialized = true;
         }
 
-
         /// <summary>
         /// Gets planetary position (longitude, latitude, distance, speed) for a given UTC date and planet ID.
         /// Handles Rahu (Mean/True) and Ketu (computed as opposite point).

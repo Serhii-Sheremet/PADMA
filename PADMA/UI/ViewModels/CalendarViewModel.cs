@@ -369,14 +369,14 @@ namespace PADMA.UI.ViewModels
                 }
 
                 // ---- Swiss: PlanetData calculation ----
-                var sunData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SUN, bufferStartUtc, bufferEndUtc, nodeMode);
-                var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc, nodeMode);
-                var marsData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MARS, bufferStartUtc, bufferEndUtc, nodeMode);
-                var mercuryData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MERCURY, bufferStartUtc, bufferEndUtc, nodeMode);
-                var jupiterData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.JUPITER, bufferStartUtc, bufferEndUtc, nodeMode);
-                var venusData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.VENUS, bufferStartUtc, bufferEndUtc, nodeMode);
-                var saturnData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SATURN, bufferStartUtc, bufferEndUtc, nodeMode);
-                var rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHU, bufferStartUtc, bufferEndUtc, nodeMode);
+                var sunData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SUN, bufferStartUtc, bufferEndUtc, nodeMode, true);
+                var moonData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MOON, bufferStartUtc, bufferEndUtc, nodeMode, true);
+                var marsData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MARS, bufferStartUtc, bufferEndUtc, nodeMode, true);
+                var mercuryData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.MERCURY, bufferStartUtc, bufferEndUtc, nodeMode, true);
+                var jupiterData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.JUPITER, bufferStartUtc, bufferEndUtc, nodeMode, true);
+                var venusData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.VENUS, bufferStartUtc, bufferEndUtc, nodeMode, true);
+                var saturnData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.SATURN, bufferStartUtc, bufferEndUtc, nodeMode, true);
+                var rahuData = SwissAnalysis.CalculatePlanetDataList_London((int)EPlanet.RAHU, bufferStartUtc, bufferEndUtc, nodeMode, true);
                 var ketuData = rahuData?.Select(d => SwissAnalysis.CalculateKetuData(d)).ToList();
 
                 // ---- Swiss: LagnaData calculation ----

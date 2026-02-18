@@ -2380,13 +2380,11 @@ namespace PADMA.Pages
             var tr = DataCache.Instance.TransitList.First(t => t.PlanetId == slice.PlanetId && t.House == dom);
 
             // ---- Блок 4: Vedha ----
-            if (tr != null)
+            if (!useLagna && tr != null)
             {
                 if (!string.IsNullOrWhiteSpace(tr.Vedha) && int.TryParse(tr.Vedha, out int vedhaDom))
                 {
-                    var nodeType = slice.NodeType; 
-                    //var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(slice, transitPack, vedhaDom, useLagna, nodeType);
-                                                   
+                    var nodeType = slice.NodeType;
                     var planetKey = (EPlanet)slice.PlanetId;
                     var slicesForPlanet = transitPack[planetKey];
 
@@ -2399,7 +2397,6 @@ namespace PADMA.Pages
                         targetEndUtc: rangeEndUtc,
                         transitPack: transitPack,
                         vedhaDom: vedhaDom,
-                        isLagna: useLagna,
                         nodeType: nodeType);
 
                     vedhaList = PlanetTooltipUtility.MergeVedhaIntervals(vedhaList);
@@ -2434,7 +2431,6 @@ namespace PADMA.Pages
 
                             vParts.Add($"{vpName} ({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
                         }
-
                         AddTooltipBlock("Vedha from", string.Join(", ", vParts));
                     }
                 }
@@ -2620,6 +2616,8 @@ namespace PADMA.Pages
                     }
                     AddTooltipBlock("Drekkana", string.Join(", ", parts));
                 }
+                UpdateTooltipBodyHeight();
+                Dispatcher.Dispatch(UpdateTooltipBodyHeight);
             }
         }
 
