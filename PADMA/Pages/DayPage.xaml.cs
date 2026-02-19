@@ -9,6 +9,7 @@ using PADMA.UI;
 using PADMA.UI.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -1464,39 +1465,48 @@ namespace PADMA.Pages
                     break;
 
                 case (int)EDVLineName.SUNPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.MOONPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.MARSPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.MERCURYPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.JUPITERPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.VENUSPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.SATURNPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.RAHUPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
 
                 case (int)EDVLineName.KETUPADA:
-                    ShowPlanetPadaTooltip(seg);
+                    //ShowPlanetPadaTooltip(seg);
+                    _ = ShowPlanetPadaTooltipBusyAsync(seg);
                     break;
             }
             IsTooltipVisible = true;
@@ -2245,6 +2255,18 @@ namespace PADMA.Pages
                 case "ru": return "П";
             }
             return string.Empty;
+        }
+
+        private async Task ShowPlanetPadaTooltipBusyAsync(PanchangaSegment seg)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            var text = Localization.GetLocalizedText("Calculating tooltip...", lang);
+
+            await RunBusyAsync(text, () =>
+            {
+                ShowPlanetPadaTooltip(seg);   
+                return Task.CompletedTask;
+            });
         }
 
         private void ShowPlanetPadaTooltip(PanchangaSegment seg)
