@@ -38,7 +38,8 @@ namespace PADMA.Core.Analysis
             if (planetId == (int)EPlanet.KETU)
                 planetId = (int)EPlanet.RAHU;
 
-            var key = $"{planetId}:{zodiacId}:{(int)nodeType}";
+            var anchorKey = anchorUtc.Date.ToString("yyyyMMdd");
+            var key = $"{planetId}:{zodiacId}:{(int)nodeType}:{anchorKey}";
 
             lock (_zodiacBoundaryCacheLock)
             {
