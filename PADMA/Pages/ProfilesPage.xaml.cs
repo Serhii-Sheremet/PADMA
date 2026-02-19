@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.Core.Analysis;
 
 namespace PADMA.Pages
 {
@@ -178,7 +179,10 @@ namespace PADMA.Pages
                 await DataCache.Instance.ProfileContextService.RebuildAsync();
 
                 MessagingCenter.Send<object>(this, "ProfileChanged");
+                
+                SwissAnalysis.ClearZodiacBoundaryCache();
                 ClearSelection();
+                
                 await Shell.Current.GoToAsync("//main", true);
 
                 // Дать UI шанс показать MainPage overlay

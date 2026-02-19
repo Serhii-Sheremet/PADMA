@@ -36,9 +36,14 @@ namespace PADMA.Core.Analysis
         {
             // Ketu -> Rahu для границ времени
             if (planetId == (int)EPlanet.KETU)
+            {
                 planetId = (int)EPlanet.RAHU;
+                zodiacId = zodiacId >= 1 && zodiacId <= 12 ? ((zodiacId + 5) % 12) + 1 : zodiacId;
+            }
 
             var anchorKey = anchorUtc.Date.ToString("yyyyMMdd");
+            if (anchorUtc.Kind != DateTimeKind.Utc)
+                anchorUtc = DateTime.SpecifyKind(anchorUtc, DateTimeKind.Utc);
             var key = $"{planetId}:{zodiacId}:{(int)nodeType}:{anchorKey}";
 
             lock (_zodiacBoundaryCacheLock)
@@ -56,6 +61,12 @@ namespace PADMA.Core.Analysis
             }
 
             return (start, end);
+        }
+
+        public static void ClearZodiacBoundaryCache()
+        {
+            lock (_zodiacBoundaryCacheLock)
+                _zodiacBoundaryCache.Clear();
         }
 
         private static void EnsureAnchorAt(List<PlanetData> list, int planetId, DateTime utc, EAppSetting nodeType)

@@ -1,4 +1,4 @@
-using Microsoft.Maui.Controls;
+using PADMA.Core.Analysis;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI.Templates;
@@ -68,6 +68,7 @@ namespace PADMA.Pages
                 db.SetAppSettingActive("NODE", _currentSettingCode);
 
                 DataCache.Instance.Refresh(db);
+                SwissAnalysis.ClearZodiacBoundaryCache();
                 MessagingCenter.Send<object>(this, "SettingsChanged");
             }
         }
