@@ -799,13 +799,125 @@ YogaIndex = floor( YogaAngle / 13°20′ ) + 1
 - Uses `NityaYogaTithiResults` (paired Sun/Moon positions).  
 - Each yoga occupies a 13°20′ arc (13.3333°).
 
-### ☠️ Mrityu Bhaga Detection
+### ☠️ Mrityu Bhaga Detection Engine
 
-`CalculateMrityuBhagaDataList_London(int planetId, DateTime fromUtc, DateTime toUtc)` — determines critical zones for each planet within a range.
+## Overview
 
-- Uses pre-defined angular ranges per planet (degrees or sign+degree).  
-- Flags `PlanetData.IsInMrityuBhaga = true` when longitude falls within danger range.  
-- Output: `List<MrityuBhagaData>` per planet.
+Mrityu Bhaga detection identifies time intervals when a planet’s sidereal longitude falls into its predefined “critical / danger” degree zone (Mrityu Bhaga) for the current zodiac sign.
+
+The engine reuses:
+* Swiss Ephemeris sidereal positions (Lahiri)
+* Reference Mrityu Bhaga degree table loaded in DataCache (MRITYUBHAGA)
+* Existing PADMA time handling conventions (UTC internally, local only for UI)
+
+It produces **intervals** (periods), not just flags.
+
+## Inputs
+
+Function:
+```
+CalculateMrityuBhagaDataList_London(
+* planetId,
+* fromUtc,
+* toUtc,
+* nodeType)
+``` 
+
+Data sources:
+* DataCache.Instance.MrityuBhagaList (table MRITYUBHAGA)
+  * PlanetId
+  * ZodiacId
+  * Degree (sidereal, 0–360)
+* Active system setting: Mrityu Bhaga mode
+  * MRITYUBHAGANEQUAL
+  * MRITYUBHAGANLESS
+  * MRITYUBHAGANMORE
+  * MRITYUBHAGAERNST
+
+## Zone Definition (per active setting)
+
+For each planet and current zodiac sign, the critical zone is built from the reference degree `D` and tolerance `tol`:
+* MRITYUBHAGANEQUAL: [D - tol, D + tol]
+* MRITYUBHAGANLESS:  [D - tol, D]
+* MRITYUBHAGANMORE:  [D, D + tol]
+* MRITYUBHAGAERNST:  [D - tol, D + tol]
+
+Tolerance values are defined by settings (current implementation):
+* EQUAL: 0.5°
+* LESS/MORE/ERNST: 1.0°
+
+Zone comparison uses normalized degrees and supports wrap-around over 0°.
+
+## Core Algorithm
+
+For the requested window (fromUtc..toUtc):
+
+1. Iterate time samples and compute planet sidereal longitude and retrograde flag.
+2. Resolve current zodiac sign by longitude.
+3. Load Mrityu Bhaga reference record for (planetId, zodiacId).
+4. Build zone boundaries (fromDeg..toDeg) per active setting.
+5. Determine `inside = IsWithinDegrees(lon, fromDeg, toDeg)`.
+6. Detect transitions:
+   * Entry: inside == true after being outside
+   * Exit: inside == false after being inside
+7. Record intervals as MrityuBhagaData objects:
+   * DateFromUtc
+   * DateToUtc
+   * PlanetId
+   * ZodiacId
+   * Degree
+   * MrityuBhagaSetting
+   * LongitudeFrom / LongitudeTo
+
+## Real Boundary Expansion (No Window Clipping)
+
+The engine MUST return **real** interval boundaries and must not clip periods to the requested window:
+* If the planet is already inside the Mrityu Bhaga zone at fromUtc:
+  * Expand backward in time until the last moment outside the zone.
+  * Refine the entry moment to obtain a real DateFromUtc.
+
+* If the planet is still inside the zone at toUtc:
+  * Expand forward in time until the first moment outside the zone.
+  * Refine the exit moment to obtain a real DateToUtc.
+
+This prevents artificial truncation and supports cases where a Mrityu Bhaga period starts before or ends after the monthly calculation window.
+Protective limits are used for expansion (e.g., up to N days backward/forward).
+
+## Sampling Strategy
+
+To avoid missing short passages through the zone (especially for fast planets), the engine uses adaptive sampling:
+
+* Outside zone: coarse step (recommended: ~15 minutes)
+* Inside zone: fine step (~1 minute)
+
+Optional refinement:
+
+* When an entry/exit is detected between two samples, a binary search refinement may be used to improve boundary precision.
+
+## Time Handling
+
+* All calculations and stored interval boundaries are in UTC.
+* UI layers convert to profile local time for display.
+
+## Output
+```
+List<MrityuBhagaData>
+```
+Properties:
+* Chronologically ordered
+* Non-overlapping for the same planet/sign segment
+* Real (expanded) boundaries; not clipped by fromUtc/toUtc
+
+## Consumers
+
+Mrityu Bhaga intervals are intended for later UI and monthly views, including:
+* Planetary monthly transit overview
+* Warning markers / special annotations
+
+## Status
+
+Implemented.
+Boundary expansion logic ensures correct intervals for both slow and fast planets without clipping to calculation window.
 
 ### 🌑 Eclipse Computation
 

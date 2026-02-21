@@ -619,6 +619,267 @@ namespace PADMA.Core.Analysis
             return SwissService.NormalizeDegrees(raw);
         }
 
+        private static (bool inside, int zodId, double lon, bool retro, MrityuBhaga? mb, double fromDeg, double toDeg)
+        GetMrityuBhagaState(
+            int planetId,
+            DateTime utc,
+            EAppSetting nodeType,
+            IReadOnlyList<MrityuBhaga> mbList,
+            EAppSetting mbSettingMode,
+            double tol)
+        {
+            var planet = SwissService.GetPlanetPosition(utc, planetId, nodeType);
+            double lon = SwissService.NormalizeDegrees(planet[0]);
+            bool retro = planet[3] < 0;
+            int zodId = SwissUtility.GetZodiacIdFromDegree(lon);
+
+            var mb = mbList.FirstOrDefault(x => x.PlanetId == planetId && x.ZodiacId == zodId);
+            if (mb == null)
+                return (false, zodId, lon, retro, null, 0, 0);
+
+            double fromDeg = mb.Degree, toDeg = mb.Degree;
+
+            switch (mbSettingMode)
+            {
+                case EAppSetting.MRITYUBHAGANEQUAL: fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
+                case EAppSetting.MRITYUBHAGANLESS: fromDeg = mb.Degree - tol; toDeg = mb.Degree; break;
+                case EAppSetting.MRITYUBHAGANMORE: fromDeg = mb.Degree; toDeg = mb.Degree + tol; break;
+                case EAppSetting.MRITYUBHAGAERNST: fromDeg = mb.Degree - tol; toDeg = mb.Degree + tol; break;
+            }
+
+            fromDeg = SwissService.NormalizeDegrees(fromDeg);
+            toDeg = SwissService.NormalizeDegrees(toDeg);
+
+            bool inside = IsWithinDegrees(lon, fromDeg, toDeg);
+            return (inside, zodId, lon, retro, mb, fromDeg, toDeg);
+        }
+
+        private static DateTime RefineBoundaryBinary(
+            int planetId,
+            DateTime t0,
+            DateTime t1,
+            bool targetInsideAtT1,
+            EAppSetting nodeType,
+            IReadOnlyList<MrityuBhaga> mbList,
+            EAppSetting mbSettingMode,
+            double tol,
+            int maxIter = 30,
+            TimeSpan? minResolution = null)
+        {
+            var minRes = minResolution ?? TimeSpan.FromSeconds(10);
+
+            DateTime lo = t0;
+            DateTime hi = t1;
+
+            for (int i = 0; i < maxIter && (hi - lo) > minRes; i++)
+            {
+                var mid = lo + TimeSpan.FromTicks((hi - lo).Ticks / 2);
+                var st = GetMrityuBhagaState(planetId, mid, nodeType, mbList, mbSettingMode, tol);
+
+                if (st.inside == targetInsideAtT1)
+                    hi = mid;
+                else
+                    lo = mid;
+            }
+
+            return hi;
+        }
+
+        private static DateTime ExpandBackwardToExit(
+            int planetId,
+            DateTime anchorUtc,
+            EAppSetting nodeType,
+            IReadOnlyList<MrityuBhaga> mbList,
+            EAppSetting mbSettingMode,
+            double tol,
+            TimeSpan maxLookback)
+        {
+            var step = TimeSpan.FromMinutes(15);
+            var cur = anchorUtc;
+
+            // предполагаем: на anchorUtc inside==true
+            while (anchorUtc - cur < maxLookback)
+            {
+                var prev = cur - step;
+                var stPrev = GetMrityuBhagaState(planetId, prev, nodeType, mbList, mbSettingMode, tol);
+
+                if (!stPrev.inside)
+                {
+                    // граница между prev (outside) и cur (inside)
+                    return RefineBoundaryBinary(planetId, prev, cur, targetInsideAtT1: true,
+                        nodeType, mbList, mbSettingMode, tol);
+                }
+
+                cur = prev;
+                step = step < TimeSpan.FromHours(6) ? TimeSpan.FromTicks(step.Ticks * 2) : step; // ускоряемся
+            }
+
+            return anchorUtc - maxLookback; // fallback
+        }
+
+        private static DateTime ExpandForwardToExit(
+            int planetId,
+            DateTime anchorUtc,
+            EAppSetting nodeType,
+            IReadOnlyList<MrityuBhaga> mbList,
+            EAppSetting mbSettingMode,
+            double tol,
+            TimeSpan maxLookforward)
+        {
+            var step = TimeSpan.FromMinutes(15);
+            var cur = anchorUtc;
+
+            // предполагаем: на anchorUtc inside==true
+            while (cur - anchorUtc < maxLookforward)
+            {
+                var next = cur + step;
+                var stNext = GetMrityuBhagaState(planetId, next, nodeType, mbList, mbSettingMode, tol);
+
+                if (!stNext.inside)
+                {
+                    // граница между cur (inside) и next (outside)
+                    return RefineBoundaryBinary(planetId, cur, next, targetInsideAtT1: false,
+                        nodeType, mbList, mbSettingMode, tol);
+                }
+
+                cur = next;
+                step = step < TimeSpan.FromHours(6) ? TimeSpan.FromTicks(step.Ticks * 2) : step;
+            }
+
+            return anchorUtc + maxLookforward; // fallback
+        }
+
+        public static List<MrityuBhagaData> CalculateMrityuBhagaDataList_London(
+            int planetId, DateTime fromUtc, DateTime toUtc, EAppSetting nodeType)
+        {
+            var results = new List<MrityuBhagaData>();
+            if (toUtc <= fromUtc) return results;
+
+            SwissService.SetSiderealMode(SweConst.SE_SIDM_LAHIRI);
+
+            var mbList = DataCache.Instance.MrityuBhagaList;
+            var mbSettingMode = DataCache.Instance.GetActiveMrityuBhagaSettings();
+
+            double tol = mbSettingMode switch
+            {
+                EAppSetting.MRITYUBHAGANEQUAL => 0.5,
+                EAppSetting.MRITYUBHAGANLESS => 1.0,
+                EAppSetting.MRITYUBHAGANMORE => 1.0,
+                EAppSetting.MRITYUBHAGAERNST => 1.0,
+                _ => 0.5
+            };
+
+            // --- NEW: boundary expansion limits ---
+            var maxLookback = TimeSpan.FromDays(90);
+            var maxLookforward = TimeSpan.FromDays(90);
+
+            DateTime cur = fromUtc;
+
+            bool inZone = false;
+            MrityuBhagaData? current = null;
+
+            double lastLon = 0;
+            bool lastRetro = false;
+            bool hasLast = false;
+
+            // --- NEW: check if we start inside, expand backward ---
+            var stStart = GetMrityuBhagaState(planetId, fromUtc, nodeType, mbList, mbSettingMode, tol);
+            if (stStart.mb != null && stStart.inside)
+            {
+                var realStart = ExpandBackwardToExit(
+                    planetId, fromUtc, nodeType, mbList, mbSettingMode, tol, maxLookback);
+
+                inZone = true;
+                current = new MrityuBhagaData
+                {
+                    PlanetId = planetId,
+                    ZodiacId = stStart.zodId,
+                    Degree = stStart.mb.Degree,
+                    MrityuBhagaSetting = mbSettingMode,
+                    LongitudeFrom = stStart.fromDeg,
+                    LongitudeTo = stStart.toDeg,
+                    DateFromUtc = realStart
+                };
+            }
+
+            while (cur <= toUtc)
+            {
+                var st = GetMrityuBhagaState(planetId, cur, nodeType, mbList, mbSettingMode, tol);
+                if (st.mb == null)
+                {
+                    cur = cur.AddMinutes(15);
+                    continue;
+                }
+
+                bool inside = st.inside;
+                int zodId = st.zodId;
+                bool retro = st.retro;
+
+                // --- entry ---
+                if (inside && !inZone)
+                {
+                    // refine entry using previous sample time (prevCur)
+                    // to do that, keep prevCur; simplest: store it
+                    // (see note below)
+                    inZone = true;
+                    current = new MrityuBhagaData
+                    {
+                        PlanetId = planetId,
+                        ZodiacId = zodId,
+                        Degree = st.mb.Degree,
+                        MrityuBhagaSetting = mbSettingMode,
+                        LongitudeFrom = st.fromDeg,
+                        LongitudeTo = st.toDeg,
+                        DateFromUtc = cur // можно уточнить бинарно, см. ниже
+                    };
+                }
+
+                // --- exit ---
+                if (!inside && inZone && current != null)
+                {
+                    current.DateToUtc = cur; // можно уточнить бинарно
+                    results.Add(current);
+                    inZone = false;
+                    current = null;
+                }
+
+                // --- zodiac/retro change ---
+                if (hasLast)
+                {
+                    if (SwissUtility.GetZodiacIdFromDegree(lastLon) != zodId || retro != lastRetro)
+                    {
+                        if (inZone && current != null)
+                        {
+                            current.DateToUtc = cur;
+                            results.Add(current);
+                        }
+                        inZone = false;
+                        current = null;
+                    }
+                }
+
+                lastLon = st.lon;
+                lastRetro = retro;
+                hasLast = true;
+
+                // --- step ---
+                cur = inZone ? cur.AddMinutes(1) : cur.AddMinutes(15);
+            }
+
+            // --- NEW: close open interval by expanding forward (real end) ---
+            if (inZone && current != null)
+            {
+                var realEnd = ExpandForwardToExit(
+                    planetId, toUtc, nodeType, mbList, mbSettingMode, tol, maxLookforward);
+
+                current.DateToUtc = realEnd;
+                results.Add(current);
+            }
+
+            return results;
+        }
+
+        /*
         public static List<MrityuBhagaData> CalculateMrityuBhagaDataList_London(int planetId, DateTime fromUtc, DateTime toUtc, EAppSetting nodeType)
         {
             var results = new List<MrityuBhagaData>();
@@ -729,6 +990,7 @@ namespace PADMA.Core.Analysis
 
             return results;
         }
+        */
 
         /// <summary>
         /// Перевіряє, чи знаходиться поточна довгота у діапазоні з урахуванням переходу через 0°.
