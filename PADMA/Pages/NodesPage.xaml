@@ -6,42 +6,39 @@
     x:Class="PADMA.Pages.NodesPage"
     Title="Nodes (Rahu and Ketu)">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="16">
+    <!-- ВАЖНО: без ScrollView, его уже даёт ConfigBasePage -->
+    <VerticalStackLayout Padding="16" Spacing="16">
 
-            <!-- Заголовок страницы -->
-            <Label x:Name="HeaderLabel"
-                   Style="{StaticResource PageTitleStyle}"
-                   HorizontalOptions="Start" />
+        <!-- Заголовок страницы: лучше убрать, если используешь TitleLabel шаблона -->
+        <!-- Если хочешь свой заголовок — тогда в шаблоне скрывай TitleLabel -->
+        <Label x:Name="HeaderLabel"
+               Style="{StaticResource PageTitleStyle}"
+               HorizontalOptions="Start" />
 
-            <!-- Радиокнопки -->
-            <Grid ColumnSpacing="12" RowSpacing="16"
-                  ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto">
+        <Grid ColumnSpacing="12" RowSpacing="16"
+              ColumnDefinitions="Auto,*"
+              RowDefinitions="Auto,Auto">
 
-                <!-- Mean -->
-                <RadioButton x:Name="MeanRadioButton"
-                             Grid.Row="0" Grid.Column="0"
-                             GroupName="NodesOption"
-                             CheckedChanged="OnRadioButtonCheckedChanged" />
+            <RadioButton x:Name="MeanRadioButton"
+                         Grid.Row="0" Grid.Column="0"
+                         GroupName="NodesOption"
+                         CheckedChanged="OnRadioButtonCheckedChanged" />
 
-                <Label x:Name="MeanLabel"
-                       Grid.Row="0" Grid.Column="1"
-                       VerticalOptions="Center"
-                       Style="{StaticResource LabelTextStyle}" />
+            <Label x:Name="MeanLabel"
+                   Grid.Row="0" Grid.Column="1"
+                   VerticalOptions="Center"
+                   Style="{StaticResource LabelTextStyle}" />
 
-                <!-- True -->
-                <RadioButton x:Name="TrueRadioButton"
-                             Grid.Row="1" Grid.Column="0"
-                             GroupName="NodesOption"
-                             CheckedChanged="OnRadioButtonCheckedChanged" />
+            <RadioButton x:Name="TrueRadioButton"
+                         Grid.Row="1" Grid.Column="0"
+                         GroupName="NodesOption"
+                         CheckedChanged="OnRadioButtonCheckedChanged" />
 
-                <Label x:Name="TrueLabel"
-                       Grid.Row="1" Grid.Column="1"
-                       VerticalOptions="Center"
-                       Style="{StaticResource LabelTextStyle}" />
-            </Grid>
+            <Label x:Name="TrueLabel"
+                   Grid.Row="1" Grid.Column="1"
+                   VerticalOptions="Center"
+                   Style="{StaticResource LabelTextStyle}" />
+        </Grid>
 
-        </VerticalStackLayout>
-    </ScrollView>
+    </VerticalStackLayout>
 </ui:ConfigBasePage>

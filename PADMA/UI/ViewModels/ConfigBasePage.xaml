@@ -2,8 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PADMA.UI.Templates.ConfigBasePage"
-             BackgroundColor="White"
-             Padding="20">
+             Padding="10">
 
     <ContentPage.ToolbarItems>
         <ToolbarItem IconImageSource="close_icon.png"
@@ -12,17 +11,33 @@
                      Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="20">
-            <Label x:Name="TitleLabel"
-                   FontSize="22"
-                   FontAttributes="Bold"
-                   TextColor="#222"
-                   HorizontalOptions="Center"
-                   Margin="10,10,0,10" />
+    <Grid>
 
-            <!-- Здесь появится контент дочерней страницы -->
-            <ContentPresenter />
-        </VerticalStackLayout>
-    </ScrollView>
+        <!-- Background image -->
+        <!--<Image Source="background.png"
+               Aspect="AspectFill" />-->
+
+        <!-- Optional dark overlay -->
+        <BoxView Color="#AAFFFFFF" />
+
+        <!-- Foreground content -->
+        <ScrollView>
+            <VerticalStackLayout Spacing="20"
+                                 Padding="20">
+
+                <Label x:Name="TitleLabel"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="#222"
+                       HorizontalOptions="Center"
+                       Margin="10,10,0,10" />
+
+                <!-- Child page content -->
+                <ContentPresenter />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+
 </ContentPage>

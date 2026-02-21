@@ -12,6 +12,7 @@ namespace PADMA.UI.Templates
         public ConfigBasePage()
         {
             InitializeComponent();
+            //this.BackgroundImageSource = "background.png";
         }
 
         protected virtual async void OnCloseClicked(object sender, EventArgs e)
