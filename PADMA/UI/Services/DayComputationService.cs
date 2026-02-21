@@ -333,7 +333,7 @@ namespace PADMA.UI.Services
                 var nakshatraSlices = NakshatraTransitBuilder.BuildNakshatraSlices(moonData);
 
                 var tithiData = SwissAnalysis.CalculateTithiDataList_London(inputStartUtc, inputEndUtc, nodeMode);
-                var tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
+                var tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData, inputEndUtc);
 
                 var raw = new List<(int YogaId, string Title, DayOfWeek vara, int NakshatraId, int TithiId, Color Color, DateTime StartLocal, DateTime EndLocal)>();
 

@@ -433,8 +433,14 @@ namespace PADMA.Core.Analysis
             double msDiff0 = GetMoonSunDiff(fromUtc, nodeType);
             int currentTithi = GetCurrentTithi(msDiff0);
 
-            DateTime cursor = fromUtc;
+            results.Add(new TithiData
+            {
+                DateTimeUtc = fromUtc,
+                MoonSunDifference = msDiff0,
+                TithiId = currentTithi
+            });
 
+            DateTime cursor = fromUtc;
             while (cursor < toUtc)
             {
                 // шаг 1 час — грубый поиск смены титхи
@@ -536,6 +542,13 @@ namespace PADMA.Core.Analysis
             double yogaLon = GetYogaLongitude(sun0[0], moon0[0]);
             int currentNakshatraId = SwissUtility.GetNakshatraIdFromDegree(yogaLon);
             int currentYogaId = DataCache.Instance.NityaYogaList.FirstOrDefault(y => y.NakshatraId == currentNakshatraId)?.Id ?? 0;
+
+            results.Add(new NityaYogaData
+            {
+                DateTimeUtc = fromUtc,
+                Longitude = yogaLon,
+                NityaYogaId = currentYogaId
+            });
 
             DateTime cursor = fromUtc;
             while (cursor < toUtc)

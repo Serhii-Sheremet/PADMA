@@ -6,10 +6,9 @@ namespace PADMA.Core.TransitBuilder
 {
     public static class NityaYogaTransitBuilder
     {
-        public static List<NityaYogaSlice> BuildNityaYogaSlices(List<NityaYogaData> dataList)
+        public static List<NityaYogaSlice> BuildNityaYogaSlices(List<NityaYogaData> dataList, DateTime endUtc)
         {
             var result = new List<NityaYogaSlice>();
-
             if (dataList == null || dataList.Count == 0)
                 return result;
 
@@ -18,19 +17,21 @@ namespace PADMA.Core.TransitBuilder
                 var current = dataList[i];
                 var nextStart = (i < dataList.Count - 1)
                     ? dataList[i + 1].DateTimeUtc
-                    : current.DateTimeUtc.AddDays(1); // last fallback
+                    : endUtc;
+
+                // защита на всякий случай
+                if (nextStart <= current.DateTimeUtc)
+                    continue;
 
                 var id = current.NityaYogaId;
 
-                var slice = new NityaYogaSlice
+                result.Add(new NityaYogaSlice
                 {
                     StartUtc = current.DateTimeUtc,
                     EndUtc = nextStart,
                     NityaYogaId = id,
                     ColorId = NityaYogaSlice.GetNityaYogaColorId(id)
-                };
-
-                result.Add(slice);
+                });
             }
 
             return result;

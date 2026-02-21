@@ -392,12 +392,12 @@ namespace PADMA.UI.ViewModels
                 taraBalaSlices = TaraBalaTransitBuilder.BuildTaraBalaSlices(nakshatraSlices, birthNakshatraMoonId);
                 // ---- Swiss + Tithi —---
                 var tithiData = SwissAnalysis.CalculateTithiDataList_London(bufferStartUtc, bufferEndUtc, nodeMode);
-                tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData);
+                tithiSlices = TithiTransitBuilder.BuildTithiSlices(tithiData, bufferEndUtc);
                 // ---- Karana ----
                 karanaSlices = KaranaTransitBuilder.BuildKaranaSlices(tithiSlices);
                 // ---- Swiss + Nitya Yoga ----
                 var nityaYogaData = SwissAnalysis.CalculateNityaYogaDataList_London(bufferStartUtc, bufferEndUtc, nodeMode);
-                nityaYogaSlices = NityaYogaTransitBuilder.BuildNityaYogaSlices(nityaYogaData);
+                nityaYogaSlices = NityaYogaTransitBuilder.BuildNityaYogaSlices(nityaYogaData, bufferEndUtc);
                 // ---- Chandra Bala ----
                 chandraBalaSlices = ChandraBalaTransitBuilder.BuildChandraBalaSlices(moonData, birthZodiacMoonId);
 
