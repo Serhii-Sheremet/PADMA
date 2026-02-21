@@ -292,8 +292,6 @@ namespace PADMA.Core.Analysis
             return utcT + maxLookforward;
         }
 
-
-
         private static int FindTransitionEpoch(int planetId, PlanetData fromState, PlanetData toState, int startEpoch, int endEpoch, EAppSetting nodeType)
         {
             if (endEpoch - startEpoch <= 1)
