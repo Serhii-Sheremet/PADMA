@@ -1,9 +1,8 @@
-﻿using Microsoft.Maui.Controls;
+﻿using PADMA.Core.Analysis;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
-using System;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace PADMA.Pages;
 
@@ -25,6 +24,15 @@ public partial class ProfileDetailPage : ContentPage
     private bool _ignoreNextNavigating = false;
     private bool _skipSnapshotOnce = false; // не обновлять снапшот при следующем OnAppearing
 
+    private enum ProfileUiMode
+    {
+        View,   // просмотр существующего
+        Edit,   // редактирование существующего
+        Create  // создание нового
+    }
+
+    private ProfileUiMode _mode;
+
     public ProfileDetailPage(DatabaseService database)
     {
         InitializeComponent();
@@ -42,12 +50,37 @@ public partial class ProfileDetailPage : ContentPage
         });
 
         // отслеживаем изменения полей
+        
         entryProfileName.TextChanged += (_, _) => MarkChanged();
         entryPersonName.TextChanged += (_, _) => MarkChanged();
         entryPersonSurname.TextChanged += (_, _) => MarkChanged();
         entryMessage.TextChanged += (_, _) => MarkChanged();
-        dateOfBirthDate.DateSelected += (_, _) => MarkChanged();
-        timeOfBirthTime.PropertyChanged += (_, _) => MarkChanged();
+        dateOfBirthDate.DateSelected += OnDobDateSelected;
+        timeOfBirthTime.PropertyChanged += OnDobTimeChanged;
+    }
+
+    private void OnDobDateSelected(object? sender, DateChangedEventArgs e)
+    {
+        if (_isInitializing || _profile == null) return;
+
+        // сохраняем время, меняем только дату
+        var t = timeOfBirthTime.Time;
+        _profile.DateOfBirth = e.NewDate.Date + t;
+
+        MarkChanged();
+    }
+
+    private void OnDobTimeChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != TimePicker.TimeProperty.PropertyName) return;
+        if (_isInitializing || _profile == null) return;
+
+        // сохраняем дату, меняем только время
+        var d = dateOfBirthDate.Date;
+        var t = timeOfBirthTime.Time;
+        _profile.DateOfBirth = d.Date + t;
+
+        MarkChanged();
     }
 
     protected override void OnAppearing()
@@ -57,32 +90,44 @@ public partial class ProfileDetailPage : ContentPage
         Shell.Current.Navigating += OnShellNavigating;
         _isInitializing = true;
 
-        // если есть кэш — используем его и просим не обновлять снапшот один раз
+        // 1) Получить/создать профиль
         if (_tempProfile != null)
         {
+            // Возврат со страницы поиска локации или после отмены выхода — используем кеш
             _profile = _tempProfile;
             _skipSnapshotOnce = true;
         }
         else if (ProfileId > 0)
         {
+            // Открыли существующий профиль
             _profile = _database.GetProfileById(ProfileId);
 
+            // Подтянуть локации из БД (и обновить Locality в профиле, чтобы UI видел)
             if (_profile?.PlaceOfBirthId is int pbId)
             {
-                var loc = _database.GetLocationById(pbId);
-                _birthLocation = loc;
-                _profile.PlaceOfBirthLocality = loc?.Locality ?? "";
+                _birthLocation = _database.GetLocationById(pbId);
+                _profile.PlaceOfBirthLocality = _birthLocation?.Locality ?? "";
+            }
+            else
+            {
+                _birthLocation = null;
+                if (_profile != null) _profile.PlaceOfBirthLocality = "";
             }
 
             if (_profile?.PlaceOfLivingId is int plId)
             {
-                var loc = _database.GetLocationById(plId);
-                _livingLocation = loc;
-                _profile.PlaceOfLivingLocality = loc?.Locality ?? "";
+                _livingLocation = _database.GetLocationById(plId);
+                _profile.PlaceOfLivingLocality = _livingLocation?.Locality ?? "";
+            }
+            else
+            {
+                _livingLocation = null;
+                if (_profile != null) _profile.PlaceOfLivingLocality = "";
             }
         }
         else
         {
+            // Новый профиль
             _profile = new Profile
             {
                 DateOfBirth = DateTime.Now,
@@ -91,27 +136,56 @@ public partial class ProfileDetailPage : ContentPage
                 PersonSurname = "",
                 Message = ""
             };
+
+            _birthLocation = null;
+            _livingLocation = null;
         }
 
+        if (_profile == null)
+        {
+            // На всякий случай: если БД вернула null — создаём новый
+            _profile = new Profile
+            {
+                DateOfBirth = DateTime.Now,
+                ProfileName = "",
+                PersonName = "",
+                PersonSurname = "",
+                Message = ""
+            };
+            _birthLocation = null;
+            _livingLocation = null;
+        }
+
+        // 2) BindingContext (после того, как _profile окончательно определён)
         BindingContext = _profile;
 
-        // установить текущие значения в контролы
+        // 3) Обновить контролы из модели (важно: чтобы DatePicker/TimePicker не ломали время)
         RefreshLocationLabels();
-        dateOfBirthDate.Date = _profile!.DateOfBirth.Date;
-        timeOfBirthTime.Time = _profile!.DateOfBirth.TimeOfDay;
+        dateOfBirthDate.Date = _profile.DateOfBirth.Date;
+        timeOfBirthTime.Time = _profile.DateOfBirth.TimeOfDay;
 
+        // 4) Локализация (зависит от языка, не от режима)
         ApplyLocalization();
 
-        if (!_isEditing)
-            SetEditMode(ProfileId == 0);
+        // 5) Режим: новый профиль -> Create, существующий -> View, если уже редактируем -> Edit
+        if (_isEditing)
+        {
+            ApplyMode(ProfileUiMode.Edit);
+        }
+        else
+        {
+            ApplyMode(_profile.Id == 0 ? ProfileUiMode.Create : ProfileUiMode.View);
+        }
 
+        // 6) Флаги изменений
         _isInitializing = false;
         _hasChanges = false;
 
-        // снапшот создаём только если НЕ просили пропустить
+        // 7) Snapshot (только если не просили пропустить один раз)
         if (!_skipSnapshotOnce)
             _snapshotJson = System.Text.Json.JsonSerializer.Serialize(_profile);
-        _skipSnapshotOnce = false; // сбросить на будущее
+
+        _skipSnapshotOnce = false;
     }
 
     protected override void OnDisappearing()
@@ -225,6 +299,17 @@ public partial class ProfileDetailPage : ContentPage
 
         string lang = DataCache.Instance.CurrentLanguageCode;
 
+        Profile? before = null;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(_snapshotJson))
+                before = System.Text.Json.JsonSerializer.Deserialize<Profile>(_snapshotJson);
+        }
+        catch
+        {
+            // если что-то пошло не так — просто считаем, что before неизвестен
+        }
+
         // синхронизуем UI -> модель
         _profile.DateOfBirth = dateOfBirthDate.Date + timeOfBirthTime.Time;
 
@@ -301,14 +386,38 @@ public partial class ProfileDetailPage : ContentPage
             _profile.PlaceOfLivingId = _livingLocation.Id;
             _profile.PlaceOfLivingLocality = _livingLocation.Locality;
 
+            bool isActiveProfile = DataCache.Instance.ActiveProfile?.Id == _profile.Id && _profile.Id > 0;
+
+            bool calcRelevantChanged = false;
+            if (before != null)
+            {
+                calcRelevantChanged =
+                    before.DateOfBirth != _profile.DateOfBirth ||
+                    before.PlaceOfBirthId != _profile.PlaceOfBirthId ||
+                    before.PlaceOfLivingId != _profile.PlaceOfLivingId;
+            }
+
             if (_profile.Id == 0)
                 _database.AddProfile(_profile);
             else
                 _database.UpdateProfile(_profile);
 
+            // если редактировали активный профиль и изменились ключевые поля для расчётов — пересобрать контекст и уведомить UI
+            if (isActiveProfile && calcRelevantChanged)
+            {
+                // обновим ActiveProfile на свежий объект из БД (чтобы не держать старую ссылку)
+                DataCache.Instance.ActiveProfile = _database.GetProfileById(_profile.Id);
+
+                DataCache.Instance.ReloadLocations(_database);
+                await DataCache.Instance.ProfileContextService.RebuildAsync();
+
+                MessagingCenter.Send<object>(this, "ProfileChanged");
+                SwissAnalysis.ClearZodiacBoundaryCache();
+            }
+
             _hasChanges = false;
             _isEditing = false;
-            SetEditMode(false);
+            ApplyMode(ProfileUiMode.View);
 
             // обновляем снимок — теперь страница чистая
             _snapshotJson = System.Text.Json.JsonSerializer.Serialize(_profile);
@@ -392,24 +501,61 @@ public partial class ProfileDetailPage : ContentPage
             : _profile!.PlaceOfLivingLocality;
     }
 
-    private void SetEditMode(bool isEdit)
+    private void ApplyMode(ProfileUiMode mode)
     {
-        _isEditing = isEdit;
+        _mode = mode;
 
-        entryProfileName.IsEnabled = isEdit;
-        entryPersonName.IsEnabled = isEdit;
-        entryPersonSurname.IsEnabled = isEdit;
-        dateOfBirthDate.IsEnabled = isEdit;
-        timeOfBirthTime.IsEnabled = isEdit;
-        entryMessage.IsEnabled = isEdit;
-        btnPlaceOfBirth.IsEnabled = isEdit;
-        btnPlaceOfLiving.IsEnabled = isEdit;
+        bool isView = mode == ProfileUiMode.View;
+        bool isEdit = mode == ProfileUiMode.Edit;
+        bool isCreate = mode == ProfileUiMode.Create;
+
+        
+        // Вариант 1: скрывать лишние
+        //btnSave.IsVisible = isEdit || isCreate;
+        //btnEdit.IsVisible = isView;
+        //btnDelete.IsVisible = isView;
+
+        // Вариант 2: кнопки "серенькие" (IsVisible - IsEnabled+Opacity)
+        btnSave.IsEnabled = isEdit || isCreate;
+        btnSave.Opacity = btnSave.IsEnabled ? 1.0 : 0.35;
+
+        btnEdit.IsEnabled = isView;
+        btnEdit.Opacity = btnEdit.IsEnabled ? 1.0 : 0.35;
+
+        btnDelete.IsEnabled = isView;
+        btnDelete.Opacity = btnDelete.IsEnabled ? 1.0 : 0.35;
+
+        // Дополнительно: включить/выключить редактируемость полей
+        SetFieldsEditable(isEdit || isCreate);
+    }
+
+    private void SetFieldsEditable(bool editable)
+    {
+        entryProfileName.IsEnabled = editable;
+        entryPersonName.IsEnabled = editable;
+        entryPersonSurname.IsEnabled = editable;
+        entryMessage.IsEnabled = editable;
+        dateOfBirthDate.IsEnabled = editable;
+        timeOfBirthTime.IsEnabled = editable;
+        btnPlaceOfBirth.IsEnabled = editable;
+        btnPlaceOfLiving.IsEnabled = editable;
     }
 
     private async void OnSaveClicked(object sender, EventArgs e)
     {
+        if (_profile == null)
+            return;
+
         string lang = DataCache.Instance.CurrentLanguageCode;
 
+        // 1) Если изменений нет — просто выйти из режима редактирования
+        if (!HasRealChanges())
+        {
+            ApplyMode(ProfileUiMode.View);
+            return;
+        }
+
+        // 2) Изменения есть — спрашиваем
         bool confirm = await DisplayAlert(
             Localization.GetLocalizedText("Save", lang),
             Localization.GetLocalizedText("Save changes to profile?", lang),
@@ -417,14 +563,61 @@ public partial class ProfileDetailPage : ContentPage
             Localization.GetLocalizedText("No", lang)
         );
 
-        if (!confirm) return;
+        // 3) Если НЕ подтверждаем сохранение — откатываем изменения и выходим в View
+        if (!confirm)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(_snapshotJson))
+                {
+                    var original = JsonSerializer.Deserialize<Profile>(_snapshotJson);
+                    if (original != null)
+                    {
+                        _profile = original;
+                        BindingContext = _profile;
 
+                        // восстановить связные объекты локаций по Id (как у тебя в OnAppearing)
+                        if (_profile.PlaceOfBirthId is int pbId)
+                            _birthLocation = _database.GetLocationById(pbId);
+                        else
+                            _birthLocation = null;
+
+                        if (_profile.PlaceOfLivingId is int plId)
+                            _livingLocation = _database.GetLocationById(plId);
+                        else
+                            _livingLocation = null;
+
+                        RefreshLocationLabels();
+                        dateOfBirthDate.Date = _profile.DateOfBirth.Date;
+                        timeOfBirthTime.Time = _profile.DateOfBirth.TimeOfDay;
+                    }
+                }
+            }
+            catch
+            {
+                // если что-то пошло не так с десериализацией — просто выходим в View без отката
+            }
+
+            _hasChanges = false;
+            ApplyMode(ProfileUiMode.View);
+            return;
+        }
+
+        // 4) Подтвердили — сохраняем
         bool result = await SaveProfileAsync();
-        if (result)
-            await GoBackAsync();
+        if (!result)
+            return;
+
+        ApplyMode(ProfileUiMode.View);
+
+        // обновляем снапшот, чтобы изменения считались сохранёнными
+        _snapshotJson = JsonSerializer.Serialize(_profile);
     }
 
-    private void OnEditClicked(object sender, EventArgs e) => SetEditMode(true);
+    private void OnEditClicked(object sender, EventArgs e)
+    {
+        ApplyMode(ProfileUiMode.Edit);
+    }
 
     private async void OnDeleteClicked(object sender, EventArgs e)
     {

@@ -12,6 +12,8 @@ namespace PADMA.Pages
         private readonly DatabaseService _database;
         private ProfileViewItem? _selectedProfile;
         public ObservableCollection<ProfileViewItem> Profiles { get; } = new();
+        private bool _pendingProfileChanged;
+        private bool _subscribed;
 
         private bool _isBusy;
         public bool IsBusy
@@ -60,6 +62,8 @@ namespace PADMA.Pages
         public ProfilesPage(DatabaseService database)
         {
             InitializeComponent();
+            SubscribeMessages();
+
             _database = database;
             BindingContext = this;
 
@@ -72,6 +76,17 @@ namespace PADMA.Pages
             btnDetails.Text = Localization.GetLocalizedText("Details", lang);
             btnSetDefault.Text = Localization.GetLocalizedText("Set default", lang);
             btnChoose.Text = Localization.GetLocalizedText("Choose", lang);
+        }
+
+        private void SubscribeMessages()
+        {
+            if (_subscribed) return;
+            _subscribed = true;
+
+            MessagingCenter.Subscribe<object>(this, "ProfileChanged", _ =>
+            {
+                _pendingProfileChanged = true;
+            });
         }
 
         protected override void OnAppearing()
@@ -204,8 +219,25 @@ namespace PADMA.Pages
 
         private async void OnCloseClicked(object sender, EventArgs e)
         {
-            ClearSelection();
-            await Shell.Current.GoToAsync("//main", true);
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            if (_pendingProfileChanged)
+            {
+                await RunBusyAsync(Localization.GetLocalizedText("Updating profile…", lang), async () =>
+                {
+                    ClearSelection();
+                    await Shell.Current.GoToAsync("//main", true);
+
+                    // Дать UI шанс показать MainPage overlay
+                    await Task.Yield();
+                });
+            }
+            else
+            {
+                ClearSelection();
+                await Shell.Current.GoToAsync("//main", true);
+                await Task.Yield();
+            }
         }
 
         private void ClearSelection()
