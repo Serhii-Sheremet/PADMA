@@ -510,7 +510,6 @@ namespace PADMA.Core.Services
                               .FirstOrDefault();
         }
 
-
         /// <summary>
         /// Поиск локаций в таблице LOCATION по частичному совпадению имени.
         /// </summary>
@@ -518,29 +517,37 @@ namespace PADMA.Core.Services
         {
             try
             {
-                const string sql = @"
-            SELECT 
-                ID as Id,
-                LOCALITY as Locality,
-                REGION as Region,
-                STATE as State,
-                COUNTRY as Country,
-                COUNTRYCODE as CountryCode,
-                LANGUAGECODE as LanguageCode,
-                LATITUDE as Latitude,
-                LONGITUDE as Longitude
-            FROM LOCATION
-            WHERE 
-                LOWER(LOCALITY) LIKE '%' || LOWER(?) || '%'
-                OR LOWER(REGION) LIKE '%' || LOWER(?) || '%'
-                OR LOWER(COUNTRY) LIKE '%' || LOWER(?) || '%'
-            ORDER BY LOCALITY ASC";
+                query = (query ?? "").Trim();
+                if (query.Length == 0)
+                    return new List<AppLocation>();
 
-                return _connection.Query<AppLocation>(sql, query, query, query);
+                const string sql = @"
+                    SELECT 
+                        MIN(ID) as Id,
+                        LOCALITY as Locality,
+                        REGION as Region,
+                        STATE as State,
+                        COUNTRY as Country,
+                        COUNTRYCODE as CountryCode,
+                        LANGUAGECODE as LanguageCode,
+                        LATITUDE as Latitude,
+                        LONGITUDE as Longitude
+                    FROM LOCATION
+                    WHERE 
+                        LOWER(LOCALITY) LIKE '%' || LOWER(?) || '%'
+                        OR LOWER(REGION) LIKE '%' || LOWER(?) || '%'
+                        OR LOWER(STATE) LIKE '%' || LOWER(?) || '%'
+                        OR LOWER(COUNTRY) LIKE '%' || LOWER(?) || '%'
+                    GROUP BY 
+                        LOWER(LOCALITY), LOWER(REGION), LOWER(STATE), LOWER(COUNTRY),
+                        LATITUDE, LONGITUDE
+                    ORDER BY LOCALITY ASC";
+
+                return _connection.Query<AppLocation>(sql, query, query, query, query);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] SearchLocationByName error: {ex.Message}");
+                Debug.WriteLine($"[PADMA] SearchLocationByName error: {ex.Message}");
                 return new List<AppLocation>();
             }
         }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls;
+﻿using CommunityToolkit.Maui.Extensions;
+using Microsoft.Maui.Controls;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
@@ -13,6 +14,11 @@ public partial class LocationSearchPage : ContentPage
     private readonly DatabaseService _database;
     private readonly NominatimService _nominatim;
     private readonly ObservableCollection<AppLocation> _results = new();
+
+    private CancellationTokenSource? _searchCts;
+    private DateTime _lastNominatimCallUtc = DateTime.MinValue;
+    private const int MinQueryLen = 3;
+    private const int DebounceMs = 350;
 
     private AppLocation? _selected;
     public string Mode { get; set; } = ""; // "birth" | "living"
@@ -54,6 +60,98 @@ public partial class LocationSearchPage : ContentPage
         });
     }
 
+    private string? _countryCode; // "pl", "ua", ...
+
+    private async void OnCountryClicked(object sender, EventArgs e)
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+        var popup = new CountrySelectPopup(lang);
+        await this.ShowPopupAsync(popup);
+
+        var item = popup.SelectedCountry;
+        if (item != null)
+        {
+            _countryCode = item.Code;
+            entryCountry.Text = item.Display;
+        }
+    }
+
+    private async void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        var query = (e.NewTextValue ?? "").Trim();
+
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+
+        _selected = null;
+        btnSelect.IsEnabled = false;
+
+        if (query.Length < MinQueryLen)
+        {
+            _results.Clear();
+            loadingIndicator.IsRunning = false;
+            loadingIndicator.IsVisible = false;
+            return;
+        }
+
+        try
+        {
+            // debounce
+            await Task.Delay(DebounceMs, token);
+            if (token.IsCancellationRequested) return;
+
+            loadingIndicator.IsRunning = true;
+            loadingIndicator.IsVisible = true;
+
+            _results.Clear();
+
+            // 1) Сначала БД (НО: важно, чтобы поиск был contains + case-insensitive)
+            var local = _database.SearchLocationByName(query);
+            if (token.IsCancellationRequested) return;
+
+            if (local.Count > 0)
+            {
+                foreach (var loc in local)
+                    _results.Add(loc);
+
+                return; // только БД
+            }
+
+            // 2) Если БД пусто — Nominatim (не чаще 1 раза в секунду)
+            var nowUtc = DateTime.UtcNow;
+            var sinceLast = nowUtc - _lastNominatimCallUtc;
+            if (sinceLast.TotalMilliseconds < 1000)
+                await Task.Delay(1000 - (int)sinceLast.TotalMilliseconds, token);
+
+            if (token.IsCancellationRequested) return;
+
+            _lastNominatimCallUtc = DateTime.UtcNow;
+
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            // позже сюда добавим фильтр по стране (countrycodes)
+            var found = await _nominatim.SearchAsync(query, lang);
+            if (token.IsCancellationRequested) return;
+
+            var unique = found
+                .GroupBy(x => (x.DisplayName?.Trim().ToLowerInvariant() ?? ""))
+                .Select(g => g.First())
+                .ToList();
+
+            foreach (var loc in unique)
+                _results.Add(loc);
+        }
+        catch (TaskCanceledException)
+        {
+            // ignore
+        }
+        finally
+        {
+            loadingIndicator.IsRunning = false;
+            loadingIndicator.IsVisible = false;
+        }
+    }
 
     private async void OnSearchClicked(object sender, EventArgs e)
     {

@@ -92,6 +92,9 @@
 
   <ItemGroup>
     <MauiXaml Update="Pages\ConfigurationPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\CountrySelectPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\DayPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\FirstDayOfWeekPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\HoraPage.xaml" Generator="MSBuild:Compile" />
