@@ -40,41 +40,36 @@
 
                 <!-- Место рождения -->
                 <Label x:Name="lblPlaceOfBirth" Text="Place of birth" FontAttributes="Bold" />
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid>
                     <Label x:Name="lblPlaceOfBirthValue"
                            VerticalOptions="Center"
                            TextColor="Black"
                            FontAttributes="Italic"
-                           Padding="4,2" />
-                    <ImageButton x:Name="btnPlaceOfBirth"
-                           Source="search_icon.png"
-                           HeightRequest="22"
-                           WidthRequest="22"
-                           BackgroundColor="Transparent"
-                           BorderWidth="0"
-                           Clicked="OnPlaceOfBirthClicked"
-                           Grid.Column="1"
-                           HorizontalOptions="End"/>
+                           Padding="4,8" />
+
+                    <!-- Прозрачный слой для тапа по всей области -->
+                    <BoxView BackgroundColor="Transparent">
+                        <BoxView.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPlaceOfBirthClicked" />
+                        </BoxView.GestureRecognizers>
+                    </BoxView>
                 </Grid>
                 <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,8"/>
 
                 <!-- Место проживания -->
                 <Label x:Name="lblPlaceOfLiving" Text="Place of living" FontAttributes="Bold" />
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid>
                     <Label x:Name="lblPlaceOfLivingValue"
                            VerticalOptions="Center"
                            TextColor="Black"
                            FontAttributes="Italic"
-                           Padding="4,2" />
-                    <ImageButton x:Name="btnPlaceOfLiving"
-                           Source="search_icon.png"
-                           HeightRequest="22"
-                           WidthRequest="22"
-                           BackgroundColor="Transparent"
-                           BorderWidth="0"
-                           Clicked="OnPlaceOfLivingClicked"
-                           Grid.Column="1"
-                           HorizontalOptions="End"/>
+                           Padding="4,8" />
+
+                    <BoxView BackgroundColor="Transparent">
+                        <BoxView.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPlaceOfLivingClicked" />
+                        </BoxView.GestureRecognizers>
+                    </BoxView>
                 </Grid>
                 <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,8"/>
 

@@ -468,7 +468,7 @@ public partial class ProfileDetailPage : ContentPage
 
     private async void OnPlaceOfBirthClicked(object sender, EventArgs e)
     {
-        if (_profile == null) return;
+        if (!_isEditing) return;
 
         _profile.DateOfBirth = dateOfBirthDate.Date + timeOfBirthTime.Time;
         _tempProfile = _profile;
@@ -479,7 +479,7 @@ public partial class ProfileDetailPage : ContentPage
 
     private async void OnPlaceOfLivingClicked(object sender, EventArgs e)
     {
-        if (_profile == null) return;
+        if (!_isEditing) return;
 
         _profile.DateOfBirth = dateOfBirthDate.Date + timeOfBirthTime.Time;
         _tempProfile = _profile;
@@ -509,7 +509,9 @@ public partial class ProfileDetailPage : ContentPage
         bool isEdit = mode == ProfileUiMode.Edit;
         bool isCreate = mode == ProfileUiMode.Create;
 
-        
+        // синхронизируем старый флаг с новым режимом
+        _isEditing = isEdit || isCreate;
+
         // Вариант 1: скрывать лишние
         //btnSave.IsVisible = isEdit || isCreate;
         //btnEdit.IsVisible = isView;
@@ -525,7 +527,6 @@ public partial class ProfileDetailPage : ContentPage
         btnDelete.IsEnabled = isView;
         btnDelete.Opacity = btnDelete.IsEnabled ? 1.0 : 0.35;
 
-        // Дополнительно: включить/выключить редактируемость полей
         SetFieldsEditable(isEdit || isCreate);
     }
 
@@ -537,8 +538,6 @@ public partial class ProfileDetailPage : ContentPage
         entryMessage.IsEnabled = editable;
         dateOfBirthDate.IsEnabled = editable;
         timeOfBirthTime.IsEnabled = editable;
-        btnPlaceOfBirth.IsEnabled = editable;
-        btnPlaceOfLiving.IsEnabled = editable;
     }
 
     private async void OnSaveClicked(object sender, EventArgs e)
