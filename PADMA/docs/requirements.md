@@ -547,7 +547,8 @@ Dialogs follow the same visual and logical pattern as those used in `ConfigBaseP
 ### 🌍 LocationPage — Location Lookup  
 
 **Purpose:**  
-Searches and selects geographic locations using **Nominatim API**.  
+Searches and selects geographic locations using **Nominatim API**. 
+Hybrid search using local DB first, Nominatim as fallback, optional country filter via popup. 
 
 **Toolbar layout:**  
 ```
@@ -563,6 +564,14 @@ Searches and selects geographic locations using **Nominatim API**.
 - Selected locations are **not immediately saved** into `LOCATION`.  
 - Database update occurs only after the entire profile is saved.  
 - Therefore, this page acts as a **lookup-only** component, not a data editor.  
+
+## Key Points
+
+- Country selection popup
+- Normalized columns: LOCALITY_NORM, REGION_NORM, STATE_NORM, COUNTRY_NORM
+- Local DB search uses normalized columns
+- External search uses Nominatim with countrycodes and limit=20
+- Offline-first behavior
 
 ### 🧩 Navigation hierarchy  
 ```

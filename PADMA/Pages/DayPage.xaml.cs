@@ -735,7 +735,7 @@ namespace PADMA.Pages
             _isClosing = true;
 
             var lang = DataCache.Instance.CurrentLanguageCode;
-            await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
+            await RunBusyAsync(Localization.GetLocalizedText("Please wait…", lang), async () =>
             {
                 try
                 {

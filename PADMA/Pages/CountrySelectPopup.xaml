@@ -13,7 +13,10 @@
 
             <SearchBar x:Name="sb" Placeholder="Search..." TextChanged="OnSearchChanged"/>
 
-            <CollectionView x:Name="cv" SelectionMode="Single" SelectionChanged="OnSelected">
+            <CollectionView x:Name="cv" 
+                            HeightRequest="360"
+                            SelectionMode="Single" 
+                            SelectionChanged="OnSelected">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid Padding="8">
