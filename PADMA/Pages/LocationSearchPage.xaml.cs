@@ -25,6 +25,30 @@ public partial class LocationSearchPage : ContentPage
 
     public ICommand ItemTappedCommand { get; }
 
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            if (_isBusy == value) return;
+            _isBusy = value;
+            OnPropertyChanged(nameof(IsBusy));
+        }
+    }
+
+    private string _busyText = "Please wait…";
+    public string BusyText
+    {
+        get => _busyText;
+        set
+        {
+            if (_busyText == value) return;
+            _busyText = value;
+            OnPropertyChanged(nameof(BusyText));
+        }
+    }
+
     public LocationSearchPage(DatabaseService database, NominatimService nominatim)
     {
         InitializeComponent();
@@ -66,8 +90,10 @@ public partial class LocationSearchPage : ContentPage
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
         var popup = new CountrySelectPopup(lang);
-        await this.ShowPopupAsync(popup);
-
+        await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
+        {
+            await this.ShowPopupAsync(popup);
+        });
         var item = popup.SelectedCountry;
         if (item != null)
         {
@@ -108,6 +134,13 @@ public partial class LocationSearchPage : ContentPage
 
             // 1) Сначала БД (НО: важно, чтобы поиск был contains + case-insensitive)
             var local = _database.SearchLocationByName(query);
+            if (!string.IsNullOrWhiteSpace(_countryCode))
+            {
+                local = local
+                    .Where(l => string.Equals(l.CountryCode, _countryCode, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
             if (token.IsCancellationRequested) return;
 
             if (local.Count > 0)
@@ -116,6 +149,17 @@ public partial class LocationSearchPage : ContentPage
                     _results.Add(loc);
 
                 return; // только БД
+            }
+
+            bool hasCyrillic = query.Any(ch => ch >= '\u0400' && ch <= '\u04FF');
+
+            // для кириллицы поднимаем порог Nominatim, чтобы меньше шума
+            int minNominatimLen = hasCyrillic ? 4 : 3;
+
+            if (query.Length < minNominatimLen)
+            {
+                // БД ничего не нашла, но в Nominatim пока рано — просто показываем пусто
+                return;
             }
 
             // 2) Если БД пусто — Nominatim (не чаще 1 раза в секунду)
@@ -129,9 +173,7 @@ public partial class LocationSearchPage : ContentPage
             _lastNominatimCallUtc = DateTime.UtcNow;
 
             var lang = DataCache.Instance.CurrentLanguageCode;
-
-            // позже сюда добавим фильтр по стране (countrycodes)
-            var found = await _nominatim.SearchAsync(query, lang);
+            var found = await _nominatim.SearchAsync(query, lang, _countryCode);
             if (token.IsCancellationRequested) return;
 
             var unique = found
@@ -181,7 +223,7 @@ public partial class LocationSearchPage : ContentPage
         else
         {
             // Если нет — запрос к Nominatim
-            var found = await _nominatim.SearchAsync(query, lang);
+            var found = await _nominatim.SearchAsync(query, lang, _countryCode);
             var unique = found
                 .GroupBy(x => (x.DisplayName?.Trim().ToLowerInvariant() ?? ""))
                 .Select(g => g.First())
@@ -230,5 +272,16 @@ public partial class LocationSearchPage : ContentPage
         // Просто отправляем выбранное AppLocation наверх
         MessagingCenter.Send(this, "LocationSelected", (Mode, _selected));
         await Shell.Current.GoToAsync("..", true);
+    }
+
+    private async Task RunBusyAsync(string text, Func<Task> action)
+    {
+        BusyText = text;
+        IsBusy = true;
+
+        await Task.Yield(); // дать UI шанс отрисовать overlay
+
+        try { await action(); }
+        finally { IsBusy = false; }
     }
 }

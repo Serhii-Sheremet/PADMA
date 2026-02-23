@@ -20,10 +20,18 @@ public class NominatimService
 
     }
 
-    public async Task<List<AppLocation>> SearchAsync(string query, string langCode)
+    public async Task<List<AppLocation>> SearchAsync(string query, string langCode, string? countryCode = null)
     {
+        var ccFilter = string.IsNullOrWhiteSpace(countryCode)
+                ? null
+                : countryCode.Trim().ToLowerInvariant();
+
         var url =
-            $"https://nominatim.openstreetmap.org/search?q={Uri.EscapeDataString(query)}&format=json&addressdetails=1&accept-language={langCode}";
+            $"https://nominatim.openstreetmap.org/search?q={Uri.EscapeDataString(query)}&format=json&addressdetails=1&accept-language={langCode}&limit=20";
+
+        if (!string.IsNullOrWhiteSpace(ccFilter))
+            url += $"&countrycodes={Uri.EscapeDataString(ccFilter)}";
+        
         var response = await _http.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
@@ -65,8 +73,8 @@ public class NominatimService
                 string country =
                     address.TryGetProperty("country", out var cn) ? cn.GetString() : "";
 
-                string countryCode =
-                    address.TryGetProperty("country_code", out var cc) ? cc.GetString()?.ToUpper() : "";
+                string countryCodeFromApi =
+                    address.TryGetProperty("country_code", out var cc) ? (cc.GetString() ?? "").ToUpperInvariant() : "";
 
                 string lat = item.GetProperty("lat").GetString() ?? "0";
                 string lon = item.GetProperty("lon").GetString() ?? "0";
@@ -88,7 +96,7 @@ public class NominatimService
                     Locality = locality ?? "",
                     Region = region,
                     Country = country,
-                    CountryCode = countryCode,
+                    CountryCode = countryCodeFromApi,
                     LanguageCode = langCode,
                     Latitude = lat,
                     Longitude = lon,

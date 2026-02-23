@@ -21,6 +21,7 @@ namespace PADMA.Core.Services
             _dbPath = Path.Combine(FileSystem.AppDataDirectory, "PADMADB.db3");
             EnsureDatabaseExists();
             _connection = new SQLiteConnection(_dbPath);
+            BackfillLocationNormColumnsIfNeeded();
         }
 
         #region Initialization
@@ -368,36 +369,6 @@ namespace PADMA.Core.Services
         }
 
         /// <summary>
-        /// Searches for locations by name (LOCALITY, REGION, STATE, COUNTRY).
-        /// </summary>
-        public List<Location> SearchLocations(string text)
-        {
-            try
-            {
-                const string sql = @"SELECT ID as Id, 
-                                            LOCALITY as Locality, 
-                                            LATITUDE as Latitude, 
-                                            LONGITUDE as Longitude, 
-                                            REGION as Region, 
-                                            STATE as State, 
-                                            COUNTRY as Country, 
-                                            COUNTRYCODE as CountryCode, 
-                                            LANGUAGECODE as LanguageCode
-                                     FROM LOCATION
-                                     WHERE LOCALITY LIKE ? OR REGION LIKE ? OR STATE LIKE ? OR COUNTRY LIKE ?
-                                     ORDER BY LOCALITY COLLATE NOCASE";
-
-                var pattern = $"%{text}%";
-                return _connection.Query<Location>(sql, pattern, pattern, pattern, pattern);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] SearchLocations error: {ex.Message}");
-                return new List<Location>();
-            }
-        }
-
-        /// <summary>
         /// Returns location by ID.
         /// </summary>
         public AppLocation? GetLocationById(int id)
@@ -424,6 +395,32 @@ namespace PADMA.Core.Services
             }
         }
 
+        private int InsertLocationWithNorm(AppLocation location)
+        {
+            // важно: тут можно быть мягче к пустым полям
+            var locality = location.Locality ?? "";
+            var region = location.Region ?? "";
+            var state = location.State ?? "";
+            var country = location.Country ?? "";
+            var countryCode = location.CountryCode ?? "";
+            var lang = location.LanguageCode ?? "";
+            var lat = location.Latitude ?? "0";
+            var lon = location.Longitude ?? "0";
+
+            _connection.Execute(@"
+                    INSERT INTO LOCATION
+                    (LOCALITY, REGION, STATE, COUNTRY, COUNTRYCODE, LANGUAGECODE, LATITUDE, LONGITUDE,
+                     LOCALITY_NORM, REGION_NORM, STATE_NORM, COUNTRY_NORM)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                locality, region, state, country, countryCode, lang, lat, lon,
+                Norm(locality), Norm(region), Norm(state), Norm(country));
+
+            // sqlite-net: получить last_insert_rowid
+            var id = _connection.ExecuteScalar<int>("SELECT last_insert_rowid()");
+            location.Id = id;
+            return id;
+        }
+
         /// <summary>
         /// Adds a new location (used after Nominatim search) and return its Id.
         /// </summary>
@@ -431,8 +428,7 @@ namespace PADMA.Core.Services
         {
             try
             {
-                _connection.Insert(location);
-                return location.Id;
+                return InsertLocationWithNorm(location);
             }
             catch (Exception ex)
             {
@@ -458,8 +454,7 @@ namespace PADMA.Core.Services
                 }
 
                 // 3. Ничего не нашли — создаём новую запись
-                _connection.Insert(location);   // sqlite-net заполнит location.Id
-                return location.Id;
+                return InsertLocationWithNorm(location);  // sqlite-net заполнит location.Id
             }
             catch (Exception ex)
             {
@@ -470,44 +465,111 @@ namespace PADMA.Core.Services
 
         private AppLocation? FindExistingLocation(AppLocation loc)
         {
-            if (string.IsNullOrWhiteSpace(loc.Locality) ||
-                string.IsNullOrWhiteSpace(loc.Country))
+            if (string.IsNullOrWhiteSpace(loc.Locality))
                 return null;
 
-            string locality = loc.Locality.Trim().ToUpperInvariant();
-            string country = (loc.CountryCode ?? loc.Country).Trim().ToUpperInvariant();
+            var localityNorm = Norm(loc.Locality);
+            var regionNorm = Norm(loc.Region);
+            var stateNorm = Norm(loc.State);
 
-            // Region и State — опциональны; хотя бы что-то одно может быть
-            string? region = loc.Region?.Trim().ToUpperInvariant();
-            string? state = loc.State?.Trim().ToUpperInvariant();
+            var countryNorm = Norm(loc.Country);
+            var countryCode = (loc.CountryCode ?? "").Trim().ToUpperInvariant();
 
-            // Вариант 1: совпадает LOCALITY + COUNTRY + REGION
             const string sqlRegion = @"
-                SELECT * FROM LOCATION
-                 WHERE UPPER(LOCALITY) = ?
-                   AND UPPER(COUNTRY) = ?
-                   AND (
-                         (REGION IS NOT NULL AND UPPER(REGION) = ?)
-                      OR (STATE  IS NOT NULL AND UPPER(STATE)  = ?)
-                   )
-                 LIMIT 1";
+                    SELECT * FROM LOCATION
+                     WHERE LOCALITY_NORM = ?
+                       AND (
+                            (COUNTRYCODE IS NOT NULL AND COUNTRYCODE = ?)
+                         OR (COUNTRY_NORM IS NOT NULL AND COUNTRY_NORM = ?)
+                       )
+                       AND (
+                             (REGION_NORM IS NOT NULL AND REGION_NORM = ?)
+                          OR (STATE_NORM  IS NOT NULL AND STATE_NORM  = ?)
+                       )
+                     LIMIT 1";
 
             var matchByRegion = _connection.Query<AppLocation>(
-                sqlRegion, locality, country, region, state
+                sqlRegion, localityNorm, countryCode, countryNorm, regionNorm, stateNorm
             ).FirstOrDefault();
 
             if (matchByRegion != null)
                 return matchByRegion;
 
-            // Вариант 2: совпадает LOCALITY + COUNTRY (region/state могут быть null)
             const string sqlSimple = @"
-                SELECT * FROM LOCATION
-                 WHERE UPPER(LOCALITY) = ?
-                   AND UPPER(COUNTRY) = ?
-                 LIMIT 1";
+                    SELECT * FROM LOCATION
+                     WHERE LOCALITY_NORM = ?
+                       AND (
+                            (COUNTRYCODE IS NOT NULL AND COUNTRYCODE = ?)
+                         OR (COUNTRY_NORM IS NOT NULL AND COUNTRY_NORM = ?)
+                       )
+                     LIMIT 1";
 
-            return _connection.Query<AppLocation>(sqlSimple, locality, country)
+            return _connection.Query<AppLocation>(sqlSimple, localityNorm, countryCode, countryNorm)
                               .FirstOrDefault();
+        }
+
+        private static string Norm(string? s)
+        {
+            s = (s ?? "").Trim();
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ");
+            return s.ToLowerInvariant();
+        }
+
+        public void BackfillLocationNormColumnsIfNeeded()
+        {
+            try
+            {
+                // Если таблица пустая — ничего не делаем
+                var total = _connection.ExecuteScalar<int>("SELECT COUNT(1) FROM LOCATION");
+                if (total == 0) return;
+
+                // Сколько записей не имеют нормализованных полей
+                var missing = _connection.ExecuteScalar<int>(@"
+                                    SELECT COUNT(1)
+                                    FROM LOCATION
+                                    WHERE 
+                                        LOCALITY_NORM IS NULL OR LOCALITY_NORM = ''
+                                        OR REGION_NORM IS NULL OR REGION_NORM = ''
+                                        OR STATE_NORM IS NULL OR STATE_NORM = ''
+                                        OR COUNTRY_NORM IS NULL OR COUNTRY_NORM = ''");
+
+                if (missing == 0) return;
+
+                var rows = _connection.Query<(int Id, string Locality, string Region, string State, string Country)>(@"
+                                SELECT 
+                                    ID as Id,
+                                    LOCALITY as Locality,
+                                    IFNULL(REGION,'') as Region,
+                                    IFNULL(STATE,'') as State,
+                                    IFNULL(COUNTRY,'') as Country
+                                FROM LOCATION");
+
+                _connection.RunInTransaction(() =>
+                {
+                    foreach (var r in rows)
+                    {
+                        _connection.Execute(@"
+                                UPDATE LOCATION
+                                SET 
+                                    LOCALITY_NORM = ?,
+                                    REGION_NORM   = ?,
+                                    STATE_NORM    = ?,
+                                    COUNTRY_NORM  = ?
+                                WHERE ID = ?",
+                            Norm(r.Locality),
+                            Norm(r.Region),
+                            Norm(r.State),
+                            Norm(r.Country),
+                            r.Id);
+                    }
+                });
+
+                System.Diagnostics.Debug.WriteLine($"[PADMA] BackfillLocationNormColumnsIfNeeded: updated {rows.Count} rows");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] BackfillLocationNormColumnsIfNeeded error: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -521,69 +583,37 @@ namespace PADMA.Core.Services
                 if (query.Length == 0)
                     return new List<AppLocation>();
 
-                const string sql = @"
-                    SELECT 
-                        MIN(ID) as Id,
-                        LOCALITY as Locality,
-                        REGION as Region,
-                        STATE as State,
-                        COUNTRY as Country,
-                        COUNTRYCODE as CountryCode,
-                        LANGUAGECODE as LanguageCode,
-                        LATITUDE as Latitude,
-                        LONGITUDE as Longitude
-                    FROM LOCATION
-                    WHERE 
-                        LOWER(LOCALITY) LIKE '%' || LOWER(?) || '%'
-                        OR LOWER(REGION) LIKE '%' || LOWER(?) || '%'
-                        OR LOWER(STATE) LIKE '%' || LOWER(?) || '%'
-                        OR LOWER(COUNTRY) LIKE '%' || LOWER(?) || '%'
-                    GROUP BY 
-                        LOWER(LOCALITY), LOWER(REGION), LOWER(STATE), LOWER(COUNTRY),
-                        LATITUDE, LONGITUDE
-                    ORDER BY LOCALITY ASC";
+                // нормализуем запрос
+                var q = System.Text.RegularExpressions.Regex.Replace(query, @"\s+", " ").Trim().ToLowerInvariant();
 
-                return _connection.Query<AppLocation>(sql, query, query, query, query);
+                const string sql = @"
+                        SELECT 
+                            MIN(ID) as Id,
+                            LOCALITY as Locality,
+                            REGION as Region,
+                            STATE as State,
+                            COUNTRY as Country,
+                            COUNTRYCODE as CountryCode,
+                            LANGUAGECODE as LanguageCode,
+                            LATITUDE as Latitude,
+                            LONGITUDE as Longitude
+                        FROM LOCATION
+                        WHERE 
+                            LOCALITY_NORM LIKE '%' || ? || '%'
+                            OR REGION_NORM LIKE '%' || ? || '%'
+                            OR STATE_NORM LIKE '%' || ? || '%'
+                            OR COUNTRY_NORM LIKE '%' || ? || '%'
+                        GROUP BY 
+                            LOWER(LOCALITY), LOWER(REGION), LOWER(STATE), LOWER(COUNTRY),
+                            LATITUDE, LONGITUDE
+                        ORDER BY LOCALITY ASC";
+
+                return _connection.Query<AppLocation>(sql, q, q, q, q);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[PADMA] SearchLocationByName error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PADMA] SearchLocationByName error: {ex.Message}");
                 return new List<AppLocation>();
-            }
-        }
-
-        /// <summary>
-        /// Ищет локацию в БД по Locality, Region и Country (без учёта регистра).
-        /// Если совпадение найдено — возвращает существующую запись.
-        /// </summary>
-        public AppLocation? FindLocationByLocality(string locality, string? region = null, string? country = null)
-        {
-            try
-            {
-                const string sql = @"
-            SELECT 
-                ID as Id,
-                LOCALITY as Locality,
-                REGION as Region,
-                STATE as State,
-                COUNTRY as Country,
-                COUNTRYCODE as CountryCode,
-                LANGUAGECODE as LanguageCode,
-                LATITUDE as Latitude,
-                LONGITUDE as Longitude
-            FROM LOCATION
-            WHERE 
-                LOWER(LOCALITY) = LOWER(?)
-                AND (LOWER(REGION) = LOWER(?) OR (REGION IS NULL AND ? IS NULL))
-                AND (LOWER(COUNTRY) = LOWER(?) OR (COUNTRY IS NULL AND ? IS NULL))
-            LIMIT 1";
-
-                return _connection.FindWithQuery<AppLocation>(sql, locality, region, region, country, country);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PADMA] FindLocationByLocality error: {ex.Message}");
-                return null;
             }
         }
 
@@ -614,7 +644,6 @@ namespace PADMA.Core.Services
                 return new List<AppLocation>();
             }
         }
-
 
         #endregion
 
@@ -1532,6 +1561,7 @@ namespace PADMA.Core.Services
 
 
         #endregion
+
 
         #region User Events (Appointments)
 
