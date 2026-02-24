@@ -11,11 +11,11 @@
 
             <!-- Страна -->
             <Grid RowDefinitions="Auto,Auto">
-                <Label Text="Country" FontAttributes="Bold" />
+                <Label x:Name="lbCountry" Text="Country" FontAttributes="Bold" />
                 <Grid Grid.Row="1">
                     <Entry x:Name="entryCountry"
-                   Placeholder="Select country"
-                   IsReadOnly="True" />
+                           Placeholder="Select country"
+                           IsReadOnly="True" />
                     <BoxView BackgroundColor="Transparent">
                         <BoxView.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnCountryClicked" />
@@ -26,13 +26,13 @@
 
             <!-- Локация -->
             <Grid RowDefinitions="Auto,Auto">
-                <Label Text="Location" FontAttributes="Bold" />
+                <Label x:Name="lbLocation" Text="Location" FontAttributes="Bold" />
                 <Entry x:Name="entrySearch"
-               Grid.Row="1"
-               Placeholder="Enter city name"
-               TextChanged="OnSearchTextChanged"
-               Completed="OnSearchClicked"
-               ClearButtonVisibility="WhileEditing" />
+                       Grid.Row="1"
+                       Placeholder="Enter settlement name"
+                       TextChanged="OnSearchTextChanged"
+                       Completed="OnSearchClicked"
+                       ClearButtonVisibility="WhileEditing" />
             </Grid>
 
         </VerticalStackLayout>

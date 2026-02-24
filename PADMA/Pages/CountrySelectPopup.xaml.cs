@@ -1,6 +1,7 @@
 using CommunityToolkit.Maui.Views;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using PADMA.Core.Utilities;
 
 namespace PADMA.Pages;
 
@@ -23,7 +24,8 @@ public partial class CountrySelectPopup : Popup
         InitializeComponent();
 
         // ћожно локализовать заголовок через твой Localization
-        lblTitle.Text = PADMA.Core.Utilities.Localization.GetLocalizedText("Country", lang);
+        lblTitle.Text = Localization.GetLocalizedText("Country", lang);
+        sb.Placeholder = Localization.GetLocalizedText("Search...", lang);
 
         _all = BuildCountries();
         foreach (var c in _all) _items.Add(c);
