@@ -782,7 +782,7 @@ INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES 
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (377,'Set default','Set default','en');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (378,'Set default','Зробити типовим','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (379,'Set default','Ustaw jako domyślny','pl');
-INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (380,'Set default','Сделать по умолчанию','ru');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (380,'Set default','По умолчанию','ru');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (381,'Calculating calendar…','Calculating calendar…','en');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (382,'Calculating calendar…','Розрахунок календаря…','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (383,'Calculating calendar…','Obliczanie kalendarza…','pl');
