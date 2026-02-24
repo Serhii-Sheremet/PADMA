@@ -1,14 +1,52 @@
 using Plugin.LocalNotification;
+#if ANDROID
+using Android.App;
+using Android.Content;
+using Android.OS;
+#endif
 
 namespace PADMA.Core.Services;
 
 public sealed class PluginLocalNotificationProvider : ILocalNotificationProvider
 {
+    #if ANDROID
+    private static bool CanScheduleExactAlarms()
+    {
+        if (Build.VERSION.SdkInt < BuildVersionCodes.S) // Android 12 (API 31)
+            return true;
+
+        var alarmManager = (AlarmManager?)Android.App.Application.Context
+            .GetSystemService(Context.AlarmService);
+
+        return alarmManager?.CanScheduleExactAlarms() ?? true;
+    }
+
+    private static void RequestExactAlarmPermission()
+    {
+        if (Build.VERSION.SdkInt < BuildVersionCodes.S)
+            return;
+
+        // Opens system screen: "Allow exact alarms" / "Alarms & reminders"
+        var intent = new Intent(Android.Provider.Settings.ActionRequestScheduleExactAlarm);
+        intent.AddFlags(ActivityFlags.NewTask);
+        Android.App.Application.Context.StartActivity(intent);
+    }
+    #endif
+
     public async Task<bool> EnsurePermissionsAsync()
     {
         // Wiki: AreNotificationsEnabled + RequestNotificationPermission :contentReference[oaicite:2]{index=2}
         if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
             return await LocalNotificationCenter.Current.RequestNotificationPermission();
+
+        #if ANDROID
+        // Exact alarms are required for reliable scheduled notifications on Android 12+
+        if (!CanScheduleExactAlarms())
+        {
+            RequestExactAlarmPermission();
+            // Не блокируем и не ждём результата тут: пользователь подтверждает в системном экране.
+        }
+        #endif
 
         return true;
     }
@@ -35,7 +73,6 @@ public sealed class PluginLocalNotificationProvider : ILocalNotificationProvider
 
         await LocalNotificationCenter.Current.Show(request);
     }
-
 
     public Task CancelAsync(int notificationId)
     {
