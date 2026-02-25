@@ -194,7 +194,12 @@ namespace PADMA.Pages
                 await DataCache.Instance.ProfileContextService.RebuildAsync();
 
                 MessagingCenter.Send<object>(this, "ProfileChanged");
-                
+
+                // пересобираем расписание нотификаций
+                var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>();
+                if (reminder != null)
+                    await reminder.RefreshAsync();
+
                 SwissAnalysis.ClearZodiacBoundaryCache();
                 ClearSelection();
                 

@@ -7,4 +7,5 @@ public interface ILocalNotificationProvider
     Task CancelAsync(int notificationId);
     Task CancelManyAsync(IEnumerable<int> notificationIds);
     Task CancelAllAsync();
+
 }

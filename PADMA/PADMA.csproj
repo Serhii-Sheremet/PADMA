@@ -33,17 +33,15 @@
   </PropertyGroup>
 	
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-  	<AndroidPackageFormat>apk</AndroidPackageFormat>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
   </PropertyGroup>
   
-  <!-- Debug: для эмулятора (x86_64) -->
-  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' AND '$(Configuration)' == 'Debug'">
-  	<AndroidSupportedAbis>x86_64;x86</AndroidSupportedAbis>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net9.0-android' AND '$(Configuration)'=='Debug'">
+    <RuntimeIdentifier>android-x64</RuntimeIdentifier>
   </PropertyGroup>
   
-  <!-- Release: для реальных телефонов (ARM) -->
-  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' AND '$(Configuration)' == 'Release'">
-  	<AndroidSupportedAbis>arm64-v8a;armeabi-v7a</AndroidSupportedAbis>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net9.0-android' AND '$(Configuration)'=='Release'">
+    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>

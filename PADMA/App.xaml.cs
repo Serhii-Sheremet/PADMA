@@ -18,10 +18,13 @@ public partial class App : Application
         try
         {
             await SwissService.InitializeEphemerisPathAsync();
+
+            var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>(); // чтобы подписки точно установились
+
             await DataCache.Instance.RebuildProfileContextAsync();
 
-            var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>();
-            if (reminder != null)
+            // refresh только если профиль реально есть
+            if (reminder != null && DataCache.Instance.ProfileContextService.Current != null)
                 await reminder.RefreshAsync();
         }
         catch (Exception ex)

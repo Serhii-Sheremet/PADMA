@@ -1,4 +1,5 @@
 using Plugin.LocalNotification;
+
 #if ANDROID
 using Android.App;
 using Android.Content;
@@ -53,23 +54,27 @@ public sealed class PluginLocalNotificationProvider : ILocalNotificationProvider
 
     public async Task ScheduleAsync(int notificationId, DateTime fireTimeLocal, string title, string body)
     {
-        // Plugin/AlarmManager ждЄт локальное врем€ устройства.
         var local = fireTimeLocal;
 
-        // ¬ј∆Ќќ: приходит Unspecified Ч считаем это Local.
         if (local.Kind == DateTimeKind.Unspecified)
             local = DateTime.SpecifyKind(local, DateTimeKind.Local);
         else
             local = local.ToLocalTime();
 
+        if (local <= DateTime.Now.AddSeconds(1))
+            local = DateTime.Now.AddSeconds(5);
+
         var request = new NotificationRequest
         {
             NotificationId = notificationId,
             Title = title,
-            Description = body
+            Description = body,
+            Android = { ChannelId = "default" },
+            Schedule = new NotificationRequestSchedule
+            {
+                NotifyTime = local
+            }
         };
-
-        request.Schedule.NotifyTime = local;
 
         await LocalNotificationCenter.Current.Show(request);
     }

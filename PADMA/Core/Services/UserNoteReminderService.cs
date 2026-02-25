@@ -115,9 +115,10 @@ public sealed class UserNoteReminderService : IUserNoteReminderService
                 var name = string.IsNullOrWhiteSpace(item.Note.Name) ? "Reminder" : item.Note.Name;
                 var body = $"{from}Ц{to} Х {name}";
 
-                // notificationId = note.Id (по требовани€м Stage 1)
+                // notificationId = note.Id
                 await _provider.ScheduleAsync(item.Note.Id, item.FireTimeLocal, title, body);
             }
+            await _provider.ShowNowAsync();
         }
         finally
         {
