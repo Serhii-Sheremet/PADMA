@@ -118,7 +118,6 @@ public sealed class UserNoteReminderService : IUserNoteReminderService
                 // notificationId = note.Id
                 await _provider.ScheduleAsync(item.Note.Id, item.FireTimeLocal, title, body);
             }
-            await _provider.ShowNowAsync();
         }
         finally
         {
