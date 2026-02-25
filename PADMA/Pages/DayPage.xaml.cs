@@ -1817,6 +1817,9 @@ namespace PADMA.Pages
         {
             if (string.IsNullOrWhiteSpace(value))
                 return;
+            
+            if(value.Equals("#"))
+                value = string.Empty;
 
             var lang = DataCache.Instance.CurrentLanguageCode;
             var label = Localization.GetLocalizedText(nativeLabel, lang);
@@ -2443,7 +2446,8 @@ namespace PADMA.Pages
 
                     if (vedhaList != null && vedhaList.Count > 0)
                     {
-                        var vParts = new List<string>();
+                        //var vParts = new List<string>();
+                        AddTooltipBlock("Vedha from", "#");
                         foreach (var ve in vedhaList)
                         {
                             var vpName = PanchangaHelper.GetPlanetDescEntity((int)ve.PlanetCode)?.Name ?? ve.PlanetCode.ToString();
@@ -2451,9 +2455,10 @@ namespace PADMA.Pages
                             var veStartLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(ve.DateStart, DateTimeKind.Utc), tzInfo);
                             var veEndLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(ve.DateEnd, DateTimeKind.Utc), tzInfo);
 
-                            vParts.Add($"{vpName} ({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
+                            //vParts.Add($"{vpName} ({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
+                            AddTooltipBlock(vpName, $"({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
                         }
-                        AddTooltipBlock("Vedha from", string.Join(", ", vParts));
+                        //AddTooltipBlock("Vedha from", string.Join(", ", vParts));
                     }
                 }
             }
