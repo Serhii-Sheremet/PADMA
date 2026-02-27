@@ -222,16 +222,16 @@ namespace PADMA.Core.Services
             try
             {
                 const string sql = @"SELECT ID as Id, 
-                                            PROFILENAME as ProfileName, 
-                                            PERSONNAME as PersonName, 
-                                            PERSONSURNAME as PersonSurname, 
-                                            DATEOFBIRTH as DateOfBirth, 
-                                            PLACEOFBIRTHID as PlaceOfBirthId, 
-                                            PLACEOFLIVINGID as PlaceOfLivingId, 
-                                            MESSAGE as Message, 
-                                            CHECKED as Checked 
-                                     FROM PROFILE 
-                                     ORDER BY PROFILENAME COLLATE NOCASE";
+                            PROFILENAME as ProfileName, 
+                            PERSONNAME as PersonName, 
+                            PERSONSURNAME as PersonSurname, 
+                            DATEOFBIRTH as DateOfBirth, 
+                            PLACEOFBIRTHID as PlaceOfBirthId, 
+                            PLACEOFLIVINGID as PlaceOfLivingId, 
+                            MESSAGE as Message, 
+                            CHECKED as Checked 
+                     FROM PROFILE 
+                     ORDER BY PROFILENAME COLLATE NOCASE";
 
                 return _connection.Query<Profile>(sql);
             }
@@ -250,16 +250,16 @@ namespace PADMA.Core.Services
             try
             {
                 const string sql = @"SELECT ID as Id, 
-                                            PROFILENAME as ProfileName, 
-                                            PERSONNAME as PersonName, 
-                                            PERSONSURNAME as PersonSurname, 
-                                            DATEOFBIRTH as DateOfBirth, 
-                                            PLACEOFBIRTHID as PlaceOfBirthId, 
-                                            PLACEOFLIVINGID as PlaceOfLivingId, 
-                                            MESSAGE as Message, 
-                                            CHECKED as Checked 
-                                     FROM PROFILE 
-                                     WHERE ID = ?";
+                            PROFILENAME as ProfileName, 
+                            PERSONNAME as PersonName, 
+                            PERSONSURNAME as PersonSurname, 
+                            DATEOFBIRTH as DateOfBirth, 
+                            PLACEOFBIRTHID as PlaceOfBirthId, 
+                            PLACEOFLIVINGID as PlaceOfLivingId, 
+                            MESSAGE as Message, 
+                            CHECKED as Checked 
+                     FROM PROFILE 
+                     WHERE ID = ?";
 
                 return _connection.FindWithQuery<Profile>(sql, id);
             }
