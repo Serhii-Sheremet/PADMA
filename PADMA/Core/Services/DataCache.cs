@@ -243,6 +243,13 @@ namespace PADMA.Core.Services
             return Colors.Black; // fallback, if the color is not found
         }
 
+        public void ReloadProfiles(DatabaseService db, bool setActiveToDefault = true)
+        {
+            ProfileList = db.GetProfiles().ToList();
+            if (setActiveToDefault)
+                ActiveProfile = GetActiveProfile();
+        }
+
         public Profile? GetActiveProfile()
         {
             return ProfileList.FirstOrDefault(p => p.Checked) ?? null;

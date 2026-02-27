@@ -86,6 +86,15 @@ public partial class AppShell : Shell, INotifyPropertyChanged
             _isExiting = true;
             try
             {
+                // Reset to DB-default profile before closing (so next launch starts from default)
+                var db = ServiceLocator.Services.GetService<DatabaseService>();
+                if (db != null)
+                {
+                    var def = db.GetProfiles().FirstOrDefault(p => p.Checked);
+                    if (def != null)
+                        DataCache.Instance.ActiveProfile = def;
+                }
+
                 AppCloser.Close();
             }
             finally

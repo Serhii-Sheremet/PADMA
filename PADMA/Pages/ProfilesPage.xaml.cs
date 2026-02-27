@@ -162,6 +162,7 @@ namespace PADMA.Pages
             if (!confirm) return;
 
             _database.SetDefaultProfile(_selectedProfile.Id);
+            DataCache.Instance.ReloadProfiles(_database);
 
             // обновить список и сохранить выбор
             int keepId = _selectedProfile.Id;
