@@ -80,6 +80,7 @@ namespace PADMA.Pages
             btnMrityuBhaga.Text = Localization.GetLocalizedText("Mrityu Bhaga", lang);
             btnSunrise.Text = Localization.GetLocalizedText("Sunrise calculation", lang);
             btnNotifications.Text = Localization.GetLocalizedText("Notifications", lang);
+            btnColorSettings.Text = Localization.GetLocalizedText("Color settings", lang);
         }
 
         private async Task ShowSettingsUpdatedMessage()
@@ -172,5 +173,11 @@ namespace PADMA.Pages
         {
             await Shell.Current.GoToAsync("NotificationsPage");
         }
+
+        private async void OnColorSettingsClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("ColorSettingsPage");
+        }
+
     }
 }

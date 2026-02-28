@@ -1,9 +1,6 @@
-using Microsoft.Maui.Controls;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI.Templates;
-using System;
-using System.Linq;
 
 namespace PADMA.Pages
 {

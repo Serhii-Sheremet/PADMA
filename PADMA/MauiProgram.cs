@@ -1,12 +1,10 @@
 ﻿using CommunityToolkit.Maui;
-using Microsoft.Maui;
 using PADMA.Core.Services;
 using PADMA.Pages;
 using PADMA.UI.Services;
 using Plugin.LocalNotification;
 using Syncfusion.Licensing;
 using Syncfusion.Maui.Core.Hosting;
-using System.IO;
 
 namespace PADMA;
 public static class MauiProgram

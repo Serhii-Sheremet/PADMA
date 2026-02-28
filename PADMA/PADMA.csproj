@@ -83,12 +83,18 @@
 
   <!-- XAML Dependencies -->
   <ItemGroup>
+    <Compile Update="Pages\ColorSettingsPage.xaml.cs">
+      <DependentUpon>ColorSettingsPage.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Pages\ConfigurationPage.xaml.cs">
       <DependentUpon>ConfigurationPage.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
+    <MauiXaml Update="Pages\ColorSettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\ConfigurationPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\CountrySelectPopup.xaml">
       <Generator>MSBuild:Compile</Generator>
