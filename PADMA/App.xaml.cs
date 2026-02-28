@@ -4,10 +4,12 @@ namespace PADMA;
 
 public partial class App : Application
 {
+    private bool _initializedOnce;
+    private readonly SemaphoreSlim _profileInitLock = new(1, 1);
+
     public App()
     {
         InitializeComponent();
-        //_ = SwissService.InitializeEphemerisPathAsync(); // запустится в фоне
         MainPage = new AppShell();
     }
 
@@ -17,23 +19,54 @@ public partial class App : Application
 
         try
         {
-            await SwissService.InitializeEphemerisPathAsync();
-            var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>(); // чтобы подписки точно установились
-            var db = ServiceLocator.Services.GetService<DatabaseService>();
-            if (db != null)
-            {
-                DataCache.Instance.ReloadProfiles(db, setActiveToDefault: true);
-            }
-            await DataCache.Instance.RebuildProfileContextAsync();
-
-            // refresh только если профиль реально есть
-            if (reminder != null && DataCache.Instance.ProfileContextService.Current != null)
-                await reminder.RefreshAsync();
+            _initializedOnce = true;
+            await EnsureDefaultProfileContextAsync();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ProfileContext] Rebuild failed: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[ProfileContext] OnStart failed: {ex}");
         }
     }
+
+    protected override async void OnResume()
+    {
+        base.OnResume();
+        try
+        {
+            // при возврате в приложение тоже приводим к дефолту
+            await EnsureDefaultProfileContextAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfileContext] OnResume failed: {ex}");
+        }
+    }
+
+    public async Task EnsureDefaultProfileContextAsync()
+    {
+        if (!await _profileInitLock.WaitAsync(0))
+            return;
+        
+        try
+        {
+            await SwissService.InitializeEphemerisPathAsync();
+
+            var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>();
+            var db = ServiceLocator.Services.GetService<DatabaseService>();
+
+            if (db != null)
+                DataCache.Instance.ReloadProfiles(db, setActiveToDefault: true);
+
+            await DataCache.Instance.RebuildProfileContextAsync();
+
+            if (reminder != null && DataCache.Instance.ProfileContextService.Current != null)
+                await reminder.RefreshAsync();
+        }
+        finally
+        {
+            _profileInitLock.Release();
+        }
+    }
+
 
 }

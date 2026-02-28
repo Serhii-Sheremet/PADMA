@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Maui;
+using Microsoft.Maui.Dispatching;
+using Microsoft.Maui.LifecycleEvents;
 using PADMA.Core.Services;
 using PADMA.Pages;
 using PADMA.UI.Services;
@@ -6,12 +8,53 @@ using Plugin.LocalNotification;
 using Syncfusion.Licensing;
 using Syncfusion.Maui.Core.Hosting;
 
+
 namespace PADMA;
 public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
+
+        builder.ConfigureLifecycleEvents(events =>
+        {
+            #if ANDROID
+                events.AddAndroid(android =>
+                {
+                    android.OnCreate((activity, bundle) =>
+                    {
+                        Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(async () =>
+                        {
+                            if (Microsoft.Maui.Controls.Application.Current is App app)
+                                await app.EnsureDefaultProfileContextAsync();
+                        });
+                    });
+            
+                    android.OnResume(activity =>
+                    {
+                        Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(async () =>
+                        {
+                            if (Microsoft.Maui.Controls.Application.Current is App app)
+                                await app.EnsureDefaultProfileContextAsync();
+                        });
+                    });
+                });
+            #endif
+            
+            #if IOS
+                        events.AddiOS(ios =>
+                        {
+                            ios.OnActivated(app =>
+                            {
+                                Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(async () =>
+                                {
+                                    if (Microsoft.Maui.Controls.Application.Current is App mauiApp)
+                                        await mauiApp.EnsureDefaultProfileContextAsync();
+                                });
+                            });
+                        });
+            #endif
+        });
 
         SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWX1fcXVXQ2BdWUBxWERWYEs=");
 
