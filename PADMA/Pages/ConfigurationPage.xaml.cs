@@ -96,7 +96,11 @@ namespace PADMA.Pages
         private async void OnCloseClicked(object sender, EventArgs e)
         {
             if (IsBusy) return;
+            await CloseAsync();
+        }
 
+        private async Task CloseAsync()
+        {
             var lang = DataCache.Instance.CurrentLanguageCode;
             await RunBusyAsync(Localization.GetLocalizedText("Applying settingsЕ", lang), async () =>
             {
@@ -112,6 +116,16 @@ namespace PADMA.Pages
                 // чуть сгладит переход, чтобы MainPage успел показать свой overlay
                 await Task.Yield();
             });
+        }
+
+        protected override bool OnBackButtonPressed()
+        {
+            Dispatcher.Dispatch(async () =>
+            {
+                if (IsBusy) return;
+                await CloseAsync();
+            });
+            return true; 
         }
 
         private async void OnLanguageClicked(object sender, EventArgs e)

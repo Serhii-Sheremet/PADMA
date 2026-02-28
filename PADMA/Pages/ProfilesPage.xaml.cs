@@ -255,7 +255,14 @@ namespace PADMA.Pages
             UpdateActionsVisibility();
         }
 
-
+        protected override bool OnBackButtonPressed()
+        {
+            Dispatcher.Dispatch(async () =>
+            {
+                await Shell.Current.GoToAsync("//main");
+            });
+            return true;
+        }
 
 
     }
