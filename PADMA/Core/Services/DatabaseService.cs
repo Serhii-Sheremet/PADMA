@@ -1755,11 +1755,26 @@ namespace PADMA.Core.Services
             }
         }
 
-
-
         #endregion
 
 
+        #region Color Settings
+        public void UpdateColorArgb(int colorId, int argbValue)
+        {
+            try
+            {
+                const string sql = @"UPDATE COLOR SET ARGBVALUE = ? WHERE ID = ?";
+                _connection.Execute(sql, argbValue, colorId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PADMA] UpdateColorArgb error: {ex.Message}");
+            }
+        }
+
+
+
+        #endregion
 
     }
 }

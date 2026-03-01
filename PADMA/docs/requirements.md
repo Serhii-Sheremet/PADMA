@@ -208,14 +208,16 @@ Acts as a hub for accessing all configuration pages.
 - Inherits from `ContentPage`.
 - Localized title `"Settings"`.
 - Vertical list of localized navigation buttons:
-  - `LanguagePage`
-  - `FirstDayOfWeekPage`
-  - `TransitsPage`
-  - `NodesPage`
+  - `Language`
+  - `First day of week`
+  - `Planetary transits`
+  - `Nodes (Rahu and Ketu)`
   - `Hora`
-  - `Muhurtas`
-  - `MrityuBhaga` 
-  - `Sunrise`
+  - `30 Muhurtas (60 Ghati)`
+  - `Mrityu Bhaga` 
+  - `Sunrise calculation`
+  - `Notification`
+  - `Color settings`
 - Toolbar with close icon (returns to `MainPage`).
 
 **Behavior:**
@@ -5387,3 +5389,128 @@ planetary and Panchanga stripes, completing the functional scope of the
 page.
 
 ------------
+
+# PADMA – Color Settings Page (Syncfusion) Requirements
+
+> Target: `PADMA/Pages/ColorSettingsPage` (inherits `ConfigBasePage`)
+
+## 1. Goal
+
+Provide a configuration page that lets the user fine-tune **application color palette** stored in database tables `COLOR` and `COLOR_DESC`, using **Syncfusion Color Picker** for precise selection.
+
+The page must follow the same UX and behavioral patterns as existing configuration pages (e.g., `HoraPage`, `MuhurtasPage`):
+- load current values on page open
+- track changes vs original values
+- on exit, if changes exist → ask to save / discard
+- if saved → persist to DB, refresh cache, notify the app to redraw calendar/UI
+
+## 2. Data model and sources
+
+### 2.1 Tables
+- `COLOR` (`AppColor`): `ID`, `CODE`, `ARGBVALUE`
+- `COLOR_DESC` (`AppColorDesc`): localized color names: `COLORID`, `NAME`, `LANGUAGECODE`
+
+### 2.2 Enum mapping
+- `EColor` values correspond to `COLOR.ID` (including updated `EVENTSTRIANGLE = 8`).
+
+### 2.3 Cache
+Already loaded into:
+- `DataCache.Instance.ColorList`
+- `DataCache.Instance.ColorDescList`
+
+### 2.4 ARGB conversions
+Use existing helper methods (do not duplicate logic):
+- `CalendarDrawingHelper.ColorFromArgbInt(int argb)`
+- `CalendarDrawingHelper.ColorToArgbInt(Color color)`
+
+## 3. UI requirements
+
+### 3.1 General
+- Page must inherit `ConfigBasePage` and use the same layout/styling conventions as other config pages.
+- All static texts must be localized via `Localization.GetLocalizedText(...)` using `DataCache.Instance.CurrentLanguageCode`.
+
+### 3.2 Layout
+Two panel layout (WinForms legacy analogy):
+- **Left panel**: list of available color entries (localized name).
+- **Right panel**: selected color preview rectangle (bigger swatch) - clicking -> Syncfusion Color Picker control (`SfColorPicker`) for selecting a color.
+- **Bottom area**:
+  - a button **“Apply system settings”** (apply system default palette)
+
+> Note: existing config pages apply changes on `OnDisappearing()`.  
+
+## 4. Behavior requirements
+
+### 4.1 Load current colors
+On page creation:
+1. Read current color values from DB (preferred) or from `DataCache` (acceptable if it reflects DB).
+2. Build a view list ordered by `COLOR.ID` (or a defined ordering).
+3. Resolve display name from `COLOR_DESC` for current language; fallback to `COLOR.CODE`.
+
+### 4.2 Selection behavior
+- Selecting an item in the left list makes it **current selection**.
+- Tapping the preview opens SfColorPicker; picker selection updates the pending value.
+- Changing the color in the picker updates the selected item’s pending value (in-memory).
+
+### 4.3 Change tracking
+- The page must track changes relative to the original values loaded at entry.
+- If no values changed → leaving the page closes silently (no prompts).
+- If any values changed → leaving the page triggers a **Save changes?** dialog, consistent with `HoraPage` / `MuhurtasPage`.
+
+### 4.4 Save prompt on exit (OnDisappearing)
+Follow same pattern as other config pages:
+- On `OnDisappearing()`:
+  - if unchanged → return
+  - else show `DisplayAlert(“Save changes?”, “…”, “Yes”, “No”)`
+  - if user selects **Yes** → persist changes (see 4.5)
+  - if **No** → discard in-memory changes (no DB update)
+
+### 4.5 Persist changes
+When saving:
+1. Update `COLOR.ARGBVALUE` for each changed row.
+2. Refresh cache:
+   - `DataCache.Instance.Refresh(db)` (not refreshes colors as for now)
+3. Notify app/UI to redraw:
+   - `MessagingCenter.Send<object>(this, "SettingsChanged");`
+
+> This message is already used by other config pages and is expected to trigger calendar redraw / UI refresh.
+
+## 5. “System settings” default palette
+
+### 5.1 Purpose
+Allow user to restore the **system default** palette for all colors (or a defined subset).
+
+### 5.2 Defaults definition
+Defaults must be a constant set defined in code (hardcoded), stable across runs:
+- Implemented as `Dictionary<EColor, int /*ARGB*/>` or equivalent.
+- Must cover at least all values present in `EColor` (except optional `NOCOLOR`).
+
+### 5.3 Action flow
+When user taps **System settings**:
+1. Ask confirmation (localized): “Apply system default colors?”
+2. If confirmed:
+   - set each color’s pending value to its default ARGB
+   - mark page as changed (so exiting will trigger save prompt unless user applies immediately)
+3. Update picker/preview for current selection accordingly.
+
+## 6. Non-goals / constraints
+- Do not introduce a brand-new settings storage mechanism; color values remain in `COLOR` table.
+- Keep UX consistent with existing config pages (no unique navigation patterns only for this page).
+- Do not refactor unrelated modules while implementing this page.
+
+## 7. Acceptance criteria
+
+1. Opening `ColorSettingsPage` shows list of colors with correct localized names.
+2. By default dirst item in a list is selected and bigger swatch display appropriate color
+3. Taping a color swatch -> open sfugion palette selection control.
+3. Picker changes update selected item’s swatch and are tracked as unsaved changes.
+4. Leaving the page:
+   - no changes → no prompt
+   - with changes → prompt appears; **Yes** saves to DB, **No** discards
+5. After saving:
+   - `COLOR.ARGBVALUE` values are updated
+   - caches are refreshed
+   - `"SettingsChanged"` message is sent
+   - calendar/UI redraws using new colors
+6. “System settings” applies default palette in-memory and participates in the same save/discard logic.
+
+---------

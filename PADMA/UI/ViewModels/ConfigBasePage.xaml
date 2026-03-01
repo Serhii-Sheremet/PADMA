@@ -21,9 +21,10 @@
         <BoxView Color="#AAFFFFFF" />
 
         <!-- Foreground content -->
-        <ScrollView>
-            <VerticalStackLayout Spacing="20"
-                                 Padding="20">
+        <ScrollView x:Name="RootScroll">
+            <VerticalStackLayout x:Name="RootStack"
+                         Spacing="20"
+                         Padding="20">
 
                 <Label x:Name="TitleLabel"
                        FontSize="22"
@@ -37,6 +38,12 @@
 
             </VerticalStackLayout>
         </ScrollView>
+
+        <!-- NEW: overlay host ABOVE ScrollView -->
+        <Grid x:Name="OverlayHost"
+              InputTransparent="True"
+              VerticalOptions="Fill"
+              HorizontalOptions="Fill"/>
 
     </Grid>
 

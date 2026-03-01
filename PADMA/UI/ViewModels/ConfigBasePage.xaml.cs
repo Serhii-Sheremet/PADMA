@@ -1,6 +1,4 @@
-using Microsoft.Maui.Controls;
 using PADMA.Core.Utilities;
-using System.Threading.Tasks;
 using PADMA.Core.Services;
 
 namespace PADMA.UI.Templates
@@ -9,10 +7,55 @@ namespace PADMA.UI.Templates
     {
         protected bool IsClosingByButton = false;
 
+        public Grid OverlayHostGrid => OverlayHost;
+
+        public static readonly BindableProperty IsCompactProperty =
+        BindableProperty.Create(nameof(IsCompact), typeof(bool), typeof(ConfigBasePage), false,
+            propertyChanged: (b, o, n) => ((ConfigBasePage)b).ApplyLayoutMode());
+
+        public bool IsCompact
+        {
+            get => (bool)GetValue(IsCompactProperty);
+            set => SetValue(IsCompactProperty, value);
+        }
+
+        public static readonly BindableProperty ShowTitleProperty =
+        BindableProperty.Create(nameof(ShowTitle), typeof(bool), typeof(ConfigBasePage), true,
+            propertyChanged: (b, o, n) => ((ConfigBasePage)b).TitleLabel.IsVisible = (bool)n);
+
+        public bool ShowTitle
+        {
+            get => (bool)GetValue(ShowTitleProperty);
+            set => SetValue(ShowTitleProperty, value);
+        }
+
         public ConfigBasePage()
         {
             InitializeComponent();
+            ApplyLayoutMode();
             //this.BackgroundImageSource = "background.png";
+        }
+
+        private void ApplyLayoutMode()
+        {
+            if (RootStack == null) return;
+
+            if (IsCompact)
+            {
+                Padding = new Thickness(0);
+                TitleLabel.Margin = new Thickness(0, 0, 0, 2);
+                RootStack.Spacing = 6; 
+                RootStack.Padding = new Thickness(12, 2, 12, 10);
+                TitleLabel.HorizontalOptions = LayoutOptions.Start;
+            }
+            else
+            {
+                Padding = new Thickness(10);
+                RootStack.Padding = new Thickness(20);
+                RootStack.Spacing = 20;
+                TitleLabel.Margin = new Thickness(10, 10, 0, 10);
+                TitleLabel.HorizontalOptions = LayoutOptions.Center;
+            }
         }
 
         protected virtual async void OnCloseClicked(object sender, EventArgs e)

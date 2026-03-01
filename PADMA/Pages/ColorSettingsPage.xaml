@@ -1,20 +1,115 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ui:ConfigBasePage
-             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
-             x:Class="PADMA.Pages.ColorSettingsPage">
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
+    xmlns:inputs="clr-namespace:Syncfusion.Maui.Inputs;assembly=Syncfusion.Maui.Inputs"
+    x:Class="PADMA.Pages.ColorSettingsPage"
+    IsCompact="True"
+    ShowTitle="True">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="16">
+    <Grid Padding="12" RowSpacing="10"
+          RowDefinitions="Auto,*,Auto">
 
-            <!-- Заголовок страницы -->
-            <Label x:Name="HeaderLabel"
-                   Style="{StaticResource PageTitleStyle}"
-                   HorizontalOptions="Start" />
+        <!-- Full-width list -->
+        <Frame Grid.Row="1" Padding="8">
+            <CollectionView x:Name="ColorsList"
+                            SelectionMode="Single"
+                            SelectionChanged="OnSelectionChanged">
 
-           
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Stroke="#22000000"
+                                StrokeThickness="1"
+                                BackgroundColor="Transparent"
+                                Margin="4,2"
+                                Padding="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10"/>
+                            </Border.StrokeShape>
 
-        </VerticalStackLayout>
-    </ScrollView>
+                            <Grid Padding="10"
+                                  ColumnSpacing="12"
+                                  ColumnDefinitions="90,*,Auto">
+
+                                <!-- color swatch -->
+                                <Border BackgroundColor="{Binding MauiColor}"
+                                        WidthRequest="80"
+                                        HeightRequest="26"
+                                        VerticalOptions="Center">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="6"/>
+                                    </Border.StrokeShape>
+                                </Border>
+
+                                <!-- name -->
+                                <Label Grid.Column="1"
+                                       Text="{Binding Name}"
+                                       LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center"
+                                       FontSize="16"/>
+
+                                <!-- dirty marker -->
+                                <Label Grid.Column="2"
+                                       Text="*"
+                                       IsVisible="{Binding IsDirty}"
+                                       VerticalOptions="Center"/>
+
+                            </Grid>
+
+                            <!-- Selected highlight -->
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="Normal">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="Transparent" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="#1F000000" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+            </CollectionView>
+        </Frame>
+
+        <!-- Bottom buttons: left System, right Change -->
+        <Grid Grid.Row="2" ColumnSpacing="10"
+              ColumnDefinitions="*,*">
+            <Button x:Name="ApplySystemButton"
+                    Grid.Column="0"
+                    Clicked="OnApplySystemClicked"/>
+            <Button x:Name="ChangeButton"
+                    Grid.Column="1"
+                    Clicked="OnChangeClicked"
+                    IsEnabled="False"/>
+        </Grid>
+
+        <!-- hidden picker  -->
+        <Grid x:Name="PickerAnchor"
+              HorizontalOptions="Center"
+              VerticalOptions="Center"
+              InputTransparent="True">
+
+            <inputs:SfColorPicker x:Name="HiddenColorPicker"
+                          IsOpen="False"
+                          IsActionButtonsVisible="False"
+                          ColorMode="Spectrum"
+                          IsColorModeSwitcherVisible="False"
+                          ColorChanged="OnHiddenColorChanged"
+                          WidthRequest="1"
+                          HeightRequest="1"
+                          Opacity="0.01"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"/>
+        </Grid>
+
+    </Grid>
 </ui:ConfigBasePage>

@@ -206,14 +206,9 @@ namespace PADMA.Core.Services
             CultureInfo.CurrentCulture = ci;
 
             // подключаем ресурсы Syncfusion ColorPicker
-            // 2) подключаем ресурсы (ВАЖНО: base name должен быть точный)
-            var rm = new ResourceManager("PADMA.Resources.SfColorPicker", typeof(App).Assembly);
-            SfColorPickerResources.ResourceManager = rm;
-
-            // 3) диагностика (временно)
-            var testApply = rm.GetString("Apply", ci);
-            System.Diagnostics.Debug.WriteLine($"SfColorPicker Apply test = '{testApply}' culture={ci.Name}");
-
+            // подключаем ресурсы (ВАЖНО: base name должен быть точный)
+            //var rm = new ResourceManager("PADMA.Resources.SfColorPicker", typeof(App).Assembly);
+            //SfColorPickerResources.ResourceManager = rm;
         }
 
         public string GetCurrentCultureCode(string langCode)
@@ -229,6 +224,7 @@ namespace PADMA.Core.Services
             AppSettingsList = db.GetAppSettingsList();
             CurrentLanguageCode = db.GetActiveLanguageCode();
             AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
+            ColorList = db.GetColors();
         }
 
         public Color GetColor(EColor color)
