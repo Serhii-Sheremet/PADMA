@@ -5411,7 +5411,7 @@ The page must follow the same UX and behavioral patterns as existing configurati
 - `COLOR_DESC` (`AppColorDesc`): localized color names: `COLORID`, `NAME`, `LANGUAGECODE`
 
 ### 2.2 Enum mapping
-- `EColor` values correspond to `COLOR.ID` (including updated `EVENTSTRIANGLE = 8`).
+- `EColor` values correspond to `COLOR.ID`.
 
 ### 2.3 Cache
 Already loaded into:
@@ -5431,10 +5431,8 @@ Use existing helper methods (do not duplicate logic):
 
 ### 3.2 Layout
 Two panel layout (WinForms legacy analogy):
-- **Left panel**: list of available color entries (localized name).
-- **Right panel**: selected color preview rectangle (bigger swatch) - clicking -> Syncfusion Color Picker control (`SfColorPicker`) for selecting a color.
-- **Bottom area**:
-  - a button **“Apply system settings”** (apply system default palette)
+- **Top panel**: list of available color entries (localized name with small colored swatch).
+- **Bottom area**: buttons **"System default" and "Change"**
 
 > Note: existing config pages apply changes on `OnDisappearing()`.  
 
@@ -5448,7 +5446,7 @@ On page creation:
 
 ### 4.2 Selection behavior
 - Selecting an item in the left list makes it **current selection**.
-- Tapping the preview opens SfColorPicker; picker selection updates the pending value.
+- Tapping the "Change" button opens SfColorPicker; picker selection updates the pending value.
 - Changing the color in the picker updates the selected item’s pending value (in-memory).
 
 ### 4.3 Change tracking
@@ -5500,8 +5498,8 @@ When user taps **System settings**:
 ## 7. Acceptance criteria
 
 1. Opening `ColorSettingsPage` shows list of colors with correct localized names.
-2. By default dirst item in a list is selected and bigger swatch display appropriate color
-3. Taping a color swatch -> open sfugion palette selection control.
+2. By default first item in a list is selected.
+3. Taping a "Change" button -> open sfugion palette selection control (the picker's color is set to selected one).
 3. Picker changes update selected item’s swatch and are tracked as unsaved changes.
 4. Leaving the page:
    - no changes → no prompt
@@ -5511,6 +5509,6 @@ When user taps **System settings**:
    - caches are refreshed
    - `"SettingsChanged"` message is sent
    - calendar/UI redraws using new colors
-6. “System settings” applies default palette in-memory and participates in the same save/discard logic.
+6. “System default” applies default palette in-memory and participates in the same save/discard logic.
 
 ---------

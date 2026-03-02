@@ -4,20 +4,26 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
     xmlns:inputs="clr-namespace:Syncfusion.Maui.Inputs;assembly=Syncfusion.Maui.Inputs"
+    xmlns:popup="clr-namespace:Syncfusion.Maui.Popup;assembly=Syncfusion.Maui.Popup"
     x:Class="PADMA.Pages.ColorSettingsPage"
     IsCompact="True"
     ShowTitle="True">
 
-    <Grid Padding="12" RowSpacing="10"
-          RowDefinitions="Auto,*,Auto">
+    <AbsoluteLayout>
 
-        <!-- Full-width list -->
-        <Frame Grid.Row="1" Padding="8">
-            <CollectionView x:Name="ColorsList"
+        <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
+              AbsoluteLayout.LayoutFlags="All"
+              Padding="12"
+              RowSpacing="10"
+              RowDefinitions="*,Auto">
+
+            <!-- Full-width list -->
+            <Frame Grid.Row="0" Padding="8">
+                <CollectionView x:Name="ColorsList"
                             SelectionMode="Single"
                             SelectionChanged="OnSelectionChanged">
 
-                <CollectionView.ItemTemplate>
+                    <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Border Stroke="#22000000"
                                 StrokeThickness="1"
@@ -77,39 +83,77 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
 
-            </CollectionView>
-        </Frame>
+                </CollectionView>
+            </Frame>
 
-        <!-- Bottom buttons: left System, right Change -->
-        <Grid Grid.Row="2" ColumnSpacing="10"
-              ColumnDefinitions="*,*">
-            <Button x:Name="ApplySystemButton"
-                    Grid.Column="0"
-                    Clicked="OnApplySystemClicked"/>
-            <Button x:Name="ChangeButton"
-                    Grid.Column="1"
-                    Clicked="OnChangeClicked"
-                    IsEnabled="False"/>
+            <!-- Bottom buttons: left System, right Change -->
+            <Grid Grid.Row="1" ColumnSpacing="10"
+                  ColumnDefinitions="*,*">
+                <Button x:Name="ApplySystemButton"
+                        Grid.Column="0"
+                        Clicked="OnApplySystemClicked"/>
+                <Button x:Name="ChangeButton"
+                        Grid.Column="1"
+                        Clicked="OnChangeClicked"
+                        IsEnabled="False"/>
+            </Grid>
+
         </Grid>
 
-        <!-- hidden picker  -->
-        <Grid x:Name="PickerAnchor"
-              HorizontalOptions="Center"
-              VerticalOptions="Center"
-              InputTransparent="True">
+        <popup:SfPopup x:Name="ColorPopup"
+               IsOpen="False"
+               ShowCloseButton="True"
+               ShowHeader="False"
+               StaysOpen="False"
+               WidthRequest="360"
+               HeightRequest="560"
+               IsFullScreen="False">
 
-            <inputs:SfColorPicker x:Name="HiddenColorPicker"
-                          IsOpen="False"
-                          IsActionButtonsVisible="False"
-                          ColorMode="Spectrum"
-                          IsColorModeSwitcherVisible="False"
-                          ColorChanged="OnHiddenColorChanged"
-                          WidthRequest="1"
-                          HeightRequest="1"
-                          Opacity="0.01"
-                          HorizontalOptions="Center"
-                          VerticalOptions="Center"/>
-        </Grid>
+            <popup:SfPopup.ContentTemplate>
+                <DataTemplate>
+                    <Grid Padding="12"
+                          RowDefinitions="Auto,*,56"
+                          RowSpacing="10"
+                          WidthRequest="360"
+                          HeightRequest="540">
 
-    </Grid>
+                        <Label Text="Color"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+
+                        <inputs:SfColorPicker Grid.Row="1"
+                                    Margin="0,0,0,-24"
+                                    IsInline="True"
+                                    ColorMode="Spectrum"
+                                    IsColorModeSwitcherVisible="True"
+                                    IsActionButtonsVisible="False"
+                                    ShowInputArea="True"
+                                    ShowAlphaSlider="True"
+                                    Loaded="OnInlinePickerLoaded"
+                                    ColorChanged="OnInlineColorChanged"/>
+
+                        <!-- bottom bar (fixed height) -->
+                        <Grid Grid.Row="2"
+                              ColumnDefinitions="*,Auto"
+                              ColumnSpacing="10"
+                              VerticalOptions="End">
+
+                            <!--Label Text=""
+                                   VerticalOptions="Center"/>-->
+
+                            <Button Text="Select"
+                                    HeightRequest="34"
+                                    WidthRequest="120"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="End"
+                                    Clicked="OnSelectColorClicked"/>
+                        </Grid>
+
+                    </Grid>
+                </DataTemplate>
+            </popup:SfPopup.ContentTemplate>
+
+        </popup:SfPopup>
+
+    </AbsoluteLayout>
 </ui:ConfigBasePage>

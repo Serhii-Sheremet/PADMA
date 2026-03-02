@@ -14,46 +14,11 @@ namespace PADMA.Pages;
 public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
 {
     private readonly DatabaseService _db;
-    private Color? _pendingOpenColor;
-    private bool _fixApplied;
-
     private readonly Dictionary<int, int> _originalColors = new();
     private readonly Dictionary<int, int> _currentColors = new();
-
     private readonly ObservableCollection<ColorItem> _items = new();
-
     private ColorItem? _selectedItem;
-    private bool _isSavingOrDiscarding; // чтобы OnDisappearing не зациклился при навигации/попапах
-
-    private Syncfusion.Maui.Inputs.SfColorPicker? _picker;
-
-    private void EnsureHiddenPicker()
-    {
-        if (_picker != null) return;
-
-        _picker = new SfColorPicker
-        {
-            IsOpen = false,
-            IsActionButtonsVisible = false,
-
-            // ВАЖНО: не микроскопический размер
-            WidthRequest = 40,
-            HeightRequest = 40,
-
-            // Полностью прозрачно, но измеряется
-            Opacity = 0.001,
-
-            HorizontalOptions = LayoutOptions.Center,
-            VerticalOptions = LayoutOptions.Center,
-        };
-
-        _picker.ColorChanged += OnHiddenColorChanged;
-
-        // кладём ВНЕ ScrollView — в overlay host template
-        this.OverlayHostGrid.Children.Add(_picker);
-        OverlayHostGrid.HorizontalOptions = LayoutOptions.Fill;
-        OverlayHostGrid.VerticalOptions = LayoutOptions.Fill;
-    }
+    private bool _isSavingOrDiscarding; 
 
     public ColorSettingsPage(DatabaseService db)
     {
@@ -107,6 +72,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         if (_items.Count == 0) return;
         ColorsList.SelectedItem = _items[0];
         _selectedItem = _items[0];
+        
     }
 
     private void OnSelectionChanged(object? sender, Microsoft.Maui.Controls.SelectionChangedEventArgs e)
@@ -115,48 +81,57 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         ChangeButton.IsEnabled = _selectedItem != null;
     }
 
+    private SfColorPicker? _inlinePicker;
+    private Color _pendingColor;
+
+    private void OnInlinePickerLoaded(object? sender, EventArgs e)
+    {
+        if (sender is Syncfusion.Maui.Inputs.SfColorPicker cp)
+        {
+            _inlinePicker = cp;
+            _inlinePicker.SelectedColor = _pendingColor;
+        }
+    }
+
     private void OnChangeClicked(object sender, EventArgs e)
     {
         if (_selectedItem == null) return;
 
-        EnsureHiddenPicker();
+        _pendingColor = _selectedItem.MauiColor;
+        ColorPopup.IsOpen = true;
+        
+        if (_inlinePicker != null)
+            _inlinePicker.SelectedColor = _pendingColor;
 
-        var c = _selectedItem.MauiColor;
-
-        _picker!.IsOpen = false;
-        _picker.SelectedColor = c;
-
-        // Даем странице/host/picker пройти layout
-        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(120), () =>
-        {
-            // “пинок” на пересчёт координат
-            _picker.InvalidateMeasure();
-            //_picker.ForceLayout();
-
-            _picker.IsOpen = true;
-        });
     }
 
-    private void HiddenColorPicker_ColorChangingFix(object? sender, Syncfusion.Maui.Inputs.ColorChangingEventArgs e)
-    {
-        if (_pendingOpenColor == null || _fixApplied) return;
-
-        // первый же тик после открытия — принудительно ставим наш цвет
-        HiddenColorPicker.SelectedColor = _pendingOpenColor;
-        _fixApplied = true;
-
-        // можно отписаться, чтобы не мешать дальнейшему выбору
-        HiddenColorPicker.ColorChanging -= HiddenColorPicker_ColorChangingFix;
-    }
-
-    private void OnHiddenColorChanged(object? sender, Syncfusion.Maui.Inputs.ColorChangedEventArgs e)
+    private void OnInlineColorChanged(object sender, Syncfusion.Maui.Inputs.ColorChangedEventArgs e)
     {
         if (_selectedItem == null) return;
 
-        var argb = CalendarDrawingHelper.ColorToArgbInt(e.NewColor);
-        _currentColors[_selectedItem.Id] = argb;
-        _selectedItem.SetArgb(argb, isDirty: argb != _originalColors[_selectedItem.Id]);
+        _pendingColor = e.NewColor;
+        var newArgb = CalendarDrawingHelper.ColorToArgbInt(_pendingColor);
+
+        _currentColors[_selectedItem.Id] = newArgb;
+
+        var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != newArgb;
+        _selectedItem.SetArgb(newArgb, isDirty);
     }
+
+    private void OnSelectColorClicked(object sender, EventArgs e)
+    {
+        if (_selectedItem == null) return;
+
+        var newArgb = CalendarDrawingHelper.ColorToArgbInt(_pendingColor);
+        _currentColors[_selectedItem.Id] = newArgb;
+
+        var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != newArgb;
+        _selectedItem.SetArgb(newArgb, isDirty);
+
+        ColorPopup.IsOpen = false;
+    }
+
+    
 
     private async void OnApplySystemClicked(object sender, EventArgs e)
     {

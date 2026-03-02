@@ -207,8 +207,8 @@ namespace PADMA.Core.Services
 
             // подключаем ресурсы Syncfusion ColorPicker
             // подключаем ресурсы (ВАЖНО: base name должен быть точный)
-            //var rm = new ResourceManager("PADMA.Resources.SfColorPicker", typeof(App).Assembly);
-            //SfColorPickerResources.ResourceManager = rm;
+            // var rm = new ResourceManager("PADMA.Resources.SfColorPicker", typeof(App).Assembly);
+            // SfColorPickerResources.ResourceManager = rm;
         }
 
         public string GetCurrentCultureCode(string langCode)
