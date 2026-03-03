@@ -98,6 +98,31 @@
                         IsEnabled="False"/>
             </Grid>
 
+            <!--  Busy overlay -->
+            <Grid Grid.Row="0"
+                  Grid.ColumnSpan="2"
+                  IsVisible="{Binding IsBusy, FallbackValue=False}"
+                  InputTransparent="False"
+                  BackgroundColor="#80000000"
+                  ZIndex="999">
+
+                <VerticalStackLayout
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Spacing="12">
+
+                    <ActivityIndicator
+                        IsRunning="True"
+                        WidthRequest="48"
+                        HeightRequest="48" />
+
+                    <Label Text="{Binding BusyText}"
+                           TextColor="White"
+                           FontSize="Medium"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+
         </Grid>
 
         <popup:SfPopup x:Name="ColorPopup"
@@ -117,7 +142,8 @@
                           WidthRequest="360"
                           HeightRequest="540">
 
-                        <Label Text="Color"
+                        <Label x:Name="LabelColor"
+                               Text="{Binding LabelColor}"
                                FontAttributes="Bold"
                                HorizontalOptions="Center"/>
 
@@ -138,10 +164,8 @@
                               ColumnSpacing="10"
                               VerticalOptions="End">
 
-                            <!--Label Text=""
-                                   VerticalOptions="Center"/>-->
-
-                            <Button Text="Select"
+                            <Button x:Name="ButtonSelect"
+                                    Text="{Binding ButtonSelect}"
                                     HeightRequest="34"
                                     WidthRequest="120"
                                     VerticalOptions="Center"

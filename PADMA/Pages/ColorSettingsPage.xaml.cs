@@ -18,11 +18,69 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     private readonly Dictionary<int, int> _currentColors = new();
     private readonly ObservableCollection<ColorItem> _items = new();
     private ColorItem? _selectedItem;
-    private bool _isSavingOrDiscarding; 
+    private bool _isSavingOrDiscarding;
+
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            if (_isBusy == value) return;
+            _isBusy = value;
+            OnPropertyChanged(nameof(IsBusy));
+        }
+    }
+
+    private string _busyText = "Please waitЕ";
+    public string BusyText
+    {
+        get => _busyText;
+        set
+        {
+            if (_busyText == value) return;
+            _busyText = value;
+            OnPropertyChanged(nameof(BusyText));
+        }
+    }
+
+    private string _lblColor = "Select color";
+    public string LabelColor
+    {   get => _lblColor;
+        set
+        {
+            if (_lblColor == value) return;
+            _lblColor = value;
+            OnPropertyChanged(nameof(LabelColor));
+        }
+    }
+
+    private string _btnSelect = "Select";
+    public string ButtonSelect
+    {   get => _btnSelect;
+        set
+        {
+            if (_btnSelect == value) return;
+            _btnSelect = value;
+            OnPropertyChanged(nameof(ButtonSelect));
+        }
+    }
+
+    private async Task RunBusyAsync(string text, Func<Task> action)
+    {
+        BusyText = text;
+        IsBusy = true;
+
+        await Task.Yield(); // дать UI шанс отрисовать overlay
+
+        try { await action(); }
+        finally { IsBusy = false; }
+    }
 
     public ColorSettingsPage(DatabaseService db)
     {
         InitializeComponent();
+        BindingContext = this;
         IsCompact = true;
         _db = db;
 
@@ -37,6 +95,8 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         Title = Localization.GetLocalizedText("Color settings", lang);
         ApplySystemButton.Text = Localization.GetLocalizedText("System default", lang);
         ChangeButton.Text = Localization.GetLocalizedText("Change", lang);
+        LabelColor = Localization.GetLocalizedText("Select color", lang);
+        ButtonSelect = Localization.GetLocalizedText("Select", lang);
     }
 
     private void LoadColors()
@@ -93,16 +153,21 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         }
     }
 
-    private void OnChangeClicked(object sender, EventArgs e)
+    private async void OnChangeClicked(object sender, EventArgs e)
     {
         if (_selectedItem == null) return;
 
-        _pendingColor = _selectedItem.MauiColor;
-        ColorPopup.IsOpen = true;
-        
-        if (_inlinePicker != null)
-            _inlinePicker.SelectedColor = _pendingColor;
+        var lang = DataCache.Instance.CurrentLanguageCode;
+        await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
+        {
+            _pendingColor = _selectedItem.MauiColor;
+            ColorPopup.IsOpen = true;
 
+            if (_inlinePicker != null)
+                _inlinePicker.SelectedColor = _pendingColor;
+
+            await Task.Yield();
+        });
     }
 
     private void OnInlineColorChanged(object sender, Syncfusion.Maui.Inputs.ColorChangedEventArgs e)
@@ -127,6 +192,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
 
         var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != newArgb;
         _selectedItem.SetArgb(newArgb, isDirty);
+
 
         ColorPopup.IsOpen = false;
     }
@@ -288,4 +354,6 @@ public sealed class ColorItem : INotifyPropertyChanged
 
     private void OnPropertyChanged([CallerMemberName] string? n = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
+
+    
 }
