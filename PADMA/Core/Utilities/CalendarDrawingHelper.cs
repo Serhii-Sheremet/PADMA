@@ -50,10 +50,17 @@ namespace PADMA.Core.Utilities
 
         public static int ColorToArgbInt(Color c)
         {
-            byte a = (byte)(c.Alpha * 255);
-            byte r = (byte)(c.Red * 255);
-            byte g = (byte)(c.Green * 255);
-            byte b = (byte)(c.Blue * 255);
+            static byte ToByte(float v)
+            {
+                v = Math.Clamp(v, 0f, 1f);
+                return (byte)Math.Round(v * 255f);
+            }
+
+            byte a = ToByte((float)c.Alpha);
+            byte r = ToByte((float)c.Red);
+            byte g = ToByte((float)c.Green);
+            byte b = ToByte((float)c.Blue);
+
             return (a << 24) | (r << 16) | (g << 8) | b;
         }
 

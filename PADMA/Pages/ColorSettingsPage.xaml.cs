@@ -19,6 +19,8 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     private readonly ObservableCollection<ColorItem> _items = new();
     private ColorItem? _selectedItem;
     private bool _isSavingOrDiscarding;
+    private SfColorPicker? InlineColorPicker;
+    private Color _pendingColor;
 
     private bool _isBusy;
     public bool IsBusy
@@ -83,6 +85,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         BindingContext = this;
         IsCompact = true;
         _db = db;
+        InlineColorPicker = this.FindByName<SfColorPicker>("InlineColorPicker");
 
         ApplyLocalization();
         LoadColors();
@@ -132,39 +135,37 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         if (_items.Count == 0) return;
         ColorsList.SelectedItem = _items[0];
         _selectedItem = _items[0];
-        
     }
 
     private void OnSelectionChanged(object? sender, Microsoft.Maui.Controls.SelectionChangedEventArgs e)
     {
         _selectedItem = e.CurrentSelection?.FirstOrDefault() as ColorItem;
         ChangeButton.IsEnabled = _selectedItem != null;
+
+        if (_selectedItem != null)
+            _pendingColor = _selectedItem.MauiColor;
     }
-
-    private SfColorPicker? _inlinePicker;
-    private Color _pendingColor;
-
-    private void OnInlinePickerLoaded(object? sender, EventArgs e)
+    
+    private async void OnInlinePickerLoaded(object? sender, EventArgs e)
     {
-        if (sender is Syncfusion.Maui.Inputs.SfColorPicker cp)
-        {
-            _inlinePicker = cp;
-            _inlinePicker.SelectedColor = _pendingColor;
-        }
+        if (sender is not SfColorPicker cp) return;
+
+        InlineColorPicker = cp;
+        
     }
 
     private async void OnChangeClicked(object sender, EventArgs e)
     {
         if (_selectedItem == null) return;
+        
+        _pendingColor = _selectedItem.MauiColor;
 
         var lang = DataCache.Instance.CurrentLanguageCode;
         await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
         {
-            _pendingColor = _selectedItem.MauiColor;
-            ColorPopup.IsOpen = true;
+            InlineColorPicker.SelectedColor = _pendingColor;
 
-            if (_inlinePicker != null)
-                _inlinePicker.SelectedColor = _pendingColor;
+            ColorPopup.IsOpen = true;
 
             await Task.Yield();
         });
@@ -174,13 +175,8 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     {
         if (_selectedItem == null) return;
 
-        _pendingColor = e.NewColor;
-        var newArgb = CalendarDrawingHelper.ColorToArgbInt(_pendingColor);
-
-        _currentColors[_selectedItem.Id] = newArgb;
-
-        var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != newArgb;
-        _selectedItem.SetArgb(newArgb, isDirty);
+        _pendingColor =e.NewColor;
+        
     }
 
     private void OnSelectColorClicked(object sender, EventArgs e)
@@ -192,7 +188,6 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
 
         var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != newArgb;
         _selectedItem.SetArgb(newArgb, isDirty);
-
 
         ColorPopup.IsOpen = false;
     }
@@ -296,8 +291,6 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     }
 
     // ===== System default palette (ARGB int) =====
-    // «десь хардкодим набор "системных" цветов. Ћучше покрыть все EColor (кроме NOCOLOR).
-    // ‘ормат: 0xAARRGGBB (int) => unchecked((int)0xFFRRGGBB)
     private static readonly Dictionary<int, int> SystemDefaultPalette = new()
     {
         // примерные значени€ Ч подставь ваши реальные system defaults
@@ -306,8 +299,6 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         { (int)EColor.LIGHTGREEN, unchecked((int)0xFF81C784) },
         { (int)EColor.LIGHTRED, unchecked((int)0xFFEF9A9A) },
         { (int)EColor.PINK, unchecked((int)0xFFF48FB1) },
-
-        { (int)EColor.EVENTSTRIANGLE, unchecked((int)0xFFFFD54F) }, // пример: желтый треугольник
 
         { (int)EColor.GRAY, unchecked((int)0xFF9E9E9E) },
         { (int)EColor.BLACK, unchecked((int)0xFF000000) },

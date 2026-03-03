@@ -3,8 +3,8 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
-    xmlns:inputs="clr-namespace:Syncfusion.Maui.Inputs;assembly=Syncfusion.Maui.Inputs"
     xmlns:popup="clr-namespace:Syncfusion.Maui.Popup;assembly=Syncfusion.Maui.Popup"
+    xmlns:inputs="clr-namespace:Syncfusion.Maui.Inputs;assembly=Syncfusion.Maui.Inputs"
     x:Class="PADMA.Pages.ColorSettingsPage"
     IsCompact="True"
     ShowTitle="True">
@@ -147,7 +147,8 @@
                                FontAttributes="Bold"
                                HorizontalOptions="Center"/>
 
-                        <inputs:SfColorPicker Grid.Row="1"
+                        <inputs:SfColorPicker x:Name="InlineColorPicker"
+                                    Grid.Row="1"
                                     Margin="0,0,0,-24"
                                     IsInline="True"
                                     ColorMode="Spectrum"
