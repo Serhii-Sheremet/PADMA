@@ -69,7 +69,7 @@
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	<PackageReference Include="NodaTime" Version="3.2.2" />
 	<PackageReference Include="GeoTimeZone" Version="6.1.0" />
-	<PackageReference Include="Syncfusion.Maui.Inputs" Version="32.2.4" />
+	<PackageReference Include="Syncfusion.Maui.Inputs" Version="32.2.8" />
 	<PackageReference Include="TimeZoneConverter" Version="7.2.0" />
 
     <!-- Logging -->
@@ -92,6 +92,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <MauiXaml Update="Pages\ColorLookupPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\ColorSettingsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

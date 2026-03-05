@@ -1,10 +1,9 @@
-using CommunityToolkit.Maui.Extensions;
+п»їusing CommunityToolkit.Maui.Extensions;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
 using PADMA.Core.Enums;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
-using Syncfusion.Maui.Inputs;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -19,65 +18,6 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     private readonly ObservableCollection<ColorItem> _items = new();
     private ColorItem? _selectedItem;
     private bool _isSavingOrDiscarding;
-    private SfColorPicker? InlineColorPicker;
-    private Color _pendingColor;
-
-    private bool _isBusy;
-    public bool IsBusy
-    {
-        get => _isBusy;
-        set
-        {
-            if (_isBusy == value) return;
-            _isBusy = value;
-            OnPropertyChanged(nameof(IsBusy));
-        }
-    }
-
-    private string _busyText = "Please wait…";
-    public string BusyText
-    {
-        get => _busyText;
-        set
-        {
-            if (_busyText == value) return;
-            _busyText = value;
-            OnPropertyChanged(nameof(BusyText));
-        }
-    }
-
-    private string _lblColor = "Select color";
-    public string LabelColor
-    {   get => _lblColor;
-        set
-        {
-            if (_lblColor == value) return;
-            _lblColor = value;
-            OnPropertyChanged(nameof(LabelColor));
-        }
-    }
-
-    private string _btnSelect = "Select";
-    public string ButtonSelect
-    {   get => _btnSelect;
-        set
-        {
-            if (_btnSelect == value) return;
-            _btnSelect = value;
-            OnPropertyChanged(nameof(ButtonSelect));
-        }
-    }
-
-    private async Task RunBusyAsync(string text, Func<Task> action)
-    {
-        BusyText = text;
-        IsBusy = true;
-
-        await Task.Yield(); // дать UI шанс отрисовать overlay
-
-        try { await action(); }
-        finally { IsBusy = false; }
-    }
 
     public ColorSettingsPage(DatabaseService db)
     {
@@ -85,7 +25,6 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         BindingContext = this;
         IsCompact = true;
         _db = db;
-        InlineColorPicker = this.FindByName<SfColorPicker>("InlineColorPicker");
 
         ApplyLocalization();
         LoadColors();
@@ -98,8 +37,6 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         Title = Localization.GetLocalizedText("Color settings", lang);
         ApplySystemButton.Text = Localization.GetLocalizedText("System default", lang);
         ChangeButton.Text = Localization.GetLocalizedText("Change", lang);
-        LabelColor = Localization.GetLocalizedText("Select color", lang);
-        ButtonSelect = Localization.GetLocalizedText("Select", lang);
     }
 
     private void LoadColors()
@@ -110,10 +47,10 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
 
         var lang = DataCache.Instance.CurrentLanguageCode;
 
-        // предпочтительно как в других конфиг-страницах: читаем из DB
+        // РїСЂРµРґРїРѕС‡С‚РёС‚РµР»СЊРЅРѕ РєР°Рє РІ РґСЂСѓРіРёС… РєРѕРЅС„РёРі-СЃС‚СЂР°РЅРёС†Р°С…: С‡РёС‚Р°РµРј РёР· DB
         var colors = _db.GetColors().OrderBy(c => c.Id).ToList();
 
-        // desc из кеша (уже загружено)
+        // desc РёР· РєРµС€Р° (СѓР¶Рµ Р·Р°РіСЂСѓР¶РµРЅРѕ)
         var descs = DataCache.Instance.ColorDescList;
 
         foreach (var c in colors)
@@ -141,57 +78,75 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     {
         _selectedItem = e.CurrentSelection?.FirstOrDefault() as ColorItem;
         ChangeButton.IsEnabled = _selectedItem != null;
-
-        if (_selectedItem != null)
-            _pendingColor = _selectedItem.MauiColor;
     }
-    
-    private async void OnInlinePickerLoaded(object? sender, EventArgs e)
-    {
-        if (sender is not SfColorPicker cp) return;
 
-        InlineColorPicker = cp;
-        
+    private void OnColorSelected(ColorLookupPage sender, int argb)
+    {
+        if (_selectedItem == null) return;
+
+        _currentColors[_selectedItem.Id] = argb;
+        var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != argb;
+        _selectedItem.SetArgb(argb, isDirty);
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        MessagingCenter.Subscribe < ColorLookupPage, int> (this, "ColorSelected", OnColorSelected);
+    }
+
+    protected override async void OnDisappearing()
+    {
+        MessagingCenter.Unsubscribe<ColorLookupPage, int>(this, "ColorSelected");
+        base.OnDisappearing();
+
+        if (_isSavingOrDiscarding) return;
+        if (!IsDirty()) return;
+
+        _isSavingOrDiscarding = true;
+
+        try
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            var save = await DisplayAlert(
+                Localization.GetLocalizedText("Save changes?", lang),
+                Localization.GetLocalizedText("Do you want to save changes?", lang),
+                Localization.GetLocalizedText("Yes", lang),
+                Localization.GetLocalizedText("No", lang));
+
+            if (save)
+            {
+                SaveToDb();
+                DataCache.Instance.Refresh(_db); // С‚С‹ СѓР¶Рµ РґРѕР±Р°РІРёР» GetColors() СЃСЋРґР°
+                MessagingCenter.Send<object>(this, "SettingsChanged");
+            }
+            else
+            {
+                // discard: РІРѕСЃСЃС‚Р°РЅРѕРІРёРј current РёР· original Рё UI
+                foreach (var item in _items)
+                {
+                    var orig = _originalColors[item.Id];
+                    _currentColors[item.Id] = orig;
+                    item.SetArgb(orig, isDirty: false);
+                }
+            }
+        }
+        finally
+        {
+            _isSavingOrDiscarding = false;
+        }
     }
 
     private async void OnChangeClicked(object sender, EventArgs e)
     {
         if (_selectedItem == null) return;
-        
-        _pendingColor = _selectedItem.MauiColor;
 
-        var lang = DataCache.Instance.CurrentLanguageCode;
-        await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
-        {
-            InlineColorPicker.SelectedColor = _pendingColor;
-
-            ColorPopup.IsOpen = true;
-
-            await Task.Yield();
-        });
+        var startArgb = _selectedItem.Argb; 
+        await Shell.Current.GoToAsync($"{nameof(ColorLookupPage)}?StartArgb={startArgb}", true);
     }
 
-    private void OnInlineColorChanged(object sender, Syncfusion.Maui.Inputs.ColorChangedEventArgs e)
-    {
-        if (_selectedItem == null) return;
-
-        _pendingColor =e.NewColor;
-        
-    }
-
-    private void OnSelectColorClicked(object sender, EventArgs e)
-    {
-        if (_selectedItem == null) return;
-
-        var newArgb = CalendarDrawingHelper.ColorToArgbInt(_pendingColor);
-        _currentColors[_selectedItem.Id] = newArgb;
-
-        var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != newArgb;
-        _selectedItem.SetArgb(newArgb, isDirty);
-
-        ColorPopup.IsOpen = false;
-    }
-
+    
     
 
     private async void OnApplySystemClicked(object sender, EventArgs e)
@@ -215,48 +170,6 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
             item.SetArgb(defArgb, isDirty: defArgb != _originalColors[item.Id]);
         }
 
-    }
-
-    protected override async void OnDisappearing()
-    {
-        base.OnDisappearing();
-
-        if (_isSavingOrDiscarding) return;
-        if (!IsDirty()) return;
-
-        _isSavingOrDiscarding = true;
-
-        try
-        {
-            var lang = DataCache.Instance.CurrentLanguageCode;
-
-            var save = await DisplayAlert(
-                Localization.GetLocalizedText("Save changes?", lang),
-                Localization.GetLocalizedText("Do you want to save changes?", lang),
-                Localization.GetLocalizedText("Yes", lang),
-                Localization.GetLocalizedText("No", lang));
-
-            if (save)
-            {
-                SaveToDb();
-                DataCache.Instance.Refresh(_db); // ты уже добавил GetColors() сюда
-                MessagingCenter.Send<object>(this, "SettingsChanged");
-            }
-            else
-            {
-                // discard: восстановим current из original и UI
-                foreach (var item in _items)
-                {
-                    var orig = _originalColors[item.Id];
-                    _currentColors[item.Id] = orig;
-                    item.SetArgb(orig, isDirty: false);
-                }
-            }
-        }
-        finally
-        {
-            _isSavingOrDiscarding = false;
-        }
     }
 
     private bool IsDirty()
@@ -283,7 +196,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
             _originalColors[id] = cur;
         }
 
-        // сброс dirty-флажков
+        // СЃР±СЂРѕСЃ dirty-С„Р»Р°Р¶РєРѕРІ
         foreach (var item in _items)
         {
             item.SetArgb(_currentColors[item.Id], isDirty: false);
@@ -293,7 +206,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     // ===== System default palette (ARGB int) =====
     private static readonly Dictionary<int, int> SystemDefaultPalette = new()
     {
-        // примерные значения — подставь ваши реальные system defaults
+        // РїСЂРёРјРµСЂРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ вЂ” РїРѕРґСЃС‚Р°РІСЊ РІР°С€Рё СЂРµР°Р»СЊРЅС‹Рµ system defaults
         { (int)EColor.GREEN, unchecked((int)0xFF2E7D32) },
         { (int)EColor.RED, unchecked((int)0xFFC62828) },
         { (int)EColor.LIGHTGREEN, unchecked((int)0xFF81C784) },
@@ -305,7 +218,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     };
 }
 
-// простой item как у тебя в других конфиг страницах, без MVVM
+// РїСЂРѕСЃС‚РѕР№ item РєР°Рє Сѓ С‚РµР±СЏ РІ РґСЂСѓРіРёС… РєРѕРЅС„РёРі СЃС‚СЂР°РЅРёС†Р°С…, Р±РµР· MVVM
 public sealed class ColorItem : INotifyPropertyChanged
 {
     public int Id { get; }

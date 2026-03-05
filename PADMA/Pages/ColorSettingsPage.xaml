@@ -3,8 +3,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
-    xmlns:popup="clr-namespace:Syncfusion.Maui.Popup;assembly=Syncfusion.Maui.Popup"
-    xmlns:inputs="clr-namespace:Syncfusion.Maui.Inputs;assembly=Syncfusion.Maui.Inputs"
     x:Class="PADMA.Pages.ColorSettingsPage"
     IsCompact="True"
     ShowTitle="True">
@@ -98,87 +96,7 @@
                         IsEnabled="False"/>
             </Grid>
 
-            <!--  Busy overlay -->
-            <Grid Grid.Row="0"
-                  Grid.ColumnSpan="2"
-                  IsVisible="{Binding IsBusy, FallbackValue=False}"
-                  InputTransparent="False"
-                  BackgroundColor="#80000000"
-                  ZIndex="999">
-
-                <VerticalStackLayout
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    Spacing="12">
-
-                    <ActivityIndicator
-                        IsRunning="True"
-                        WidthRequest="48"
-                        HeightRequest="48" />
-
-                    <Label Text="{Binding BusyText}"
-                           TextColor="White"
-                           FontSize="Medium"
-                           HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Grid>
-
         </Grid>
-
-        <popup:SfPopup x:Name="ColorPopup"
-               IsOpen="False"
-               ShowCloseButton="True"
-               ShowHeader="False"
-               StaysOpen="False"
-               WidthRequest="360"
-               HeightRequest="560"
-               IsFullScreen="False">
-
-            <popup:SfPopup.ContentTemplate>
-                <DataTemplate>
-                    <Grid Padding="12"
-                          RowDefinitions="Auto,*,56"
-                          RowSpacing="10"
-                          WidthRequest="360"
-                          HeightRequest="540">
-
-                        <Label x:Name="LabelColor"
-                               Text="{Binding LabelColor}"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-
-                        <inputs:SfColorPicker x:Name="InlineColorPicker"
-                                    Grid.Row="1"
-                                    Margin="0,0,0,-24"
-                                    IsInline="True"
-                                    ColorMode="Spectrum"
-                                    IsColorModeSwitcherVisible="True"
-                                    IsActionButtonsVisible="False"
-                                    ShowInputArea="True"
-                                    ShowAlphaSlider="True"
-                                    Loaded="OnInlinePickerLoaded"
-                                    ColorChanged="OnInlineColorChanged"/>
-
-                        <!-- bottom bar (fixed height) -->
-                        <Grid Grid.Row="2"
-                              ColumnDefinitions="*,Auto"
-                              ColumnSpacing="10"
-                              VerticalOptions="End">
-
-                            <Button x:Name="ButtonSelect"
-                                    Text="{Binding ButtonSelect}"
-                                    HeightRequest="34"
-                                    WidthRequest="120"
-                                    VerticalOptions="Center"
-                                    HorizontalOptions="End"
-                                    Clicked="OnSelectColorClicked"/>
-                        </Grid>
-
-                    </Grid>
-                </DataTemplate>
-            </popup:SfPopup.ContentTemplate>
-
-        </popup:SfPopup>
 
     </AbsoluteLayout>
 </ui:ConfigBasePage>
