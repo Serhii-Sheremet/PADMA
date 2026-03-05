@@ -44,7 +44,7 @@ public partial class ColorLookupPage : ContentPage
     private void ApplyLocalization()
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
-        Title = Localization.GetLocalizedText("Select color", lang);
+        Title = Localization.GetLocalizedText("Select a color", lang);
         SelectButon.Text = Localization.GetLocalizedText("Select", lang);
     }
 

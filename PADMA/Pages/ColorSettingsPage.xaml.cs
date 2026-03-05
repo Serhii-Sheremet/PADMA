@@ -18,6 +18,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     private readonly ObservableCollection<ColorItem> _items = new();
     private ColorItem? _selectedItem;
     private bool _isSavingOrDiscarding;
+    private bool _navigatingToLookup;
 
     public ColorSettingsPage(DatabaseService db)
     {
@@ -29,13 +30,34 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         ApplyLocalization();
         LoadColors();
         SelectFirst();
+
+        MessagingCenter.Subscribe<ColorLookupPage, int>(
+            this,
+            "ColorSelected",
+            (sender, argb) => ApplySelectedColor(argb));
+
+    }
+
+    private void ApplySelectedColor(int argb)
+    {
+        if (_selectedItem == null || _currentColors.TryGetValue(_selectedItem.Id, out var cur) && cur == argb)
+            return;
+
+        // dirty если оригинал отсутствует или отличается
+        var isDirty = !_originalColors.TryGetValue(_selectedItem.Id, out var orig) || orig != argb;
+
+        // обновляем current dictionary
+        _currentColors[_selectedItem.Id] = argb;
+
+        // обновляем item (один раз)
+        _selectedItem.SetArgb(argb, isDirty);
     }
 
     private void ApplyLocalization()
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
         Title = Localization.GetLocalizedText("Color settings", lang);
-        ApplySystemButton.Text = Localization.GetLocalizedText("System default", lang);
+        ApplySystemButton.Text = Localization.GetLocalizedText("Default color", lang);
         ChangeButton.Text = Localization.GetLocalizedText("Change", lang);
     }
 
@@ -74,32 +96,23 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
         _selectedItem = _items[0];
     }
 
-    private void OnSelectionChanged(object? sender, Microsoft.Maui.Controls.SelectionChangedEventArgs e)
+    private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         _selectedItem = e.CurrentSelection?.FirstOrDefault() as ColorItem;
         ChangeButton.IsEnabled = _selectedItem != null;
     }
 
-    private void OnColorSelected(ColorLookupPage sender, int argb)
-    {
-        if (_selectedItem == null) return;
-
-        _currentColors[_selectedItem.Id] = argb;
-        var isDirty = _originalColors.TryGetValue(_selectedItem.Id, out var orig) && orig != argb;
-        _selectedItem.SetArgb(argb, isDirty);
-    }
-
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        MessagingCenter.Subscribe < ColorLookupPage, int> (this, "ColorSelected", OnColorSelected);
+        _navigatingToLookup = false;
     }
 
     protected override async void OnDisappearing()
     {
-        MessagingCenter.Unsubscribe<ColorLookupPage, int>(this, "ColorSelected");
         base.OnDisappearing();
 
+        if (_navigatingToLookup) return;
         if (_isSavingOrDiscarding) return;
         if (!IsDirty()) return;
 
@@ -111,7 +124,7 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
 
             var save = await DisplayAlert(
                 Localization.GetLocalizedText("Save changes?", lang),
-                Localization.GetLocalizedText("Do you want to save changes?", lang),
+                Localization.GetLocalizedText("Apply new settings for colors?", lang),
                 Localization.GetLocalizedText("Yes", lang),
                 Localization.GetLocalizedText("No", lang));
 
@@ -142,20 +155,18 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     {
         if (_selectedItem == null) return;
 
+        _navigatingToLookup = true;
         var startArgb = _selectedItem.Argb; 
         await Shell.Current.GoToAsync($"{nameof(ColorLookupPage)}?StartArgb={startArgb}", true);
     }
-
-    
-    
 
     private async void OnApplySystemClicked(object sender, EventArgs e)
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
 
         var ok = await DisplayAlert(
-            Localization.GetLocalizedText("Confirm", lang),
-            Localization.GetLocalizedText("Apply system default colors?", lang),
+            Localization.GetLocalizedText("Confirmation", lang),
+            Localization.GetLocalizedText("Reset to default colors?", lang),
             Localization.GetLocalizedText("Yes", lang),
             Localization.GetLocalizedText("No", lang));
 
@@ -206,15 +217,38 @@ public partial class ColorSettingsPage : UI.Templates.ConfigBasePage
     // ===== System default palette (ARGB int) =====
     private static readonly Dictionary<int, int> SystemDefaultPalette = new()
     {
-        // примерные значения — подставь ваши реальные system defaults
-        { (int)EColor.GREEN, unchecked((int)0xFF2E7D32) },
-        { (int)EColor.RED, unchecked((int)0xFFC62828) },
-        { (int)EColor.LIGHTGREEN, unchecked((int)0xFF81C784) },
-        { (int)EColor.LIGHTRED, unchecked((int)0xFFEF9A9A) },
-        { (int)EColor.PINK, unchecked((int)0xFFF48FB1) },
-
-        { (int)EColor.GRAY, unchecked((int)0xFF9E9E9E) },
-        { (int)EColor.BLACK, unchecked((int)0xFF000000) },
+        {(int)EColor.GREEN,             -13631697 },
+        {(int)EColor.RED,               -45233 },
+        {(int)EColor.LIGHTGREEN,        -4587591 },
+        {(int)EColor.LIGHTRED,          -14650 },
+        {(int)EColor.PINK,              -16181 },
+        {(int)EColor.NOTEMARKER,        -14774017 },
+        {(int)EColor.YOGAMERGE,         -3211314 },
+        {(int)EColor.MUHURTAMERGE,      -16181 },
+        {(int)EColor.MRITYUBHAGA,       -1064908 },
+        {(int)EColor.SUN,               -4587591 },
+        {(int)EColor.VENUS,             -4587591 },
+        {(int)EColor.MERCURY,           -4587591 },
+        {(int)EColor.MOON,              -4587591 },
+        {(int)EColor.SATURN,            -14650 },
+        {(int)EColor.JUPITER,           -4587591 },
+        {(int)EColor.MARS,              -14650 },
+        {(int)EColor.MASA1,             -4587591 },
+        {(int)EColor.MASA2,             -4587591 },
+        {(int)EColor.MASA3,             -4587591 },
+        {(int)EColor.MASA4,             -4587591 },
+        {(int)EColor.MASA5,             -4587591 },
+        {(int)EColor.MASA6,             -4587591 },
+        {(int)EColor.MASA7,             -4587591 },
+        {(int)EColor.MASA8,             -4587591 },
+        {(int)EColor.MASA9,             -4587591 },
+        {(int)EColor.MASA10,            -4587591 },
+        {(int)EColor.MASA11,            -4587591 },
+        {(int)EColor.MASA12,            -4587591 },
+        {(int)EColor.SHUNYANAKSHATRA,   -16181 },
+        {(int)EColor.SHUNIATITHI,       -16181 },
+        {(int)EColor.GRAY,              -4144960 },
+        {(int)EColor.BLACK,             -16777216 }
     };
 }
 
@@ -258,6 +292,4 @@ public sealed class ColorItem : INotifyPropertyChanged
 
     private void OnPropertyChanged([CallerMemberName] string? n = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
-
-    
 }

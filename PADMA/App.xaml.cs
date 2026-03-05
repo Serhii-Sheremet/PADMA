@@ -55,9 +55,13 @@ public partial class App : Application
             var db = ServiceLocator.Services.GetService<DatabaseService>();
 
             if (db != null)
-                DataCache.Instance.ReloadProfiles(db, setActiveToDefault: true);
-
-            await DataCache.Instance.RebuildProfileContextAsync();
+            {
+                if (DataCache.Instance.ProfileList != null && DataCache.Instance.ProfileList.Count > 0)
+                {
+                    DataCache.Instance.ReloadProfiles(db, setActiveToDefault: true);
+                    await DataCache.Instance.RebuildProfileContextAsync();
+                }
+            }
 
             if (reminder != null && DataCache.Instance.ProfileContextService.Current != null)
                 await reminder.RefreshAsync();
