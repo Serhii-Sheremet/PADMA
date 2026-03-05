@@ -5430,7 +5430,6 @@ Use existing helper methods (do not duplicate logic):
 - All static texts must be localized via `Localization.GetLocalizedText(...)` using `DataCache.Instance.CurrentLanguageCode`.
 
 ### 3.2 Layout
-Two panel layout (WinForms legacy analogy):
 - **Top panel**: list of available color entries (localized name with small colored swatch).
 - **Bottom area**: buttons **"System default" and "Change"**
 
@@ -5446,7 +5445,7 @@ On page creation:
 
 ### 4.2 Selection behavior
 - Selecting an item in the left list makes it **current selection**.
-- Tapping the "Change" button opens SfColorPicker; picker selection updates the pending value.
+- Tapping the "Change" button opens a lookup page ColorLookupPage with inline SfColorPicker.
 - Changing the color in the picker updates the selected item’s pending value (in-memory).
 
 ### 4.3 Change tracking
@@ -5499,7 +5498,7 @@ When user taps **System settings**:
 
 1. Opening `ColorSettingsPage` shows list of colors with correct localized names.
 2. By default first item in a list is selected.
-3. Taping a "Change" button -> open sfugion palette selection control (the picker's color is set to selected one).
+3. Taping a "Change" button -> open ColorLookupPage with inline sfugion palette selection control (the picker's color is set to selected one).
 3. Picker changes update selected item’s swatch and are tracked as unsaved changes.
 4. Leaving the page:
    - no changes → no prompt
