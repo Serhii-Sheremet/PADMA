@@ -119,11 +119,15 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\SunrisePage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\TransitChartsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\TransitsPage.xaml" Generator="MSBuild:Compile" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Core\Native\" />
+    <Folder Include="UI\Charts\" />
   </ItemGroup>
   
   <ItemGroup>

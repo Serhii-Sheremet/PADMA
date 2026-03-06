@@ -5511,3 +5511,186 @@ When user taps **System settings**:
 6. “System default” applies default palette in-memory and participates in the same save/discard logic.
 
 ---------
+
+# PADMA – Transit Charts (Preliminary Requirements)
+
+## 1. Goal
+Introduce a new feature **Transit Charts** that visualizes planetary positions using the **North Indian style house chart**.
+The feature will be accessible from the main navigation menu and designed specifically for **mobile phone screens**.
+
+This document defines only the **initial UI structure and architectural foundations**.
+Detailed rendering rules, planet placement logic, and additional controls will be specified later.
+
+# 2. Navigation
+
+## 2.1 Burger Menu Entry
+A new entry must be added to the application burger menu:
+
+`Transit charts`
+
+Selecting this option opens a new page:
+
+`TransitChartsPage`
+
+# 3. Base Page Layout
+
+## 3.1 Base Template
+The new page should reuse the existing **ConfigBasePage** template already used in other configuration pages and DayOverviewPage.
+
+This provides a consistent UI including:
+
+- Page title
+- Back navigation arrow
+- Close button (X)
+- Standard page layout used throughout PADMA
+
+# 4. Page Structure
+
+The page will contain **two categories of charts**, accessible via tabs.
+
+## 4.1 Tab Layout
+At the top of the page there should be **two tabs**.
+
+Tab order:
+
+1. **Current Transits**
+2. **Transits from Natal Positions**
+
+Default selected tab:
+
+`Current Transits`
+
+Switching tabs changes the content area of the page.
+
+# 5. Chart Categories
+
+## 5.1 Category 1 – Current Transit
+Charts showing **current planetary positions relative to the current Lagna (Ascendant)**.
+
+This tab will display charts derived from the **current sky positions**.
+Details of the charts displayed inside this tab will be specified later.
+
+## 5.2 Category 2 – Transits from Natal Positions
+Charts showing **current planetary transits relative to natal planetary positions**.
+
+These charts depend on:
+
+- Natal planetary positions
+- Current planetary transits
+
+Details will be defined later.
+
+# 6. Chart Rendering
+
+Charts use the **North Indian house chart style**.
+
+Properties:
+
+- 12 houses
+- Diamond-based layout
+- Fixed house positions
+- Zodiac numbers change within houses
+
+# 7. Chart Renderer Service
+
+A reusable rendering component must be implemented.
+
+## 7.1 Service Goal
+Provide a **public chart drawing service** that can be reused across the application.
+
+Charts will not be limited to this page only.
+Example future usage: i.e. Natal chart in Profile creation service
+
+## 7.2 Service Responsibilities
+
+The service must:
+
+1. Draw the North Indian chart structure
+2. Place zodiac numbers inside houses
+3. Place planets inside houses
+4. Render planets according to configured colors
+5. Adapt to different chart sizes
+
+## 7.3 Service Design
+
+The renderer should be implemented as a reusable component.
+Example conceptual name: `TransitChartRenderer`
+
+# 8. Input Data (Preliminary)
+
+The chart renderer will receive structured input data.
+
+Initial assumptions:
+
+### 8.1 Rashi Order
+A list representing the **shifted zodiac sequence** relative to Lagna.
+
+This determines which zodiac sign appears in each house.
+
+### 8.2 Planets by House
+A prepared structure mapping planets to houses.
+
+Example concept:
+House → List of planets
+
+The renderer will **only draw**, not calculate positions.
+Planet placement calculations will happen elsewhere.
+
+# 9. Responsive Chart Size
+
+Charts must use **relative sizing**.
+
+Rules:
+- No hardcoded width or height
+- Chart must adapt to available container space
+- Rendering must scale correctly on different devices
+
+This is important because different charts may occupy different areas of the screen.
+
+# 10. Chart Shape
+
+In the legacy desktop application charts were drawn as **rectangles** due to wide screen layouts.
+
+For the mobile version:
+
+Charts will be rendered as **squares**.
+
+Benefits:
+
+- Easier scaling
+- Better layout on phones
+- Consistent geometry
+
+# 11. Planet Placement (To Be Defined Later)
+
+The exact algorithm for positioning planets inside houses will be defined later.
+
+Legacy implementation contains a partially automated placement system.
+
+This logic may be:
+
+- reused
+- improved
+- redesigned
+
+Details will be discussed during implementation.
+
+# 12. Implementation Order
+
+Initial implementation should focus on:
+
+1. Burger menu entry
+2. TransitChartsPage creation
+3. ConfigBasePage reuse
+4. Two-tab layout
+5. Empty chart container
+6. Initial chart renderer service skeleton
+
+Planet placement and chart content will be added later.
+
+# 13. Status
+
+Preliminary Requirements
+Further specifications will follow during implementation.
+
+---------

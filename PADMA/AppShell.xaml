@@ -15,6 +15,11 @@
         <ShellContent ContentTemplate="{DataTemplate pages:ProfilesPage}" />
     </FlyoutItem>
 
+    <!-- Транзитные карты -->
+    <FlyoutItem Title="{Binding FlyoutTransitChartsTitle}" Route="transitCharts">
+        <ShellContent ContentTemplate="{DataTemplate pages:TransitChartsPage}" />
+    </FlyoutItem>
+
     <!-- Настройки -->
     <FlyoutItem Title="{Binding FlyoutSettingsTitle}" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />

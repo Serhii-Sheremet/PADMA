@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ui:ConfigBasePage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:ui="clr-namespace:PADMA.UI.Templates;assembly=PADMA"
+    xmlns:charts="clr-namespace:PADMA.UI.Charts;assembly=PADMA"
+    x:Class="PADMA.Pages.TransitChartsPage">
+
+    <Grid RowDefinitions="Auto,*"
+          RowSpacing="8"
+          Padding="10,0,10,10">
+
+        <!-- Tabs -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,Auto"
+              ColumnSpacing="10"
+              Margin="0,0,0,4"
+              HorizontalOptions="Start">
+
+            <!-- Current Transits -->
+            <Grid Grid.Column="0"
+                  RowDefinitions="Auto,4">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCurrentTransitsTapped" />
+                </Grid.GestureRecognizers>
+
+                <Label x:Name="CurrentTabLabel"
+                       Grid.Row="0"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       LineBreakMode="NoWrap" />
+
+                <BoxView x:Name="CurrentTabIndicator"
+                         Grid.Row="1"
+                         HeightRequest="3"
+                         HorizontalOptions="Fill" />
+            </Grid>
+
+            <!-- Natal Transits -->
+            <Grid Grid.Column="1"
+                  RowDefinitions="Auto,4">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnNatalTransitsTapped" />
+                </Grid.GestureRecognizers>
+
+                <Label x:Name="NatalTabLabel"
+                       Grid.Row="0"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       LineBreakMode="NoWrap" />
+
+                <BoxView x:Name="NatalTabIndicator"
+                         Grid.Row="1"
+                         HeightRequest="3"
+                         HorizontalOptions="Fill" />
+            </Grid>
+        </Grid>
+
+        <!-- Scrollable content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="10">
+
+                <charts:NorthIndianChartView
+                    x:Name="ChartView"
+                    HorizontalOptions="Fill"
+                    ChartBackgroundColor="#FAFAD2"
+                    ChartLineColor="Black"
+                    ChartLineStrokeWidth="1" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ui:ConfigBasePage>
