@@ -149,7 +149,7 @@
                                       VerticalOptions="Start"
                                       WidthRequest="25"
                                       HeightRequest="25"
-                                      Fill="#1E90FF"
+                                      Fill="{Binding NoteMarkerColor}"
                                       Data="M 0,0 L 25,0 L 25,25 Z"
                                       Margin="0,2,2,0">
                                     <Path.GestureRecognizers>

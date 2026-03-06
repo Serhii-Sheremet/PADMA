@@ -1999,9 +1999,9 @@ namespace PADMA.Pages
         {
             // Build a single overlay lane from multiple yoga stripes.
             // If active yogas have the same ColorId -> use it.
-            // If there is a mix of ColorId -> use LIGHTGREEN (neutralization).
+            // If there is a mix of ColorId -> use YOGAMERGE (neutralization).
 
-            var overlapColorId = (int)EColor.LIGHTGREEN;
+            var overlapColorId = (int)EColor.YOGAMERGE;
 
             // Flatten all yoga time intervals for the day
             var intervals = new List<(int YogaId, int ColorId, string Title, DateTime Start, DateTime End)>();

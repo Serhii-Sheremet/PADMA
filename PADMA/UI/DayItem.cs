@@ -19,6 +19,7 @@ namespace PADMA.UI
         public string? EclipseIcon { get; set; }
         public bool HasEclipse => !string.IsNullOrEmpty(EclipseIcon);
         public bool HasUserEvents { get; set; }
+        public Color NoteMarkerColor { get; set; } = new Color();
 
         public string PlanetMarkersText { get; set; } = string.Empty;
 

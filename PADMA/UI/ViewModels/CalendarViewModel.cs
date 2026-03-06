@@ -460,6 +460,7 @@ namespace PADMA.UI.ViewModels
                 bool isCurrentMonth = date.Month == month && date.Year == year;
                 bool isToday = date.Date == DateTime.Today;
                 bool hasUserEvents = false;
+                Color noteMarkerColor = DataCache.Instance.GetColor(EColor.NOTEMARKER);
                 var evCache = DataCache.Instance.UserEventsWindowCache;
                 if (profile != null && ctx != null && evCache != null)
                 {
@@ -618,6 +619,7 @@ namespace PADMA.UI.ViewModels
                     IsCurrentMonth = isCurrentMonth,
                     IsToday = isToday,
                     HasUserEvents = hasUserEvents,
+                    NoteMarkerColor = noteMarkerColor,
                     EclipseId = eclipseId,
                     EclipseDate = eclipseDate,    
                     EclipseIcon = eclipseIcon,
