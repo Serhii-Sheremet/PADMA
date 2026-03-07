@@ -1,7 +1,9 @@
 using PADMA.Core.Models;
+using PADMA.Core.Analysis;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI.Templates;
+using System.Globalization;
 
 namespace PADMA.Pages
 {
@@ -33,25 +35,7 @@ namespace PADMA.Pages
             ApplyLocalization();
             UpdateTabState();
 
-            LoadTestChartHouses();
-        }
-
-        private void LoadTestChartHouses()
-        {
-            var zList = DataCache.Instance.ZodiacList;
-            var houses = new List<ChartHouseData>();
-
-            for (int i = 0; i < zList.Count && i < 12; i++)
-            {
-                houses.Add(new ChartHouseData
-                {
-                    HouseNumber = i + 1,
-                    ZodiacNumber = zList[i].Id,
-                    Planets = new List<ChartPlanetItem>()
-                });
-            }
-
-            ChartView.SetHouses(houses);
+            LoadSelectedTabContent();
         }
 
         private void ApplyLocalization()
@@ -98,5 +82,43 @@ namespace PADMA.Pages
             ApplyLocalization();
             UpdateTabState();
         }
+
+        private void LoadSelectedTabContent()
+        {
+            if (_showCurrentTransits)
+            {
+                LoadCurrentTransitChart();
+            }
+            else
+            {
+                //LoadNatalTransitPlaceholder(); 
+            }
+        }
+
+        private void LoadCurrentTransitChart()
+        {
+            Profile? profile = DataCache.Instance.ActiveProfile;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            if (profile == null || ctx == null)
+                return;
+            
+            var nodeMode = DataCache.Instance.GetActiveNodeSetting();
+
+            var now = DateTime.Now;
+
+            var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(now, ctx.LivingLat, ctx.LivingLon, nodeMode);
+            var ascendant = SwissService.CalculateAscendantForDate(now, ctx.LivingLat, ctx.LivingLon, 0, 'O');
+            var lagnaId = SwissUtility.GetZodiacIdFromDegree(ascendant); 
+            
+            var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), lagnaId);
+
+            var houses = TransitChartDataService.BuildCurrentTransitChartHouses(
+                pdList,
+                swappedZodiacs);
+
+            ChartView.SetHouses(houses);
+        }
+
+
     }
 }

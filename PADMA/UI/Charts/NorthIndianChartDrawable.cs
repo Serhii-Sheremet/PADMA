@@ -1,5 +1,6 @@
 using Microsoft.Maui.Graphics;
 using PADMA.Core.Models;
+using PADMA.Core.Utilities;
 
 namespace PADMA.UI.Charts
 {
@@ -30,6 +31,7 @@ namespace PADMA.UI.Charts
 
             DrawChartGrid(canvas, chartRect);
             DrawZodiacNumbers(canvas, chartRect);
+            DrawPlanets(canvas, chartRect);
 
             canvas.RestoreState();
         }
@@ -131,8 +133,85 @@ namespace PADMA.UI.Charts
             DrawHouseNumber(9, bottomRightNode.X + w * 0.010f, bottomRightNode.Y - h * 0.025f); // левее
         }
 
+        private void DrawPlanets(ICanvas canvas, RectF rect)
+        {
+            if (Houses == null || Houses.Count != 12)
+                return;
 
+            var x = rect.Left;
+            var y = rect.Top;
+            var w = rect.Width;
+            var h = rect.Height;
 
+            canvas.FontSize = 18;
+
+            void DrawHousePlanets(int houseNumber, float px, float py)
+            {
+                var house = Houses.FirstOrDefault(h => h.HouseNumber == houseNumber);
+                if (house == null || house.Planets == null || house.Planets.Count == 0)
+                    return;
+
+                var text = string.Join(" ", house.Planets.Select(BuildPlanetText));
+
+                canvas.FontColor = Colors.Black;
+
+                canvas.DrawString(
+                    text,
+                    px,
+                    py,
+                    w * 0.22f,
+                    h * 0.08f,
+                    HorizontalAlignment.Center,
+                    VerticalAlignment.Center);
+            }
+
+            // H1 top center
+            DrawHousePlanets(1, x + w * 0.39f, y + h * 0.18f);
+
+            // H2 top-left
+            DrawHousePlanets(2, x + w * 0.14f, y + h * 0.06f);
+
+            // H3 left-upper
+            DrawHousePlanets(3, x + w * 0.02f, y + h * 0.26f);
+
+            // H4 left-center
+            DrawHousePlanets(4, x + w * 0.14f, y + h * 0.45f);
+
+            // H5 left-lower
+            DrawHousePlanets(5, x + w * 0.02f, y + h * 0.72f);
+
+            // H6 bottom-left
+            DrawHousePlanets(6, x + w * 0.14f, y + h * 0.86f);
+
+            // H7 bottom-center
+            DrawHousePlanets(7, x + w * 0.39f, y + h * 0.84f);
+
+            // H8 bottom-right
+            DrawHousePlanets(8, x + w * 0.64f, y + h * 0.86f);
+
+            // H9 right-lower
+            DrawHousePlanets(9, x + w * 0.78f, y + h * 0.72f);
+
+            // H10 right-center
+            DrawHousePlanets(10, x + w * 0.64f, y + h * 0.45f);
+
+            // H11 right-upper
+            DrawHousePlanets(11, x + w * 0.78f, y + h * 0.26f);
+
+            // H12 top-right
+            DrawHousePlanets(12, x + w * 0.64f, y + h * 0.06f);
+        }
+
+        private static string BuildPlanetText(ChartPlanetItem item)
+        {
+            var planetName = PanchangaHelper.GetPlanetDescEntity((int)item.PlanetCode)?.Name ?? string.Empty;
+
+            var shortName = planetName.Length >= 2
+                ? planetName.Substring(0, 2)
+                : planetName;
+
+            return $"{shortName}{item.Retro}{item.Exaltation}";
+        }
 
 
 

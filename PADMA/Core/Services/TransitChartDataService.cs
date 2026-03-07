@@ -13,7 +13,6 @@ namespace PADMA.Core.Services
             return filter != EAspectFilter.NONE;
         }
 
-
         public static List<ChartPlanetItem>[] AddAspects(
             List<ChartPlanetItem>[] planetsList,
             EAspectFilter aspectFilter)
@@ -90,14 +89,10 @@ namespace PADMA.Core.Services
         {
             var planetsList = new List<ChartPlanetItem>();
 
-            var pdTunedList = pdList
-                .Where(p => p.PlanetId != (int)EPlanet.KETU)
-                .ToList();
-
-            for (int i = 0; i < pdTunedList.Count; i++)
+            for (int i = 0; i < pdList.Count; i++)
             {
                 var chartPlanet = GetPlanetIfCurrentZodiac(
-                    pdTunedList[i],
+                    pdList[i],
                     ETransitType.TRANSITGENERAL,
                     zodiacId,
                     house);
@@ -147,7 +142,13 @@ namespace PADMA.Core.Services
                         ?.ColorId ?? (int)EColor.BLACK);
             }
 
-            string retro = pd.IsRetrograde ? "R" : string.Empty;
+            string retro =
+                    pd.IsRetrograde &&
+                    planetCode != EPlanet.RAHU &&
+                    planetCode != EPlanet.KETU
+                        ? "R"
+                        : string.Empty;
+
             return new ChartPlanetItem
             {
                 PlanetCode = planetCode,
@@ -160,6 +161,31 @@ namespace PADMA.Core.Services
             };
         }
 
+        public static List<ChartHouseData> BuildCurrentTransitChartHouses(
+            List<PlanetData> pdList,
+            List<Zodiac> swappedZodiacs)
+        {
+            var houses = new List<ChartHouseData>();
+
+            for (int i = 0; i < 12; i++)
+            {
+                var zodiac = swappedZodiacs[i];
+
+                var planets = GetGeneralPlanetsListByZodiac(
+                    pdList,
+                    zodiac.Id,
+                    i + 1);
+
+                houses.Add(new ChartHouseData
+                {
+                    HouseNumber = i + 1,
+                    ZodiacNumber = zodiac.Id,
+                    Planets = planets
+                });
+            }
+
+            return houses;
+        }
 
 
     }
