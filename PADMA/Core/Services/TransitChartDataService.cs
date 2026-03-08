@@ -15,9 +15,9 @@ namespace PADMA.Core.Services
 
         public static List<ChartPlanetItem>[] AddAspects(
             List<ChartPlanetItem>[] planetsList,
-            EAspectFilter aspectFilter)
+            List<EPlanet> selectedAspectPlanets)
         {
-            if (!AreAspectsEnabled(aspectFilter))
+            if (selectedAspectPlanets == null || selectedAspectPlanets.Count == 0)
                 return planetsList;
 
             for (int houseIndex = 0; houseIndex < planetsList.Length; houseIndex++)
@@ -29,23 +29,23 @@ namespace PADMA.Core.Services
                     if (sourcePlanet.IsActiveAspect)
                         continue;
 
+                    if (!selectedAspectPlanets.Contains(sourcePlanet.PlanetCode))
+                        continue;
+
                     if (sourcePlanet.TransitType == ETransitType.TRANSITBIRTH ||
                         sourcePlanet.TransitType == ETransitType.NATALNAVAMSA ||
                         sourcePlanet.TransitType == ETransitType.TRANSITNAVAMSA)
                         continue;
 
-                    if (aspectFilter != EAspectFilter.ALL &&
-                        (EPlanet)aspectFilter != sourcePlanet.PlanetCode)
-                        continue;
-
                     var aspectOffsets = GetAspectDomsListByPlanet(sourcePlanet.PlanetCode);
+                    if (aspectOffsets.Count == 0)
+                        continue;
 
                     foreach (var offset in aspectOffsets)
                     {
-                        int targetHouse = houseIndex + offset - 1;
-
-                        if (targetHouse >= 12)
-                            targetHouse -= 12;
+                        int targetHouseIndex = houseIndex + offset - 1;
+                        if (targetHouseIndex >= 12)
+                            targetHouseIndex -= 12;
 
                         var aspectPlanet = new ChartPlanetItem
                         {
@@ -58,7 +58,7 @@ namespace PADMA.Core.Services
                             ColorCode = EColor.GRAY
                         };
 
-                        planetsList[targetHouse].Add(aspectPlanet);
+                        planetsList[targetHouseIndex].Add(aspectPlanet);
                     }
                 }
             }
@@ -181,6 +181,38 @@ namespace PADMA.Core.Services
                     HouseNumber = i + 1,
                     ZodiacNumber = zodiac.Id,
                     Planets = planets
+                });
+            }
+
+            return houses;
+        }
+
+        public static List<ChartHouseData> BuildCurrentTransitChartHouses(
+            List<PlanetData> pdList,
+            List<Zodiac> swappedZodiacs,
+            List<EPlanet> selectedAspectPlanets)
+        {
+            var planetsList = new List<ChartPlanetItem>[12];
+
+            for (int i = 0; i < 12; i++)
+            {
+                planetsList[i] = GetGeneralPlanetsListByZodiac(
+                    pdList,
+                    swappedZodiacs[i].Id,
+                    i + 1);
+            }
+
+            planetsList = AddAspects(planetsList, selectedAspectPlanets);
+
+            var houses = new List<ChartHouseData>();
+
+            for (int i = 0; i < 12; i++)
+            {
+                houses.Add(new ChartHouseData
+                {
+                    HouseNumber = i + 1,
+                    ZodiacNumber = swappedZodiacs[i].Id,
+                    Planets = planetsList[i]
                 });
             }
 

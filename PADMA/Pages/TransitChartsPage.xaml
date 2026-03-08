@@ -68,6 +68,211 @@
                     ChartLineColor="Black"
                     ChartLineStrokeWidth="1" />
 
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="4">
+
+                    <!-- Aspects header -->
+                    <HorizontalStackLayout Grid.Row="0"
+                            x:Name="AspectsHeaderLayout"
+                            Spacing="6"
+                            HorizontalOptions="Start">
+                        <HorizontalStackLayout.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnAspectsHeaderTapped" />
+                        </HorizontalStackLayout.GestureRecognizers>
+
+                        <VerticalStackLayout Spacing="2"
+                                HorizontalOptions="Start">
+                            <HorizontalStackLayout Spacing="4"
+                               HorizontalOptions="Start">
+                                <Label x:Name="AspectsLabel"
+                                       FontSize="16"
+                                       VerticalOptions="Center" />
+
+                                <Label x:Name="AspectsExpandIcon"
+                                       FontSize="14"
+                                       VerticalOptions="Center"
+                                       Text="▲" />
+                            </HorizontalStackLayout>
+
+                            <BoxView x:Name="AspectsUnderline"
+                                     HeightRequest="2"
+                                     WidthRequest="56"
+                                     Color="#C8A23A"
+                                     HorizontalOptions="Start" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+
+                    <!-- Expandable panel -->
+                    <Border Grid.Row="1"
+                            x:Name="AspectsPanel"
+                            IsVisible="False"
+                            Stroke="#D0D0D0"
+                            StrokeThickness="1"
+                            Padding="6,4"
+                            BackgroundColor="Transparent"
+                            HorizontalOptions="Start"
+                            WidthRequest="200">
+                        
+                        <VerticalStackLayout Spacing="0">
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectAll"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectAll"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectSun"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectSun"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectMoon"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectMoon"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectMars"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectMars"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectMercury"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectMercury"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectJupiter"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectJupiter"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectVenus"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectVenus"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectSaturn"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectSaturn"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="4"
+                                  Padding="0">
+                                <CheckBox x:Name="CheckAspectRahu"
+                                          Grid.Column="0"
+                                          Margin="0"
+                                          Scale="0.9"
+                                          VerticalOptions="Center"
+                                          CheckedChanged="OnAspectCheckChanged" />
+                                <Label x:Name="LabelAspectRahu"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       Margin="0"
+                                       Padding="0" 
+                                       FontSize="14"/>
+                            </Grid>
+
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+
             </VerticalStackLayout>
         </ScrollView>
 
