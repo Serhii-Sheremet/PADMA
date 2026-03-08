@@ -12,16 +12,26 @@ namespace PADMA.Pages
     {
         private bool _showCurrentTransits = true;
         private bool _isAspectsExpanded;
-        private bool _isUpdatingAspectChecks;
+
+        private bool _aspectAllSelected;
+        private bool _aspectSunSelected;
+        private bool _aspectMoonSelected;
+        private bool _aspectMarsSelected;
+        private bool _aspectMercurySelected;
+        private bool _aspectJupiterSelected;
+        private bool _aspectVenusSelected;
+        private bool _aspectSaturnSelected;
+        private bool _aspectRahuSelected;
+        private bool _isUpdatingAspectSelection;
+
+        private bool _isNatalReferenceExpanded;
+        private int _selectedNatalReferenceId = 0; // 0 = Lagna
 
         public TransitChartsPage()
         {
             InitializeComponent();
             
             ChartView.SizeChanged += OnChartViewSizeChanged;
-
-            ApplyLocalization();
-            UpdateTabState();
         }
 
         private void OnChartViewSizeChanged(object? sender, EventArgs e)
@@ -35,9 +45,12 @@ namespace PADMA.Pages
         protected override void OnAppearing()
         {
             base.OnAppearing();
+
             ApplyLocalization();
             UpdateTabState();
-
+            UpdateAspectSelectionUi();
+            UpdateNatalReferenceUnderline();
+            Dispatcher.Dispatch(UpdateNatalReferenceUnderline);
             LoadSelectedTabContent();
         }
 
@@ -46,7 +59,7 @@ namespace PADMA.Pages
             var lang = DataCache.Instance.CurrentLanguageCode;
             Title = Localization.GetLocalizedText("Transit charts", lang);
             CurrentTabLabel.Text = Localization.GetLocalizedText("Current Transits", lang);
-            NatalTabLabel.Text = Localization.GetLocalizedText("Transits from Natal Positions", lang);
+            NatalTabLabel.Text = Localization.GetLocalizedText("Transits from Natal", lang);
             
             AspectsLabel.Text = Localization.GetLocalizedText("Aspects", lang);
             AspectsUnderline.WidthRequest = Math.Max(38, AspectsLabel.Text.Length * 10);
@@ -61,7 +74,105 @@ namespace PADMA.Pages
             LabelAspectSaturn.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.SATURN)?.Name ?? "Saturn";
             LabelAspectRahu.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.RAHU)?.Name ?? "Rahu";
 
+            NatalReferenceLabel.Text = GetNatalReferenceDisplayName(_selectedNatalReferenceId);
+
+            NatalRefLagnaLabel.Text = Localization.GetLocalizedText("Lagna", lang);
+            NatalRefSunLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.SUN)?.Name ?? "Sun";
+            NatalRefMoonLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.MOON)?.Name ?? "Moon";
+            NatalRefMarsLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.MARS)?.Name ?? "Mars";
+            NatalRefMercuryLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.MERCURY)?.Name ?? "Mercury";
+            NatalRefJupiterLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.JUPITER)?.Name ?? "Jupiter";
+            NatalRefVenusLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.VENUS)?.Name ?? "Venus";
+            NatalRefSaturnLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.SATURN)?.Name ?? "Saturn";
+            NatalRefRahuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.RAHU)?.Name ?? "Rahu";
+            NatalRefKetuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.KETU)?.Name ?? "Ketu";
+
         }
+
+        private void UpdateNatalReferenceState()
+        {
+            var isEnabled = !_showCurrentTransits;
+
+            NatalReferenceHeader.InputTransparent = !isEnabled;
+
+            NatalReferenceLabel.TextColor = isEnabled ? Colors.Black : Colors.Gray;
+            NatalReferenceArrow.TextColor = isEnabled ? Colors.Black : Colors.Gray;
+            NatalReferenceUnderline.Color = isEnabled
+                ? Color.FromArgb("#C8A23A")
+                : Color.FromArgb("#D0D0D0");
+
+            if (!isEnabled)
+            {
+                _isNatalReferenceExpanded = false;
+                NatalReferencePanel.IsVisible = false;
+                NatalReferenceArrow.Text = "▼";
+            }
+        }
+
+        private void UpdateNatalReferenceUnderline()
+        {
+            if (NatalReferenceHeader.Width > 0)
+            {
+                NatalReferenceUnderline.WidthRequest = NatalReferenceHeader.Width;
+                return;
+            }
+
+            var measureLabel = new Label
+            {
+                Text = NatalReferenceLabel.Text,
+                FontSize = NatalReferenceLabel.FontSize,
+                LineBreakMode = LineBreakMode.NoWrap
+            };
+
+            var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
+            NatalReferenceUnderline.WidthRequest = Math.Max(24, size.Width + 8);
+        }
+
+        private string GetNatalReferenceDisplayName(int id)
+        {
+            if (id == 0)
+                return Localization.GetLocalizedText("Lagna", DataCache.Instance.CurrentLanguageCode);
+
+            return PanchangaHelper.GetPlanetDescEntity(id)?.Name ?? "Lagna";
+        }
+
+        private void OnNatalReferenceTapped(object sender, TappedEventArgs e)
+        {
+            if (_showCurrentTransits)
+                return;
+
+            _isNatalReferenceExpanded = !_isNatalReferenceExpanded;
+            NatalReferencePanel.IsVisible = _isNatalReferenceExpanded;
+            NatalReferenceArrow.Text = _isNatalReferenceExpanded ? "▲" : "▼";
+        }
+
+        private void SelectNatalReference(int id)
+        {
+            _selectedNatalReferenceId = id;
+            NatalReferenceLabel.Text = GetNatalReferenceDisplayName(id);
+
+            _isNatalReferenceExpanded = false;
+            NatalReferencePanel.IsVisible = false;
+            NatalReferenceArrow.Text = "▼";
+
+            UpdateNatalReferenceUnderline();
+
+            if (!_showCurrentTransits)
+            {
+                //LoadNatalTransitChart(id);
+            }
+        }
+
+        private void OnNatalReferenceLagnaTapped(object sender, TappedEventArgs e) => SelectNatalReference(0);
+        private void OnNatalReferenceSunTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.SUN);
+        private void OnNatalReferenceMoonTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.MOON);
+        private void OnNatalReferenceMarsTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.MARS);
+        private void OnNatalReferenceMercuryTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.MERCURY);
+        private void OnNatalReferenceJupiterTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.JUPITER);
+        private void OnNatalReferenceVenusTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.VENUS);
+        private void OnNatalReferenceSaturnTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.SATURN);
+        private void OnNatalReferenceRahuTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.RAHU);
+        private void OnNatalReferenceKetuTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.KETU);
 
         private void UpdateTabState()
         {
@@ -76,6 +187,8 @@ namespace PADMA.Pages
 
             CurrentTabIndicator.Color = _showCurrentTransits ? selectedIndicator : unselectedIndicator;
             NatalTabIndicator.Color = _showCurrentTransits ? unselectedIndicator : selectedIndicator;
+
+            UpdateNatalReferenceState();
         }
 
         private void OnCurrentTransitsTapped(object sender, TappedEventArgs e)
@@ -86,6 +199,7 @@ namespace PADMA.Pages
             _showCurrentTransits = true;
             ApplyLocalization();
             UpdateTabState();
+            LoadSelectedTabContent();
         }
 
         private void OnNatalTransitsTapped(object sender, TappedEventArgs e)
@@ -96,6 +210,7 @@ namespace PADMA.Pages
             _showCurrentTransits = false;
             ApplyLocalization();
             UpdateTabState();
+            LoadSelectedTabContent();
         }
 
         private void LoadSelectedTabContent()
@@ -144,72 +259,131 @@ namespace PADMA.Pages
             AspectsExpandIcon.Text = _isAspectsExpanded ? "▲" : "▼";
         }
 
-        private void OnAspectCheckChanged(object sender, CheckedChangedEventArgs e)
+        private void UpdateAspectSelectionUi()
         {
-            if (_isUpdatingAspectChecks)
-                return;
-
-            try
-            {
-                _isUpdatingAspectChecks = true;
-
-                if (sender == CheckAspectAll)
-                {
-                    bool value = CheckAspectAll.IsChecked;
-
-                    CheckAspectSun.IsChecked = value;
-                    CheckAspectMoon.IsChecked = value;
-                    CheckAspectMars.IsChecked = value;
-                    CheckAspectMercury.IsChecked = value;
-                    CheckAspectJupiter.IsChecked = value;
-                    CheckAspectVenus.IsChecked = value;
-                    CheckAspectSaturn.IsChecked = value;
-                    CheckAspectRahu.IsChecked = value;
-                }
-                else
-                {
-                    bool allChecked =
-                        CheckAspectSun.IsChecked &&
-                        CheckAspectMoon.IsChecked &&
-                        CheckAspectMars.IsChecked &&
-                        CheckAspectMercury.IsChecked &&
-                        CheckAspectJupiter.IsChecked &&
-                        CheckAspectVenus.IsChecked &&
-                        CheckAspectSaturn.IsChecked &&
-                        CheckAspectRahu.IsChecked;
-
-                    CheckAspectAll.IsChecked = allChecked;
-                }
-            }
-            finally
-            {
-                _isUpdatingAspectChecks = false;
-            }
-
-            if (_showCurrentTransits)
-            {
-                LoadCurrentTransitChart();
-            }
+            AspectAllCheck.IsVisible = _aspectAllSelected;
+            AspectSunCheck.IsVisible = _aspectSunSelected;
+            AspectMoonCheck.IsVisible = _aspectMoonSelected;
+            AspectMarsCheck.IsVisible = _aspectMarsSelected;
+            AspectMercuryCheck.IsVisible = _aspectMercurySelected;
+            AspectJupiterCheck.IsVisible = _aspectJupiterSelected;
+            AspectVenusCheck.IsVisible = _aspectVenusSelected;
+            AspectSaturnCheck.IsVisible = _aspectSaturnSelected;
+            AspectRahuCheck.IsVisible = _aspectRahuSelected;
         }
 
-        private bool AreAnyAspectsSelected()
+        private void UpdateAspectAllState()
         {
-            return CheckAspectAll.IsChecked ||
-                   CheckAspectSun.IsChecked ||
-                   CheckAspectMoon.IsChecked ||
-                   CheckAspectMars.IsChecked ||
-                   CheckAspectMercury.IsChecked ||
-                   CheckAspectJupiter.IsChecked ||
-                   CheckAspectVenus.IsChecked ||
-                   CheckAspectSaturn.IsChecked ||
-                   CheckAspectRahu.IsChecked;
+            _aspectAllSelected =
+                _aspectSunSelected &&
+                _aspectMoonSelected &&
+                _aspectMarsSelected &&
+                _aspectMercurySelected &&
+                _aspectJupiterSelected &&
+                _aspectVenusSelected &&
+                _aspectSaturnSelected &&
+                _aspectRahuSelected;
+        }
+
+        private void ToggleAspect(ref bool value)
+        {
+            value = !value;
+        }
+
+        private void OnAspectAllTapped(object sender, TappedEventArgs e)
+        {
+            if (_isUpdatingAspectSelection)
+                return;
+
+            _isUpdatingAspectSelection = true;
+
+            _aspectAllSelected = !_aspectAllSelected;
+
+            _aspectSunSelected = _aspectAllSelected;
+            _aspectMoonSelected = _aspectAllSelected;
+            _aspectMarsSelected = _aspectAllSelected;
+            _aspectMercurySelected = _aspectAllSelected;
+            _aspectJupiterSelected = _aspectAllSelected;
+            _aspectVenusSelected = _aspectAllSelected;
+            _aspectSaturnSelected = _aspectAllSelected;
+            _aspectRahuSelected = _aspectAllSelected;
+
+            UpdateAspectSelectionUi();
+            _isUpdatingAspectSelection = false;
+
+            if (_showCurrentTransits)
+                LoadCurrentTransitChart();
+        }
+
+        private void OnAspectSunTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectSunSelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
+        }
+
+        private void OnAspectMoonTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectMoonSelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
+        }
+
+        private void OnAspectMarsTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectMarsSelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
+        }
+
+        private void OnAspectMercuryTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectMercurySelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
+        }
+
+        private void OnAspectJupiterTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectJupiterSelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
+        }
+
+        private void OnAspectVenusTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectVenusSelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
+        }
+
+        private void OnAspectSaturnTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectSaturnSelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
+        }
+
+        private void OnAspectRahuTapped(object sender, TappedEventArgs e)
+        {
+            ToggleAspect(ref _aspectRahuSelected);
+            UpdateAspectAllState();
+            UpdateAspectSelectionUi();
+            if (_showCurrentTransits) LoadCurrentTransitChart();
         }
 
         private List<EPlanet> GetSelectedAspectPlanets()
         {
             var result = new List<EPlanet>();
 
-            if (CheckAspectAll.IsChecked)
+            if (_aspectAllSelected)
             {
                 result.Add(EPlanet.SUN);
                 result.Add(EPlanet.MOON);
@@ -222,14 +396,14 @@ namespace PADMA.Pages
                 return result;
             }
 
-            if (CheckAspectSun.IsChecked) result.Add(EPlanet.SUN);
-            if (CheckAspectMoon.IsChecked) result.Add(EPlanet.MOON);
-            if (CheckAspectMars.IsChecked) result.Add(EPlanet.MARS);
-            if (CheckAspectMercury.IsChecked) result.Add(EPlanet.MERCURY);
-            if (CheckAspectJupiter.IsChecked) result.Add(EPlanet.JUPITER);
-            if (CheckAspectVenus.IsChecked) result.Add(EPlanet.VENUS);
-            if (CheckAspectSaturn.IsChecked) result.Add(EPlanet.SATURN);
-            if (CheckAspectRahu.IsChecked) result.Add(EPlanet.RAHU);
+            if (_aspectSunSelected) result.Add(EPlanet.SUN);
+            if (_aspectMoonSelected) result.Add(EPlanet.MOON);
+            if (_aspectMarsSelected) result.Add(EPlanet.MARS);
+            if (_aspectMercurySelected) result.Add(EPlanet.MERCURY);
+            if (_aspectJupiterSelected) result.Add(EPlanet.JUPITER);
+            if (_aspectVenusSelected) result.Add(EPlanet.VENUS);
+            if (_aspectSaturnSelected) result.Add(EPlanet.SATURN);
+            if (_aspectRahuSelected) result.Add(EPlanet.RAHU);
 
             return result;
         }

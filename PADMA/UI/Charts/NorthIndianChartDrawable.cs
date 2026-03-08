@@ -90,7 +90,7 @@ namespace PADMA.UI.Charts
             var bottomRightNode = new PointF(x + w * 0.75f, y + h * 0.75f);
 
             canvas.FontColor = Colors.Black;
-            canvas.FontSize = 14;
+            canvas.FontSize = 13;
 
             ChartHouseData? GetHouse(int houseNumber)
                 => Houses.FirstOrDefault(house => house.HouseNumber == houseNumber);
@@ -141,7 +141,7 @@ namespace PADMA.UI.Charts
 
             var layouts = GetHousePlanetLayouts(rect);
 
-            canvas.FontSize = 18;
+            canvas.FontSize = 16;
 
             foreach (var house in Houses)
             {
@@ -248,17 +248,17 @@ namespace PADMA.UI.Charts
             return new Dictionary<int, RectF>
             {
                 { 1,  new RectF(x + w * 0.40f, y + h * 0.24f, w * 0.40f, h * 0.16f) }, // top center
-                { 2,  new RectF(x + w * 0.10f, y + h * 0.08f, w * 0.22f, h * 0.16f) }, // top-left
+                { 2,  new RectF(x + w * 0.10f, y + h * 0.06f, w * 0.22f, h * 0.16f) }, // top-left
                 { 3,  new RectF(x + w * 0.02f, y + h * 0.24f, w * 0.20f, h * 0.22f) }, // left-upper
                 { 4,  new RectF(x + w * 0.10f, y + h * 0.48f, w * 0.24f, h * 0.18f) }, // left-center
                 { 5,  new RectF(x + w * 0.02f, y + h * 0.72f, w * 0.20f, h * 0.20f) }, // left-lower
-                { 6,  new RectF(x + w * 0.12f, y + h * 0.96f, w * 0.22f, h * 0.14f) }, // bottom-left
+                { 6,  new RectF(x + w * 0.12f, y + h * 0.90f, w * 0.22f, h * 0.14f) }, // bottom-left
                 { 7,  new RectF(x + w * 0.40f, y + h * 0.72f, w * 0.40f, h * 0.16f) }, // bottom-center
-                { 8,  new RectF(x + w * 0.65f, y + h * 0.96f, w * 0.22f, h * 0.14f) }, // bottom-right
+                { 8,  new RectF(x + w * 0.65f, y + h * 0.90f, w * 0.22f, h * 0.14f) }, // bottom-right
                 { 9,  new RectF(x + w * 0.82f, y + h * 0.72f, w * 0.18f, h * 0.20f) }, // right-lower
                 { 10, new RectF(x + w * 0.66f, y + h * 0.48f, w * 0.24f, h * 0.18f) }, // right-center
                 { 11, new RectF(x + w * 0.82f, y + h * 0.24f, w * 0.18f, h * 0.22f) }, // right-upper
-                { 12, new RectF(x + w * 0.66f, y + h * 0.08f, w * 0.22f, h * 0.16f) }, // top-right
+                { 12, new RectF(x + w * 0.66f, y + h * 0.06f, w * 0.22f, h * 0.16f) }, // top-right
             };
         }
 
