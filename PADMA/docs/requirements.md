@@ -5694,3 +5694,5 @@ Preliminary Requirements
 Further specifications will follow during implementation.
 
 ---------
+
+DateTime | < | StepUnit ▼ | StepValue | >

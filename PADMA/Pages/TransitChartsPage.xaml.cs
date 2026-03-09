@@ -1,9 +1,10 @@
-﻿using PADMA.Core.Models;
-using PADMA.Core.Analysis;
-using PADMA.Core.Services;
+﻿using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
+using PADMA.Core.Models;
+using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI.Templates;
+using System.ComponentModel;
 using System.Globalization;
 
 namespace PADMA.Pages
@@ -26,6 +27,20 @@ namespace PADMA.Pages
 
         private bool _isNatalReferenceExpanded;
         private int _selectedNatalReferenceId = 0; // 0 = Lagna
+
+        public DateTime CurrentTransitLocalDateTime { get; set; } = DateTime.Now;
+        public DateTime CurrentTransitUtcDateTime => CurrentTransitLocalDateTime.ToUniversalTime();
+        public string SelectedStepUnit { get; set; } = "Seconds";
+        public int SelectedStepValue { get; set; } = 10;
+        public List<string> StepUnits { get; } = new()
+        {
+            "Seconds",
+            "Minutes",
+            "Hours",
+            "Days",
+            "Months",
+            "Years"
+        };
 
         public TransitChartsPage()
         {
@@ -217,7 +232,8 @@ namespace PADMA.Pages
         {
             if (_showCurrentTransits)
             {
-                LoadCurrentTransitChart();
+                var nowUtc = DateTime.Now.ToUniversalTime();
+                LoadCurrentTransitChart(nowUtc);
             }
             else
             {
@@ -225,7 +241,7 @@ namespace PADMA.Pages
             }
         }
 
-        private void LoadCurrentTransitChart()
+        private void LoadCurrentTransitChart(DateTime transitUtc)
         {
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
@@ -233,10 +249,9 @@ namespace PADMA.Pages
                 return;
             
             var nodeMode = DataCache.Instance.GetActiveNodeSetting();
-            var nowUtc = DateTime.Now.ToUniversalTime();
 
-            var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(nowUtc, ctx.LivingLat, ctx.LivingLon, nodeMode);
-            var ascendant = SwissService.CalculateAscendantForDate(nowUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
+            var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, nodeMode);
+            var ascendant = SwissService.CalculateAscendantForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
             var lagnaId = SwissUtility.GetZodiacIdFromDegree(ascendant); 
             
             var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), lagnaId);
@@ -312,7 +327,9 @@ namespace PADMA.Pages
             _isUpdatingAspectSelection = false;
 
             if (_showCurrentTransits)
-                LoadCurrentTransitChart();
+            {
+                LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            }
         }
 
         private void OnAspectSunTapped(object sender, TappedEventArgs e)
@@ -320,7 +337,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectSunSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
         private void OnAspectMoonTapped(object sender, TappedEventArgs e)
@@ -328,7 +345,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectMoonSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
         private void OnAspectMarsTapped(object sender, TappedEventArgs e)
@@ -336,7 +353,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectMarsSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
         private void OnAspectMercuryTapped(object sender, TappedEventArgs e)
@@ -344,7 +361,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectMercurySelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
         private void OnAspectJupiterTapped(object sender, TappedEventArgs e)
@@ -352,7 +369,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectJupiterSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
         private void OnAspectVenusTapped(object sender, TappedEventArgs e)
@@ -360,7 +377,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectVenusSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
         private void OnAspectSaturnTapped(object sender, TappedEventArgs e)
@@ -368,7 +385,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectSaturnSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
         private void OnAspectRahuTapped(object sender, TappedEventArgs e)
@@ -376,7 +393,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectRahuSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart();
+            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime); 
         }
 
         private List<EPlanet> GetSelectedAspectPlanets()
@@ -407,6 +424,72 @@ namespace PADMA.Pages
 
             return result;
         }
+
+        private void ShiftTransitTime(int direction)
+        {
+            int value = SelectedStepValue * direction;
+
+            CurrentTransitLocalDateTime = SelectedStepUnit switch
+            {
+                "Seconds" => CurrentTransitLocalDateTime.AddSeconds(value),
+                "Minutes" => CurrentTransitLocalDateTime.AddMinutes(value),
+                "Hours" => CurrentTransitLocalDateTime.AddHours(value),
+                "Days" => CurrentTransitLocalDateTime.AddDays(value),
+                "Months" => CurrentTransitLocalDateTime.AddMonths(value),
+                "Years" => CurrentTransitLocalDateTime.AddYears(value),
+                _ => CurrentTransitLocalDateTime
+            };
+
+            LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+        }
+
+        
+
+        private void OnStepBackClicked(object sender, EventArgs e)
+        {
+            ShiftTransitTime(-1);
+        }
+
+        private void OnStepForwardClicked(object sender, EventArgs e)
+        {
+            ShiftTransitTime(1);
+        }
+
+        private void OnTransitDateSelected(object sender, DateChangedEventArgs e)
+        {
+            CurrentTransitLocalDateTime = new DateTime(
+                e.NewDate.Year,
+                e.NewDate.Month,
+                e.NewDate.Day,
+                CurrentTransitLocalDateTime.Hour,
+                CurrentTransitLocalDateTime.Minute,
+                CurrentTransitLocalDateTime.Second);
+
+            LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+        }
+
+        private void OnTransitTimeChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(TimePicker.Time))
+                return;
+
+            var time = transitTimePicker.Time;
+
+            CurrentTransitLocalDateTime = new DateTime(
+                CurrentTransitLocalDateTime.Year,
+                CurrentTransitLocalDateTime.Month,
+                CurrentTransitLocalDateTime.Day,
+                time.Hours,
+                time.Minutes,
+                time.Seconds);
+
+            LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+        }
+
+
+
+
+
 
 
     }

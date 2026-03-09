@@ -105,7 +105,7 @@
                     ChartLineStrokeWidth="1" />
 
                     <Grid RowDefinitions="Auto,Auto"
-                      RowSpacing="4">
+                        RowSpacing="4">
 
                         <!-- Aspects header -->
                         <HorizontalStackLayout Grid.Row="0"
@@ -419,6 +419,52 @@
 
                             </Grid>
                         </Border>
+
+                    </Grid>
+
+                    <Grid
+                        Padding="8"
+                        ColumnSpacing="6"
+                        RowSpacing="0"
+                        ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+
+                        <!-- DateTime -->
+                        <HorizontalStackLayout Spacing="6">
+                            <DatePicker x:Name="transitDatePicker"
+                                        Date="{Binding CurrentTransitLocalDateTime, Mode=OneWay}"
+                                        DateSelected="OnTransitDateSelected" />
+
+                            <TimePicker x:Name="transitTimePicker"
+                                        Time="{Binding CurrentTransitLocalDateTime, Converter={StaticResource DateTimeToTimeSpanConverter}, Mode=OneWay}"
+                                        PropertyChanged="OnTransitTimeChanged" />
+                        </HorizontalStackLayout>
+
+                        <!-- Left arrow -->
+                        <Button Grid.Row="0"
+                            Grid.Column="1"
+                            Text="◀"
+                            WidthRequest="36"
+                            Clicked="OnStepBackClicked"/>
+
+                        <!-- Step Unit -->
+                        <Button Grid.Row="0"
+                            Grid.Column="2"
+                            Text="{Binding SelectedStepUnit}"/>
+                        <!--Clicked="OnStepUnitClicked"/>-->
+
+                        <!-- Step value -->
+                        <Entry Grid.Row="0"
+                            Grid.Column="3"
+                            WidthRequest="10"
+                            Keyboard="Numeric"
+                            Text="{Binding SelectedStepValue}"/>
+
+                        <!-- Right arrow -->
+                        <Button Grid.Row="0"
+                            Grid.Column="4"
+                            Text="▶"
+                            WidthRequest="36"
+                            Clicked="OnStepForwardClicked"/>
 
                     </Grid>
 

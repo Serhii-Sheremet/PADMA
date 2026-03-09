@@ -78,60 +78,60 @@ namespace PADMA.UI.Charts
             if (Houses == null || Houses.Count != 12)
                 return;
 
-            var x = rect.Left;
-            var y = rect.Top;
-            var w = rect.Width;
-            var h = rect.Height;
+            const float globalYOffset = 4f;
 
-            var topLeftNode = new PointF(x + w * 0.25f, y + h * 0.25f);
-            var topRightNode = new PointF(x + w * 0.75f, y + h * 0.25f);
-            var centerNode = new PointF(x + w * 0.50f, y + h * 0.50f);
-            var bottomLeftNode = new PointF(x + w * 0.25f, y + h * 0.75f);
-            var bottomRightNode = new PointF(x + w * 0.75f, y + h * 0.75f);
-
+            canvas.FontSize = 10;
             canvas.FontColor = Colors.Black;
-            canvas.FontSize = 13;
 
-            ChartHouseData? GetHouse(int houseNumber)
-                => Houses.FirstOrDefault(house => house.HouseNumber == houseNumber);
+            var xs = GetDomNumbersPositionXCoordinate(rect.Left, rect.Width);
+            var ys = GetDomNumbersPositionYCoordinate(rect.Top, rect.Height);
 
-            void DrawHouseNumber(int houseNumber, float px, float py)
+            for (int i = 0; i < Houses.Count; i++)
             {
-                var house = GetHouse(houseNumber);
-                if (house == null)
-                    return;
-
                 canvas.DrawString(
-                    house.ZodiacNumber.ToString(),
-                    px,
-                    py,
-                    24,
-                    20,
-                    HorizontalAlignment.Center,
-                    VerticalAlignment.Center);
+                    Houses[i].ZodiacNumber.ToString(),
+                    xs[i],
+                    ys[i] + globalYOffset,
+                    HorizontalAlignment.Center);
             }
+        }
 
-            // Top-left node: H2, H3
-            DrawHouseNumber(2, topLeftNode.X - w * 0.045f, topLeftNode.Y - h * 0.070f); // правее
-            DrawHouseNumber(3, topLeftNode.X - w * 0.090f, topLeftNode.Y - h * 0.020f); // левее
+        private static float[] GetDomNumbersPositionXCoordinate(float posX, float width)
+        {
+            return new float[12]
+            {
+                posX + (width / 2f),
+                posX + (width / 4f),
+                posX + (width / 4f - 12f),
+                posX + (width / 2f - 12f),
+                posX + (width / 4f - 12f),
+                posX + (width / 4f),
+                posX + (width / 2f),
+                posX + (width - width / 4f),
+                posX + (width - width / 4f + 12f),
+                posX + (width / 2f + 12f),
+                posX + (width - width / 4f + 12f),
+                posX + (width - width / 4f)
+            };
+        }
 
-            // Top-right node: H12, H11
-            DrawHouseNumber(12, topRightNode.X - w * 0.040f, topRightNode.Y - h * 0.070f); // левее
-            DrawHouseNumber(11, topRightNode.X + w * 0.010f, topRightNode.Y - h * 0.020f);
-
-            // Center node: H1 top, H4 left, H10 right, H7 bottom
-            DrawHouseNumber(1, centerNode.X - 12, centerNode.Y - h * 0.090f); // ближе к узлу
-            DrawHouseNumber(4, centerNode.X - w * 0.090f, centerNode.Y - h * 0.030f); // выше
-            DrawHouseNumber(10, centerNode.X + w * 0.015f, centerNode.Y - h * 0.030f); // выше и левее
-            DrawHouseNumber(7, centerNode.X - 12, centerNode.Y + h * 0.045f); // ближе к узлу
-
-            // Bottom-left node: H6, H5
-            DrawHouseNumber(6, bottomLeftNode.X - w * 0.045f, bottomLeftNode.Y + h * 0.015f); // правее
-            DrawHouseNumber(5, bottomLeftNode.X - w * 0.090f, bottomLeftNode.Y - h * 0.020f); // левее
-
-            // Bottom-right node: H8, H9
-            DrawHouseNumber(8, bottomRightNode.X - w * 0.045f, bottomRightNode.Y + h * 0.015f); // левее
-            DrawHouseNumber(9, bottomRightNode.X + w * 0.010f, bottomRightNode.Y - h * 0.025f); // левее
+        private static float[] GetDomNumbersPositionYCoordinate(float posY, float height)
+        {
+            return new float[12]
+            {
+                posY + (height / 2f - 12f),
+                posY + (height / 4f - 12f),
+                posY + (height / 4f),
+                posY + (height / 2f),
+                posY + (height - height / 4f),
+                posY + (height - height / 4f + 12f),
+                posY + (height / 2f + 12f),
+                posY + (height - height / 4f + 12f),
+                posY + (height - height / 4f),
+                posY + (height / 2f),
+                posY + (height / 4f),
+                posY + (height / 4f - 12f)
+            };
         }
 
         private void DrawPlanets(ICanvas canvas, RectF rect)
@@ -139,95 +139,577 @@ namespace PADMA.UI.Charts
             if (Houses == null || Houses.Count != 12)
                 return;
 
-            var layouts = GetHousePlanetLayouts(rect);
-
-            canvas.FontSize = 16;
+            const float fontSize = 14f;
+            canvas.FontSize = fontSize;
 
             foreach (var house in Houses)
             {
                 if (house.Planets == null || house.Planets.Count == 0)
                     continue;
 
-                if (!layouts.TryGetValue(house.HouseNumber, out var area))
-                    continue;
+                switch (house.HouseNumber)
+                {
+                    case 1:
+                        DrawCenteredDiamondHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width / 2f,
+                            rect.Top + rect.Height / 4f);
+                        break;
 
-                DrawWrappedPlanetsInArea(canvas, area, house.Planets);
+                    case 4:
+                        DrawCenteredDiamondHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width / 4f,
+                            rect.Top + rect.Height / 2f);
+                        break;
+
+                    case 7:
+                        DrawCenteredDiamondHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width / 2f,
+                            rect.Top + rect.Height * 3f / 4f);
+                        break;
+
+                    case 10:
+                        DrawCenteredDiamondHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width * 3f / 4f,
+                            rect.Top + rect.Height / 2f);
+                        break;
+
+                    case 2:
+                        DrawTopTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width / 4f);
+                        break;
+
+                    case 12:
+                        DrawTopTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width * 3f / 4f);
+                        break;
+
+                    case 6:
+                        DrawBottomTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width / 4f);
+                        break;
+
+                    case 8:
+                        DrawBottomTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Left + rect.Width * 3f / 4f);
+                        break;
+
+                    case 3:
+                        DrawLeftTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Top + rect.Height / 4f);
+                        break;
+
+                    case 5:
+                        DrawLeftTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Top + rect.Height * 3f / 4f);
+                        break;
+
+                    case 9:
+                        DrawRightTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Top + rect.Height * 3f / 4f);
+                        break;
+
+                    case 11:
+                        DrawRightTriangleHouse(
+                            canvas, rect, house.Planets, fontSize,
+                            rect.Top + rect.Height / 4f);
+                        break;
+                }
             }
         }
 
-        private void DrawWrappedPlanetsInArea(ICanvas canvas, RectF area, List<ChartPlanetItem> planets)
+        private void DrawCenteredDiamondHouse(
+            ICanvas canvas,
+            RectF rect,
+            List<ChartPlanetItem> planets,
+            float fontSize,
+            float centerX,
+            float centerY)
         {
-            if (planets.Count == 0)
+            var tokens = BuildPlanetTokens(canvas, planets, fontSize);
+            if (tokens.Count == 0)
                 return;
 
-            const float fontSize = 18f;
-            const float lineHeight = fontSize * 1.1f; //20f;
-            const float tokenSpacing = 6f;
+            float textHeight = tokens.Max(t => t.Height);
+            const float spacing = 4f;
 
-            canvas.FontSize = fontSize;
+            float mainLineWidth = rect.Width / 2f - 40f;
+            float sideLineWidth = (rect.Width / 2f * (rect.Height / 4f - textHeight) / (rect.Height / 4f)) - 40f;
 
-            var items = planets
-                .Where(p => !string.IsNullOrWhiteSpace(BuildPlanetText(p)))
-                .ToList();
+            int index = 0;
 
-            if (items.Count == 0)
+            var mainRow = TakeCenteredRowTokens(tokens, ref index, mainLineWidth, spacing);
+            DrawCenteredRow(canvas, mainRow, centerX, centerY, spacing);
+
+            if (index >= tokens.Count)
                 return;
 
-            var maxLines = Math.Max(1, (int)(area.Height / lineHeight));
+            var topRow = TakeCenteredRowTokens(tokens, ref index, sideLineWidth, spacing);
+            DrawCenteredRow(canvas, topRow, centerX, centerY - textHeight, spacing);
 
-            var lines = new List<List<ChartPlanetItem>>();
-            var currentLine = new List<ChartPlanetItem>();
+            if (index >= tokens.Count)
+                return;
 
-            foreach (var item in items)
+            var bottomRow = TakeCenteredRowTokens(tokens, ref index, sideLineWidth, spacing);
+            DrawCenteredRow(canvas, bottomRow, centerX, centerY + textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var rest = tokens.Skip(index).ToList();
+            DrawCenteredRow(canvas, rest, centerX, centerY + 2f * textHeight, spacing);
+        }
+
+        private enum HouseRowAlignment
+        {
+            Center,
+            Left,
+            Right
+        }
+
+        private sealed class HouseRowSpec
+        {
+            public float AnchorX { get; init; }
+            public float Y { get; init; }
+            public float MaxWidth { get; init; }
+            public HouseRowAlignment Alignment { get; init; }
+        }
+
+        private sealed class PlanetToken
+        {
+            public required ChartPlanetItem Item { get; init; }
+            public required string Text { get; init; }
+            public float Width { get; set; }
+            public float Height { get; set; }
+        }
+
+        private List<PlanetToken> BuildPlanetTokens(ICanvas canvas, List<ChartPlanetItem> planets, float fontSize)
+        {
+            var tokens = new List<PlanetToken>();
+
+            foreach (var p in planets)
             {
-                var candidateLine = new List<ChartPlanetItem>(currentLine) { item };
-                var candidateText = string.Join(" ", candidateLine.Select(BuildPlanetText));
-                var candidateWidth = canvas.GetStringSize(candidateText, null, fontSize).Width;
+                var text = BuildPlanetText(p);
+                if (string.IsNullOrWhiteSpace(text))
+                    continue;
 
-                if (candidateWidth <= area.Width)
+                var size = canvas.GetStringSize(text, null, fontSize);
+
+                tokens.Add(new PlanetToken
                 {
-                    currentLine.Add(item);
+                    Item = p,
+                    Text = text,
+                    Width = size.Width,
+                    Height = size.Height
+                });
+            }
+
+            return tokens;
+        }
+
+        private void DrawCenteredRow(
+            ICanvas canvas,
+            List<PlanetToken> rowTokens,
+            float centerX,
+            float centerY,
+            float spacing = 4f)
+        {
+            if (rowTokens.Count == 0)
+                return;
+
+            const float globalYOffset = 12f;
+
+            float usedLeft = 0f;
+            float usedRight = 0f;
+            bool leftTurn = false;
+            bool rightTurn = false;
+
+            for (int i = 0; i < rowTokens.Count; i++)
+            {
+                var token = rowTokens[i];
+                float drawX;
+
+                if (!leftTurn && !rightTurn)
+                {
+                    drawX = centerX - token.Width / 2f;
+                    usedLeft += token.Width / 2f;
+                    usedRight += token.Width / 2f;
+                    leftTurn = true;
+                }
+                else if (leftTurn && !rightTurn)
+                {
+                    drawX = centerX - usedLeft - spacing - token.Width;
+                    usedLeft += spacing + token.Width;
+                    leftTurn = false;
+                    rightTurn = true;
                 }
                 else
                 {
-                    if (currentLine.Count > 0)
-                    {
-                        lines.Add(new List<ChartPlanetItem>(currentLine));
-                        if (lines.Count >= maxLines)
-                            break;
-                    }
-
-                    currentLine.Clear();
-                    currentLine.Add(item);
+                    drawX = centerX + usedRight + spacing;
+                    usedRight += spacing + token.Width;
+                    leftTurn = true;
+                    rightTurn = false;
                 }
+
+                canvas.FontColor = GetPlanetDrawColor(token.Item);
+                canvas.DrawString(
+                    token.Text,
+                    drawX,
+                    centerY - token.Height / 2f + globalYOffset,
+                    HorizontalAlignment.Left);
             }
+        }
 
-            if (lines.Count < maxLines && currentLine.Count > 0)
+        private static List<PlanetToken> TakeCenteredRowTokens(
+            List<PlanetToken> source,
+            ref int startIndex,
+            float maxWidth,
+            float spacing = 4f)
+        {
+            var result = new List<PlanetToken>();
+            float usedLeft = 0f;
+            float usedRight = 0f;
+            bool leftTurn = false;
+            bool rightTurn = false;
+
+            int i = startIndex;
+            while (i < source.Count)
             {
-                lines.Add(new List<ChartPlanetItem>(currentLine));
-            }
+                var token = source[i];
+                float candidateLeft = usedLeft;
+                float candidateRight = usedRight;
 
-            for (int i = 0; i < lines.Count; i++)
-            {
-                float xCursor = area.X;
-                float yCursor = area.Y + i * lineHeight + 2f;
-
-                foreach (var item in lines[i])
+                if (!leftTurn && !rightTurn)
                 {
-                    var text = BuildPlanetText(item);
-                    var textSize = canvas.GetStringSize(text, null, fontSize);
-
-                    canvas.FontColor = GetPlanetDrawColor(item);
-                    // draw token without internal wrapping
-                    canvas.DrawString(
-                        text,
-                        xCursor,
-                        yCursor,
-                        HorizontalAlignment.Left);
-
-                    xCursor += textSize.Width + tokenSpacing;
+                    candidateLeft += token.Width / 2f;
+                    candidateRight += token.Width / 2f;
                 }
+                else if (leftTurn && !rightTurn)
+                {
+                    candidateLeft += spacing + token.Width;
+                }
+                else
+                {
+                    candidateRight += spacing + token.Width;
+                }
+
+                if (candidateLeft + candidateRight > maxWidth)
+                    break;
+
+                result.Add(token);
+                usedLeft = candidateLeft;
+                usedRight = candidateRight;
+
+                if (!leftTurn && !rightTurn)
+                {
+                    leftTurn = true;
+                }
+                else if (leftTurn && !rightTurn)
+                {
+                    leftTurn = false;
+                    rightTurn = true;
+                }
+                else
+                {
+                    leftTurn = true;
+                    rightTurn = false;
+                }
+
+                i++;
             }
+
+            startIndex = i;
+            return result;
+        }
+
+        private void DrawLeftAlignedRow(
+            ICanvas canvas,
+            List<PlanetToken> rowTokens,
+            float leftX,
+            float centerY,
+            float spacing = 4f)
+        {
+            if (rowTokens.Count == 0)
+                return;
+
+            const float globalYOffset = 12f;
+
+            float x = leftX;
+
+            foreach (var token in rowTokens)
+            {
+                canvas.FontColor = GetPlanetDrawColor(token.Item);
+                canvas.DrawString(
+                    token.Text,
+                    x,
+                    centerY - token.Height / 2f + globalYOffset,
+                    HorizontalAlignment.Left);
+
+                x += token.Width + spacing;
+            }
+        }
+
+        private void DrawRightAlignedRow(
+            ICanvas canvas,
+            List<PlanetToken> rowTokens,
+            float rightX,
+            float centerY,
+            float spacing = 4f)
+        {
+            if (rowTokens.Count == 0)
+                return;
+
+            const float globalYOffset = 12f;
+
+            float totalWidth = 0f;
+            for (int i = 0; i < rowTokens.Count; i++)
+            {
+                totalWidth += rowTokens[i].Width;
+                if (i < rowTokens.Count - 1)
+                    totalWidth += spacing;
+            }
+
+            float x = rightX - totalWidth;
+
+            foreach (var token in rowTokens)
+            {
+                canvas.FontColor = GetPlanetDrawColor(token.Item);
+                canvas.DrawString(
+                    token.Text,
+                    x,
+                    centerY - token.Height / 2f + globalYOffset,
+                    HorizontalAlignment.Left);
+
+                x += token.Width + spacing;
+            }
+        }
+
+        private static List<PlanetToken> TakeLinearRowTokens(
+            List<PlanetToken> source,
+            ref int startIndex,
+            float maxWidth,
+            float spacing = 4f)
+        {
+            var result = new List<PlanetToken>();
+            float usedWidth = 0f;
+
+            int i = startIndex;
+            while (i < source.Count)
+            {
+                var token = source[i];
+                float candidateWidth = usedWidth;
+
+                if (result.Count > 0)
+                    candidateWidth += spacing;
+
+                candidateWidth += token.Width;
+
+                if (candidateWidth > maxWidth && result.Count > 0)
+                    break;
+
+                result.Add(token);
+                usedWidth = candidateWidth;
+                i++;
+            }
+
+            startIndex = i;
+            return result;
+        }
+
+        private void DrawLeftTriangleHouse(
+            ICanvas canvas,
+            RectF rect,
+            List<ChartPlanetItem> planets,
+            float fontSize,
+            float centerY)
+        {
+            var tokens = BuildPlanetTokens(canvas, planets, fontSize);
+            if (tokens.Count == 0)
+                return;
+
+            float textHeight = tokens.Max(t => t.Height);
+            const float spacing = 4f;
+
+            float mainLineWidth = rect.Width / 4f - 20f;
+            float top1LineWidth = rect.Width / 4f * (rect.Height / 4f - textHeight) / (rect.Height / 4f);
+            float top2LineWidth = rect.Width / 4f * (rect.Height / 4f - 2f * textHeight) / (rect.Height / 4f);
+
+            float leftX = rect.Left + 4f;
+
+            int index = 0;
+
+            var mainRow = TakeLinearRowTokens(tokens, ref index, mainLineWidth, spacing);
+            DrawLeftAlignedRow(canvas, mainRow, leftX, centerY, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var top1Row = TakeLinearRowTokens(tokens, ref index, top1LineWidth, spacing);
+            DrawLeftAlignedRow(canvas, top1Row, leftX, centerY - textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var bottom1Row = TakeLinearRowTokens(tokens, ref index, top1LineWidth, spacing);
+            DrawLeftAlignedRow(canvas, bottom1Row, leftX, centerY + textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var top2Row = TakeLinearRowTokens(tokens, ref index, top2LineWidth, spacing);
+            DrawLeftAlignedRow(canvas, top2Row, leftX, centerY - 2f * textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var rest = tokens.Skip(index).ToList();
+            DrawLeftAlignedRow(canvas, rest, leftX, centerY + 2f * textHeight, spacing);
+        }
+
+        private void DrawRightTriangleHouse(
+            ICanvas canvas,
+            RectF rect,
+            List<ChartPlanetItem> planets,
+            float fontSize,
+            float centerY)
+        {
+            var tokens = BuildPlanetTokens(canvas, planets, fontSize);
+            if (tokens.Count == 0)
+                return;
+
+            float textHeight = tokens.Max(t => t.Height);
+            const float spacing = 4f;
+
+            float mainLineWidth = rect.Width / 4f - 20f;
+            float top1LineWidth = rect.Width / 4f * (rect.Height / 4f - textHeight) / (rect.Height / 4f);
+            float top2LineWidth = rect.Width / 4f * (rect.Height / 4f - 2f * textHeight) / (rect.Height / 4f);
+
+            float rightX = rect.Right - 4f;
+
+            int index = 0;
+
+            var mainRow = TakeLinearRowTokens(tokens, ref index, mainLineWidth, spacing);
+            DrawRightAlignedRow(canvas, mainRow, rightX, centerY, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var top1Row = TakeLinearRowTokens(tokens, ref index, top1LineWidth, spacing);
+            DrawRightAlignedRow(canvas, top1Row, rightX, centerY - textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var bottom1Row = TakeLinearRowTokens(tokens, ref index, top1LineWidth, spacing);
+            DrawRightAlignedRow(canvas, bottom1Row, rightX, centerY + textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var top2Row = TakeLinearRowTokens(tokens, ref index, top2LineWidth, spacing);
+            DrawRightAlignedRow(canvas, top2Row, rightX, centerY - 2f * textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var rest = tokens.Skip(index).ToList();
+            DrawRightAlignedRow(canvas, rest, rightX, centerY + 2f * textHeight, spacing);
+        }
+
+        private void DrawTopTriangleHouse(
+            ICanvas canvas,
+            RectF rect,
+            List<ChartPlanetItem> planets,
+            float fontSize,
+            float centerX)
+        {
+            var tokens = BuildPlanetTokens(canvas, planets, fontSize);
+            if (tokens.Count == 0)
+                return;
+
+            float textHeight = tokens.Max(t => t.Height);
+            const float spacing = 4f;
+
+            float mainLineWidth = rect.Width / 2f * (rect.Height / 4f - 6f) / (rect.Height / 4f) - 40f;
+            float bottom1LineWidth = rect.Width / 2f * (rect.Height / 4f - textHeight - 6f) / (rect.Height / 4f) - 40f;
+            float bottom2LineWidth = rect.Width / 2f * (rect.Height / 4f - 2f * textHeight - 6f) / (rect.Height / 4f) - 20f;
+
+            int index = 0;
+
+            var mainRow = TakeCenteredRowTokens(tokens, ref index, mainLineWidth, spacing);
+            DrawCenteredRow(canvas, mainRow, centerX, rect.Top + 4f + textHeight / 2f, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var bottom1Row = TakeCenteredRowTokens(tokens, ref index, bottom1LineWidth, spacing);
+            DrawCenteredRow(canvas, bottom1Row, centerX, rect.Top + textHeight + 4f + textHeight / 2f, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var bottom2Row = TakeCenteredRowTokens(tokens, ref index, bottom2LineWidth, spacing);
+            DrawCenteredRow(canvas, bottom2Row, centerX, rect.Top + 2f * textHeight + 4f + textHeight / 2f, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var rest = tokens.Skip(index).ToList();
+            DrawCenteredRow(canvas, rest, centerX, rect.Top + 3f * textHeight + 4f + textHeight / 2f, spacing);
+        }
+
+        private void DrawBottomTriangleHouse(
+            ICanvas canvas,
+            RectF rect,
+            List<ChartPlanetItem> planets,
+            float fontSize,
+            float centerX)
+        {
+            var tokens = BuildPlanetTokens(canvas, planets, fontSize);
+            if (tokens.Count == 0)
+                return;
+
+            float textHeight = tokens.Max(t => t.Height);
+            const float spacing = 4f;
+
+            float mainLineWidth = rect.Width / 2f * (rect.Height / 4f - 6f) / (rect.Height / 4f) - 40f;
+            float top1LineWidth = rect.Width / 2f * (rect.Height / 4f - textHeight - 6f) / (rect.Height / 4f) - 40f;
+            float top2LineWidth = rect.Width / 2f * (rect.Height / 4f - 2f * textHeight - 6f) / (rect.Height / 4f) - 20f;
+
+            float baseCenterY = rect.Bottom - textHeight / 2f - 4f;
+
+            int index = 0;
+
+            var mainRow = TakeCenteredRowTokens(tokens, ref index, mainLineWidth, spacing);
+            DrawCenteredRow(canvas, mainRow, centerX, baseCenterY, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var top1Row = TakeCenteredRowTokens(tokens, ref index, top1LineWidth, spacing);
+            DrawCenteredRow(canvas, top1Row, centerX, baseCenterY - textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var top2Row = TakeCenteredRowTokens(tokens, ref index, top2LineWidth, spacing);
+            DrawCenteredRow(canvas, top2Row, centerX, baseCenterY - 2f * textHeight, spacing);
+
+            if (index >= tokens.Count)
+                return;
+
+            var rest = tokens.Skip(index).ToList();
+            DrawCenteredRow(canvas, rest, centerX, baseCenterY - 3f * textHeight, spacing);
         }
 
         private static Color GetPlanetDrawColor(ChartPlanetItem item)
@@ -236,30 +718,6 @@ namespace PADMA.UI.Charts
                 return Colors.Gray;
 
             return DataCache.Instance.GetColor(item.ColorCode);
-        }
-
-        private static Dictionary<int, RectF> GetHousePlanetLayouts(RectF rect)
-        {
-            var x = rect.Left;
-            var y = rect.Top;
-            var w = rect.Width;
-            var h = rect.Height;
-
-            return new Dictionary<int, RectF>
-            {
-                { 1,  new RectF(x + w * 0.40f, y + h * 0.24f, w * 0.40f, h * 0.16f) }, // top center
-                { 2,  new RectF(x + w * 0.10f, y + h * 0.06f, w * 0.22f, h * 0.16f) }, // top-left
-                { 3,  new RectF(x + w * 0.02f, y + h * 0.24f, w * 0.20f, h * 0.22f) }, // left-upper
-                { 4,  new RectF(x + w * 0.10f, y + h * 0.48f, w * 0.24f, h * 0.18f) }, // left-center
-                { 5,  new RectF(x + w * 0.02f, y + h * 0.72f, w * 0.20f, h * 0.20f) }, // left-lower
-                { 6,  new RectF(x + w * 0.12f, y + h * 0.90f, w * 0.22f, h * 0.14f) }, // bottom-left
-                { 7,  new RectF(x + w * 0.40f, y + h * 0.72f, w * 0.40f, h * 0.16f) }, // bottom-center
-                { 8,  new RectF(x + w * 0.65f, y + h * 0.90f, w * 0.22f, h * 0.14f) }, // bottom-right
-                { 9,  new RectF(x + w * 0.82f, y + h * 0.72f, w * 0.18f, h * 0.20f) }, // right-lower
-                { 10, new RectF(x + w * 0.66f, y + h * 0.48f, w * 0.24f, h * 0.18f) }, // right-center
-                { 11, new RectF(x + w * 0.82f, y + h * 0.24f, w * 0.18f, h * 0.22f) }, // right-upper
-                { 12, new RectF(x + w * 0.66f, y + h * 0.06f, w * 0.22f, h * 0.16f) }, // top-right
-            };
         }
 
         private static string BuildPlanetText(ChartPlanetItem item)
