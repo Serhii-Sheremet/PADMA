@@ -28,11 +28,63 @@ namespace PADMA.Pages
         private bool _isNatalReferenceExpanded;
         private int _selectedNatalReferenceId = 0; // 0 = Lagna
 
-        public DateTime CurrentTransitLocalDateTime { get; set; } = DateTime.Now;
+        private bool _isStepUnitExpanded;
+
+        private DateTime _currentTransitLocalDateTime = DateTime.Now;
+        public DateTime CurrentTransitLocalDateTime
+        {
+            get => _currentTransitLocalDateTime;
+            set
+            {
+                if (_currentTransitLocalDateTime == value)
+                    return;
+
+                _currentTransitLocalDateTime = value;
+                OnPropertyChanged(nameof(CurrentTransitLocalDateTime));
+                OnPropertyChanged(nameof(CurrentTransitUtcDateTime));
+                OnPropertyChanged(nameof(CurrentTransitDateDisplay));
+                OnPropertyChanged(nameof(CurrentTransitTimeDisplay));
+            }
+        }
+
         public DateTime CurrentTransitUtcDateTime => CurrentTransitLocalDateTime.ToUniversalTime();
-        public string SelectedStepUnit { get; set; } = "Seconds";
-        public int SelectedStepValue { get; set; } = 10;
-        public List<string> StepUnits { get; } = new()
+
+        private string _selectedStepUnit = "Seconds";
+        public string SelectedStepUnit
+        {
+            get => _selectedStepUnit;
+            set
+            {
+                if (_selectedStepUnit == value)
+                    return;
+
+                _selectedStepUnit = value;
+                OnPropertyChanged(nameof(SelectedStepUnit));
+            }
+        }
+
+        private int _selectedStepValue = 10;
+        public int SelectedStepValue
+        {
+            get => _selectedStepValue;
+            set
+            {
+                var normalized = value <= 0 ? 1 : value;
+                if (_selectedStepValue == normalized)
+                    return;
+
+                _selectedStepValue = normalized;
+                OnPropertyChanged(nameof(SelectedStepValue));
+            }
+        }
+
+        public string CurrentTransitDateDisplay =>
+            CurrentTransitLocalDateTime.ToString("dddd, dd MMMM yyyy", CultureInfo.CurrentCulture);
+
+        public string CurrentTransitTimeDisplay =>
+            CurrentTransitLocalDateTime.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+
+        private readonly List<string> _stepUnits = new()
         {
             "Seconds",
             "Minutes",
@@ -42,10 +94,96 @@ namespace PADMA.Pages
             "Years"
         };
 
+        private int GetParsedStepValue()
+        {
+            if (int.TryParse(StepValueEntry.Text, out var value) && value > 0)
+                return value;
+
+            return GetDefaultStepValue(SelectedStepUnit);
+        }
+
+        private static int GetDefaultStepValue(string stepUnit) =>
+            stepUnit switch
+            {
+                "Seconds" => 10,
+                "Minutes" => 1,
+                "Hours" => 1,
+                "Days" => 1,
+                "Months" => 1,
+                "Years" => 1,
+                _ => 1
+            };
+
+        private bool _isDateEditorOpen;
+        private bool _isTimeEditorOpen;
+
+        private void ShowDateEditor()
+        {
+            if (_isDateEditorOpen)
+                return;
+
+            _isDateEditorOpen = true;
+
+            TransitDateLabel.IsVisible = false;
+            transitDatePicker.IsVisible = true;
+            transitDatePicker.Opacity = 0.01;
+            transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
+
+            Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(80), () =>
+            {
+                if (_isDateEditorOpen)
+                    transitDatePicker.Focus();
+            });
+        }
+
+        private void HideDateEditor()
+        {
+            _isDateEditorOpen = false;
+            transitDatePicker.IsVisible = false;
+            TransitDateLabel.IsVisible = true;
+        }
+
+        private void ShowTimeEditor()
+        {
+            if (_isTimeEditorOpen)
+                return;
+
+            _isTimeEditorOpen = true;
+
+            TransitTimeLabel.IsVisible = false;
+            transitTimePicker.IsVisible = true;
+            transitTimePicker.Opacity = 0.01;
+            transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
+
+            Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(80), () =>
+            {
+                if (_isTimeEditorOpen)
+                    transitTimePicker.Focus();
+            });
+        }
+
+        private void HideTimeEditor()
+        {
+            _isTimeEditorOpen = false;
+            transitTimePicker.IsVisible = false;
+            TransitTimeLabel.IsVisible = true;
+        }
+
+        private void OnTransitDateTapped(object sender, TappedEventArgs e)
+        {
+            ShowDateEditor();
+        }
+
+        private void OnTransitTimeTapped(object sender, TappedEventArgs e)
+        {
+            ShowTimeEditor();
+        }
+
         public TransitChartsPage()
         {
             InitializeComponent();
-            
+            BindingContext = this;
+
             ChartView.SizeChanged += OnChartViewSizeChanged;
         }
 
@@ -65,6 +203,14 @@ namespace PADMA.Pages
             UpdateTabState();
             UpdateAspectSelectionUi();
             UpdateNatalReferenceUnderline();
+            UpdateStepUnitUi();
+
+            transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
+            transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
+
+            HideDateEditor();
+            HideTimeEditor();
+
             Dispatcher.Dispatch(UpdateNatalReferenceUnderline);
             LoadSelectedTabContent();
         }
@@ -232,8 +378,7 @@ namespace PADMA.Pages
         {
             if (_showCurrentTransits)
             {
-                var nowUtc = DateTime.Now.ToUniversalTime();
-                LoadCurrentTransitChart(nowUtc);
+                LoadCurrentTransitChart(CurrentTransitUtcDateTime);
             }
             else
             {
@@ -427,6 +572,9 @@ namespace PADMA.Pages
 
         private void ShiftTransitTime(int direction)
         {
+            SelectedStepValue = GetParsedStepValue();
+            StepValueEntry.Text = SelectedStepValue.ToString();
+
             int value = SelectedStepValue * direction;
 
             CurrentTransitLocalDateTime = SelectedStepUnit switch
@@ -440,10 +588,18 @@ namespace PADMA.Pages
                 _ => CurrentTransitLocalDateTime
             };
 
+            transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
+            transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
+
             LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
-        
+        private void OnStepUnitTapped(object sender, EventArgs e)
+        {
+            _isStepUnitExpanded = !_isStepUnitExpanded;
+            StepUnitPanel.IsVisible = _isStepUnitExpanded;
+            StepUnitArrow.Text = _isStepUnitExpanded ? "▲" : "▼";
+        }
 
         private void OnStepBackClicked(object sender, EventArgs e)
         {
@@ -465,7 +621,13 @@ namespace PADMA.Pages
                 CurrentTransitLocalDateTime.Minute,
                 CurrentTransitLocalDateTime.Second);
 
+            HideDateEditor();
             LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+        }
+
+        private void OnTransitDateUnfocused(object sender, FocusEventArgs e)
+        {
+            HideDateEditor();
         }
 
         private void OnTransitTimeChanged(object sender, PropertyChangedEventArgs e)
@@ -483,11 +645,39 @@ namespace PADMA.Pages
                 time.Minutes,
                 time.Seconds);
 
+            HideTimeEditor();
             LoadCurrentTransitChart(CurrentTransitUtcDateTime);
         }
 
+        private void OnTransitTimeUnfocused(object sender, FocusEventArgs e)
+        {
+            HideTimeEditor();
+        }
 
+        private void UpdateStepUnitUi()
+        {
+            StepUnitLabel.Text = SelectedStepUnit;
+            StepUnitArrow.Text = _isStepUnitExpanded ? "▲" : "▼";
+            StepValueEntry.Text = SelectedStepValue.ToString();
+        }
 
+        private void SetStepUnit(string unit)
+        {
+            SelectedStepUnit = unit;
+            SelectedStepValue = GetDefaultStepValue(unit);
+
+            _isStepUnitExpanded = false;
+            StepUnitPanel.IsVisible = false;
+
+            UpdateStepUnitUi();
+        }
+
+        private void OnStepSecondsTapped(object sender, TappedEventArgs e) => SetStepUnit("Seconds");
+        private void OnStepMinutesTapped(object sender, TappedEventArgs e) => SetStepUnit("Minutes");
+        private void OnStepHoursTapped(object sender, TappedEventArgs e) => SetStepUnit("Hours");
+        private void OnStepDaysTapped(object sender, TappedEventArgs e) => SetStepUnit("Days");
+        private void OnStepMonthsTapped(object sender, TappedEventArgs e) => SetStepUnit("Months");
+        private void OnStepYearsTapped(object sender, TappedEventArgs e) => SetStepUnit("Years");
 
 
 

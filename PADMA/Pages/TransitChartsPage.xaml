@@ -11,7 +11,7 @@
         <!-- Main page content -->
         <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
               AbsoluteLayout.LayoutFlags="All"
-              RowDefinitions="Auto,*"
+              RowDefinitions="Auto,Auto,*"
               RowSpacing="8"
               Padding="10,0,10,10">
 
@@ -93,33 +93,98 @@
                 </VerticalStackLayout>
             </Grid>
 
+            <!-- Fixed date/time header -->
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="*,110"
+                  ColumnSpacing="0"
+                  HorizontalOptions="Fill"
+                  Margin="0,0,0,2"
+                  MaximumHeightRequest="40">
+
+                <!-- DATE CELL -->
+                <Border Grid.Column="0"
+                        Stroke="#BDBDBD"
+                        StrokeThickness="1"
+                        BackgroundColor="Transparent"
+                        Padding="8,6">
+                    <Grid>
+                        <Label x:Name="TransitDateLabel"
+                               Text="{Binding CurrentTransitDateDisplay}"
+                               HorizontalTextAlignment="Center"
+                               VerticalOptions="Center"
+                               LineBreakMode="NoWrap">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnTransitDateTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                        <DatePicker x:Name="transitDatePicker"
+                                    IsVisible="False"
+                                    Date="{Binding CurrentTransitLocalDateTime, Mode=OneWay}"
+                                    DateSelected="OnTransitDateSelected" 
+                                    Unfocused="OnTransitDateUnfocused"/>
+                    </Grid>
+                </Border>
+
+                <!-- TIME CELL -->
+                <Border Grid.Column="1"
+                        Stroke="#BDBDBD"
+                        StrokeThickness="1"
+                        BackgroundColor="Transparent"
+                        Padding="8,6"
+                        Margin="-1,0,0,0">
+                    <Grid>
+                        <Label x:Name="TransitTimeLabel"
+                               Text="{Binding CurrentTransitTimeDisplay}"
+                               HorizontalTextAlignment="Center"
+                               VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnTransitTimeTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+
+                        <TimePicker x:Name="transitTimePicker"
+                                    IsVisible="False"
+                                    Time="{Binding CurrentTransitLocalDateTime, Converter={StaticResource DateTimeToTimeSpanConverter}, Mode=OneWay}"
+                                    PropertyChanged="OnTransitTimeChanged" 
+                                    Unfocused="OnTransitTimeUnfocused"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
             <!-- Scrollable content -->
-            <ScrollView Grid.Row="1">
+            <ScrollView Grid.Row="2">
                 <VerticalStackLayout Spacing="10">
 
                     <charts:NorthIndianChartView
-                    x:Name="ChartView"
-                    HorizontalOptions="Fill"
-                    ChartBackgroundColor="#FAFAD2"
-                    ChartLineColor="Black"
-                    ChartLineStrokeWidth="1" />
+                                x:Name="ChartView"
+                                HorizontalOptions="Fill"
+                                ChartBackgroundColor="#FAFAD2"
+                                ChartLineColor="Black"
+                                ChartLineStrokeWidth="1" />
 
-                    <Grid RowDefinitions="Auto,Auto"
-                        RowSpacing="4">
+                    <Grid RowDefinitions="Auto,*"
+                          ColumnSpacing="8"
+                          RowSpacing="4"
+                          VerticalOptions="Center"
+                          Margin="0,2,0,0"
+                          MinimumHeightRequest="32">
 
                         <!-- Aspects header -->
                         <HorizontalStackLayout Grid.Row="0"
                             x:Name="AspectsHeaderLayout"
                             Spacing="6"
-                            HorizontalOptions="Start">
+                            HorizontalOptions="Start"
+                            VerticalOptions="Center">
+                            
                             <HorizontalStackLayout.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnAspectsHeaderTapped" />
                             </HorizontalStackLayout.GestureRecognizers>
 
                             <VerticalStackLayout Spacing="2"
-                                HorizontalOptions="Start">
+                                    HorizontalOptions="Start">
                                 <HorizontalStackLayout Spacing="4"
-                               HorizontalOptions="Start">
+                                       HorizontalOptions="Start">
                                     <Label x:Name="AspectsLabel"
                                        FontSize="16"
                                        VerticalOptions="Center" />
@@ -137,6 +202,59 @@
                                      HorizontalOptions="Start" />
                             </VerticalStackLayout>
                         </HorizontalStackLayout>
+
+                        <!-- shift control -->
+                        <Grid Grid.Column="1"
+                              ColumnDefinitions="Auto,Auto,Auto,Auto"
+                              ColumnSpacing="6"
+                              HorizontalOptions="End"
+                              VerticalOptions="Center">
+
+                            <ImageButton Grid.Column="0"
+                                    Source="left_arrow.png"
+                                    BackgroundColor="Transparent"
+                                    WidthRequest="18"
+                                    HeightRequest="18"
+                                    Padding="0"
+                                    Clicked="OnStepBackClicked" />
+
+                            <HorizontalStackLayout Grid.Column="1"
+                                    x:Name="StepUnitHeader"
+                                    Spacing="4"
+                                    VerticalOptions="Center">
+                                <HorizontalStackLayout.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnStepUnitTapped" />
+                                </HorizontalStackLayout.GestureRecognizers>
+
+                                <Label x:Name="StepUnitLabel"
+                                       VerticalOptions="Center"
+                                       Text="{Binding SelectedStepUnit}" />
+
+                                <Label x:Name="StepUnitArrow"
+                                       Text="▼"
+                                       FontSize="14"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+
+                            <Entry Grid.Column="2"
+                                   x:Name="StepValueEntry"
+                                   WidthRequest="10"
+                                   HeightRequest="30"
+                                   FontSize="14"
+                                   Margin="0"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center"
+                                   Keyboard="Numeric"
+                                   Text="{Binding SelectedStepValue}" />
+
+                            <ImageButton Grid.Column="3"
+                                    Source="right_arrow.png"
+                                    BackgroundColor="Transparent"
+                                    WidthRequest="18"
+                                    HeightRequest="18"
+                                    Padding="0"
+                                    Clicked="OnStepForwardClicked" />
+                        </Grid>
 
                         <!-- Expandable panel -->
                         <Border Grid.Row="1"
@@ -422,51 +540,7 @@
 
                     </Grid>
 
-                    <Grid
-                        Padding="8"
-                        ColumnSpacing="6"
-                        RowSpacing="0"
-                        ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*">
-
-                        <!-- DateTime -->
-                        <HorizontalStackLayout Spacing="6">
-                            <DatePicker x:Name="transitDatePicker"
-                                        Date="{Binding CurrentTransitLocalDateTime, Mode=OneWay}"
-                                        DateSelected="OnTransitDateSelected" />
-
-                            <TimePicker x:Name="transitTimePicker"
-                                        Time="{Binding CurrentTransitLocalDateTime, Converter={StaticResource DateTimeToTimeSpanConverter}, Mode=OneWay}"
-                                        PropertyChanged="OnTransitTimeChanged" />
-                        </HorizontalStackLayout>
-
-                        <!-- Left arrow -->
-                        <Button Grid.Row="0"
-                            Grid.Column="1"
-                            Text="◀"
-                            WidthRequest="36"
-                            Clicked="OnStepBackClicked"/>
-
-                        <!-- Step Unit -->
-                        <Button Grid.Row="0"
-                            Grid.Column="2"
-                            Text="{Binding SelectedStepUnit}"/>
-                        <!--Clicked="OnStepUnitClicked"/>-->
-
-                        <!-- Step value -->
-                        <Entry Grid.Row="0"
-                            Grid.Column="3"
-                            WidthRequest="10"
-                            Keyboard="Numeric"
-                            Text="{Binding SelectedStepValue}"/>
-
-                        <!-- Right arrow -->
-                        <Button Grid.Row="0"
-                            Grid.Column="4"
-                            Text="▶"
-                            WidthRequest="36"
-                            Clicked="OnStepForwardClicked"/>
-
-                    </Grid>
+                    
 
 
                 </VerticalStackLayout>
@@ -477,7 +551,7 @@
         <!-- Floating dropdown -->
         <Border x:Name="NatalReferencePanel"
                 IsVisible="False"
-                AbsoluteLayout.LayoutBounds="251,38,110,-1"
+                AbsoluteLayout.LayoutBounds="251,28,110,-1"
                 AbsoluteLayout.LayoutFlags="None"
                 Stroke="#D0D0D0"
                 StrokeThickness="1"
@@ -580,5 +654,73 @@
 
             </VerticalStackLayout>
         </Border>
+
+        <Border x:Name="StepUnitPanel"
+                IsVisible="False"
+                BackgroundColor="White"
+                Stroke="#D0D0D0"
+                StrokeThickness="1"
+                Padding="6,4"
+                AbsoluteLayout.LayoutBounds="0.78,0.86,110,-1"
+                AbsoluteLayout.LayoutFlags="PositionProportional">
+            <VerticalStackLayout Spacing="0">
+
+                <Label Text="Seconds"
+                       FontSize="15"
+                       TextColor="Black"
+                       BackgroundColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnStepSecondsTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <Label Text="Minutes"
+                       FontSize="15"
+                       TextColor="Black"
+                       BackgroundColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnStepMinutesTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <Label Text="Hours"
+                       FontSize="15"
+                       TextColor="Black"
+                       BackgroundColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnStepHoursTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <Label Text="Days"
+                       FontSize="15"
+                       TextColor="Black"
+                       BackgroundColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnStepDaysTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <Label Text="Months"
+                       FontSize="15"
+                       TextColor="Black"
+                       BackgroundColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnStepMonthsTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <Label Text="Years"
+                       FontSize="15"
+                       TextColor="Black"
+                       BackgroundColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnStepYearsTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+            </VerticalStackLayout>
+        </Border>
+
     </AbsoluteLayout>
 </ui:ConfigBasePage>
