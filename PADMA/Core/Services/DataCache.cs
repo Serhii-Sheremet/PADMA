@@ -113,19 +113,19 @@ namespace PADMA.Core.Services
             DayOfWeek = db.GetFirstDayOfWeekFromDb();
 
             // Colors
-            ColorList = db.GetColors();
+            ColorList = db.GetColors().ToList(); ;
             ColorDescList = db.GetColorDescs().ToList();
 
             // Planets
-            PlanetList = db.GetPlanets();
+            PlanetList = db.GetPlanets().ToList(); ;
             PlanetDescList = db.GetPlanetDescs().ToList();
 
             // Transits
-            TransitList = db.GetTransits();
+            TransitList = db.GetTransits().ToList(); ;
             TransitDescList = db.GetTransitDescs().ToList();
 
             // Zodiacs
-            ZodiacList = db.GetZodiacs().ToList();
+            ZodiacList = db.GetZodiacs().ToList(); ;
             ZodiacDescList = db.GetZodiacDescs().ToList();
 
             // Padas 

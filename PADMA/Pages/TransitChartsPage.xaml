@@ -141,7 +141,7 @@
 
             <!-- Scrollable content -->
             <ScrollView Grid.Row="2">
-                <VerticalStackLayout Spacing="10">
+                <VerticalStackLayout Spacing="2">
 
                     <charts:NorthIndianChartView
                                 x:Name="ChartView"
@@ -200,9 +200,10 @@
                             <ImageButton Grid.Column="0"
                                     Source="left_arrow.png"
                                     BackgroundColor="Transparent"
-                                    WidthRequest="18"
-                                    HeightRequest="18"
+                                    WidthRequest="16"
+                                    HeightRequest="16"
                                     Padding="0"
+                                    Margin="0"
                                     Clicked="OnStepBackClicked" />
                             
                             <HorizontalStackLayout Grid.Column="1"
@@ -214,7 +215,7 @@
                                 </HorizontalStackLayout.GestureRecognizers>
 
                                 <VerticalStackLayout Spacing="2"
-                                    HorizontalOptions="Start">
+                                        HorizontalOptions="Start">
                                     <HorizontalStackLayout Spacing="4"
                                             HorizontalOptions="Start">
                                         <Label x:Name="StepUnitLabel"
@@ -238,8 +239,8 @@
                             <Entry Grid.Column="2"
                                    x:Name="StepValueEntry"
                                    WidthRequest="10"
-                                   HeightRequest="24"
-                                   FontSize="14"
+                                   HeightRequest="20"
+                                   FontSize="12"
                                    Margin="0,-5,0,0"
                                    HorizontalTextAlignment="Center"
                                    VerticalTextAlignment="Center"
@@ -249,9 +250,10 @@
                             <ImageButton Grid.Column="3"
                                     Source="right_arrow.png"
                                     BackgroundColor="Transparent"
-                                    WidthRequest="18"
-                                    HeightRequest="18"
+                                    WidthRequest="16"
+                                    HeightRequest="16"
                                     Padding="0"
+                                    Margin="0" 
                                     Clicked="OnStepForwardClicked" />
                         </Grid>
 
@@ -539,7 +541,72 @@
 
                     </Grid>
 
-                    
+                    <Label x:Name="LabelPlanetsTransitPositions"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           Margin="0,2,0,0" />
+
+                    <Border Stroke="#BDBDBD"
+                            StrokeThickness="1"
+                            BackgroundColor="Transparent"
+                            Padding="0"
+                            Margin="0,0,0,0">
+
+                        <Grid RowDefinitions="Auto,*">
+
+                            <!-- header -->
+                            <Grid Grid.Row="0"
+                                  BackgroundColor="#EFE8C8"
+                                  ColumnDefinitions="20,60,78,*,36,64"
+                                  Padding="4,3">
+                                <Label Grid.Column="0" 
+                                       Text="" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelDegree"
+                                       Grid.Column="1" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelRasi"
+                                       Grid.Column="2" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelNakshatra"
+                                       Grid.Column="3" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelPada"
+                                       Grid.Column="4" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" 
+                                       HorizontalTextAlignment="Center" />
+                                <Label x:Name="TableLabelNavamsa"
+                                       Grid.Column="5" 
+                                       Text="Навамша" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                            </Grid>
+
+                            <!-- rows -->
+                            <CollectionView x:Name="TransitPlanetTableView"
+                                            Grid.Row="1"
+                                            SelectionMode="None">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="20,60,78,*,36,64"
+                                              Padding="4,3">
+                                            <Label Grid.Column="0" Text="{Binding Planet}" FontSize="10" />
+                                            <Label Grid.Column="1" Text="{Binding Degree}" FontSize="10" />
+                                            <Label Grid.Column="2" Text="{Binding Zodiac}" FontSize="10" />
+                                            <Label Grid.Column="3" Text="{Binding Nakshatra}" FontSize="10" LineBreakMode="TailTruncation" />
+                                            <Label Grid.Column="4" Text="{Binding Pada}" FontSize="10" HorizontalTextAlignment="Center" />
+                                            <Label Grid.Column="5" Text="{Binding Navamsha}" FontSize="10" LineBreakMode="TailTruncation" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Grid>
+                    </Border>
 
 
                 </VerticalStackLayout>
@@ -660,7 +727,7 @@
                 Stroke="#D0D0D0"
                 StrokeThickness="1"
                 Padding="6,4"
-                AbsoluteLayout.LayoutBounds="0.78,0.86,110,-1"
+                AbsoluteLayout.LayoutBounds="0.78,0.84,110,-1"
                 AbsoluteLayout.LayoutFlags="PositionProportional">
             <VerticalStackLayout Spacing="0">
 

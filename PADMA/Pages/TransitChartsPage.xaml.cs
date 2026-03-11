@@ -192,7 +192,7 @@ namespace PADMA.Pages
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
             Title = Localization.GetLocalizedText("Transit charts", lang);
-            CurrentTabLabel.Text = Localization.GetLocalizedText("Current Transits", lang);
+            CurrentTabLabel.Text = Localization.GetLocalizedText("Current transits", lang);
             NatalTabLabel.Text = Localization.GetLocalizedText("Transits from Natal", lang);
             
             AspectsLabel.Text = Localization.GetLocalizedText("Aspects", lang);
@@ -220,6 +220,13 @@ namespace PADMA.Pages
             NatalRefSaturnLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.SATURN)?.Name ?? "Saturn";
             NatalRefRahuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.RAHU)?.Name ?? "Rahu";
             NatalRefKetuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.KETU)?.Name ?? "Ketu";
+
+            LabelPlanetsTransitPositions.Text = Localization.GetLocalizedText("Planets transit positions", lang);
+            TableLabelDegree.Text = Localization.GetLocalizedText("Degree", lang);
+            TableLabelRasi.Text = Localization.GetLocalizedText("Rasi", lang);
+            TableLabelNakshatra.Text = Localization.GetLocalizedText("Nakshatra", lang);
+            TableLabelPada.Text = Localization.GetLocalizedText("Pada", lang);
+            TableLabelNavamsa.Text = Localization.GetLocalizedText("Navamsa", lang);
 
         }
 
@@ -419,6 +426,7 @@ namespace PADMA.Pages
                 selectedAspectPlanets);
 
             ChartView.SetHouses(houses);
+            BuildTransitPlanetTable(pdList, ascendant);
         }
 
         private void OnAspectsHeaderTapped(object sender, TappedEventArgs e)
@@ -688,29 +696,90 @@ namespace PADMA.Pages
 
         public List<TransitPlanetTableRow> TransitPlanetRows { get; set; } = new();
 
-        private void BuildTransitPlanetTable(List<PlanetData> pdList)
+        private void BuildTransitPlanetTable(List<PlanetData> pdList, double ascendant)
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
+            var planet = "Lg";
+            var lagnaId = SwissUtility.GetZodiacIdFromDegree(ascendant);
+
+            var lagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(ascendant);
+            var lagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(ascendant);
+            var lagnaPadaId = SwissUtility.GetPadaIdFromDegree(ascendant);
+            var lagnaPadaNumber = SwissUtility.GetPadaNumberByPadaId(lagnaPadaId);
+            var lagnaNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(lagnaNakshatraId, lagnaPadaNumber);
+
+            var lagnaRow = new TransitPlanetTableRow
+            {
+                Planet = planet,
+                Degree = FormatDegree(ascendant),
+                Zodiac = GetZodiacDisplay(lagnaZodiacId),
+                Nakshatra = GetNakshatraDisplay(lagnaNakshatraId),
+                Pada = SwissUtility.GetPadaNumberByPadaId(lagnaPadaId).ToString(),
+                Navamsha = GetZodiacDisplay(lagnaNavamsaZodiacId)
+            };
 
             TransitPlanetRows = pdList
                 .OrderBy(p => p.PlanetId)
                 .Select(p => new TransitPlanetTableRow
                 {
-                    Planet = GetPlanetShortName(p.PlanetId, lang),
+                    Planet = GetPlanetShortName(p.PlanetId),
                     Degree = FormatDegree(p.Longitude),
-                    Zodiac = GetZodiacDisplay(p.ZodiakId),
+                    Zodiac = GetZodiacDisplay(p.ZodiacId),
                     Nakshatra = GetNakshatraDisplay(p.NakshatraId),
-                    Pada = p.PadaNumber.ToString(),
-                    Navamsha = GetNavamshaDisplay(p) // если поле есть; если нет, пока верни ""
+                    Pada = SwissUtility.GetPadaNumberByPadaId(p.PadaId).ToString(),
+                    Navamsha = GetZodiacDisplay(p.NavamsaZodiacId) 
                 })
                 .ToList();
+
+            TransitPlanetRows.Insert(0, lagnaRow);
 
             TransitPlanetTableView.ItemsSource = null;
             TransitPlanetTableView.ItemsSource = TransitPlanetRows;
         }
 
+        private string GetPlanetShortName(int planetId)
+        {
+            var name = PanchangaHelper.GetPlanetDescEntity(planetId)?.Name ?? planetId.ToString();
+            return name.Length >= 2 ? name.Substring(0, 2) : name;
+        }
 
+        private string GetZodiacDisplay(int zodiacId)
+        {
+            return $"{zodiacId}.{ PanchangaHelper.GetZodiacDescEntity(zodiacId).Name}";
+        }
 
+        private string GetNakshatraDisplay(int nakshatraId)
+        {
+            return $"{nakshatraId}.{PanchangaHelper.GetNakshatraDescEntity(nakshatraId).ShortName}";
+        }
+
+        private string FormatDegree(double longitude)
+        {
+            var totalDegrees = longitude % 30.0;
+            if (totalDegrees < 0)
+                totalDegrees += 30.0;
+
+            int deg = (int)totalDegrees;
+            double m1 = (totalDegrees - deg) * 60.0;
+            int min = (int)m1;
+            int sec = (int)Math.Round((m1 - min) * 60.0);
+
+            if (sec == 60)
+            {
+                sec = 0;
+                min++;
+            }
+
+            if (min == 60)
+            {
+                min = 0;
+                deg++;
+            }
+
+            return $"{deg}°{min:00}'{sec:00}\"";
+        }
+
+        
 
 
     }
