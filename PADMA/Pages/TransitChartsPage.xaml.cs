@@ -113,72 +113,7 @@ namespace PADMA.Pages
                 "Years" => 1,
                 _ => 1
             };
-
-        private bool _isDateEditorOpen;
-        private bool _isTimeEditorOpen;
-
-        private void ShowDateEditor()
-        {
-            if (_isDateEditorOpen)
-                return;
-
-            _isDateEditorOpen = true;
-
-            TransitDateLabel.IsVisible = false;
-            transitDatePicker.IsVisible = true;
-            transitDatePicker.Opacity = 0.01;
-            transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
-
-            Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(80), () =>
-            {
-                if (_isDateEditorOpen)
-                    transitDatePicker.Focus();
-            });
-        }
-
-        private void HideDateEditor()
-        {
-            _isDateEditorOpen = false;
-            transitDatePicker.IsVisible = false;
-            TransitDateLabel.IsVisible = true;
-        }
-
-        private void ShowTimeEditor()
-        {
-            if (_isTimeEditorOpen)
-                return;
-
-            _isTimeEditorOpen = true;
-
-            TransitTimeLabel.IsVisible = false;
-            transitTimePicker.IsVisible = true;
-            transitTimePicker.Opacity = 0.01;
-            transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
-
-            Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(80), () =>
-            {
-                if (_isTimeEditorOpen)
-                    transitTimePicker.Focus();
-            });
-        }
-
-        private void HideTimeEditor()
-        {
-            _isTimeEditorOpen = false;
-            transitTimePicker.IsVisible = false;
-            TransitTimeLabel.IsVisible = true;
-        }
-
-        private void OnTransitDateTapped(object sender, TappedEventArgs e)
-        {
-            ShowDateEditor();
-        }
-
-        private void OnTransitTimeTapped(object sender, TappedEventArgs e)
-        {
-            ShowTimeEditor();
-        }
-
+        
         public TransitChartsPage()
         {
             InitializeComponent();
@@ -203,16 +138,54 @@ namespace PADMA.Pages
             UpdateTabState();
             UpdateAspectSelectionUi();
             UpdateNatalReferenceUnderline();
+            UpdateAspectsUnderline();
+            UpdateStepUnitline();
             UpdateStepUnitUi();
 
             transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
             transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
 
-            HideDateEditor();
-            HideTimeEditor();
-
             Dispatcher.Dispatch(UpdateNatalReferenceUnderline);
+            Dispatcher.Dispatch(UpdateAspectsUnderline);
+            Dispatcher.Dispatch(UpdateStepUnitline);
+
             LoadSelectedTabContent();
+        }
+
+        private async void OnCloseClicked(object sender, EventArgs e)
+        {
+            ResetTransientUiState();
+            await Shell.Current.GoToAsync("//main", true);
+        }
+
+        protected override bool OnBackButtonPressed()
+        {
+            Dispatcher.Dispatch(async () =>
+            {
+                ResetTransientUiState();
+                await Shell.Current.GoToAsync("//main");
+            });
+            return true;
+        }
+
+        private void ResetTransientUiState()
+        {
+            UpdateTabState();
+
+            // natal reference dropdown
+            _isNatalReferenceExpanded = false;
+            NatalReferencePanel.IsVisible = false;
+            NatalReferenceArrow.Text = "▼";
+
+            // aspects panel
+            _isAspectsExpanded = false;
+            AspectsPanel.IsVisible = false;
+            AspectsExpandIcon.Text = "▼";
+            
+            // step unit dropdown
+            _isStepUnitExpanded = false;
+            StepUnitPanel.IsVisible = false;
+            StepUnitArrow.Text = "▼";
         }
 
         private void ApplyLocalization()
@@ -287,6 +260,44 @@ namespace PADMA.Pages
 
             var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
             NatalReferenceUnderline.WidthRequest = Math.Max(24, size.Width + 8);
+        }
+
+        private void UpdateAspectsUnderline()
+        {
+            if (AspectsUnderline.Width > 0)
+            {
+                AspectsUnderline.WidthRequest = AspectsLabel.Width;
+                return;
+            }
+
+            var measureLabel = new Label
+            {
+                Text = AspectsLabel.Text,
+                FontSize = AspectsLabel.FontSize,
+                LineBreakMode = LineBreakMode.NoWrap
+            };
+
+            var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
+            AspectsUnderline.WidthRequest = Math.Max(24, size.Width + 8);
+        }
+
+        private void UpdateStepUnitline()
+        {
+            if (StepUnitLabel.Width > 0)
+            {
+                StepUnitline.WidthRequest = StepUnitLabel.Width;
+                return;
+            }
+
+            var measureLabel = new Label
+            {
+                Text = StepUnitLabel.Text,
+                FontSize = StepUnitLabel.FontSize,
+                LineBreakMode = LineBreakMode.NoWrap
+            };
+
+            var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
+            StepUnitline.WidthRequest = Math.Max(24, size.Width + 8);
         }
 
         private string GetNatalReferenceDisplayName(int id)
@@ -409,8 +420,6 @@ namespace PADMA.Pages
 
             ChartView.SetHouses(houses);
         }
-
-
 
         private void OnAspectsHeaderTapped(object sender, TappedEventArgs e)
         {
@@ -621,13 +630,7 @@ namespace PADMA.Pages
                 CurrentTransitLocalDateTime.Minute,
                 CurrentTransitLocalDateTime.Second);
 
-            HideDateEditor();
             LoadCurrentTransitChart(CurrentTransitUtcDateTime);
-        }
-
-        private void OnTransitDateUnfocused(object sender, FocusEventArgs e)
-        {
-            HideDateEditor();
         }
 
         private void OnTransitTimeChanged(object sender, PropertyChangedEventArgs e)
@@ -645,13 +648,7 @@ namespace PADMA.Pages
                 time.Minutes,
                 time.Seconds);
 
-            HideTimeEditor();
             LoadCurrentTransitChart(CurrentTransitUtcDateTime);
-        }
-
-        private void OnTransitTimeUnfocused(object sender, FocusEventArgs e)
-        {
-            HideTimeEditor();
         }
 
         private void UpdateStepUnitUi()
@@ -678,6 +675,40 @@ namespace PADMA.Pages
         private void OnStepDaysTapped(object sender, TappedEventArgs e) => SetStepUnit("Days");
         private void OnStepMonthsTapped(object sender, TappedEventArgs e) => SetStepUnit("Months");
         private void OnStepYearsTapped(object sender, TappedEventArgs e) => SetStepUnit("Years");
+
+        public sealed class TransitPlanetTableRow
+        {
+            public string Planet { get; set; } = string.Empty;
+            public string Degree { get; set; } = string.Empty;
+            public string Zodiac { get; set; } = string.Empty;
+            public string Nakshatra { get; set; } = string.Empty;
+            public string Pada { get; set; } = string.Empty;
+            public string Navamsha { get; set; } = string.Empty;
+        }
+
+        public List<TransitPlanetTableRow> TransitPlanetRows { get; set; } = new();
+
+        private void BuildTransitPlanetTable(List<PlanetData> pdList)
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            TransitPlanetRows = pdList
+                .OrderBy(p => p.PlanetId)
+                .Select(p => new TransitPlanetTableRow
+                {
+                    Planet = GetPlanetShortName(p.PlanetId, lang),
+                    Degree = FormatDegree(p.Longitude),
+                    Zodiac = GetZodiacDisplay(p.ZodiakId),
+                    Nakshatra = GetNakshatraDisplay(p.NakshatraId),
+                    Pada = p.PadaNumber.ToString(),
+                    Navamsha = GetNavamshaDisplay(p) // если поле есть; если нет, пока верни ""
+                })
+                .ToList();
+
+            TransitPlanetTableView.ItemsSource = null;
+            TransitPlanetTableView.ItemsSource = TransitPlanetRows;
+        }
+
 
 
 

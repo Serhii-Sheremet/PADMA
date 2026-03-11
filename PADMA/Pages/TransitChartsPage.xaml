@@ -75,17 +75,19 @@
                         </HorizontalStackLayout.GestureRecognizers>
 
                         <Label x:Name="NatalReferenceLabel"
+                               Margin="0,-1,0,0"
                                VerticalOptions="Center" />
 
                         <Label x:Name="NatalReferenceArrow"
+                               Margin="0,-1,0,0"
                                Text="▼"
                                FontSize="14"
                                VerticalOptions="Center" />
                     </HorizontalStackLayout>
 
                     <BoxView x:Name="NatalReferenceUnderline"
+                             Margin="0,-1,0,0"
                              HeightRequest="2"
-                             Margin="0,-2,0,0"
                              Color="#C8A23A"
                              HorizontalOptions="Start" 
                              WidthRequest="40"/>
@@ -99,56 +101,41 @@
                   ColumnSpacing="0"
                   HorizontalOptions="Fill"
                   Margin="0,0,0,2"
-                  MaximumHeightRequest="40">
+                  MaximumHeightRequest="42">
 
-                <!-- DATE CELL -->
                 <Border Grid.Column="0"
                         Stroke="#BDBDBD"
                         StrokeThickness="1"
                         BackgroundColor="Transparent"
-                        Padding="8,6">
-                    <Grid>
-                        <Label x:Name="TransitDateLabel"
-                               Text="{Binding CurrentTransitDateDisplay}"
-                               HorizontalTextAlignment="Center"
-                               VerticalOptions="Center"
-                               LineBreakMode="NoWrap">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnTransitDateTapped" />
-                            </Label.GestureRecognizers>
-                        </Label>
-
-                        <DatePicker x:Name="transitDatePicker"
-                                    IsVisible="False"
-                                    Date="{Binding CurrentTransitLocalDateTime, Mode=OneWay}"
-                                    DateSelected="OnTransitDateSelected" 
-                                    Unfocused="OnTransitDateUnfocused"/>
-                    </Grid>
+                        Padding="6,0"
+                        MinimumHeightRequest="40"
+                        MaximumHeightRequest="40">
+                    <DatePicker x:Name="transitDatePicker"
+                                Format="D"
+                                HeightRequest="38"
+                                MinimumHeightRequest="38"
+                                HorizontalOptions="CenterAndExpand"
+                                VerticalOptions="Center"
+                                Date="{Binding CurrentTransitLocalDateTime, Mode=OneWay}"
+                                DateSelected="OnTransitDateSelected" />
                 </Border>
 
-                <!-- TIME CELL -->
                 <Border Grid.Column="1"
                         Stroke="#BDBDBD"
                         StrokeThickness="1"
                         BackgroundColor="Transparent"
-                        Padding="8,6"
-                        Margin="-1,0,0,0">
-                    <Grid>
-                        <Label x:Name="TransitTimeLabel"
-                               Text="{Binding CurrentTransitTimeDisplay}"
-                               HorizontalTextAlignment="Center"
-                               VerticalOptions="Center">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnTransitTimeTapped" />
-                            </Label.GestureRecognizers>
-                        </Label>
-
-                        <TimePicker x:Name="transitTimePicker"
-                                    IsVisible="False"
-                                    Time="{Binding CurrentTransitLocalDateTime, Converter={StaticResource DateTimeToTimeSpanConverter}, Mode=OneWay}"
-                                    PropertyChanged="OnTransitTimeChanged" 
-                                    Unfocused="OnTransitTimeUnfocused"/>
-                    </Grid>
+                        Padding="6,0"
+                        Margin="-1,0,0,0"
+                        MinimumHeightRequest="40"
+                        MaximumHeightRequest="40">
+                    <TimePicker x:Name="transitTimePicker"
+                                Format="HH:mm:ss"
+                                HeightRequest="38"
+                                MinimumHeightRequest="38"
+                                HorizontalOptions="CenterAndExpand"
+                                VerticalOptions="Center"
+                                Time="{Binding CurrentTransitLocalDateTime, Converter={StaticResource DateTimeToTimeSpanConverter}, Mode=OneWay}"
+                                PropertyChanged="OnTransitTimeChanged" />
                 </Border>
             </Grid>
 
@@ -192,12 +179,12 @@
                                     <Label x:Name="AspectsExpandIcon"
                                        FontSize="14"
                                        VerticalOptions="Center"
-                                       Text="▲" />
+                                       Text="▼" />
                                 </HorizontalStackLayout>
 
                                 <BoxView x:Name="AspectsUnderline"
                                      HeightRequest="2"
-                                     WidthRequest="56"
+                                     WidthRequest="40"
                                      Color="#C8A23A"
                                      HorizontalOptions="Start" />
                             </VerticalStackLayout>
@@ -217,7 +204,7 @@
                                     HeightRequest="18"
                                     Padding="0"
                                     Clicked="OnStepBackClicked" />
-
+                            
                             <HorizontalStackLayout Grid.Column="1"
                                     x:Name="StepUnitHeader"
                                     Spacing="4"
@@ -226,22 +213,34 @@
                                     <TapGestureRecognizer Tapped="OnStepUnitTapped" />
                                 </HorizontalStackLayout.GestureRecognizers>
 
-                                <Label x:Name="StepUnitLabel"
-                                       VerticalOptions="Center"
-                                       Text="{Binding SelectedStepUnit}" />
+                                <VerticalStackLayout Spacing="2"
+                                    HorizontalOptions="Start">
+                                    <HorizontalStackLayout Spacing="4"
+                                            HorizontalOptions="Start">
+                                        <Label x:Name="StepUnitLabel"
+                                           VerticalOptions="Center"
+                                           Text="{Binding SelectedStepUnit}" />
 
-                                <Label x:Name="StepUnitArrow"
-                                       Text="▼"
-                                       FontSize="14"
-                                       VerticalOptions="Center" />
+                                        <Label x:Name="StepUnitArrow"
+                                               Text="▼"
+                                               FontSize="14"
+                                               VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+
+                                    <BoxView x:Name="StepUnitline"
+                                             HeightRequest="2"
+                                             WidthRequest="40"
+                                             Color="#C8A23A"
+                                             HorizontalOptions="Start" />
+                                </VerticalStackLayout>
                             </HorizontalStackLayout>
 
                             <Entry Grid.Column="2"
                                    x:Name="StepValueEntry"
                                    WidthRequest="10"
-                                   HeightRequest="30"
+                                   HeightRequest="24"
                                    FontSize="14"
-                                   Margin="0"
+                                   Margin="0,-5,0,0"
                                    HorizontalTextAlignment="Center"
                                    VerticalTextAlignment="Center"
                                    Keyboard="Numeric"
