@@ -750,7 +750,7 @@ namespace PADMA.Pages
 
         private string GetNakshatraDisplay(int nakshatraId)
         {
-            return $"{nakshatraId}.{PanchangaHelper.GetNakshatraDescEntity(nakshatraId).ShortName}";
+            return $"{nakshatraId}.{PanchangaHelper.GetNakshatraDescEntity(nakshatraId).Name}";
         }
 
         private string FormatDegree(double longitude)
