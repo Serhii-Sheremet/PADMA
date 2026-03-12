@@ -42,15 +42,15 @@ namespace PADMA.Pages
                 _currentTransitLocalDateTime = value;
                 OnPropertyChanged(nameof(CurrentTransitLocalDateTime));
                 OnPropertyChanged(nameof(CurrentTransitUtcDateTime));
-                OnPropertyChanged(nameof(CurrentTransitDateDisplay));
-                OnPropertyChanged(nameof(CurrentTransitTimeDisplay));
             }
         }
 
         public DateTime CurrentTransitUtcDateTime => CurrentTransitLocalDateTime.ToUniversalTime();
 
-        private string _selectedStepUnit = "Seconds";
-        public string SelectedStepUnit
+        private ETransitStepUnit _selectedStepUnit = ETransitStepUnit.Seconds;
+        private string _selectedStepUnitText = string.Empty;
+
+        public ETransitStepUnit SelectedStepUnit
         {
             get => _selectedStepUnit;
             set
@@ -60,6 +60,19 @@ namespace PADMA.Pages
 
                 _selectedStepUnit = value;
                 OnPropertyChanged(nameof(SelectedStepUnit));
+            }
+        }
+
+        public string SelectedStepUnitText
+        {
+            get => _selectedStepUnitText;
+            set
+            {
+                if (_selectedStepUnitText == value)
+                    return;
+
+                _selectedStepUnitText = value;
+                OnPropertyChanged(nameof(SelectedStepUnitText));
             }
         }
 
@@ -78,22 +91,6 @@ namespace PADMA.Pages
             }
         }
 
-        public string CurrentTransitDateDisplay =>
-            CurrentTransitLocalDateTime.ToString("dddd, dd MMMM yyyy", CultureInfo.CurrentCulture);
-
-        public string CurrentTransitTimeDisplay =>
-            CurrentTransitLocalDateTime.ToString("HH:mm:ss", CultureInfo.CurrentCulture);
-
-        private readonly List<string> _stepUnits = new()
-        {
-            "Seconds",
-            "Minutes",
-            "Hours",
-            "Days",
-            "Months",
-            "Years"
-        };
-
         private int GetParsedStepValue()
         {
             if (int.TryParse(StepValueEntry.Text, out var value) && value > 0)
@@ -102,18 +99,50 @@ namespace PADMA.Pages
             return GetDefaultStepValue(SelectedStepUnit);
         }
 
-        private static int GetDefaultStepValue(string stepUnit) =>
-            stepUnit switch
+        private sealed class StepUnitOption
+        {
+            public ETransitStepUnit Unit { get; init; }
+            public string LocalizationKey { get; init; } = string.Empty;
+        }
+
+        private readonly List<StepUnitOption> _stepUnitOptions = new()
+        {
+            new() { Unit = ETransitStepUnit.Seconds, LocalizationKey = "Seconds" },
+            new() { Unit = ETransitStepUnit.Minutes, LocalizationKey = "Minutes" },
+            new() { Unit = ETransitStepUnit.Hours,   LocalizationKey = "Hours"   },
+            new() { Unit = ETransitStepUnit.Days,    LocalizationKey = "Days"    },
+            new() { Unit = ETransitStepUnit.Months,  LocalizationKey = "Months"  },
+            new() { Unit = ETransitStepUnit.Years,   LocalizationKey = "Years"   }
+        };
+
+        private static int GetDefaultStepValue(ETransitStepUnit stepUnit) =>
+        stepUnit switch
+        {
+            ETransitStepUnit.Seconds => 10,
+            ETransitStepUnit.Minutes => 1,
+            ETransitStepUnit.Hours => 1,
+            ETransitStepUnit.Days => 1,
+            ETransitStepUnit.Months => 1,
+            ETransitStepUnit.Years => 1,
+            _ => 1
+        };
+
+        private string GetLocalizedStepUnitText(ETransitStepUnit unit, string lang)
+        {
+            var key = unit switch
             {
-                "Seconds" => 10,
-                "Minutes" => 1,
-                "Hours" => 1,
-                "Days" => 1,
-                "Months" => 1,
-                "Years" => 1,
-                _ => 1
+                ETransitStepUnit.Seconds => "Seconds",
+                ETransitStepUnit.Minutes => "Minutes",
+                ETransitStepUnit.Hours => "Hours",
+                ETransitStepUnit.Days => "Days",
+                ETransitStepUnit.Months => "Months",
+                ETransitStepUnit.Years => "Years",
+                _ => "Seconds"
             };
-        
+
+            return Localization.GetLocalizedText(key, lang);
+        }
+
         public TransitChartsPage()
         {
             InitializeComponent();
@@ -228,6 +257,15 @@ namespace PADMA.Pages
             TableLabelPada.Text = Localization.GetLocalizedText("Pada", lang);
             TableLabelNavamsa.Text = Localization.GetLocalizedText("Navamsa", lang);
 
+            //SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
+            //StepUnitLabel.Text = SelectedStepUnitText;
+
+            StepSecondsOptionLabel.Text = Localization.GetLocalizedText("Seconds", lang);
+            StepMinutesOptionLabel.Text = Localization.GetLocalizedText("Minutes", lang);
+            StepHoursOptionLabel.Text = Localization.GetLocalizedText("Hours", lang);
+            StepDaysOptionLabel.Text = Localization.GetLocalizedText("Days", lang);
+            StepMonthsOptionLabel.Text = Localization.GetLocalizedText("Months", lang);
+            StepYearsOptionLabel.Text = Localization.GetLocalizedText("Years", lang);
         }
 
         private void UpdateNatalReferenceState()
@@ -596,12 +634,12 @@ namespace PADMA.Pages
 
             CurrentTransitLocalDateTime = SelectedStepUnit switch
             {
-                "Seconds" => CurrentTransitLocalDateTime.AddSeconds(value),
-                "Minutes" => CurrentTransitLocalDateTime.AddMinutes(value),
-                "Hours" => CurrentTransitLocalDateTime.AddHours(value),
-                "Days" => CurrentTransitLocalDateTime.AddDays(value),
-                "Months" => CurrentTransitLocalDateTime.AddMonths(value),
-                "Years" => CurrentTransitLocalDateTime.AddYears(value),
+                ETransitStepUnit.Seconds => CurrentTransitLocalDateTime.AddSeconds(value),
+                ETransitStepUnit.Minutes => CurrentTransitLocalDateTime.AddMinutes(value),
+                ETransitStepUnit.Hours => CurrentTransitLocalDateTime.AddHours(value),
+                ETransitStepUnit.Days => CurrentTransitLocalDateTime.AddDays(value),
+                ETransitStepUnit.Months => CurrentTransitLocalDateTime.AddMonths(value),
+                ETransitStepUnit.Years => CurrentTransitLocalDateTime.AddYears(value),
                 _ => CurrentTransitLocalDateTime
             };
 
@@ -661,28 +699,34 @@ namespace PADMA.Pages
 
         private void UpdateStepUnitUi()
         {
-            StepUnitLabel.Text = SelectedStepUnit;
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            StepUnitLabel.Text = GetLocalizedStepUnitText(SelectedStepUnit, lang);
             StepUnitArrow.Text = _isStepUnitExpanded ? "▲" : "▼";
             StepValueEntry.Text = SelectedStepValue.ToString();
         }
 
-        private void SetStepUnit(string unit)
+        private void SetStepUnit(ETransitStepUnit unit)
         {
             SelectedStepUnit = unit;
             SelectedStepValue = GetDefaultStepValue(unit);
+            StepValueEntry.Text = SelectedStepValue.ToString();
+
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            SelectedStepUnitText = GetLocalizedStepUnitText(unit, lang);
+            StepUnitLabel.Text = SelectedStepUnitText;
 
             _isStepUnitExpanded = false;
             StepUnitPanel.IsVisible = false;
-
-            UpdateStepUnitUi();
+            StepUnitArrow.Text = "▼";
         }
 
-        private void OnStepSecondsTapped(object sender, TappedEventArgs e) => SetStepUnit("Seconds");
-        private void OnStepMinutesTapped(object sender, TappedEventArgs e) => SetStepUnit("Minutes");
-        private void OnStepHoursTapped(object sender, TappedEventArgs e) => SetStepUnit("Hours");
-        private void OnStepDaysTapped(object sender, TappedEventArgs e) => SetStepUnit("Days");
-        private void OnStepMonthsTapped(object sender, TappedEventArgs e) => SetStepUnit("Months");
-        private void OnStepYearsTapped(object sender, TappedEventArgs e) => SetStepUnit("Years");
+        private void OnStepSecondsTapped(object sender, TappedEventArgs e) => SetStepUnit(ETransitStepUnit.Seconds);
+        private void OnStepMinutesTapped(object sender, TappedEventArgs e) => SetStepUnit(ETransitStepUnit.Minutes);
+        private void OnStepHoursTapped(object sender, TappedEventArgs e) => SetStepUnit(ETransitStepUnit.Hours);
+        private void OnStepDaysTapped(object sender, TappedEventArgs e) => SetStepUnit(ETransitStepUnit.Days);
+        private void OnStepMonthsTapped(object sender, TappedEventArgs e) => SetStepUnit(ETransitStepUnit.Months);
+        private void OnStepYearsTapped(object sender, TappedEventArgs e) => SetStepUnit(ETransitStepUnit.Years);
 
         public sealed class TransitPlanetTableRow
         {
@@ -699,7 +743,7 @@ namespace PADMA.Pages
         private void BuildTransitPlanetTable(List<PlanetData> pdList, double ascendant)
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
-            var planet = "Lg";
+            var planet = Localization.GetLocalizedText("Lg", lang);
             var lagnaId = SwissUtility.GetZodiacIdFromDegree(ascendant);
 
             var lagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(ascendant);

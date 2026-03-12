@@ -731,7 +731,7 @@
                 AbsoluteLayout.LayoutFlags="PositionProportional">
             <VerticalStackLayout Spacing="0">
 
-                <Label Text="Seconds"
+                <Label x:Name="StepSecondsOptionLabel"
                        FontSize="15"
                        TextColor="Black"
                        BackgroundColor="White">
@@ -740,7 +740,7 @@
                     </Label.GestureRecognizers>
                 </Label>
 
-                <Label Text="Minutes"
+                <Label x:Name="StepMinutesOptionLabel"
                        FontSize="15"
                        TextColor="Black"
                        BackgroundColor="White">
@@ -749,7 +749,7 @@
                     </Label.GestureRecognizers>
                 </Label>
 
-                <Label Text="Hours"
+                <Label x:Name="StepHoursOptionLabel"
                        FontSize="15"
                        TextColor="Black"
                        BackgroundColor="White">
@@ -758,7 +758,7 @@
                     </Label.GestureRecognizers>
                 </Label>
 
-                <Label Text="Days"
+                <Label x:Name="StepDaysOptionLabel"
                        FontSize="15"
                        TextColor="Black"
                        BackgroundColor="White">
@@ -767,7 +767,7 @@
                     </Label.GestureRecognizers>
                 </Label>
 
-                <Label Text="Months"
+                <Label x:Name="StepMonthsOptionLabel"
                        FontSize="15"
                        TextColor="Black"
                        BackgroundColor="White">
@@ -776,7 +776,7 @@
                     </Label.GestureRecognizers>
                 </Label>
 
-                <Label Text="Years"
+                <Label x:Name="StepYearsOptionLabel"
                        FontSize="15"
                        TextColor="Black"
                        BackgroundColor="White">
