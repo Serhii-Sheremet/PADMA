@@ -608,6 +608,19 @@
                         </Grid>
                     </Border>
 
+                    <Label x:Name="LabelTransitNavamsa"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           Margin="0,6,0,0"/>
+
+                    <charts:NorthIndianChartView
+                            x:Name="TransitNavamsaChartView"
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Start"
+                            ChartBackgroundColor="#FAFAD2"
+                            ChartLineColor="Black"
+                            ChartLineStrokeWidth="1" 
+                            SizeChanged="OnTransitNavamsaChartSizeChanged" />
 
                 </VerticalStackLayout>
             </ScrollView>

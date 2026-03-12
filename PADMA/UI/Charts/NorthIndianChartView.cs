@@ -1,5 +1,5 @@
-using Microsoft.Maui.Controls;
 using PADMA.Core.Models;
+using PADMA.Core.Utilities;
 
 namespace PADMA.UI.Charts
 {
@@ -51,5 +51,6 @@ namespace PADMA.UI.Charts
             _drawable.Houses = houses;
             Invalidate();
         }
+
     }
 }

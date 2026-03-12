@@ -24,6 +24,17 @@ namespace PADMA.Core.Utilities
                 .ToList();
         }
 
+        public static List<int> SwappingNavamsaArray(int navamsa)
+        {
+            var navamsaList = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+            var navamsaListSorted = new List<int>();
+
+            navamsaListSorted.AddRange(navamsaList.Where(i => i >= navamsa));
+            navamsaListSorted.AddRange(navamsaList.Where(i => i < navamsa));
+
+            return navamsaListSorted;
+        }
+
         public static int[,] MakeTaraBalaMatrix(List<Nakshatra> swapped)
         {
             int[,] arr = new int[9, 3];

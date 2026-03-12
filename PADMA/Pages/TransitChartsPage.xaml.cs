@@ -5,7 +5,6 @@ using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI.Templates;
 using System.ComponentModel;
-using System.Globalization;
 
 namespace PADMA.Pages
 {
@@ -105,16 +104,6 @@ namespace PADMA.Pages
             public string LocalizationKey { get; init; } = string.Empty;
         }
 
-        private readonly List<StepUnitOption> _stepUnitOptions = new()
-        {
-            new() { Unit = ETransitStepUnit.Seconds, LocalizationKey = "Seconds" },
-            new() { Unit = ETransitStepUnit.Minutes, LocalizationKey = "Minutes" },
-            new() { Unit = ETransitStepUnit.Hours,   LocalizationKey = "Hours"   },
-            new() { Unit = ETransitStepUnit.Days,    LocalizationKey = "Days"    },
-            new() { Unit = ETransitStepUnit.Months,  LocalizationKey = "Months"  },
-            new() { Unit = ETransitStepUnit.Years,   LocalizationKey = "Years"   }
-        };
-
         private static int GetDefaultStepValue(ETransitStepUnit stepUnit) =>
         stepUnit switch
         {
@@ -149,6 +138,7 @@ namespace PADMA.Pages
             BindingContext = this;
 
             ChartView.SizeChanged += OnChartViewSizeChanged;
+            TransitNavamsaChartView.SizeChanged += OnTransitNavamsaChartSizeChanged;
         }
 
         private void OnChartViewSizeChanged(object? sender, EventArgs e)
@@ -200,6 +190,16 @@ namespace PADMA.Pages
         private void ResetTransientUiState()
         {
             UpdateTabState();
+
+            // reset transit time
+            CurrentTransitLocalDateTime = DateTime.Now;
+            transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
+            transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
+
+            // reset step controls
+            SelectedStepUnit = ETransitStepUnit.Seconds;
+            SelectedStepValue = GetDefaultStepValue(SelectedStepUnit);
+            UpdateStepUnitUi();
 
             // natal reference dropdown
             _isNatalReferenceExpanded = false;
@@ -256,6 +256,8 @@ namespace PADMA.Pages
             TableLabelNakshatra.Text = Localization.GetLocalizedText("Nakshatra", lang);
             TableLabelPada.Text = Localization.GetLocalizedText("Pada", lang);
             TableLabelNavamsa.Text = Localization.GetLocalizedText("Navamsa", lang);
+
+            LabelTransitNavamsa.Text = Localization.GetLocalizedText("Transit navamsa", lang);
 
             //SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
             //StepUnitLabel.Text = SelectedStepUnitText;
@@ -453,9 +455,14 @@ namespace PADMA.Pages
 
             var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, nodeMode);
             var ascendant = SwissService.CalculateAscendantForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
-            var lagnaId = SwissUtility.GetZodiacIdFromDegree(ascendant); 
-            
-            var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), lagnaId);
+
+            var lagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(ascendant);
+            var lagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(ascendant);
+            var lagnaPadaId = SwissUtility.GetPadaIdFromDegree(ascendant);
+            var lagnaPadaNumber = SwissUtility.GetPadaNumberByPadaId(lagnaPadaId);
+            var lagnaNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(lagnaNakshatraId, lagnaPadaNumber);
+
+            var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), lagnaZodiacId);
             var selectedAspectPlanets = GetSelectedAspectPlanets();
 
             var houses = TransitChartDataService.BuildCurrentTransitChartHouses(
@@ -465,6 +472,15 @@ namespace PADMA.Pages
 
             ChartView.SetHouses(houses);
             BuildTransitPlanetTable(pdList, ascendant);
+
+            var navamsaHouses = TransitChartDataService.BuildTransitNavamsaChartHouses(pdList, lagnaNavamsaZodiacId);
+            TransitNavamsaChartView.SetHouses(navamsaHouses);
+        }
+
+        private void OnTransitNavamsaChartSizeChanged(object? sender, EventArgs e)
+        {
+            if (TransitNavamsaChartView.Width > 0)
+                TransitNavamsaChartView.HeightRequest = TransitNavamsaChartView.Width;
         }
 
         private void OnAspectsHeaderTapped(object sender, TappedEventArgs e)
@@ -780,7 +796,7 @@ namespace PADMA.Pages
             TransitPlanetTableView.ItemsSource = null;
             TransitPlanetTableView.ItemsSource = TransitPlanetRows;
         }
-
+        
         private string GetPlanetShortName(int planetId)
         {
             var name = PanchangaHelper.GetPlanetDescEntity(planetId)?.Name ?? planetId.ToString();
@@ -823,7 +839,6 @@ namespace PADMA.Pages
             return $"{deg}°{min:00}'{sec:00}\"";
         }
 
-        
 
 
     }

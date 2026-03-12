@@ -1,5 +1,5 @@
-﻿using PADMA.Core.Models;
-using PADMA.Core.Enums;
+﻿using PADMA.Core.Enums;
+using PADMA.Core.Models;
 using PADMA.Core.Utilities;
 using System.Collections.Generic;
 
@@ -218,6 +218,86 @@ namespace PADMA.Core.Services
 
             return houses;
         }
+
+        public static List<ChartHouseData> BuildTransitNavamsaChartHouses(
+            List<PlanetData> pdList,
+            int navamsaStart)
+        {
+            var houses = new List<ChartHouseData>();
+            var swappedNavamsas = TransitBuilderUtility.SwappingNavamsaArray(navamsaStart);
+
+            for (int i = 0; i < 12; i++)
+            {
+                var navamsaZodiac = swappedNavamsas[i];
+
+                var planets = GetGeneralNavamsaPlanetsListByZodiac(
+                    pdList,
+                    navamsaZodiac,
+                    i + 1);
+
+                houses.Add(new ChartHouseData
+                {
+                    HouseNumber = i + 1,
+                    ZodiacNumber = navamsaZodiac,
+                    Planets = planets
+                });
+            }
+
+            return houses;
+        }
+
+        private static List<ChartPlanetItem> GetGeneralNavamsaPlanetsListByZodiac(
+            List<PlanetData> pdList,
+            int navamsaZodiacId,
+            int houseNumber)
+        {
+            var planetsList = new List<ChartPlanetItem>();
+
+            for (int i = 0; i < pdList.Count; i++)
+            {
+                var pd = pdList[i];
+
+                if (pd.NavamsaZodiacId != navamsaZodiacId)
+                    continue;
+
+                var planetCode = (EPlanet)pd.PlanetId;
+
+                var exaltation = string.Empty;
+                var exaltState = ExaltationUtility.GetPlanetExaltation(planetCode, (EZodiac)navamsaZodiacId);
+
+                if (exaltState == EExaltation.EXALTATION)
+                {
+                    exaltation = "↑";
+                }
+                else if (exaltState == EExaltation.DEBILITATION)
+                {
+                    exaltation = "↓";
+                }
+
+                string retro =
+                        pd.IsRetrograde &&
+                        planetCode != EPlanet.RAHU &&
+                        planetCode != EPlanet.KETU
+                            ? "R"
+                            : string.Empty;
+
+                planetsList.Add(new ChartPlanetItem
+                {
+                    PlanetCode = (EPlanet)pd.PlanetId,
+                    Longitude = pd.Longitude,
+                    TransitType = ETransitType.TRANSITNAVAMSA,
+                    Retro = retro,
+                    Exaltation = exaltation,
+                    IsActiveAspect = false,
+                    ColorCode = EColor.BLACK
+                });
+            }
+
+            return planetsList
+                .OrderBy(i => i.Longitude)
+                .ToList();
+        }
+
 
 
     }

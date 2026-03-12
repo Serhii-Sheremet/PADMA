@@ -728,9 +728,17 @@ namespace PADMA.UI.Charts
                 ? planetName.Substring(0, 2)
                 : planetName;
 
-            return $"{shortName}{item.Retro}{item.Exaltation}";
-        }
+            bool isRetro = item.Retro == "R";
 
+            if (isRetro)
+                return shortName + "R";
+
+            if (!string.IsNullOrWhiteSpace(item.Exaltation))
+                return shortName + item.Exaltation;
+
+            return shortName;
+        }
+        
 
 
     }
