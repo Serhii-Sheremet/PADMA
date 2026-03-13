@@ -1,4 +1,5 @@
-﻿using PADMA.Core.Analysis;
+﻿using Microsoft.Maui.Layouts;
+using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
@@ -158,7 +159,7 @@ namespace PADMA.Pages
             UpdateAspectSelectionUi();
             UpdateNatalReferenceUnderline();
             UpdateAspectsUnderline();
-            UpdateStepUnitline();
+            RefreshStepUnitUnderline();
             UpdateStepUnitUi();
 
             transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
@@ -166,7 +167,7 @@ namespace PADMA.Pages
 
             Dispatcher.Dispatch(UpdateNatalReferenceUnderline);
             Dispatcher.Dispatch(UpdateAspectsUnderline);
-            Dispatcher.Dispatch(UpdateStepUnitline);
+            Dispatcher.Dispatch(RefreshStepUnitUnderline);
 
             LoadSelectedTabContent();
         }
@@ -259,15 +260,16 @@ namespace PADMA.Pages
 
             LabelTransitNavamsa.Text = Localization.GetLocalizedText("Transit navamsa", lang);
 
-            //SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
-            //StepUnitLabel.Text = SelectedStepUnitText;
-
             StepSecondsOptionLabel.Text = Localization.GetLocalizedText("Seconds", lang);
             StepMinutesOptionLabel.Text = Localization.GetLocalizedText("Minutes", lang);
             StepHoursOptionLabel.Text = Localization.GetLocalizedText("Hours", lang);
             StepDaysOptionLabel.Text = Localization.GetLocalizedText("Days", lang);
             StepMonthsOptionLabel.Text = Localization.GetLocalizedText("Months", lang);
             StepYearsOptionLabel.Text = Localization.GetLocalizedText("Years", lang);
+
+            SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
+            StepUnitLabel.Text = SelectedStepUnitText;
+            RefreshStepUnitUnderline();
         }
 
         private void UpdateNatalReferenceState()
@@ -326,25 +328,6 @@ namespace PADMA.Pages
 
             var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
             AspectsUnderline.WidthRequest = Math.Max(24, size.Width + 8);
-        }
-
-        private void UpdateStepUnitline()
-        {
-            if (StepUnitLabel.Width > 0)
-            {
-                StepUnitline.WidthRequest = StepUnitLabel.Width;
-                return;
-            }
-
-            var measureLabel = new Label
-            {
-                Text = StepUnitLabel.Text,
-                FontSize = StepUnitLabel.FontSize,
-                LineBreakMode = LineBreakMode.NoWrap
-            };
-
-            var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
-            StepUnitline.WidthRequest = Math.Max(24, size.Width + 8);
         }
 
         private string GetNatalReferenceDisplayName(int id)
@@ -668,7 +651,17 @@ namespace PADMA.Pages
         private void OnStepUnitTapped(object sender, EventArgs e)
         {
             _isStepUnitExpanded = !_isStepUnitExpanded;
-            StepUnitPanel.IsVisible = _isStepUnitExpanded;
+
+            if (_isStepUnitExpanded)
+            {
+                PositionStepUnitPanel();
+                StepUnitPanel.IsVisible = true;
+            }
+            else
+            {
+                StepUnitPanel.IsVisible = false;
+            }
+
             StepUnitArrow.Text = _isStepUnitExpanded ? "▲" : "▼";
         }
 
@@ -735,6 +728,8 @@ namespace PADMA.Pages
             _isStepUnitExpanded = false;
             StepUnitPanel.IsVisible = false;
             StepUnitArrow.Text = "▼";
+
+            RefreshStepUnitUnderline();
         }
 
         private void OnStepSecondsTapped(object sender, TappedEventArgs e) => SetStepUnit(ETransitStepUnit.Seconds);
@@ -837,6 +832,46 @@ namespace PADMA.Pages
             }
 
             return $"{deg}°{min:00}'{sec:00}\"";
+        }
+
+        private Point GetAbsolutePositionToRoot(VisualElement element, VisualElement root)
+        {
+            double x = element.X;
+            double y = element.Y;
+
+            Element? parent = element.Parent;
+            while (parent is VisualElement ve && parent != root)
+            {
+                x += ve.X;
+                y += ve.Y;
+                parent = ve.Parent;
+            }
+
+            return new Point(x, y);
+        }
+
+        private void PositionStepUnitPanel()
+        {
+            if (StepUnitHeader == null || CurrentTransitOverlayRoot == null)
+                return;
+
+            var p = GetAbsolutePositionToRoot(StepUnitHeader, CurrentTransitOverlayRoot);
+
+            // немного правее начала header и сразу под ним
+            double panelX = p.X + 6;
+            double panelY = p.Y + StepUnitHeader.Height + 2;
+
+            AbsoluteLayout.SetLayoutBounds(StepUnitPanel, new Rect(panelX, panelY, 110, -1));
+            AbsoluteLayout.SetLayoutFlags(StepUnitPanel, AbsoluteLayoutFlags.None);
+        }
+
+        private void RefreshStepUnitUnderline()
+        {
+            Dispatcher.Dispatch(() =>
+            {
+                StepUnitLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
+                StepUnitline.WidthRequest = StepUnitLabel.DesiredSize.Width;
+            });
         }
 
 

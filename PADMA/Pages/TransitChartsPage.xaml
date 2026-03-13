@@ -141,123 +141,141 @@
 
             <!-- Scrollable content -->
             <ScrollView Grid.Row="2">
-                <VerticalStackLayout Spacing="2">
+                <AbsoluteLayout x:Name="CurrentTransitOverlayRoot">
+                    <VerticalStackLayout x:Name="CurrentTransitContent"
+                             Spacing="2"
+                             AbsoluteLayout.LayoutBounds="0,0,1,-1"
+                             AbsoluteLayout.LayoutFlags="WidthProportional">
 
-                    <charts:NorthIndianChartView
+                        <charts:NorthIndianChartView
                                 x:Name="ChartView"
                                 HorizontalOptions="Fill"
                                 ChartBackgroundColor="#FAFAD2"
                                 ChartLineColor="Black"
                                 ChartLineStrokeWidth="1" />
 
-                    <Grid RowDefinitions="Auto,*"
-                          ColumnSpacing="8"
-                          RowSpacing="4"
-                          VerticalOptions="Center"
-                          Margin="0,2,0,0"
-                          MinimumHeightRequest="32">
+                        <Grid RowDefinitions="Auto,Auto"
+                              ColumnSpacing="0"
+                              RowSpacing="4"
+                              VerticalOptions="Start"
+                              Margin="0,2,0,0">
 
-                        <!-- Aspects header -->
-                        <HorizontalStackLayout Grid.Row="0"
-                            x:Name="AspectsHeaderLayout"
-                            Spacing="6"
-                            HorizontalOptions="Start"
-                            VerticalOptions="Center">
-                            
-                            <HorizontalStackLayout.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnAspectsHeaderTapped" />
-                            </HorizontalStackLayout.GestureRecognizers>
+                            <!-- Top controls host -->
+                            <AbsoluteLayout Grid.Row="0"
+                                    x:Name="TopControlsHost"
+                                    HeightRequest="34"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Start">
 
-                            <VerticalStackLayout Spacing="2"
-                                    HorizontalOptions="Start">
-                                <HorizontalStackLayout Spacing="4"
-                                       HorizontalOptions="Start">
-                                    <Label x:Name="AspectsLabel"
-                                       FontSize="16"
-                                       VerticalOptions="Center" />
+                                <!-- Header row -->
+                                <Grid AbsoluteLayout.LayoutBounds="0,0,1,34"
+                                  AbsoluteLayout.LayoutFlags="WidthProportional"
+                                  ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8"
+                                  VerticalOptions="Center">
 
-                                    <Label x:Name="AspectsExpandIcon"
-                                       FontSize="14"
-                                       VerticalOptions="Center"
-                                       Text="▼" />
+                                <!-- Aspects header -->
+                                <HorizontalStackLayout Grid.Column="0"
+                                        x:Name="AspectsHeaderLayout"
+                                        Spacing="6"
+                                        HorizontalOptions="Start"
+                                        VerticalOptions="Center">
+                                    <HorizontalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectsHeaderTapped" />
+                                    </HorizontalStackLayout.GestureRecognizers>
+
+                                    <VerticalStackLayout Spacing="2"
+                                            HorizontalOptions="Start">
+                                        <HorizontalStackLayout Spacing="4"
+                                           HorizontalOptions="Start">
+                                            <Label x:Name="AspectsLabel"
+                                                   FontSize="16"
+                                                   VerticalOptions="Center" />
+
+                                            <Label x:Name="AspectsExpandIcon"
+                                                   FontSize="14"
+                                                   VerticalOptions="Center"
+                                                   Text="▼" />
+                                        </HorizontalStackLayout>
+
+                                        <BoxView x:Name="AspectsUnderline"
+                                                 HeightRequest="2"
+                                                 WidthRequest="40"
+                                                 Color="#C8A23A"
+                                                 HorizontalOptions="Start" />
+                                    </VerticalStackLayout>
                                 </HorizontalStackLayout>
 
-                                <BoxView x:Name="AspectsUnderline"
-                                     HeightRequest="2"
-                                     WidthRequest="40"
-                                     Color="#C8A23A"
-                                     HorizontalOptions="Start" />
-                            </VerticalStackLayout>
-                        </HorizontalStackLayout>
+                                <!-- Shift control -->
+                                <Grid Grid.Column="1"
+                                      x:Name="StepShiftGrid"
+                                      ColumnDefinitions="Auto,Auto,Auto,Auto"
+                                      ColumnSpacing="6"
+                                      HorizontalOptions="End"
+                                      VerticalOptions="Center">
 
-                        <!-- shift control -->
-                        <Grid Grid.Column="1"
-                              ColumnDefinitions="Auto,Auto,Auto,Auto"
-                              ColumnSpacing="6"
-                              HorizontalOptions="End"
-                              VerticalOptions="Center">
+                                    <ImageButton Grid.Column="0"
+                                           Source="left_arrow.png"
+                                           BackgroundColor="Transparent"
+                                           WidthRequest="16"
+                                           HeightRequest="16"
+                                           Padding="0"
+                                           Margin="0"
+                                           Clicked="OnStepBackClicked" />
 
-                            <ImageButton Grid.Column="0"
-                                    Source="left_arrow.png"
-                                    BackgroundColor="Transparent"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
-                                    Padding="0"
-                                    Margin="0"
-                                    Clicked="OnStepBackClicked" />
-                            
-                            <HorizontalStackLayout Grid.Column="1"
-                                    x:Name="StepUnitHeader"
-                                    Spacing="4"
-                                    VerticalOptions="Center">
-                                <HorizontalStackLayout.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnStepUnitTapped" />
-                                </HorizontalStackLayout.GestureRecognizers>
+                                    <HorizontalStackLayout Grid.Column="1"
+                                            x:Name="StepUnitHeader"
+                                            Spacing="4"
+                                            VerticalOptions="Center">
+                                        <HorizontalStackLayout.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnStepUnitTapped" />
+                                        </HorizontalStackLayout.GestureRecognizers>
 
-                                <VerticalStackLayout Spacing="2"
-                                        HorizontalOptions="Start">
-                                    <HorizontalStackLayout Spacing="4"
-                                            HorizontalOptions="Start">
-                                        <Label x:Name="StepUnitLabel"
-                                           VerticalOptions="Center"
-                                           Text="{Binding SelectedStepUnit}" />
+                                        <VerticalStackLayout Spacing="2"
+                                                HorizontalOptions="Start">
+                                            <HorizontalStackLayout Spacing="4"
+                                               HorizontalOptions="Start">
+                                                <Label x:Name="StepUnitLabel"
+                                                       VerticalOptions="Center" />
 
-                                        <Label x:Name="StepUnitArrow"
-                                               Text="▼"
-                                               FontSize="14"
-                                               VerticalOptions="Center" />
+                                                <Label x:Name="StepUnitArrow"
+                                                       Text="▼"
+                                                       FontSize="14"
+                                                       VerticalOptions="Center" />
+                                            </HorizontalStackLayout>
+
+                                            <BoxView x:Name="StepUnitline"
+                                                     HeightRequest="2"
+                                                     WidthRequest="40"
+                                                     Color="#C8A23A"
+                                                     HorizontalOptions="Start" />
+                                        </VerticalStackLayout>
                                     </HorizontalStackLayout>
 
-                                    <BoxView x:Name="StepUnitline"
-                                             HeightRequest="2"
-                                             WidthRequest="40"
-                                             Color="#C8A23A"
-                                             HorizontalOptions="Start" />
-                                </VerticalStackLayout>
-                            </HorizontalStackLayout>
+                                    <Entry Grid.Column="2"
+                                           x:Name="StepValueEntry"
+                                           WidthRequest="10"
+                                           HeightRequest="20"
+                                           FontSize="12"
+                                           Margin="0,-5,0,0"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalTextAlignment="Center"
+                                           Keyboard="Numeric"
+                                           Text="{Binding SelectedStepValue}" />
 
-                            <Entry Grid.Column="2"
-                                   x:Name="StepValueEntry"
-                                   WidthRequest="10"
-                                   HeightRequest="20"
-                                   FontSize="12"
-                                   Margin="0,-5,0,0"
-                                   HorizontalTextAlignment="Center"
-                                   VerticalTextAlignment="Center"
-                                   Keyboard="Numeric"
-                                   Text="{Binding SelectedStepValue}" />
+                                    <ImageButton Grid.Column="3"
+                                        Source="right_arrow.png"
+                                        BackgroundColor="Transparent"
+                                        WidthRequest="16"
+                                        HeightRequest="16"
+                                        Padding="0"
+                                        Margin="0"
+                                        Clicked="OnStepForwardClicked" />
+                                </Grid>
+                            </Grid>
+                        </AbsoluteLayout>
 
-                            <ImageButton Grid.Column="3"
-                                    Source="right_arrow.png"
-                                    BackgroundColor="Transparent"
-                                    WidthRequest="16"
-                                    HeightRequest="16"
-                                    Padding="0"
-                                    Margin="0" 
-                                    Clicked="OnStepForwardClicked" />
-                        </Grid>
-
-                        <!-- Expandable panel -->
+                        <!-- Expandable aspects panel -->
                         <Border Grid.Row="1"
                                 x:Name="AspectsPanel"
                                 IsVisible="False"
@@ -538,15 +556,14 @@
 
                             </Grid>
                         </Border>
-
                     </Grid>
 
-                    <Label x:Name="LabelPlanetsTransitPositions"
+                        <Label x:Name="LabelPlanetsTransitPositions"
                            FontSize="12"
                            FontAttributes="Bold"
                            Margin="0,2,0,0" />
 
-                    <Border Stroke="#BDBDBD"
+                        <Border Stroke="#BDBDBD"
                             StrokeThickness="1"
                             BackgroundColor="Transparent"
                             Padding="0"
@@ -608,12 +625,12 @@
                         </Grid>
                     </Border>
 
-                    <Label x:Name="LabelTransitNavamsa"
+                        <Label x:Name="LabelTransitNavamsa"
                            FontSize="12"
                            FontAttributes="Bold"
                            Margin="0,6,0,0"/>
 
-                    <charts:NorthIndianChartView
+                        <charts:NorthIndianChartView
                             x:Name="TransitNavamsaChartView"
                             HorizontalOptions="Fill"
                             VerticalOptions="Start"
@@ -623,8 +640,99 @@
                             SizeChanged="OnTransitNavamsaChartSizeChanged" />
 
                 </VerticalStackLayout>
-            </ScrollView>
 
+                    <!-- dropdown overlay -->
+                    <Border x:Name="StepUnitPanel"
+                            IsVisible="False"
+                            BackgroundColor="White"
+                            Stroke="#D0D0D0"
+                            StrokeThickness="1"
+                            Padding="6,4"
+                            WidthRequest="110"
+                            AbsoluteLayout.LayoutBounds="0,0,110,-1"
+                            AbsoluteLayout.LayoutFlags="None"
+                            InputTransparent="False"
+                            ZIndex="1000">
+                        <Border.Shadow>
+                            <Shadow Brush="#66000000"
+                                    Offset="2,2"
+                                    Radius="8"
+                                    Opacity="0.4" />
+                        </Border.Shadow>
+
+                        <VerticalStackLayout Spacing="0">
+
+                            <Grid HeightRequest="26" BackgroundColor="White">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnStepSecondsTapped" />
+                                </Grid.GestureRecognizers>
+                                <Label x:Name="StepSecondsOptionLabel"
+                                       FontSize="15"
+                                       TextColor="Black"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="White" />
+                            </Grid>
+
+                            <Grid HeightRequest="26" BackgroundColor="White">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnStepMinutesTapped" />
+                                </Grid.GestureRecognizers>
+                                <Label x:Name="StepMinutesOptionLabel"
+                                       FontSize="15"
+                                       TextColor="Black"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="White" />
+                            </Grid>
+
+                            <Grid HeightRequest="26" BackgroundColor="White">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnStepHoursTapped" />
+                                </Grid.GestureRecognizers>
+                                <Label x:Name="StepHoursOptionLabel"
+                                       FontSize="15"
+                                       TextColor="Black"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="White" />
+                            </Grid>
+
+                            <Grid HeightRequest="26" BackgroundColor="White">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnStepDaysTapped" />
+                                </Grid.GestureRecognizers>
+                                <Label x:Name="StepDaysOptionLabel"
+                                       FontSize="15"
+                                       TextColor="Black"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="White" />
+                            </Grid>
+
+                            <Grid HeightRequest="26" BackgroundColor="White">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnStepMonthsTapped" />
+                                </Grid.GestureRecognizers>
+                                <Label x:Name="StepMonthsOptionLabel"
+                                       FontSize="15"
+                                       TextColor="Black"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="White" />
+                            </Grid>
+
+                            <Grid HeightRequest="26" BackgroundColor="White">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnStepYearsTapped" />
+                                </Grid.GestureRecognizers>
+                                <Label x:Name="StepYearsOptionLabel"
+                                       FontSize="15"
+                                       TextColor="Black"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="White" />
+                            </Grid>
+
+                        </VerticalStackLayout>
+                    </Border>
+
+                </AbsoluteLayout>
+            </ScrollView>
         </Grid>
 
         <!-- Floating dropdown -->
@@ -734,72 +842,7 @@
             </VerticalStackLayout>
         </Border>
 
-        <Border x:Name="StepUnitPanel"
-                IsVisible="False"
-                BackgroundColor="White"
-                Stroke="#D0D0D0"
-                StrokeThickness="1"
-                Padding="6,4"
-                AbsoluteLayout.LayoutBounds="0.78,0.84,110,-1"
-                AbsoluteLayout.LayoutFlags="PositionProportional">
-            <VerticalStackLayout Spacing="0">
-
-                <Label x:Name="StepSecondsOptionLabel"
-                       FontSize="15"
-                       TextColor="Black"
-                       BackgroundColor="White">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnStepSecondsTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
-
-                <Label x:Name="StepMinutesOptionLabel"
-                       FontSize="15"
-                       TextColor="Black"
-                       BackgroundColor="White">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnStepMinutesTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
-
-                <Label x:Name="StepHoursOptionLabel"
-                       FontSize="15"
-                       TextColor="Black"
-                       BackgroundColor="White">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnStepHoursTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
-
-                <Label x:Name="StepDaysOptionLabel"
-                       FontSize="15"
-                       TextColor="Black"
-                       BackgroundColor="White">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnStepDaysTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
-
-                <Label x:Name="StepMonthsOptionLabel"
-                       FontSize="15"
-                       TextColor="Black"
-                       BackgroundColor="White">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnStepMonthsTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
-
-                <Label x:Name="StepYearsOptionLabel"
-                       FontSize="15"
-                       TextColor="Black"
-                       BackgroundColor="White">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnStepYearsTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
-
-            </VerticalStackLayout>
-        </Border>
+        
 
     </AbsoluteLayout>
 </ui:ConfigBasePage>
