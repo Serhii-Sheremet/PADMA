@@ -5512,187 +5512,239 @@ When user taps **System settings**:
 
 ---------
 
-# PADMA – Transit Charts (Preliminary Requirements)
+# PADMA -- TransitChartsPage
 
-## 1. Goal
-Introduce a new feature **Transit Charts** that visualizes planetary positions using the **North Indian style house chart**.
-The feature will be accessible from the main navigation menu and designed specifically for **mobile phone screens**.
+## Overview
 
-This document defines only the **initial UI structure and architectural foundations**.
-Detailed rendering rules, planet placement logic, and additional controls will be specified later.
+`TransitChartsPage` provides visualization and analysis of planetary
+transits using two complementary modes:
 
-# 2. Navigation
+1.  **Current Transits**
+2.  **Transits from Natal Reference**
 
-## 2.1 Burger Menu Entry
-A new entry must be added to the application burger menu:
+The page allows users to inspect current planetary positions and their
+relationship to a natal chart using the North Indian chart layout.
 
-`Transit charts`
+This page integrates with the existing PADMA architecture including: -
+Swiss Ephemeris calculation modules - `DataCache` -
+`ProfileContextService` - `TransitChartDataService` - existing transit
+aspect logic
 
-Selecting this option opens a new page:
+# 1. Page Purpose
 
-`TransitChartsPage`
+The page allows the user to:
 
-# 3. Base Page Layout
+-   View **current planetary transits**
+-   Analyze **current transits relative to a natal reference point**
+-   Inspect **planetary aspects**
+-   Navigate through time (date/time controls)
+-   Compare transit positions visually and in table format
 
-## 3.1 Base Template
-The new page should reuse the existing **ConfigBasePage** template already used in other configuration pages and DayOverviewPage.
+The page uses the **North Indian chart representation** for the main
+chart and a separate **Navamsa chart**.
 
-This provides a consistent UI including:
+# 2. Page Structure
 
-- Page title
-- Back navigation arrow
-- Close button (X)
-- Standard page layout used throughout PADMA
+The page contains two logical tabs:
 
-# 4. Page Structure
+## Tab 1 -- Current Transits
 
-The page will contain **two categories of charts**, accessible via tabs.
+Displays the current planetary transit chart based on the **current
+Ascendant**.
 
-## 4.1 Tab Layout
-At the top of the page there should be **two tabs**.
+### Components
 
-Tab order:
+-   North Indian transit chart
+-   Transit positions table
+-   Transit Navamsa chart
+-   Aspect controls
+-   Date and time controls
 
-1. **Current Transits**
-2. **Transits from Natal Positions**
+### Data Source
 
-Default selected tab:
+Planetary positions are calculated dynamically using:
+`SwissAnalysis.CalculatePlanetPositionsForDate()`
 
-`Current Transits`
+The chart is calculated relative to the **current Ascendant**.
 
-Switching tabs changes the content area of the page.
+### Behaviour
 
-# 5. Chart Categories
+When time changes (via arrows or date/time pickers):
 
-## 5.1 Category 1 – Current Transit
-Charts showing **current planetary positions relative to the current Lagna (Ascendant)**.
+-   Transit chart updates
+-   Transit table updates
+-   Navamsa chart updates
+-   Aspects are recalculated
 
-This tab will display charts derived from the **current sky positions**.
-Details of the charts displayed inside this tab will be specified later.
+## Tab 2 -- Transits from Natal Reference
 
-## 5.2 Category 2 – Transits from Natal Positions
-Charts showing **current planetary transits relative to natal planetary positions**.
+Displays **current planetary transits relative to a natal reference
+point**.
 
-These charts depend on:
+Possible references:
+-   Lagna
+-   Sun
+-   Moon
+-   Mars
+-   Mercury
+-   Jupiter
+-   Venus
+-   Saturn
+-   Rahu
+-   Ketu
 
-- Natal planetary positions
-- Current planetary transits
+### Chart Construction
 
-Details will be defined later.
+1.  Natal reference zodiac is determined.
+2.  Zodiac list is **rotated (swapped)** so that the reference zodiac
+    becomes **House 1**.
+3.  Natal planets are placed in houses according to their natal zodiac.
+4.  Current transit planets are placed in houses according to their
+    **current zodiac**, using the swapped zodiac structure.
 
-# 6. Chart Rendering
+No recalculation of natal positions occurs.
 
-Charts use the **North Indian house chart style**.
+### Planet Types in Chart
 
-Properties:
+Three visual categories exist:
 
-- 12 houses
-- Diamond-based layout
-- Fixed house positions
-- Zodiac numbers change within houses
+* Natal Planets (black)
+-   Fixed positions
+-   Derived from natal chart
+-   Do not move when time changes
 
-# 7. Chart Renderer Service
+*Transit Planets (colored)
+-   Current planetary positions
+-   Color determined by house relationship using existing transit color
+    logic
+-   Move when time changes
 
-A reusable rendering component must be implemented.
+* Aspects (grey markers)
+-   Represent aspects between **transit planets only**
+-   Displayed when aspect filters are enabled
 
-## 7.1 Service Goal
-Provide a **public chart drawing service** that can be reused across the application.
+# 3. Static Panels in Natal Mode
 
-Charts will not be limited to this page only.
-Example future usage: i.e. Natal chart in Profile creation service
+In **Natal Reference mode**, two panels remain static:
 
-## 7.2 Service Responsibilities
+### Planet Table
 
-The service must:
+Displays **natal planetary positions** only.
+Header text changes to:
+ `Transits from period ruler <Reference>`
 
-1. Draw the North Indian chart structure
-2. Place zodiac numbers inside houses
-3. Place planets inside houses
-4. Render planets according to configured colors
-5. Adapt to different chart sizes
+### Navamsa Chart
 
-## 7.3 Service Design
+Displays the **natal Navamsa chart**.
 
-The renderer should be implemented as a reusable component.
-Example conceptual name: `TransitChartRenderer`
+Header text:
+ `Natal navamsa`
 
-# 8. Input Data (Preliminary)
+These panels are **not recalculated when time changes**.
 
-The chart renderer will receive structured input data.
+# 4. Time Navigation
 
-Initial assumptions:
+The page provides multiple mechanisms to change time:
+-   Time shift arrows
+-   Date picker
+-   Time picker
 
-### 8.1 Rashi Order
-A list representing the **shifted zodiac sequence** relative to Lagna.
+Behaviour depends on the active tab.
 
-This determines which zodiac sign appears in each house.
+### Current Transits Tab
 
-### 8.2 Planets by House
-A prepared structure mapping planets to houses.
+Time change triggers:
+-   Recalculation of planetary positions
+-   Chart redraw
+-   Table update
+-   Navamsa update
+-   Aspect recalculation
 
-Example concept:
-House → List of planets
+### Natal Reference Tab
 
-The renderer will **only draw**, not calculate positions.
-Planet placement calculations will happen elsewhere.
+Time change triggers:
+-   Recalculation of **transit planets only**
+-   Chart redraw
+-   Aspect recalculation
 
-# 9. Responsive Chart Size
+Static panels remain unchanged.
 
-Charts must use **relative sizing**.
+# 5. Aspect Controls
 
-Rules:
-- No hardcoded width or height
-- Chart must adapt to available container space
-- Rendering must scale correctly on different devices
+Aspect filters allow enabling/disabling aspects for:
+-   Sun
+-   Moon
+-   Mars
+-   Mercury
+-   Jupiter
+-   Venus
+-   Saturn
+-   Rahu
 
-This is important because different charts may occupy different areas of the screen.
+Aspect logic is applied only to **transit planets**.
 
-# 10. Chart Shape
+When aspect selection changes:
+-   The active chart is recalculated
+-   Aspect markers are redrawn
 
-In the legacy desktop application charts were drawn as **rectangles** due to wide screen layouts.
+Natal planets are not used for aspect calculations.
 
-For the mobile version:
+# 6. Localization
 
-Charts will be rendered as **squares**.
+The page supports localization through the existing localization system.
 
-Benefits:
+# 7. Core Services Used
 
-- Easier scaling
-- Better layout on phones
-- Consistent geometry
+The implementation relies on existing PADMA services:
 
-# 11. Planet Placement (To Be Defined Later)
+** Swiss Ephemeris
+	Planetary positions: - SwissAnalysis - SwissService
 
-The exact algorithm for positioning planets inside houses will be defined later.
+** Context Data
+-   ProfileContextService
+-   DataCache
 
-Legacy implementation contains a partially automated placement system.
+### Chart Construction
 
-This logic may be:
+`TransitChartDataService.BuildNatalChartHousesByRuler()`
 
-- reused
-- improved
-- redesigned
+This method builds the house structure by:
+1.  Using the swapped zodiac list
+2.  Adding natal planets
+3.  Adding current transit planets
+4.  Applying transit aspects
 
-Details will be discussed during implementation.
+# 8. Rendering
 
-# 12. Implementation Order
+Charts are rendered using:
+-   NorthIndianChartView
+-   NorthIndianChartDrawable
 
-Initial implementation should focus on:
+Each house contains:
+    ChartHouseData
+        HouseNumber
+        ZodiacNumber
+        Planets
 
-1. Burger menu entry
-2. TransitChartsPage creation
-3. ConfigBasePage reuse
-4. Two-tab layout
-5. Empty chart container
-6. Initial chart renderer service skeleton
+Planets are represented by:
+ `ChartPlanetItem`
 
-Planet placement and chart content will be added later.
+Planet type determines rendering color and behaviour.
 
-# 13. Status
+# 9. Summary
 
-Preliminary Requirements
-Further specifications will follow during implementation.
+`TransitChartsPage` provides a dual mode transit analysis tool
+combining:
+-   dynamic transit analysis
+-   natal relative transit interpretation
 
----------
+** Key design principles:
+-   reuse of existing transit logic
+-   separation of static natal data and dynamic transit data
+-   minimal recalculation when navigating time
+-   compatibility with legacy PAD logic
 
-DateTime | < | StepUnit ▼ | StepValue | >
+This page mirrors the analytical behaviour of the legacy PAD application
+while adapting it to the mobile PADMA architecture.
+
+-------
