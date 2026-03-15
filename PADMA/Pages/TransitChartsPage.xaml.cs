@@ -279,17 +279,15 @@ namespace PADMA.Pages
             if (_showCurrentTransits)
             {
                 LabelPlanetsTransitPositions.Text =
-                    Localization.GetLocalizedText("Planets transit positions", lang);
+                    Localization.GetLocalizedText("Transit planet positions", lang);
 
                 LabelTransitNavamsa.Text =
                     Localization.GetLocalizedText("Transit navamsa", lang);
             }
             else
             {
-                var template = Localization.GetLocalizedText("Transits from period ruler {0}", lang);
-                var natalRefName = GetNatalReferenceDisplayName(_selectedNatalReferenceId);
-
-                LabelPlanetsTransitPositions.Text = string.Format(template, natalRefName);
+                LabelPlanetsTransitPositions.Text = 
+                    Localization.GetLocalizedText("Natal planet positions", lang);
 
                 LabelTransitNavamsa.Text =
                     Localization.GetLocalizedText("Natal navamsa", lang);
