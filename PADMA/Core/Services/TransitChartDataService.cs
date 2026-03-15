@@ -219,6 +219,16 @@ namespace PADMA.Core.Services
             return houses;
         }
 
+        public static List<ChartHouseData> BuildNatalChartHousesByRuler(
+            List<PlanetData> natalPDList,
+            List<PlanetData> pdList,
+            List<Zodiac> swappedZodiacs,
+            List<EPlanet> selectedAspectPlanets)
+        {
+            // TODO
+            return new List<ChartHouseData>();
+        }
+
         public static List<ChartHouseData> BuildTransitNavamsaChartHouses(
             List<PlanetData> pdList,
             int navamsaStart)

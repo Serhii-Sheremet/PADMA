@@ -87,6 +87,7 @@ public sealed class ProfileContextService : IProfileContextService
                 LivingLon: livingLon,
                 DotNetTimeZoneId: LivingTzId,
                 TimeZoneInfo: LivingTzInfo,
+                BirthAcendent: acendent,
                 BirthZodiacMoonId: birthZodiacMoonId,
                 BirthNakshatraMoonId: birthNakshatraMoonId,
                 BirthPadaMoonId: birthPadaMoonId,

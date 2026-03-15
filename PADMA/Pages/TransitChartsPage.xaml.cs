@@ -361,7 +361,7 @@ namespace PADMA.Pages
 
             if (!_showCurrentTransits)
             {
-                //LoadNatalTransitChart(id);
+                LoadNatalTransitChart(CurrentTransitUtcDateTime, _selectedNatalReferenceId);
             }
         }
 
@@ -423,7 +423,7 @@ namespace PADMA.Pages
             }
             else
             {
-                //LoadNatalTransitPlaceholder(); 
+                LoadNatalTransitChart(CurrentTransitUtcDateTime, _selectedNatalReferenceId);
             }
         }
 
@@ -437,11 +437,11 @@ namespace PADMA.Pages
             var nodeMode = DataCache.Instance.GetActiveNodeSetting();
 
             var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, nodeMode);
-            var ascendant = SwissService.CalculateAscendantForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
+            var ascendent = SwissService.CalculateAscendantForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
 
-            var lagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(ascendant);
-            var lagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(ascendant);
-            var lagnaPadaId = SwissUtility.GetPadaIdFromDegree(ascendant);
+            var lagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(ascendent);
+            var lagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(ascendent);
+            var lagnaPadaId = SwissUtility.GetPadaIdFromDegree(ascendent);
             var lagnaPadaNumber = SwissUtility.GetPadaNumberByPadaId(lagnaPadaId);
             var lagnaNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(lagnaNakshatraId, lagnaPadaNumber);
 
@@ -454,9 +454,58 @@ namespace PADMA.Pages
                 selectedAspectPlanets);
 
             ChartView.SetHouses(houses);
-            BuildTransitPlanetTable(pdList, ascendant);
+            BuildTransitPlanetTable(pdList, ascendent);
 
             var navamsaHouses = TransitChartDataService.BuildTransitNavamsaChartHouses(pdList, lagnaNavamsaZodiacId);
+            TransitNavamsaChartView.SetHouses(navamsaHouses);
+        }
+
+        private void LoadNatalTransitChart(DateTime transitUtc, int natalReference)
+        {
+            Profile? profile = DataCache.Instance.ActiveProfile;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            if (profile == null || ctx == null)
+                return;
+            
+            var nodeMode = DataCache.Instance.GetActiveNodeSetting();
+            EPlanet rulerPlanet = (EPlanet)natalReference;
+
+            // natal positions 
+            var natalPdList = ctx.BirthPlanetDataList.ToList();
+            var natalAscendent = ctx.BirthAcendent;
+            var natalLagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(natalAscendent);
+            var natalLagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(natalAscendent);
+            var natalLagnaPadaId = ctx.BirthPadaLagnaId;
+            var natalLagnaPadaNumber = SwissUtility.GetPadaNumberByPadaId(natalLagnaPadaId);
+            var natalLagnaNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(natalLagnaNakshatraId, natalLagnaPadaNumber);
+
+            int rulerZodiacId = natalLagnaZodiacId;
+            if (natalReference != 0)
+            {
+                rulerZodiacId = natalPdList.FirstOrDefault(i => i.PlanetId == (int)rulerPlanet).ZodiacId;
+                var rulerNakshatraId = natalPdList.FirstOrDefault(i => i.PlanetId == (int)rulerPlanet).NakshatraId;
+                var rulerPadaId = natalPdList.FirstOrDefault(i => i.PlanetId == (int)rulerPlanet).PadaId;
+                var rulerPadaNumber = SwissUtility.GetPadaNumberByPadaId(rulerPadaId);
+                var rulerNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(rulerNakshatraId, rulerPadaNumber);
+            }
+
+            // current transit positions  
+            var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, nodeMode);
+            var ascendent = SwissService.CalculateAscendantForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
+
+            var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), rulerZodiacId);
+            var selectedAspectPlanets = GetSelectedAspectPlanets();
+
+            var houses = TransitChartDataService.BuildNatalChartHousesByRuler(
+                natalPdList,
+                pdList,
+                swappedZodiacs,
+                selectedAspectPlanets);
+
+            ChartView.SetHouses(houses);
+            BuildTransitPlanetTable(natalPdList, natalAscendent);
+
+            var navamsaHouses = TransitChartDataService.BuildTransitNavamsaChartHouses(natalPdList, natalLagnaNavamsaZodiacId);
             TransitNavamsaChartView.SetHouses(navamsaHouses);
         }
 

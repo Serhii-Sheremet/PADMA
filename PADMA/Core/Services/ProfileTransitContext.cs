@@ -20,6 +20,7 @@ public sealed record ProfileTransitContext(
     TimeZoneInfo TimeZoneInfo,
 
     // Birth reference values used by TransitEngine
+    double BirthAcendent,
     int BirthZodiacMoonId,
     int BirthNakshatraMoonId,
     int BirthPadaMoonId,

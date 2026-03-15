@@ -352,7 +352,6 @@ namespace PADMA.Core.Analysis
         private static DateTime EpochToDateTime(int epoch)
             => Epoch.AddSeconds(epoch);
 
-
         public static List<PlanetData> CalculatePlanetPositionsForDate(DateTime date, double latitude, double longitude, EAppSetting nodeType)
         {
             List<PlanetData> pdList = new List<PlanetData>();

@@ -2,6 +2,7 @@
 {
     public enum EPlanet
     {
+        LAGNA = 0,
         SUN = 1,
         MOON = 2,
         MARS = 3,
