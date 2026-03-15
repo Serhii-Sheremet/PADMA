@@ -12,8 +12,10 @@ namespace PADMA.Pages
     public partial class TransitChartsPage : ConfigBasePage
     {
         private bool _showCurrentTransits = true;
+        private bool IsCurrentTransitsTab => _showCurrentTransits;
+        private bool IsNatalTransitsTab => !_showCurrentTransits;
+        
         private bool _isAspectsExpanded;
-
         private bool _aspectAllSelected;
         private bool _aspectSunSelected;
         private bool _aspectMoonSelected;
@@ -251,14 +253,11 @@ namespace PADMA.Pages
             NatalRefRahuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.RAHU)?.Name ?? "Rahu";
             NatalRefKetuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.KETU)?.Name ?? "Ketu";
 
-            LabelPlanetsTransitPositions.Text = Localization.GetLocalizedText("Planets transit positions", lang);
             TableLabelDegree.Text = Localization.GetLocalizedText("Degree", lang);
             TableLabelRasi.Text = Localization.GetLocalizedText("Rasi", lang);
             TableLabelNakshatra.Text = Localization.GetLocalizedText("Nakshatra", lang);
             TableLabelPada.Text = Localization.GetLocalizedText("Pada", lang);
             TableLabelNavamsa.Text = Localization.GetLocalizedText("Navamsa", lang);
-
-            LabelTransitNavamsa.Text = Localization.GetLocalizedText("Transit navamsa", lang);
 
             StepSecondsOptionLabel.Text = Localization.GetLocalizedText("Seconds", lang);
             StepMinutesOptionLabel.Text = Localization.GetLocalizedText("Minutes", lang);
@@ -270,6 +269,31 @@ namespace PADMA.Pages
             SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
             StepUnitLabel.Text = SelectedStepUnitText;
             RefreshStepUnitUnderline();
+            UpdateTabSpecificTexts();
+        }
+
+        private void UpdateTabSpecificTexts()
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            if (_showCurrentTransits)
+            {
+                LabelPlanetsTransitPositions.Text =
+                    Localization.GetLocalizedText("Planets transit positions", lang);
+
+                LabelTransitNavamsa.Text =
+                    Localization.GetLocalizedText("Transit navamsa", lang);
+            }
+            else
+            {
+                var template = Localization.GetLocalizedText("Transits from period ruler {0}", lang);
+                var natalRefName = GetNatalReferenceDisplayName(_selectedNatalReferenceId);
+
+                LabelPlanetsTransitPositions.Text = string.Format(template, natalRefName);
+
+                LabelTransitNavamsa.Text =
+                    Localization.GetLocalizedText("Natal navamsa", lang);
+            }
         }
 
         private void UpdateNatalReferenceState()
@@ -289,6 +313,18 @@ namespace PADMA.Pages
                 _isNatalReferenceExpanded = false;
                 NatalReferencePanel.IsVisible = false;
                 NatalReferenceArrow.Text = "▼";
+            }
+        }
+
+        private void ReloadActiveChartOnly()
+        {
+            if (_showCurrentTransits)
+            {
+                LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            }
+            else
+            {
+                LoadNatalTransitChartOnly(CurrentTransitUtcDateTime, _selectedNatalReferenceId);
             }
         }
 
@@ -352,6 +388,7 @@ namespace PADMA.Pages
         {
             _selectedNatalReferenceId = id;
             NatalReferenceLabel.Text = GetNatalReferenceDisplayName(id);
+            UpdateTabSpecificTexts();
 
             _isNatalReferenceExpanded = false;
             NatalReferencePanel.IsVisible = false;
@@ -361,7 +398,7 @@ namespace PADMA.Pages
 
             if (!_showCurrentTransits)
             {
-                LoadNatalTransitChart(CurrentTransitUtcDateTime, _selectedNatalReferenceId);
+                LoadNatalTransitChartOnly(CurrentTransitUtcDateTime, _selectedNatalReferenceId);
             }
         }
 
@@ -402,6 +439,7 @@ namespace PADMA.Pages
             ApplyLocalization();
             UpdateTabState();
             LoadSelectedTabContent();
+            UpdateTabSpecificTexts();
         }
 
         private void OnNatalTransitsTapped(object sender, TappedEventArgs e)
@@ -413,6 +451,7 @@ namespace PADMA.Pages
             ApplyLocalization();
             UpdateTabState();
             LoadSelectedTabContent();
+            UpdateTabSpecificTexts();
         }
 
         private void LoadSelectedTabContent()
@@ -460,40 +499,41 @@ namespace PADMA.Pages
             TransitNavamsaChartView.SetHouses(navamsaHouses);
         }
 
-        private void LoadNatalTransitChart(DateTime transitUtc, int natalReference)
+        private void LoadNatalTransitChartOnly(DateTime transitUtc, int natalReference)
         {
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
             if (profile == null || ctx == null)
                 return;
-            
+
             var nodeMode = DataCache.Instance.GetActiveNodeSetting();
             EPlanet rulerPlanet = (EPlanet)natalReference;
 
-            // natal positions 
             var natalPdList = ctx.BirthPlanetDataList.ToList();
             var natalAscendent = ctx.BirthAcendent;
             var natalLagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(natalAscendent);
-            var natalLagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(natalAscendent);
-            var natalLagnaPadaId = ctx.BirthPadaLagnaId;
-            var natalLagnaPadaNumber = SwissUtility.GetPadaNumberByPadaId(natalLagnaPadaId);
-            var natalLagnaNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(natalLagnaNakshatraId, natalLagnaPadaNumber);
 
             int rulerZodiacId = natalLagnaZodiacId;
+
             if (natalReference != 0)
             {
-                rulerZodiacId = natalPdList.FirstOrDefault(i => i.PlanetId == (int)rulerPlanet).ZodiacId;
-                var rulerNakshatraId = natalPdList.FirstOrDefault(i => i.PlanetId == (int)rulerPlanet).NakshatraId;
-                var rulerPadaId = natalPdList.FirstOrDefault(i => i.PlanetId == (int)rulerPlanet).PadaId;
-                var rulerPadaNumber = SwissUtility.GetPadaNumberByPadaId(rulerPadaId);
-                var rulerNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(rulerNakshatraId, rulerPadaNumber);
+                var rulerPlanetData = natalPdList.FirstOrDefault(i => i.PlanetId == (int)rulerPlanet);
+                if (rulerPlanetData == null)
+                    return;
+
+                rulerZodiacId = rulerPlanetData.ZodiacId;
             }
 
-            // current transit positions  
-            var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, nodeMode);
-            var ascendent = SwissService.CalculateAscendantForDate(transitUtc, ctx.LivingLat, ctx.LivingLon, 0, 'O');
+            var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(
+                transitUtc,
+                ctx.LivingLat,
+                ctx.LivingLon,
+                nodeMode);
 
-            var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), rulerZodiacId);
+            var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(
+                DataCache.Instance.ZodiacList.ToList(),
+                rulerZodiacId);
+
             var selectedAspectPlanets = GetSelectedAspectPlanets();
 
             var houses = TransitChartDataService.BuildNatalChartHousesByRuler(
@@ -503,10 +543,38 @@ namespace PADMA.Pages
                 selectedAspectPlanets);
 
             ChartView.SetHouses(houses);
+        }
+
+        private void LoadNatalStaticPanels()
+        {
+            Profile? profile = DataCache.Instance.ActiveProfile;
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            if (profile == null || ctx == null)
+                return;
+
+            var natalPdList = ctx.BirthPlanetDataList.ToList();
+            var natalAscendent = ctx.BirthAcendent;
+
+            var natalLagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(natalAscendent);
+            var natalLagnaPadaId = ctx.BirthPadaLagnaId;
+            var natalLagnaPadaNumber = SwissUtility.GetPadaNumberByPadaId(natalLagnaPadaId);
+            var natalLagnaNavamsaZodiacId = SwissUtility.GetNavamsaByNakshatraAndPada(
+                natalLagnaNakshatraId,
+                natalLagnaPadaNumber);
+
             BuildTransitPlanetTable(natalPdList, natalAscendent);
 
-            var navamsaHouses = TransitChartDataService.BuildTransitNavamsaChartHouses(natalPdList, natalLagnaNavamsaZodiacId);
+            var navamsaHouses = TransitChartDataService.BuildTransitNavamsaChartHouses(
+                natalPdList,
+                natalLagnaNavamsaZodiacId);
+
             TransitNavamsaChartView.SetHouses(navamsaHouses);
+        }
+
+        private void LoadNatalTransitChart(DateTime transitUtc, int natalReference)
+        {
+            LoadNatalTransitChartOnly(transitUtc, natalReference);
+            LoadNatalStaticPanels();
         }
 
         private void OnTransitNavamsaChartSizeChanged(object? sender, EventArgs e)
@@ -574,10 +642,7 @@ namespace PADMA.Pages
             UpdateAspectSelectionUi();
             _isUpdatingAspectSelection = false;
 
-            if (_showCurrentTransits)
-            {
-                LoadCurrentTransitChart(CurrentTransitUtcDateTime);
-            }
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectSunTapped(object sender, TappedEventArgs e)
@@ -585,7 +650,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectSunSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectMoonTapped(object sender, TappedEventArgs e)
@@ -593,7 +658,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectMoonSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectMarsTapped(object sender, TappedEventArgs e)
@@ -601,7 +666,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectMarsSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectMercuryTapped(object sender, TappedEventArgs e)
@@ -609,7 +674,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectMercurySelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectJupiterTapped(object sender, TappedEventArgs e)
@@ -617,7 +682,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectJupiterSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectVenusTapped(object sender, TappedEventArgs e)
@@ -625,7 +690,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectVenusSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectSaturnTapped(object sender, TappedEventArgs e)
@@ -633,7 +698,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectSaturnSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnAspectRahuTapped(object sender, TappedEventArgs e)
@@ -641,7 +706,7 @@ namespace PADMA.Pages
             ToggleAspect(ref _aspectRahuSelected);
             UpdateAspectAllState();
             UpdateAspectSelectionUi();
-            if (_showCurrentTransits) LoadCurrentTransitChart(CurrentTransitUtcDateTime); 
+            ReloadActiveChartOnly();
         }
 
         private List<EPlanet> GetSelectedAspectPlanets()
@@ -694,7 +759,7 @@ namespace PADMA.Pages
             transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
             transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
 
-            LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnStepUnitTapped(object sender, EventArgs e)
@@ -734,7 +799,7 @@ namespace PADMA.Pages
                 CurrentTransitLocalDateTime.Minute,
                 CurrentTransitLocalDateTime.Second);
 
-            LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void OnTransitTimeChanged(object sender, PropertyChangedEventArgs e)
@@ -752,7 +817,7 @@ namespace PADMA.Pages
                 time.Minutes,
                 time.Seconds);
 
-            LoadCurrentTransitChart(CurrentTransitUtcDateTime);
+            ReloadActiveChartOnly();
         }
 
         private void UpdateStepUnitUi()

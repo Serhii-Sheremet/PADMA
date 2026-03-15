@@ -225,8 +225,62 @@ namespace PADMA.Core.Services
             List<Zodiac> swappedZodiacs,
             List<EPlanet> selectedAspectPlanets)
         {
-            // TODO
-            return new List<ChartHouseData>();
+            var planetsList = new List<ChartPlanetItem>[12];
+
+            for (int i = 0; i < 12; i++)
+            {
+                planetsList[i] = new List<ChartPlanetItem>();
+
+                int zodiacId = swappedZodiacs[i].Id;
+                int houseNumber = i + 1;
+
+                // 1. Natal planets (black, fixed)
+                for (int j = 0; j < natalPDList.Count; j++)
+                {
+                    var natalPlanet = GetPlanetIfCurrentZodiac(
+                        natalPDList[j],
+                        ETransitType.TRANSITBIRTH,
+                        zodiacId,
+                        houseNumber);
+
+                    if (natalPlanet != null)
+                    {
+                        planetsList[i].Add(natalPlanet);
+                    }
+                }
+
+                // 2. Current transit planets (colored, moving)
+                for (int j = 0; j < pdList.Count; j++)
+                {
+                    var transitPlanet = GetPlanetIfCurrentZodiac(
+                        pdList[j],
+                        ETransitType.TRANSITNATAL,
+                        zodiacId,
+                        houseNumber);
+
+                    if (transitPlanet != null)
+                    {
+                        planetsList[i].Add(transitPlanet);
+                    }
+                }
+            }
+
+            // 3. Aspects only for current transit planets
+            planetsList = AddAspects(planetsList, selectedAspectPlanets);
+
+            var houses = new List<ChartHouseData>();
+
+            for (int i = 0; i < 12; i++)
+            {
+                houses.Add(new ChartHouseData
+                {
+                    HouseNumber = i + 1,
+                    ZodiacNumber = swappedZodiacs[i].Id,
+                    Planets = planetsList[i]
+                });
+            }
+
+            return houses;
         }
 
         public static List<ChartHouseData> BuildTransitNavamsaChartHouses(
