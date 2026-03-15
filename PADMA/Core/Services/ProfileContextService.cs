@@ -51,7 +51,7 @@ public sealed class ProfileContextService : IProfileContextService
             {
                 // Birth reference calculations
                 double offset = TimeZoneService.GetUtcOffsetHours(profile.DateOfBirth, birthLat, birthLon);
-                localBirthDate = profile.DateOfBirth.AddHours(-offset);
+                localBirthDate = DateTime.SpecifyKind(profile.DateOfBirth.AddHours(-offset), DateTimeKind.Utc);
 
                 char hsys = 'O'; // Placidus
                 bdPlanetData = SwissAnalysis.CalculatePlanetPositionsForDate(localBirthDate, birthLat, birthLon, nodeMode);
