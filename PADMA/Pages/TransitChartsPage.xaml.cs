@@ -12,8 +12,6 @@ namespace PADMA.Pages
     public partial class TransitChartsPage : ConfigBasePage
     {
         private bool _showCurrentTransits = true;
-        private bool IsCurrentTransitsTab => _showCurrentTransits;
-        private bool IsNatalTransitsTab => !_showCurrentTransits;
         
         private bool _isAspectsExpanded;
         private bool _aspectAllSelected;
@@ -32,6 +30,8 @@ namespace PADMA.Pages
 
         private bool _isStepUnitExpanded;
 
+        private DatePicker? transitDatePicker;
+        private bool _isRebuildingTransitDatePicker;
         private DateTime _currentTransitLocalDateTime = DateTime.Now;
         public DateTime CurrentTransitLocalDateTime
         {
@@ -138,6 +138,7 @@ namespace PADMA.Pages
         public TransitChartsPage()
         {
             InitializeComponent();
+            RebuildTransitDatePicker();
             BindingContext = this;
 
             ChartView.SizeChanged += OnChartViewSizeChanged;
@@ -223,6 +224,7 @@ namespace PADMA.Pages
         private void ApplyLocalization()
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
+
             Title = Localization.GetLocalizedText("Transit charts", lang);
             CurrentTabLabel.Text = Localization.GetLocalizedText("Current transits", lang);
             NatalTabLabel.Text = Localization.GetLocalizedText("Transits from Natal", lang);
@@ -240,8 +242,6 @@ namespace PADMA.Pages
             LabelAspectSaturn.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.SATURN)?.Name ?? "Saturn";
             LabelAspectRahu.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.RAHU)?.Name ?? "Rahu";
 
-            NatalReferenceLabel.Text = GetNatalReferenceDisplayName(_selectedNatalReferenceId);
-
             NatalRefLagnaLabel.Text = Localization.GetLocalizedText("Lagna", lang);
             NatalRefSunLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.SUN)?.Name ?? "Sun";
             NatalRefMoonLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.MOON)?.Name ?? "Moon";
@@ -252,6 +252,9 @@ namespace PADMA.Pages
             NatalRefSaturnLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.SATURN)?.Name ?? "Saturn";
             NatalRefRahuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.RAHU)?.Name ?? "Rahu";
             NatalRefKetuLabel.Text = PanchangaHelper.GetPlanetDescEntity((int)EPlanet.KETU)?.Name ?? "Ketu";
+
+            NatalReferenceLabel.Text = GetNatalReferenceDisplayName(_selectedNatalReferenceId);
+            Dispatcher.Dispatch(UpdateNatalReferenceUnderline);
 
             TableLabelDegree.Text = Localization.GetLocalizedText("Degree", lang);
             TableLabelRasi.Text = Localization.GetLocalizedText("Rasi", lang);
@@ -266,10 +269,16 @@ namespace PADMA.Pages
             StepMonthsOptionLabel.Text = Localization.GetLocalizedText("Months", lang);
             StepYearsOptionLabel.Text = Localization.GetLocalizedText("Years", lang);
 
+            if (_isNatalReferenceExpanded)
+            {
+                Dispatcher.Dispatch(PositionNatalReferencePanel);
+            }
+
             SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
             StepUnitLabel.Text = SelectedStepUnitText;
             RefreshStepUnitUnderline();
             UpdateTabSpecificTexts();
+            Dispatcher.Dispatch(RebuildTransitDatePicker);
         }
 
         private void UpdateTabSpecificTexts()
@@ -326,25 +335,6 @@ namespace PADMA.Pages
             }
         }
 
-        private void UpdateNatalReferenceUnderline()
-        {
-            if (NatalReferenceHeader.Width > 0)
-            {
-                NatalReferenceUnderline.WidthRequest = NatalReferenceHeader.Width;
-                return;
-            }
-
-            var measureLabel = new Label
-            {
-                Text = NatalReferenceLabel.Text,
-                FontSize = NatalReferenceLabel.FontSize,
-                LineBreakMode = LineBreakMode.NoWrap
-            };
-
-            var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
-            NatalReferenceUnderline.WidthRequest = Math.Max(24, size.Width + 8);
-        }
-
         private void UpdateAspectsUnderline()
         {
             if (AspectsUnderline.Width > 0)
@@ -378,7 +368,17 @@ namespace PADMA.Pages
                 return;
 
             _isNatalReferenceExpanded = !_isNatalReferenceExpanded;
-            NatalReferencePanel.IsVisible = _isNatalReferenceExpanded;
+
+            if (_isNatalReferenceExpanded)
+            {
+                PositionNatalReferencePanel();
+                NatalReferencePanel.IsVisible = true;
+            }
+            else
+            {
+                NatalReferencePanel.IsVisible = false;
+            }
+
             NatalReferenceArrow.Text = _isNatalReferenceExpanded ? "▲" : "▼";
         }
 
@@ -392,15 +392,15 @@ namespace PADMA.Pages
             NatalReferencePanel.IsVisible = false;
             NatalReferenceArrow.Text = "▼";
 
-            UpdateNatalReferenceUnderline();
-
             if (!_showCurrentTransits)
             {
                 LoadNatalTransitChartOnly(CurrentTransitUtcDateTime, _selectedNatalReferenceId);
             }
+
+            RefreshNatalReferenceVisuals();
         }
 
-        private void OnNatalReferenceLagnaTapped(object sender, TappedEventArgs e) => SelectNatalReference(0);
+        private void OnNatalReferenceLagnaTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.LAGNA);
         private void OnNatalReferenceSunTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.SUN);
         private void OnNatalReferenceMoonTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.MOON);
         private void OnNatalReferenceMarsTapped(object sender, TappedEventArgs e) => SelectNatalReference((int)EPlanet.MARS);
@@ -789,6 +789,9 @@ namespace PADMA.Pages
 
         private void OnTransitDateSelected(object sender, DateChangedEventArgs e)
         {
+            if (_isRebuildingTransitDatePicker)
+                return;
+
             CurrentTransitLocalDateTime = new DateTime(
                 e.NewDate.Year,
                 e.NewDate.Month,
@@ -917,7 +920,7 @@ namespace PADMA.Pages
 
         private string GetNakshatraDisplay(int nakshatraId)
         {
-            return $"{nakshatraId}.{PanchangaHelper.GetNakshatraDescEntity(nakshatraId).Name}";
+            return $"{nakshatraId}.{PanchangaHelper.GetNakshatraDescEntity(nakshatraId).ShortName}";
         }
 
         private string FormatDegree(double longitude)
@@ -986,6 +989,78 @@ namespace PADMA.Pages
             });
         }
 
+        private void PositionNatalReferencePanel()
+        {
+            if (NatalReferenceHeader == null || PageOverlayRoot == null)
+                return;
+
+            var p = GetAbsolutePositionToRoot(NatalReferenceHeader, PageOverlayRoot);
+
+            double panelX = p.X;
+            double panelY = p.Y + NatalReferenceHeader.Height + 2;
+
+            AbsoluteLayout.SetLayoutBounds(NatalReferencePanel, new Rect(panelX, panelY, 110, -1));
+            AbsoluteLayout.SetLayoutFlags(NatalReferencePanel, AbsoluteLayoutFlags.None);
+        }
+
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+
+            if (_isNatalReferenceExpanded)
+            {
+                RefreshNatalReferenceVisuals();
+            }
+        }
+
+        private void UpdateNatalReferenceUnderline()
+        {
+            Dispatcher.Dispatch(() =>
+            {
+                NatalReferenceUnderline.WidthRequest = NatalReferenceHeader.Width;
+                NatalReferenceUnderline.TranslationX = NatalReferenceHeader.X;
+            });
+        }
+
+        private void RefreshNatalReferenceVisuals()
+        {
+            Dispatcher.Dispatch(() =>
+            {
+                UpdateNatalReferenceUnderline();
+
+                if (_isNatalReferenceExpanded)
+                    PositionNatalReferencePanel();
+            });
+        }
+
+        private void RebuildTransitDatePicker()
+        {
+            if (TransitDatePickerHost == null)
+                return;
+
+            _isRebuildingTransitDatePicker = true;
+
+            var currentDate = CurrentTransitLocalDateTime.Date;
+
+            var picker = new DatePicker
+            {
+                Format = "D",
+                Date = currentDate,
+                HeightRequest = 38,
+                MinimumHeightRequest = 38,
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                VerticalOptions = LayoutOptions.Center,
+                BackgroundColor = Colors.Transparent
+            };
+
+            picker.DateSelected += OnTransitDateSelected;
+
+            TransitDatePickerHost.Content = picker;
+
+            transitDatePicker = picker;
+
+            _isRebuildingTransitDatePicker = false;
+        }
 
 
     }

@@ -6,7 +6,7 @@
     xmlns:charts="clr-namespace:PADMA.UI.Charts;assembly=PADMA"
     x:Class="PADMA.Pages.TransitChartsPage">
 
-    <AbsoluteLayout>
+    <AbsoluteLayout x:Name="PageOverlayRoot">
 
         <!-- Main page content -->
         <Grid AbsoluteLayout.LayoutBounds="0,0,1,1"
@@ -103,21 +103,14 @@
                   Margin="0,0,0,2"
                   MaximumHeightRequest="42">
 
-                <Border Grid.Column="0"
+                <Border x:Name="TransitDatePickerHost"
+                        Grid.Column="0"
                         Stroke="#BDBDBD"
                         StrokeThickness="1"
                         BackgroundColor="Transparent"
                         Padding="6,0"
                         MinimumHeightRequest="40"
                         MaximumHeightRequest="40">
-                    <DatePicker x:Name="transitDatePicker"
-                                Format="D"
-                                HeightRequest="38"
-                                MinimumHeightRequest="38"
-                                HorizontalOptions="CenterAndExpand"
-                                VerticalOptions="Center"
-                                Date="{Binding CurrentTransitLocalDateTime, Mode=OneWay}"
-                                DateSelected="OnTransitDateSelected" />
                 </Border>
 
                 <Border Grid.Column="1"
@@ -574,7 +567,7 @@
                             <!-- header -->
                             <Grid Grid.Row="0"
                                   BackgroundColor="#EFE8C8"
-                                  ColumnDefinitions="0.5*,1.2*,1.5*,2.6*,0.8*,1.5*"
+                                  ColumnDefinitions="0.5*,1.2*,1.6*,2.4*,0.8*,1.6*"
                                   Padding="4,3">
                                 <Label Grid.Column="0" 
                                        Text="" 
@@ -738,7 +731,7 @@
         <!-- Floating dropdown -->
         <Border x:Name="NatalReferencePanel"
                 IsVisible="False"
-                AbsoluteLayout.LayoutBounds="251,28,110,-1"
+                AbsoluteLayout.LayoutBounds="0,0,110,-1"
                 AbsoluteLayout.LayoutFlags="None"
                 Stroke="#D0D0D0"
                 StrokeThickness="1"
