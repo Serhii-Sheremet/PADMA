@@ -38,7 +38,7 @@ public sealed class ProfileContextService : IProfileContextService
 
             // Data by birth location
             int birthZodiacMoonId = 1, birthNakshatraMoonId = 1, birthPadaMoonId = 1, lagnaId = 1, birthPadaLagnaId = 1;
-            double birthLat = 0, birthLon = 0, acendent = 0;
+            double birthLat = 0, birthLon = 0, ascendent = 0;
             double livingLat = 0, livingLon = 0;
             string LivingTzId = string.Empty;
             DateTime localBirthDate = profile.DateOfBirth;
@@ -55,8 +55,8 @@ public sealed class ProfileContextService : IProfileContextService
 
                 char hsys = 'O'; // Placidus
                 bdPlanetData = SwissAnalysis.CalculatePlanetPositionsForDate(localBirthDate, birthLat, birthLon, nodeMode);
-                acendent = SwissService.CalculateAscendantForDate(localBirthDate, birthLat, birthLon, 0, hsys);
-                birthPadaLagnaId = SwissUtility.GetPadaIdFromDegree(acendent);
+                ascendent = SwissService.CalculateAscendantForDate(localBirthDate, birthLat, birthLon, 0, hsys);
+                birthPadaLagnaId = SwissUtility.GetPadaIdFromDegree(ascendent);
             }
 
             // Timezone by living location
@@ -75,7 +75,7 @@ public sealed class ProfileContextService : IProfileContextService
                 birthZodiacMoonId = moon?.ZodiacId ?? 1;
                 birthNakshatraMoonId = moon?.NakshatraId ?? 1;
                 birthPadaMoonId = moon?.PadaId ?? 1;
-                lagnaId = SwissUtility.GetZodiacIdFromDegree(acendent);
+                lagnaId = SwissUtility.GetZodiacIdFromDegree(ascendent);
             }
 
             var ctx = new ProfileTransitContext(
@@ -87,7 +87,7 @@ public sealed class ProfileContextService : IProfileContextService
                 LivingLon: livingLon,
                 DotNetTimeZoneId: LivingTzId,
                 TimeZoneInfo: LivingTzInfo,
-                BirthAcendent: acendent,
+                BirthAscendent: ascendent,
                 BirthZodiacMoonId: birthZodiacMoonId,
                 BirthNakshatraMoonId: birthNakshatraMoonId,
                 BirthPadaMoonId: birthPadaMoonId,

@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Maui.Extensions;
-using Microsoft.Maui.Controls;
 using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;

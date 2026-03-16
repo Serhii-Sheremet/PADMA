@@ -11,8 +11,8 @@
                      Clicked="OnCloseClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="*,Auto">
-        <ScrollView>
+    <Grid RowDefinitions="*,Auto,Auto">
+        <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20" Spacing="12">
 
                 <Entry x:Name="entryProfileName"
@@ -81,8 +81,19 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- 2) Нижняя панель -->
-        <Grid Grid.Row="1"
+        <Button x:Name="btnBirthChartPreview"
+                Grid.Row="1"
+                Margin="20,0,20,8"
+                HeightRequest="44"
+                FontAttributes="Bold"
+                HorizontalOptions="FillAndExpand"
+                BackgroundColor="#2196F3"
+                TextColor="White"
+                CornerRadius="10"
+                Clicked="OnBirthChartPreviewClicked" />
+
+        <!-- Нижняя панель -->
+        <Grid Grid.Row="2"
               Padding="16,20"
               ColumnDefinitions="*,*,*"
               BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#111111}">

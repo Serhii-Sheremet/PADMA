@@ -277,6 +277,7 @@ namespace PADMA.Pages
             SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
             StepUnitLabel.Text = SelectedStepUnitText;
             RefreshStepUnitUnderline();
+            UpdateAspectsUnderline();
             UpdateTabSpecificTexts();
             Dispatcher.Dispatch(RebuildTransitDatePicker);
         }
@@ -337,21 +338,11 @@ namespace PADMA.Pages
 
         private void UpdateAspectsUnderline()
         {
-            if (AspectsUnderline.Width > 0)
+            Dispatcher.Dispatch(() =>
             {
-                AspectsUnderline.WidthRequest = AspectsLabel.Width;
-                return;
-            }
-
-            var measureLabel = new Label
-            {
-                Text = AspectsLabel.Text,
-                FontSize = AspectsLabel.FontSize,
-                LineBreakMode = LineBreakMode.NoWrap
-            };
-
-            var size = measureLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
-            AspectsUnderline.WidthRequest = Math.Max(24, size.Width + 8);
+                AspectsLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
+                AspectsUnderline.WidthRequest = Math.Max(24, AspectsLabel.DesiredSize.Width);
+            });
         }
 
         private string GetNatalReferenceDisplayName(int id)
@@ -508,7 +499,7 @@ namespace PADMA.Pages
             EPlanet rulerPlanet = (EPlanet)natalReference;
 
             var natalPdList = ctx.BirthPlanetDataList.ToList();
-            var natalAscendent = ctx.BirthAcendent;
+            var natalAscendent = ctx.BirthAscendent;
             var natalLagnaZodiacId = SwissUtility.GetZodiacIdFromDegree(natalAscendent);
 
             int rulerZodiacId = natalLagnaZodiacId;
@@ -551,7 +542,7 @@ namespace PADMA.Pages
                 return;
 
             var natalPdList = ctx.BirthPlanetDataList.ToList();
-            var natalAscendent = ctx.BirthAcendent;
+            var natalAscendent = ctx.BirthAscendent;
 
             var natalLagnaNakshatraId = SwissUtility.GetNakshatraIdFromDegree(natalAscendent);
             var natalLagnaPadaId = ctx.BirthPadaLagnaId;

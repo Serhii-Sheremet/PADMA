@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:charts="clr-namespace:PADMA.UI.Charts;assembly=PADMA"
+             x:Class="PADMA.Pages.BirthChartPreviewPage"
+             Title="Birth Chart Preview">
+
+    <Grid RowDefinitions="Auto,*"
+          RowSpacing="8"
+          Padding="10,0,10,10">
+        <Border Grid.Row="0"
+                Stroke="#BDBDBD"
+                StrokeThickness="1"
+                BackgroundColor="Transparent"
+                Padding="6,0"
+                MinimumHeightRequest="40"
+                MaximumHeightRequest="40">
+            
+            <Label x:Name="lblBirthContext"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="CenterAndExpand"
+                       VerticalOptions="Center"/>
+        </Border>
+
+        <!-- Scrollable content -->
+        <ScrollView Grid.Row="1">
+            <AbsoluteLayout x:Name="CurrentTransitOverlayRoot">
+                <VerticalStackLayout x:Name="CurrentTransitContent"
+                        Spacing="2"
+                        AbsoluteLayout.LayoutBounds="0,0,1,-1"
+                        AbsoluteLayout.LayoutFlags="WidthProportional">
+
+                    <charts:NorthIndianChartView
+                            x:Name="ChartView"
+                            HorizontalOptions="Fill"
+                            ChartBackgroundColor="#FAFAD2"
+                            ChartLineColor="Black"
+                            ChartLineStrokeWidth="1" />
+
+                    <Grid RowDefinitions="Auto,Auto"
+                          ColumnSpacing="0"
+                          RowSpacing="4"
+                          VerticalOptions="Start"
+                          Margin="0,2,0,0">
+
+                        <!-- Top controls host -->
+                        <AbsoluteLayout Grid.Row="0"
+                             x:Name="TopControlsHost"
+                             HeightRequest="34"
+                             HorizontalOptions="Fill"
+                             VerticalOptions="Start">
+
+                            <!-- Header row -->
+                            <Grid AbsoluteLayout.LayoutBounds="0,0,1,34"
+                                  AbsoluteLayout.LayoutFlags="WidthProportional"
+                                  ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8"
+                                  VerticalOptions="Center">
+
+                                <!-- Aspects header -->
+                                <HorizontalStackLayout Grid.Column="0"
+                                        x:Name="AspectsHeaderLayout"
+                                        Spacing="6"
+                                        HorizontalOptions="Start"
+                                        VerticalOptions="Center">
+                                    <HorizontalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectsHeaderTapped" />
+                                    </HorizontalStackLayout.GestureRecognizers>
+
+                                    <VerticalStackLayout Spacing="2"
+                                            HorizontalOptions="Start">
+                                        <HorizontalStackLayout Spacing="4"
+                                            HorizontalOptions="Start">
+                                            <Label x:Name="AspectsLabel"
+                                                   FontSize="16"
+                                                   VerticalOptions="Center" />
+
+                                            <Label x:Name="AspectsExpandIcon"
+                                                   FontSize="14"
+                                                   VerticalOptions="Center"
+                                                   Text="▼" />
+                                        </HorizontalStackLayout>
+
+                                        <BoxView x:Name="AspectsUnderline"
+                                                 HeightRequest="2"
+                                                 WidthRequest="40"
+                                                 Color="#C8A23A"
+                                                 HorizontalOptions="Start" />
+                                    </VerticalStackLayout>
+                                </HorizontalStackLayout>
+
+                                <!-- Shift control -->
+                                <Grid Grid.Column="1"
+                                      x:Name="StepShiftGrid"
+                                      ColumnDefinitions="Auto,Auto,Auto,Auto"
+                                      ColumnSpacing="6"
+                                      HorizontalOptions="End"
+                                      VerticalOptions="Center">
+
+                                    <ImageButton Grid.Column="0"
+                                        Source="left_arrow.png"
+                                        BackgroundColor="Transparent"
+                                        WidthRequest="16"
+                                        HeightRequest="16"
+                                        Padding="0"
+                                        Margin="0"
+                                        Clicked="OnStepBackClicked" />
+
+                                    <HorizontalStackLayout Grid.Column="1"
+                                           x:Name="StepUnitHeader"
+                                           Spacing="4"
+                                           VerticalOptions="Center">
+                                        <HorizontalStackLayout.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnStepUnitTapped" />
+                                        </HorizontalStackLayout.GestureRecognizers>
+
+                                        <VerticalStackLayout Spacing="2"
+                                                    HorizontalOptions="Start">
+                                            <HorizontalStackLayout Spacing="4"
+                                                    HorizontalOptions="Start">
+                                                <Label x:Name="StepUnitLabel"
+                                                       VerticalOptions="Center" />
+
+                                                <Label x:Name="StepUnitArrow"
+                                                       Text="▼"
+                                                       FontSize="14"
+                                                       VerticalOptions="Center" />
+                                            </HorizontalStackLayout>
+
+                                            <BoxView x:Name="StepUnitline"
+                                                     HeightRequest="2"
+                                                     WidthRequest="40"
+                                                     Color="#C8A23A"
+                                                     HorizontalOptions="Start" />
+                                        </VerticalStackLayout>
+                                    </HorizontalStackLayout>
+
+                                    <Entry Grid.Column="2"
+                                           x:Name="StepValueEntry"
+                                           WidthRequest="10"
+                                           HeightRequest="20"
+                                           FontSize="12"
+                                           Margin="0,-5,0,0"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalTextAlignment="Center"
+                                           Keyboard="Numeric"
+                                           Text="{Binding SelectedStepValue}" />
+
+                                    <ImageButton Grid.Column="3"
+                                           Source="right_arrow.png"
+                                           BackgroundColor="Transparent"
+                                           WidthRequest="16"
+                                           HeightRequest="16"
+                                           Padding="0"
+                                           Margin="0"
+                                           Clicked="OnStepForwardClicked" />
+                                </Grid>
+                            </Grid>
+                        </AbsoluteLayout>
+
+                        <!-- Expandable aspects panel -->
+                        <Border Grid.Row="1"
+                                x:Name="AspectsPanel"
+                                IsVisible="False"
+                                Stroke="#D0D0D0"
+                                StrokeThickness="1"
+                                Padding="8,6"
+                                BackgroundColor="Transparent"
+                                HorizontalOptions="Fill">
+
+                            <Grid ColumnDefinitions="*,*,*"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnSpacing="12"
+                                  RowSpacing="4">
+
+                                <!-- Row 1 -->
+                                <Grid Grid.Row="0" Grid.Column="0"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectAllTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectAllBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectAllCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectAll"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <Grid Grid.Row="0" Grid.Column="1"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectSunTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectSunBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectSunCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectSun"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <Grid Grid.Row="0" Grid.Column="2"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectMoonTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectMoonBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectMoonCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectMoon"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <!-- Row 2 -->
+                                <Grid Grid.Row="1" Grid.Column="0"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectMarsTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectMarsBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectMarsCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectMars"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <Grid Grid.Row="1" Grid.Column="1"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectMercuryTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectMercuryBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectMercuryCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectMercury"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <Grid Grid.Row="1" Grid.Column="2"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectJupiterTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectJupiterBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectJupiterCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectJupiter"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <!-- Row 3 -->
+                                <Grid Grid.Row="2" Grid.Column="0"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectVenusTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectVenusBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectVenusCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectVenus"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <Grid Grid.Row="2" Grid.Column="1"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectSaturnTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectSaturnBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectSaturnCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectSaturn"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                                <Grid Grid.Row="2" Grid.Column="2"
+                                      ColumnDefinitions="22,*"
+                                      HeightRequest="26">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAspectRahuTapped" />
+                                    </Grid.GestureRecognizers>
+                                    <Border x:Name="AspectRahuBox"
+                                            Grid.Column="0"
+                                            WidthRequest="18"
+                                            HeightRequest="18"
+                                            Stroke="#5A46FF"
+                                            StrokeThickness="2"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center">
+                                        <Label x:Name="AspectRahuCheck"
+                                               Text="✓"
+                                               IsVisible="False"
+                                               FontSize="11"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                    </Border>
+                                    <Label x:Name="LabelAspectRahu"
+                                           Grid.Column="1"
+                                           FontSize="14"
+                                           LineBreakMode="NoWrap"
+                                           VerticalOptions="Center" />
+                                </Grid>
+
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <Label x:Name="LabelPlanetsTransitPositions"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           Margin="0,2,0,0" />
+
+                    <Border Stroke="#BDBDBD"
+                            StrokeThickness="1"
+                            BackgroundColor="Transparent"
+                            Padding="0"
+                            Margin="0,0,0,0">
+
+                        <Grid RowDefinitions="Auto,*">
+
+                            <!-- header -->
+                            <Grid Grid.Row="0"
+                                  BackgroundColor="#EFE8C8"
+                                  ColumnDefinitions="0.5*,1.2*,1.6*,2.4*,0.8*,1.6*"
+                                  Padding="4,3">
+                                <Label Grid.Column="0" 
+                                       Text="" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelDegree"
+                                       Grid.Column="1" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelRasi"
+                                       Grid.Column="2" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelNakshatra"
+                                       Grid.Column="3" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                                <Label x:Name="TableLabelPada"
+                                       Grid.Column="4" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" 
+                                       HorizontalTextAlignment="Center" />
+                                <Label x:Name="TableLabelNavamsa"
+                                       Grid.Column="5" 
+                                       Text="Навамша" 
+                                       FontSize="10" 
+                                       FontAttributes="Bold" />
+                            </Grid>
+
+                            <!-- rows -->
+                            <CollectionView x:Name="TransitPlanetTableView"
+                                     Grid.Row="1"
+                                     SelectionMode="None">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="0.5*,1.2*,1.5*,2.6*,0.8*,1.5*"
+                                              Padding="4,3">
+                                            <Label Grid.Column="0" Text="{Binding Planet}" FontSize="10" />
+                                            <Label Grid.Column="1" Text="{Binding Degree}" FontSize="10" />
+                                            <Label Grid.Column="2" Text="{Binding Zodiac}" FontSize="10" />
+                                            <Label Grid.Column="3" Text="{Binding Nakshatra}" FontSize="10" LineBreakMode="TailTruncation" />
+                                            <Label Grid.Column="4" Text="{Binding Pada}" FontSize="10" HorizontalTextAlignment="Center" />
+                                            <Label Grid.Column="5" Text="{Binding Navamsha}" FontSize="10" LineBreakMode="TailTruncation" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Grid>
+                    </Border>
+
+                    <Label x:Name="LabelTransitNavamsa"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           Margin="0,6,0,0"/>
+
+                    <charts:NorthIndianChartView
+                        x:Name="TransitNavamsaChartView"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Start"
+                        ChartBackgroundColor="#FAFAD2"
+                        ChartLineColor="Black"
+                        ChartLineStrokeWidth="1" 
+                        SizeChanged="OnTransitNavamsaChartSizeChanged" />
+
+                </VerticalStackLayout>
+
+                <!-- dropdown overlay -->
+                <Border x:Name="StepUnitPanel"
+                        IsVisible="False"
+                        BackgroundColor="White"
+                        Stroke="#D0D0D0"
+                        StrokeThickness="1"
+                        Padding="6,4"
+                        WidthRequest="110"
+                        AbsoluteLayout.LayoutBounds="0,0,110,-1"
+                        AbsoluteLayout.LayoutFlags="None"
+                        InputTransparent="False"
+                        ZIndex="1000">
+                    <Border.Shadow>
+                        <Shadow Brush="#66000000"
+                                Offset="2,2"
+                                Radius="8"
+                                Opacity="0.4" />
+                    </Border.Shadow>
+
+                    <VerticalStackLayout Spacing="0">
+
+                        <Grid HeightRequest="26" BackgroundColor="White">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnStepSecondsTapped" />
+                            </Grid.GestureRecognizers>
+                            <Label x:Name="StepSecondsOptionLabel"
+                                   FontSize="15"
+                                   TextColor="Black"
+                                   VerticalOptions="Center"
+                                   BackgroundColor="White" />
+                        </Grid>
+
+                        <Grid HeightRequest="26" BackgroundColor="White">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnStepMinutesTapped" />
+                            </Grid.GestureRecognizers>
+                            <Label x:Name="StepMinutesOptionLabel"
+                                   FontSize="15"
+                                   TextColor="Black"
+                                   VerticalOptions="Center"
+                                   BackgroundColor="White" />
+                        </Grid>
+
+                        <Grid HeightRequest="26" BackgroundColor="White">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnStepHoursTapped" />
+                            </Grid.GestureRecognizers>
+                            <Label x:Name="StepHoursOptionLabel"
+                                   FontSize="15"
+                                   TextColor="Black"
+                                   VerticalOptions="Center"
+                                   BackgroundColor="White" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </Border>
+
+            </AbsoluteLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

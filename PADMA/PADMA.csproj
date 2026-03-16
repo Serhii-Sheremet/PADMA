@@ -92,6 +92,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <MauiXaml Update="Pages\BirthChartPreviewPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\ColorLookupPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

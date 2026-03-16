@@ -58,6 +58,7 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         Routing.RegisterRoute(nameof(ProfilesPage), typeof(ProfilesPage));
         Routing.RegisterRoute(nameof(ProfileDetailPage), typeof(ProfileDetailPage));
         Routing.RegisterRoute(nameof(LocationSearchPage), typeof(LocationSearchPage));
+        Routing.RegisterRoute(nameof(BirthChartPreviewPage), typeof(BirthChartPreviewPage));
 
         // Регистрируем маршрут для TransitChartsPage
         Routing.RegisterRoute(nameof(TransitChartsPage), typeof(TransitChartsPage));

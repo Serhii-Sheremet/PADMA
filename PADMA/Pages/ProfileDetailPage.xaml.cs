@@ -2,6 +2,7 @@
 using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.Pages;
 using System.Text.Json;
 
 namespace PADMA.Pages;
@@ -42,6 +43,11 @@ public partial class ProfileDetailPage : ContentPage
         MessagingCenter.Unsubscribe<LocationSearchPage, (string, AppLocation)>(this, "LocationSelected");
         MessagingCenter.Subscribe<LocationSearchPage, (string, AppLocation)>(
             this, "LocationSelected", OnLocationSelected);
+
+        // подписка на тюнинг даты/времени рождения из превью карты
+        MessagingCenter.Unsubscribe<BirthChartPreviewPage, DateTime>(this, "BirthDateTimeSelected");
+        MessagingCenter.Subscribe<BirthChartPreviewPage, DateTime>(
+            this, "BirthDateTimeSelected", OnBirthDateTimeSelected);
 
         // перехват системной стрелки "Назад"
         Shell.SetBackButtonBehavior(this, new BackButtonBehavior
@@ -205,6 +211,7 @@ public partial class ProfileDetailPage : ContentPage
         entryPersonName.Placeholder = Localization.GetLocalizedText("First name", langCode);
         entryPersonSurname.Placeholder = Localization.GetLocalizedText("Last name", langCode);
         entryMessage.Placeholder = Localization.GetLocalizedText("Notes", langCode);
+        btnBirthChartPreview.Text = Localization.GetLocalizedText("Birth Chart", langCode);
     }
 
     private void MarkChanged()
@@ -221,11 +228,12 @@ public partial class ProfileDetailPage : ContentPage
             return;
         }
 
-        // не перехватываем переход на страницу поиска локаций
-        if (e.Target?.Location.OriginalString?.Contains(nameof(LocationSearchPage)) == true)
+        // do not intercept internal lookup-style navigation
+        if (e.Target?.Location.OriginalString?.Contains(nameof(LocationSearchPage)) == true ||
+            e.Target?.Location.OriginalString?.Contains(nameof(BirthChartPreviewPage)) == true)
             return;
 
-        // при выходе на другие страницы перехватим и спросим про сохранение
+        // when leaving to other pages, intercept and ask about saving
         if (HasRealChanges() && e.CanCancel)
         {
             e.Cancel();
@@ -466,6 +474,18 @@ public partial class ProfileDetailPage : ContentPage
         MainThread.BeginInvokeOnMainThread(RefreshLocationLabels);
     }
 
+    private void OnBirthDateTimeSelected(BirthChartPreviewPage sender, DateTime newBirthDateTime)
+    {
+        dateOfBirthDate.Date = newBirthDateTime.Date;
+        timeOfBirthTime.Time = newBirthDateTime.TimeOfDay;
+
+        if (_profile != null)
+        {
+            _profile.DateOfBirth = newBirthDateTime;
+            _tempProfile = _profile;
+        }
+    }
+
     private async void OnPlaceOfBirthClicked(object sender, EventArgs e)
     {
         if (!_isEditing) return;
@@ -526,6 +546,9 @@ public partial class ProfileDetailPage : ContentPage
 
         btnDelete.IsEnabled = isView;
         btnDelete.Opacity = btnDelete.IsEnabled ? 1.0 : 0.35;
+
+        btnBirthChartPreview.IsEnabled = isEdit || isCreate;
+        btnBirthChartPreview.Opacity = btnBirthChartPreview.IsEnabled ? 1.0 : 0.35;
 
         SetFieldsEditable(isEdit || isCreate);
     }
@@ -651,4 +674,42 @@ public partial class ProfileDetailPage : ContentPage
 
         await GoBackAsync();
     }
+
+    private async void OnBirthChartPreviewClicked(object sender, EventArgs e)
+    {
+        if (!_isEditing)
+            return;
+
+        if (_profile == null)
+            return;
+
+        var lang = DataCache.Instance.CurrentLanguageCode;  
+        // Save current draft state before navigation
+        _profile.DateOfBirth = dateOfBirthDate.Date + timeOfBirthTime.Time;
+        _tempProfile = _profile;
+        _skipSnapshotOnce = true;
+
+        if (_birthLocation == null)
+        {
+            await DisplayAlert(
+                Localization.GetLocalizedText("Warning", lang),
+                Localization.GetLocalizedText("Please select place of birth first.", lang),
+                "OK");
+            return;
+        }
+
+        string birthDateTime = Uri.EscapeDataString(_profile.DateOfBirth.ToString("O"));
+        string birthLocationId = Uri.EscapeDataString(_birthLocation.Id.ToString());
+
+        await Shell.Current.GoToAsync(
+                nameof(BirthChartPreviewPage),
+                true,
+                new Dictionary<string, object>
+                {
+                    ["BirthDateTime"] = _profile.DateOfBirth,
+                    ["BirthLocation"] = _birthLocation
+                });
+    }
+
+
 }
