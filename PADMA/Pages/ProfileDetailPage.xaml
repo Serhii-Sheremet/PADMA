@@ -35,6 +35,7 @@
                     <DatePicker x:Name="dateOfBirthDate"
                                 Date="{Binding DateOfBirth, Mode=OneWay}" />
                     <TimePicker x:Name="timeOfBirthTime"
+                                Format="HH:mm:ss"
                                 Time="{Binding DateOfBirth, Converter={StaticResource DateTimeToTimeSpanConverter}, Mode=OneWay}" />
                 </HorizontalStackLayout>
 

@@ -56,7 +56,6 @@ public partial class ProfileDetailPage : ContentPage
         });
 
         // отслеживаем изменения полей
-        
         entryProfileName.TextChanged += (_, _) => MarkChanged();
         entryPersonName.TextChanged += (_, _) => MarkChanged();
         entryPersonSurname.TextChanged += (_, _) => MarkChanged();
