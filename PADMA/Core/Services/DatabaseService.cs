@@ -273,7 +273,7 @@ namespace PADMA.Core.Services
         /// <summary>
         /// Adds a new profile.
         /// </summary>
-        public void AddProfile(Profile profile)
+        public int AddProfile(Profile profile)
         {
             try
             {
@@ -293,10 +293,16 @@ namespace PADMA.Core.Services
                     profile.PlaceOfLivingId,
                     profile.Message,
                     profile.Checked ? 1 : 0);
+
+                int newId = _connection.ExecuteScalar<int>("SELECT last_insert_rowid();");
+                profile.Id = newId;
+
+                return newId;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[PADMA] AddProfile error: {ex.Message}");
+                return 0;
             }
         }
 

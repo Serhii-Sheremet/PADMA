@@ -46,7 +46,7 @@ public partial class App : Application
     {
         if (!await _profileInitLock.WaitAsync(0))
             return;
-        
+
         try
         {
             await SwissService.InitializeEphemerisPathAsync();
@@ -56,9 +56,10 @@ public partial class App : Application
 
             if (db != null)
             {
-                if (DataCache.Instance.ProfileList != null && DataCache.Instance.ProfileList.Count > 0)
+                DataCache.Instance.ReloadProfiles(db, setActiveToDefault: true);
+
+                if (DataCache.Instance.ActiveProfile != null)
                 {
-                    DataCache.Instance.ReloadProfiles(db, setActiveToDefault: true);
                     await DataCache.Instance.RebuildProfileContextAsync();
                 }
             }

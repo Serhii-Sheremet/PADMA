@@ -175,7 +175,7 @@ public partial class ProfileDetailPage : ContentPage
         // 5) Режим: новый профиль -> Create, существующий -> View, если уже редактируем -> Edit
         if (_isEditing)
         {
-            ApplyMode(ProfileUiMode.Edit);
+            ApplyMode(_mode == ProfileUiMode.Create ? ProfileUiMode.Create : ProfileUiMode.Edit);
         }
         else
         {
@@ -404,13 +404,106 @@ public partial class ProfileDetailPage : ContentPage
                     before.PlaceOfLivingId != _profile.PlaceOfLivingId;
             }
 
-            if (_profile.Id == 0)
+            bool saveAsNew = false;
+            // if editing an existing profile and key calculation-related fields changed,
+            // let the user choose whether to update current profile or save as new
+            if (_mode == ProfileUiMode.Edit && calcRelevantChanged)
+            {
+                saveAsNew = await DisplayAlert(
+                    Localization.GetLocalizedText("Saving profile", lang), // title
+                    Localization.GetLocalizedText("Update profile or save as new?", lang), // body
+                    Localization.GetLocalizedText("Save as new", lang), // accept (справа)
+                    Localization.GetLocalizedText("Update", lang)       // cancel (слева)
+                );
+
+                if (saveAsNew)
+                {
+                    string originalName = before?.ProfileName?.Trim() ?? string.Empty;
+                    string initialName = _profile.ProfileName;
+
+                    while (true)
+                    {
+                        string? newName = await DisplayPromptAsync(
+                            Localization.GetLocalizedText("Profile name", lang),
+                            Localization.GetLocalizedText("Enter new profile name", lang),
+                            accept: Localization.GetLocalizedText("OK", lang),
+                            cancel: Localization.GetLocalizedText("Cancel", lang),
+                            initialValue: initialName
+                        );
+
+                        // user explicitly cancelled save-as-new flow
+                        if (newName == null)
+                            return false;
+
+                        newName = newName.Trim();
+                        initialName = newName; // keep last entered value for the next loop
+
+                        if (string.IsNullOrWhiteSpace(newName))
+                        {
+                            await DisplayAlert(
+                                Localization.GetLocalizedText("Validation", lang),
+                                Localization.GetLocalizedText("Profile name is required.", lang),
+                                Localization.GetLocalizedText("OK", lang)
+                            );
+                            continue;
+                        }
+
+                        if (string.Equals(newName, originalName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            await DisplayAlert(
+                                Localization.GetLocalizedText("Validation", lang),
+                                Localization.GetLocalizedText("New profile name must be different from the current one.", lang),
+                                Localization.GetLocalizedText("OK", lang)
+                            );
+                            continue;
+                        }
+
+                        bool nameAlreadyExists = DataCache.Instance.ProfileList?
+                            .Any(p => p.Id != _profile.Id &&
+                                      string.Equals(p.ProfileName?.Trim(), newName, StringComparison.OrdinalIgnoreCase)) == true;
+
+                        if (nameAlreadyExists)
+                        {
+                            await DisplayAlert(
+                                Localization.GetLocalizedText("Validation", lang),
+                                Localization.GetLocalizedText("A profile with this name already exists.", lang),
+                                Localization.GetLocalizedText("OK", lang)
+                            );
+                            continue;
+                        }
+
+                        _profile.ProfileName = newName;
+                        entryProfileName.Text = newName;
+                        break;
+                    }
+                }
+            }
+
+            // FIX: if editing an existing profile but Id was lost somewhere, restore it
+            if (_profile.Id == 0 && _mode != ProfileUiMode.Create && ProfileId > 0 && !saveAsNew)
+            {
+                _profile.Id = ProfileId;
+            }
+
+            if (saveAsNew)
+            {
+                _profile.Id = 0;
+                _profile.Checked = false;
                 _database.AddProfile(_profile);
+                ProfileId = _profile.Id;
+            }
+            else if (_mode == ProfileUiMode.Create)
+            {
+                _database.AddProfile(_profile);
+                ProfileId = _profile.Id;
+            }
             else
+            {
                 _database.UpdateProfile(_profile);
+            }
 
             // если редактировали активный профиль и изменились ключевые поля для расчётов — пересобрать контекст и уведомить UI
-            if (isActiveProfile && calcRelevantChanged)
+            if (!saveAsNew && isActiveProfile && calcRelevantChanged)
             {
                 // обновим ActiveProfile на свежий объект из БД (чтобы не держать старую ссылку)
                 DataCache.Instance.ActiveProfile = _database.GetProfileById(_profile.Id);
@@ -567,71 +660,18 @@ public partial class ProfileDetailPage : ContentPage
         if (_profile == null)
             return;
 
-        string lang = DataCache.Instance.CurrentLanguageCode;
-
-        // 1) Если изменений нет — просто выйти из режима редактирования
+        // если изменений нет — просто выйти из режима редактирования
         if (!HasRealChanges())
         {
             ApplyMode(ProfileUiMode.View);
             return;
         }
 
-        // 2) Изменения есть — спрашиваем
-        bool confirm = await DisplayAlert(
-            Localization.GetLocalizedText("Save", lang),
-            Localization.GetLocalizedText("Save changes to profile?", lang),
-            Localization.GetLocalizedText("Yes", lang),
-            Localization.GetLocalizedText("No", lang)
-        );
-
-        // 3) Если НЕ подтверждаем сохранение — откатываем изменения и выходим в View
-        if (!confirm)
-        {
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(_snapshotJson))
-                {
-                    var original = JsonSerializer.Deserialize<Profile>(_snapshotJson);
-                    if (original != null)
-                    {
-                        _profile = original;
-                        BindingContext = _profile;
-
-                        // восстановить связные объекты локаций по Id (как у тебя в OnAppearing)
-                        if (_profile.PlaceOfBirthId is int pbId)
-                            _birthLocation = _database.GetLocationById(pbId);
-                        else
-                            _birthLocation = null;
-
-                        if (_profile.PlaceOfLivingId is int plId)
-                            _livingLocation = _database.GetLocationById(plId);
-                        else
-                            _livingLocation = null;
-
-                        RefreshLocationLabels();
-                        dateOfBirthDate.Date = _profile.DateOfBirth.Date;
-                        timeOfBirthTime.Time = _profile.DateOfBirth.TimeOfDay;
-                    }
-                }
-            }
-            catch
-            {
-                // если что-то пошло не так с десериализацией — просто выходим в View без отката
-            }
-
-            _hasChanges = false;
-            ApplyMode(ProfileUiMode.View);
-            return;
-        }
-
-        // 4) Подтвердили — сохраняем
         bool result = await SaveProfileAsync();
         if (!result)
             return;
 
         ApplyMode(ProfileUiMode.View);
-
-        // обновляем снапшот, чтобы изменения считались сохранёнными
         _snapshotJson = JsonSerializer.Serialize(_profile);
     }
 
@@ -696,9 +736,6 @@ public partial class ProfileDetailPage : ContentPage
                 "OK");
             return;
         }
-
-        string birthDateTime = Uri.EscapeDataString(_profile.DateOfBirth.ToString("O"));
-        string birthLocationId = Uri.EscapeDataString(_birthLocation.Id.ToString());
 
         await Shell.Current.GoToAsync(
                 nameof(BirthChartPreviewPage),
