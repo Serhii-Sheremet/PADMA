@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PADMA.Pages.AboutPage"
+             Title="About PADMA">
+    
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" />
+    </Shell.BackButtonBehavior>
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem IconImageSource="close_icon.png"
+             Priority="0"
+             Order="Primary"
+             Clicked="OnCloseClicked" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Scrollable content -->
+        <ScrollView Grid.Row="0">
+
+            <VerticalStackLayout Padding="20" Spacing="10">
+
+                <!-- Title -->
+                <Label x:Name="appNameLabel"
+                       FontSize="Large"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       LineBreakMode="WordWrap"/>
+
+                <Label x:Name="appSubNameLabel"
+                       FontAttributes="Italic"
+                       HorizontalOptions="Center"
+                       FontSize="18"/>
+
+                <!-- Description -->
+                <Label x:Name="appDesclabel"
+                       HorizontalOptions="Fill"
+                       HorizontalTextAlignment="Start"
+                       FontSize="16"
+                       Margin="0,20,0,0"/>
+
+                <!-- Authors -->
+                <Border Margin="0,20,0,0"
+                        Stroke="#BDBDBD"
+                        StrokeThickness="1"
+                        Padding="10">
+
+                    <Grid ColumnDefinitions="Auto,*"
+                          RowDefinitions="Auto,Auto"
+                          ColumnSpacing="10">
+
+                        <Label x:Name="ideaLabel"
+                               Grid.Row="0"
+                               Grid.Column="0"
+                               FontAttributes="Bold"/>
+
+                        <Label x:Name="ideaValueLabel"
+                               Grid.Row="0"
+                               Grid.Column="1"/>
+
+                        <Label x:Name="devLabel"
+                               Grid.Row="1"
+                               Grid.Column="0"
+                               FontAttributes="Bold"/>
+
+                        <Label x:Name="devValueLabel"
+                               Grid.Row="1"
+                               Grid.Column="1"/>
+
+                    </Grid>
+
+                </Border>
+
+                <!-- NEW BLOCK: Contacts -->
+                <Border Margin="0,30,0,0"
+                        Stroke="#BDBDBD"
+                        StrokeThickness="1"
+                        Padding="10">
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Contacts"
+                           FontAttributes="Bold"/>
+
+                        <Label Text="email@example.com"/>
+                        <!-- потом можно заменить на реальные -->
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <!-- NEW BLOCK: Copyright -->
+                <Border Margin="0,20,0,0"
+                        Stroke="#BDBDBD"
+                        StrokeThickness="1"
+                        Padding="10">
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="© 2025 PADMA"/>
+                        <Label Text="All rights reserved."/>
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <!-- NEW BLOCK: Quote -->
+                <Label Text="Created with love for practical Jyotish work."
+                       Margin="0,20,0,0"
+                       FontAttributes="Italic"
+                       HorizontalTextAlignment="Center"
+                       Opacity="0.8"/>
+
+                <!-- небольшой отступ снизу чтобы не прилипало к ростку -->
+                <VerticalStackLayout Spacing="20"/>
+
+            </VerticalStackLayout>
+
+        </ScrollView>
+
+        <!-- Bottom fixed -->
+        <VerticalStackLayout Grid.Row="1"
+                         Padding="10"
+                         Spacing="6"
+                         HorizontalOptions="Center">
+
+            <Image Source="sprout.png"
+                   HeightRequest="100"
+                   Aspect="AspectFit"
+                   Opacity="0.85"
+                   Margin="0,10,0,0">
+
+                <Image.Shadow>
+                    <Shadow Brush="#FFD580"
+                        Offset="0,0"
+                        Radius="10"
+                        Opacity="0.3"/>
+                </Image.Shadow>
+            </Image>
+
+            <Label x:Name="versionLabel"
+                   FontSize="11"
+                   Opacity="0.5"
+                   HorizontalOptions="Center"/>
+
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

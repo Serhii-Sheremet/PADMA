@@ -25,6 +25,11 @@
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>
 
+    <!-- О приложении -->
+    <FlyoutItem Title="{Binding FlyoutAboutTitle}" Route="about">
+        <ShellContent ContentTemplate="{DataTemplate pages:AboutPage}" />
+    </FlyoutItem>
+
     <!-- Exit as a command (no page) -->
     <MenuItem Text="{Binding FlyoutExitTitle}"
           Clicked="OnExitMenuItemClicked" />

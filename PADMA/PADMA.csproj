@@ -14,7 +14,7 @@
     <!-- App info -->
     <ApplicationTitle>Personal Astrological Diary</ApplicationTitle>
     <ApplicationId>com.s.sheremet.padma</ApplicationId>
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>0.9.1</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
     <!-- Windows -->
@@ -83,6 +83,9 @@
 
   <!-- XAML Dependencies -->
   <ItemGroup>
+    <Compile Update="Pages\AboutPage.xaml.cs">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Pages\ColorSettingsPage.xaml.cs">
       <DependentUpon>ColorSettingsPage.xaml</DependentUpon>
     </Compile>
@@ -92,6 +95,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <MauiXaml Update="Pages\AboutPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\BirthChartPreviewPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

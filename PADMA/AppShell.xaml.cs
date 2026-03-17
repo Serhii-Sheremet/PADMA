@@ -41,6 +41,13 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         set => SetProperty(ref _flyoutSettingsTitle, value);
     }
 
+    private string _flyoutAboutTitle = "About";
+    public string FlyoutAboutTitle
+    {
+        get => _flyoutAboutTitle;
+        set => SetProperty(ref _flyoutAboutTitle, value);
+    }
+
     private string _flyoutExitTitle = "Exit";
     public string FlyoutExitTitle
     {
@@ -62,6 +69,9 @@ public partial class AppShell : Shell, INotifyPropertyChanged
 
         // Регистрируем маршрут для TransitChartsPage
         Routing.RegisterRoute(nameof(TransitChartsPage), typeof(TransitChartsPage));
+
+        // Регистрируем маршрут для AboutPage
+        Routing.RegisterRoute(nameof(AboutPage), typeof(AboutPage));
 
         // Регистрируем маршрут для DayOverviewPage и DayPage
         Routing.RegisterRoute("dayOverview", typeof(DayOverviewPage));
@@ -125,6 +135,7 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         FlyoutProfilesTitle = Localization.GetLocalizedText("Profiles", lang);
         FlyoutTransitChartsTitle = Localization.GetLocalizedText("Transit charts", lang);
         FlyoutSettingsTitle = Localization.GetLocalizedText("Settings", lang);
+        FlyoutAboutTitle = $"{Localization.GetLocalizedText("About PADMA", lang)}...";
         FlyoutExitTitle = Localization.GetLocalizedText("Exit", lang);
     }
 
