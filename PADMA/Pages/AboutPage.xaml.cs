@@ -47,7 +47,7 @@ public partial class AboutPage : ContentPage
     private void ApplyLocalization()
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
-        Title = Localization.GetLocalizedText("About application PADMA", lang);
+        Title = $"{Localization.GetLocalizedText("About application", lang)} PADMA";
 
         appNameLabel.Text = Localization.GetLocalizedText("Personal Astrological Diary", lang);
         appSubNameLabel.Text = $"({Localization.GetLocalizedText("Mobile Application", lang)})";
@@ -59,9 +59,18 @@ public partial class AboutPage : ContentPage
         devLabel.Text = Localization.GetLocalizedText("Development", lang);
         devValueLabel.Text = Localization.GetLocalizedText("Serhii Sheremet", lang);
 
+        lblContactsLabel.Text = Localization.GetLocalizedText("Contacts", lang);
+        btnSendFeedback.Text = Localization.GetLocalizedText("Send feedback", lang);
+
+
+        lblQuoteLabel.Text = Localization.GetLocalizedText("Created with love for practical Jyotish work.", lang);
         versionLabel.Text = $"{Localization.GetLocalizedText("Version", lang)}: {AppInfo.VersionString}";
     }
 
+    private async void OnSendFeedbackClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(FeedbackPage), true);
+    }
 
 
 

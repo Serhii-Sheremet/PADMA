@@ -74,23 +74,29 @@
 
                 </Border>
 
-                <!-- NEW BLOCK: Contacts -->
+                <!-- Contacts -->
                 <Border Margin="0,30,0,0"
                         Stroke="#BDBDBD"
                         StrokeThickness="1"
                         Padding="10">
 
                     <VerticalStackLayout Spacing="6">
-                        <Label Text="Contacts"
-                           FontAttributes="Bold"/>
+                        <Label x:Name="lblContactsLabel"
+                               FontAttributes="Bold"/>
 
-                        <Label Text="email@example.com"/>
-                        <!-- потом можно заменить на реальные -->
+                        <Button x:Name="btnSendFeedback"
+                                Margin="6,0,6,6"
+                                HeightRequest="44"
+                                FontAttributes="Bold"
+                                BackgroundColor="#2196F3"
+                                TextColor="White"
+                                CornerRadius="10"
+                                Clicked="OnSendFeedbackClicked" />
                     </VerticalStackLayout>
 
                 </Border>
 
-                <!-- NEW BLOCK: Copyright -->
+                <!-- Copyright -->
                 <Border Margin="0,20,0,0"
                         Stroke="#BDBDBD"
                         StrokeThickness="1"
@@ -103,8 +109,8 @@
 
                 </Border>
 
-                <!-- NEW BLOCK: Quote -->
-                <Label Text="Created with love for practical Jyotish work."
+                <!-- Quote -->
+                <Label x:Name="lblQuoteLabel"
                        Margin="0,20,0,0"
                        FontAttributes="Italic"
                        HorizontalTextAlignment="Center"

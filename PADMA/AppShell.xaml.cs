@@ -72,6 +72,7 @@ public partial class AppShell : Shell, INotifyPropertyChanged
 
         // Регистрируем маршрут для AboutPage
         Routing.RegisterRoute(nameof(AboutPage), typeof(AboutPage));
+        Routing.RegisterRoute(nameof(FeedbackPage), typeof(FeedbackPage));
 
         // Регистрируем маршрут для DayOverviewPage и DayPage
         Routing.RegisterRoute("dayOverview", typeof(DayOverviewPage));
@@ -135,7 +136,7 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         FlyoutProfilesTitle = Localization.GetLocalizedText("Profiles", lang);
         FlyoutTransitChartsTitle = Localization.GetLocalizedText("Transit charts", lang);
         FlyoutSettingsTitle = Localization.GetLocalizedText("Settings", lang);
-        FlyoutAboutTitle = $"{Localization.GetLocalizedText("About PADMA", lang)}...";
+        FlyoutAboutTitle = $"{Localization.GetLocalizedText("About application", lang)}...";
         FlyoutExitTitle = Localization.GetLocalizedText("Exit", lang);
     }
 
