@@ -65,10 +65,10 @@ public partial class FeedbackPage : ContentPage
 
         categoryLabel.Text = Localization.GetLocalizedText("Category", lang);
         messageLabel.Text = Localization.GetLocalizedText("Message", lang);
-        emailLabel.Text = Localization.GetLocalizedText("Your email (optional)", lang);
+        emailLabel.Text = Localization.GetLocalizedText("Your email", lang);
 
-        messageEditor.Placeholder = Localization.GetLocalizedText("Write your message here...", lang);
-        emailEntry.Placeholder = Localization.GetLocalizedText("Your email (optional)", lang);
+        messageEditor.Placeholder = $"{Localization.GetLocalizedText("Write your message here", lang)}...";
+        emailEntry.Placeholder = Localization.GetLocalizedText("Email is optional", lang);
 
         sendButton.Text = Localization.GetLocalizedText("Send", lang);
 

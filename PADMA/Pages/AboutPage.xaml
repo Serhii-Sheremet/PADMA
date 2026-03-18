@@ -75,7 +75,7 @@
                 </Border>
 
                 <!-- Contacts -->
-                <Border Margin="0,30,0,0"
+                <Border Margin="0,15,0,0"
                         Stroke="#BDBDBD"
                         StrokeThickness="1"
                         Padding="10">
@@ -97,7 +97,7 @@
                 </Border>
 
                 <!-- Copyright -->
-                <Border Margin="0,20,0,0"
+                <Border Margin="0,15,0,0"
                         Stroke="#BDBDBD"
                         StrokeThickness="1"
                         Padding="10">
@@ -111,13 +111,13 @@
 
                 <!-- Quote -->
                 <Label x:Name="lblQuoteLabel"
-                       Margin="0,20,0,0"
+                       Margin="0,15,0,0"
                        FontAttributes="Italic"
                        HorizontalTextAlignment="Center"
                        Opacity="0.8"/>
 
                 <!-- небольшой отступ снизу чтобы не прилипало к ростку -->
-                <VerticalStackLayout Spacing="20"/>
+                <VerticalStackLayout Spacing="10"/>
 
             </VerticalStackLayout>
 
