@@ -103,8 +103,8 @@
                         Padding="10">
 
                     <VerticalStackLayout Spacing="6">
-                        <Label Text="© 2025 PADMA"/>
-                        <Label Text="All rights reserved."/>
+                        <Label x:Name="lblCopyright"/>
+                        <Label x:Name="lblRights"/>
                     </VerticalStackLayout>
 
                 </Border>

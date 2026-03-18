@@ -196,7 +196,7 @@ public partial class FeedbackPage : ContentPage
         {
             _isSending = true;
             sendButton.IsEnabled = false;
-            sendButton.Text = Localization.GetLocalizedText("Sending...", lang);
+            sendButton.Text = $"{Localization.GetLocalizedText("Sending", lang)}...";
 
             bool success = await _feedbackService.SendAsync(feedback);
 
@@ -217,7 +217,7 @@ public partial class FeedbackPage : ContentPage
             messageEditor.Text = string.Empty;
             emailEntry.Text = string.Empty;
 
-            _selectedCategoryKey = "Bug";
+            _selectedCategoryKey = "Bug report";
             CategoryValueLabel.Text = Localization.GetLocalizedText(_selectedCategoryKey, lang);
             RefreshCategoryUnderline();
 
@@ -250,7 +250,6 @@ public partial class FeedbackPage : ContentPage
         messageEditor?.Unfocus();
         emailEntry?.Unfocus();
     }
-    // Скрываем клавиатуру, если ещё открыта
-    //KeyboardHelper.HideKeyboard();
+
 
 }

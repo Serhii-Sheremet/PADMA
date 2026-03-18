@@ -5,7 +5,7 @@ namespace PADMA.Pages;
 
 public partial class AboutPage : ContentPage
 {
-	public AboutPage()
+    public AboutPage()
 	{
 		InitializeComponent();
         BindingContext = this;
@@ -22,6 +22,14 @@ public partial class AboutPage : ContentPage
         });
 
         ApplyLocalization();
+
+        var startYear = 2025;
+        var currentYear = DateTime.Now.Year;
+
+        lblCopyright.Text =
+            currentYear > startYear
+                ? $"© {startYear}–{currentYear} PADMA"
+                : $"© {startYear} PADMA";
     }
 
     protected override void OnDisappearing()
@@ -59,9 +67,10 @@ public partial class AboutPage : ContentPage
         devLabel.Text = Localization.GetLocalizedText("Development", lang);
         devValueLabel.Text = Localization.GetLocalizedText("Serhii Sheremet", lang);
 
-        lblContactsLabel.Text = Localization.GetLocalizedText("Contacts", lang);
+        lblContactsLabel.Text = Localization.GetLocalizedText("Contact us", lang);
         btnSendFeedback.Text = Localization.GetLocalizedText("Send feedback", lang);
 
+        lblRights.Text = Localization.GetLocalizedText("All rights reserved.", lang);
 
         lblQuoteLabel.Text = Localization.GetLocalizedText("Created with love for practical Jyotish work.", lang);
         versionLabel.Text = $"{Localization.GetLocalizedText("Version", lang)}: {AppInfo.VersionString}";
