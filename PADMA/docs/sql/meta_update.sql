@@ -1,4 +1,4 @@
-UPDATE APP_META SET VALUE = '0.0.55' WHERE KEY = 'DB_VERSION';
+UPDATE APP_META SET VALUE = '0.0.56' WHERE KEY = 'DB_VERSION';
 
 
 dotnet publish PADMA.csproj -f net9.0-android -c Release
@@ -21,3 +21,22 @@ For publish-debug:
 
 .\adb.exe logcat -c ; .\adb.exe logcat --pid=$(.\adb.exe shell pidof -s com.s.sheremet.padma) > log_padma.txt
 .\adb.exe logcat -c ; .\adb.exe logcat --pid=$(.\adb.exe shell pidof -s com.s.sheremet.padma) | findstr /i "PADMA-NOTIF" > padma_notif_log.txt
+
+--------------------
+
+SELECT TRANSITID, LANGUAGECODE, DESCRIPTION
+FROM TRANSIT_DESC
+WHERE TRANSITID = 123
+
+
+UPDATE TRANSIT_DESC
+SET DESCRIPTION = CASE LANGUAGECODE
+    WHEN 'en' THEN 'English text'
+    WHEN 'uk' THEN 'Ukrainian text'
+    WHEN 'pl' THEN 'Polish text'
+    WHEN 'ru' THEN 'Russian text'
+END
+WHERE TRANSITID = 123
+  AND LANGUAGECODE IN ('en','uk','pl','ru');
+  
+----------------------  

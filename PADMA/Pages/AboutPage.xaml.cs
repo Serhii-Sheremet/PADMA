@@ -23,13 +23,13 @@ public partial class AboutPage : ContentPage
 
         ApplyLocalization();
 
-        var startYear = 2025;
+        var startYear = 2017;
         var currentYear = DateTime.Now.Year;
 
         lblCopyright.Text =
             currentYear > startYear
-                ? $"© {startYear}–{currentYear} PADMA"
-                : $"© {startYear} PADMA";
+                ? $"© {startYear}–{currentYear} PADma"
+                : $"© {startYear} PADma";
     }
 
     protected override void OnDisappearing()
@@ -55,10 +55,10 @@ public partial class AboutPage : ContentPage
     private void ApplyLocalization()
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
-        Title = $"{Localization.GetLocalizedText("About application", lang)} PADMA";
+        Title = $"{Localization.GetLocalizedText("About application", lang)} PADma";
 
         appNameLabel.Text = Localization.GetLocalizedText("Personal Astrological Diary", lang);
-        appSubNameLabel.Text = $"({Localization.GetLocalizedText("Mobile Application", lang)})";
+        appSubNameLabel.Text = $"{Localization.GetLocalizedText("mobile application", lang)}";
         
         appDesclabel.Text = Localization.GetLocalizedText("Application for selecting favorable timing for new beginnings.", lang);
 

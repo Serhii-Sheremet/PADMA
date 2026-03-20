@@ -142,6 +142,7 @@
 
                         <charts:NorthIndianChartView
                                 x:Name="ChartView"
+                                Margin="1,0,1,0"
                                 HorizontalOptions="Fill"
                                 ChartBackgroundColor="#FAFAD2"
                                 ChartLineColor="Black"
@@ -567,7 +568,7 @@
                             <!-- header -->
                             <Grid Grid.Row="0"
                                   BackgroundColor="#EFE8C8"
-                                  ColumnDefinitions="0.5*,1.2*,1.6*,2.4*,0.8*,1.6*"
+                                  ColumnDefinitions="0.5*,1.4*,1.8*,2.0*,0.8*,1.6*"
                                   Padding="4,3">
                                 <Label Grid.Column="0" 
                                        Text="" 
@@ -603,7 +604,7 @@
                                             SelectionMode="None">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid ColumnDefinitions="0.5*,1.2*,1.5*,2.6*,0.8*,1.5*"
+                                        <Grid ColumnDefinitions="0.5*,1.4*,1.8*,2.0*,0.8*,1.6*"
                                               Padding="4,3">
                                             <Label Grid.Column="0" Text="{Binding Planet}" FontSize="10" />
                                             <Label Grid.Column="1" Text="{Binding Degree}" FontSize="10" />
@@ -625,6 +626,7 @@
 
                         <charts:NorthIndianChartView
                             x:Name="TransitNavamsaChartView"
+                            Margin="1,0,1,0"
                             HorizontalOptions="Fill"
                             VerticalOptions="Start"
                             ChartBackgroundColor="#FAFAD2"

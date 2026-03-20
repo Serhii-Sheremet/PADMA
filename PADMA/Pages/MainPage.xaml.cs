@@ -281,7 +281,7 @@ namespace PADMA.Pages
 
                 var ok = await DisplayAlert(
                     L("Exit application?"),
-                    L("Do you want to exit PADMA Application?"),
+                    L("Do you want to exit PADma application?"),
                     L("Yes"),
                     L("No"));
 

@@ -130,7 +130,7 @@
                          HorizontalOptions="Center">
 
             <Image Source="sprout.png"
-                   HeightRequest="100"
+                   HeightRequest="80"
                    Aspect="AspectFit"
                    Opacity="0.85"
                    Margin="0,10,0,0">
