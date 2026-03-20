@@ -24,9 +24,9 @@ For publish-debug:
 
 --------------------
 
-SELECT TRANSITID, LANGUAGECODE, DESCRIPTION
+SELECT *
 FROM TRANSIT_DESC
-WHERE TRANSITID = 123
+WHERE TRANSITID = 1
 
 
 UPDATE TRANSIT_DESC
@@ -36,7 +36,7 @@ SET DESCRIPTION = CASE LANGUAGECODE
     WHEN 'pl' THEN 'Polish text'
     WHEN 'ru' THEN 'Russian text'
 END
-WHERE TRANSITID = 123
+WHERE TRANSITID = 1
   AND LANGUAGECODE IN ('en','uk','pl','ru');
   
 ----------------------  

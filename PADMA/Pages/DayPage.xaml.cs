@@ -2376,92 +2376,101 @@ namespace PADMA.Pages
                 AddTooltipBlock("Drekkana", string.Join(", ", parts));
             }
 
-            // ---- Блок 3: House + Transit description ----
+            // ---- Блок 3: Transit sections (Moon / Lagna) ----
             var tranzitSetting = DataCache.Instance.GetActiveTransitSettings(); // TRANZITMOON / TRANZITLAGNA / TRANZITMOONANDLAGNA
             bool useLagna = tranzitSetting == EAppSetting.TRANZITLAGNA;
 
-            // helper: вывести дом + описание для выбранного режима (Moon/Lagna)
-            void AddHouseAndTransitDesc(bool forLagna)
+            void AddTransitSection(bool forLagna)
             {
                 int domX = forLagna ? slice.HouseFromLagna : slice.HouseFromMoon;
+
                 AddTooltipBlock(forLagna ? "House from Lagna" : "House from Moon", domX.ToString());
 
-                var trX = DataCache.Instance.TransitList.First(t => t.PlanetId == slice.PlanetId && t.House == domX);
-                var trDescX = PanchangaHelper.GetTransitDescEntity(trX.Id).Description;
-                AddTooltipBlock("Transit Description", trDescX);
+                var trX = DataCache.Instance.TransitList
+                    .FirstOrDefault(t => t.PlanetId == slice.PlanetId && t.House == domX);
+
+                if (trX == null)
+                    return;
+
+                var trDescX = PanchangaHelper.GetTransitDescEntity(trX.Id)?.Description;
+                if (!string.IsNullOrWhiteSpace(trDescX))
+                    AddTooltipBlock("Transit Description", trDescX);
+
+                if (string.IsNullOrWhiteSpace(trX.Vedha) || !int.TryParse(trX.Vedha, out int vedhaDom))
+                    return;
+
+                var nodeType = slice.NodeType;
+                var planetKey = (EPlanet)slice.PlanetId;
+
+                if (!transitPack.TryGetValue(planetKey, out var slicesForPlanet) || slicesForPlanet == null || slicesForPlanet.Count == 0)
+                    return;
+
+                var (rangeStartUtc, rangeEndUtc) =
+                    PlanetTooltipUtility.GetContinuousHouseRangeUtc(
+                        slicesForPlanet,
+                        seg.TransitStart,
+                        isLagna: forLagna);
+
+                var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(
+                    targetPlanetId: slice.PlanetId,
+                    targetStartUtc: rangeStartUtc,
+                    targetEndUtc: rangeEndUtc,
+                    transitPack: transitPack,
+                    vedhaDom: vedhaDom,
+                    isLagna: forLagna,
+                    nodeType: nodeType);
+
+                vedhaList = PlanetTooltipUtility.MergeVedhaIntervals(vedhaList);
+
+                var dayStartLocal = DateTime.SpecifyKind(Day.Date.Date, DateTimeKind.Unspecified);
+                var dayEndLocal = dayStartLocal.AddDays(1);
+
+                var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
+                var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
+
+                static DateTime AsUtc(DateTime dt) =>
+                    dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+
+                vedhaList = vedhaList
+                    .Where(v =>
+                    {
+                        var s = AsUtc(v.DateStart);
+                        var e = AsUtc(v.DateEnd);
+                        return e > dayStartUtc && s < dayEndUtc;
+                    })
+                    .ToList();
+
+                if (vedhaList.Count == 0)
+                    return;
+
+                AddTooltipBlock(forLagna ? "Vedha from Lagna" : "Vedha from Moon", "#");
+
+                foreach (var ve in vedhaList)
+                {
+                    var vpName = PanchangaHelper.GetPlanetDescEntity((int)ve.PlanetCode)?.Name ?? ve.PlanetCode.ToString();
+
+                    var veStartLocal = TimeZoneInfo.ConvertTimeFromUtc(
+                        DateTime.SpecifyKind(ve.DateStart, DateTimeKind.Utc), tzInfo);
+
+                    var veEndLocal = TimeZoneInfo.ConvertTimeFromUtc(
+                        DateTime.SpecifyKind(ve.DateEnd, DateTimeKind.Utc), tzInfo);
+
+                    AddTooltipBlock(
+                        vpName,
+                        $"({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
+                }
             }
 
             if (tranzitSetting == EAppSetting.TRANZITMOONANDLAGNA)
             {
-                AddHouseAndTransitDesc(forLagna: false);
-                AddHouseAndTransitDesc(forLagna: true);
+                AddTransitSection(forLagna: false); // Moon block
+                AddTransitSection(forLagna: true);  // Lagna block
             }
             else
             {
-                AddHouseAndTransitDesc(forLagna: useLagna);
+                AddTransitSection(forLagna: useLagna);
             }
 
-            int dom = useLagna ? slice.HouseFromLagna : slice.HouseFromMoon;
-            var tr = DataCache.Instance.TransitList.First(t => t.PlanetId == slice.PlanetId && t.House == dom);
-
-            // ---- Блок 4: Vedha ----
-            if (!useLagna && tr != null)
-            {
-                if (!string.IsNullOrWhiteSpace(tr.Vedha) && int.TryParse(tr.Vedha, out int vedhaDom))
-                {
-                    var nodeType = slice.NodeType;
-                    var planetKey = (EPlanet)slice.PlanetId;
-                    var slicesForPlanet = transitPack[planetKey];
-
-                    var (rangeStartUtc, rangeEndUtc) =
-                        PlanetTooltipUtility.GetContinuousHouseRangeUtc(slicesForPlanet, seg.TransitStart, useLagna);
-
-                    var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(
-                        targetPlanetId: slice.PlanetId,
-                        targetStartUtc: rangeStartUtc,
-                        targetEndUtc: rangeEndUtc,
-                        transitPack: transitPack,
-                        vedhaDom: vedhaDom,
-                        nodeType: nodeType);
-
-                    vedhaList = PlanetTooltipUtility.MergeVedhaIntervals(vedhaList);
-
-                    var dayStartLocal = DateTime.SpecifyKind(Day.Date.Date, DateTimeKind.Unspecified);
-                    var dayEndLocal = dayStartLocal.AddDays(1);
-
-                    var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
-                    var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
-
-                    static DateTime AsUtc(DateTime dt) =>
-                        dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
-
-                    vedhaList = vedhaList
-                        .Where(v =>
-                        {
-                            var s = AsUtc(v.DateStart);
-                            var e = AsUtc(v.DateEnd);
-                            return e > dayStartUtc && s < dayEndUtc; // есть пересечение с сутками
-                        })
-                        .ToList();
-
-                    if (vedhaList != null && vedhaList.Count > 0)
-                    {
-                        //var vParts = new List<string>();
-                        AddTooltipBlock("Vedha from", "#");
-                        foreach (var ve in vedhaList)
-                        {
-                            var vpName = PanchangaHelper.GetPlanetDescEntity((int)ve.PlanetCode)?.Name ?? ve.PlanetCode.ToString();
-
-                            var veStartLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(ve.DateStart, DateTimeKind.Utc), tzInfo);
-                            var veEndLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(ve.DateEnd, DateTimeKind.Utc), tzInfo);
-
-                            //vParts.Add($"{vpName} ({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
-                            AddTooltipBlock(vpName, $"({veStartLocal:dd.MM.yyyy HH:mm:ss} – {veEndLocal:dd.MM.yyyy HH:mm:ss})");
-                        }
-                        //AddTooltipBlock("Vedha from", string.Join(", ", vParts));
-                    }
-                }
-            }
             UpdateTooltipBodyHeight();
             Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }

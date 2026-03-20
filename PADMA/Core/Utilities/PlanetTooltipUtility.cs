@@ -247,6 +247,7 @@ namespace PADMA.Core.Utilities
             DateTime targetEndUtc,
             IReadOnlyDictionary<EPlanet, IReadOnlyList<PlanetSlice>> transitPack,
             int vedhaDom,
+            bool isLagna,
             EAppSetting nodeType)
         {
             var vList = new List<VedhaEntity>();
@@ -264,20 +265,23 @@ namespace PADMA.Core.Utilities
 
                 foreach (var s in slices)
                 {
-                    // Vedha ТОЛЬКО от натальной Луны
-                    int dom = s.HouseFromMoon;
+                    int dom = isLagna ? s.HouseFromLagna : s.HouseFromMoon;
                     if (dom != vedhaDom) continue;
 
                     var (from, to) = GetIntersection(targetStartUtc, targetEndUtc, s.StartUtc, s.EndUtc);
                     if (from == default && to == default) continue;
 
                     var anchorUtc = from;
-                    
+
                     DateTime zStartUtc;
                     DateTime zEndUtc;
                     try
                     {
-                        (zStartUtc, zEndUtc) = SwissAnalysis.GetZodiacBoundariesCached((int)vedhaPlanet, s.ZodiacId, anchorUtc, nodeType);
+                        (zStartUtc, zEndUtc) = SwissAnalysis.GetZodiacBoundariesCached(
+                            (int)vedhaPlanet,
+                            s.ZodiacId,
+                            anchorUtc,
+                            nodeType);
                     }
                     catch
                     {
@@ -303,6 +307,24 @@ namespace PADMA.Core.Utilities
             return vList;
         }
 
+        // backward-compatible wrapper
+        public static List<VedhaEntity> PrepareVedhaPlanetList(
+            int targetPlanetId,
+            DateTime targetStartUtc,
+            DateTime targetEndUtc,
+            IReadOnlyDictionary<EPlanet, IReadOnlyList<PlanetSlice>> transitPack,
+            int vedhaDom,
+            EAppSetting nodeType)
+        {
+            return PrepareVedhaPlanetList(
+                targetPlanetId,
+                targetStartUtc,
+                targetEndUtc,
+                transitPack,
+                vedhaDom,
+                isLagna: false,
+                nodeType);
+        }
 
         public static (DateTime StartUtc, DateTime EndUtc) GetContinuousHouseRangeUtc(
             IReadOnlyList<PlanetSlice> slices,

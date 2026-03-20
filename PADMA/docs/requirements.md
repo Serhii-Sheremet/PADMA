@@ -4380,10 +4380,6 @@ Both descriptions are shown sequentially.
 
 ### 5. Vedha Block 
 
-Vedha is calculated **only for Moon-based transits**
-- If active transit mode = TRANZITLAGNA, Vedha block is skipped
-- If active transit mode = TRANZITMOONANDLAGNA, Vedha is calculated using Moon houses
-
 Vedha intervals are not limited to the visible day.
 For each candidate planet:
 
@@ -4441,21 +4437,13 @@ Vedha is calculated on demand (e.g., for Planet Tooltip) and is not part of dail
 
 For a given **target planet** and its active transit period:
 
-1. Determine the house occupied by the target planet (from Natal Moon)
+1. Determine the house occupied by the target planet (from Natal Moon or from Lagna)
 2. Obtain the Vedha house number from Transit reference data
 3. Find other planets occupying that Vedha house
 4. For each such planet, compute the real zodiac-sign interval during which the Vedha is active
 5. Merge overlapping intervals per planet
 
 Vedha represents **periods of time**, not instantaneous flags.
-
-## Scope Rules
-
-* Vedha is calculated **only for Moon-based transits**
-* If active transit mode = TRANZITLAGNA → Vedha is skipped
-* If active transit mode = TRANZITMOONANDLAGNA → Vedha is calculated using Moon houses
-
-This matches legacy PAD behavior.
 
 ## Inputs
 
