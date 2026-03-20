@@ -43,6 +43,7 @@ public partial class FeedbackPage : ContentPage
             ApplyLocalization();
         });
         ApplyLocalization();
+        UpdateEmailPlaceholder();
 
         RefreshCategoryUnderline();
         Dispatcher.Dispatch(RefreshCategoryUnderline);
@@ -68,7 +69,6 @@ public partial class FeedbackPage : ContentPage
         emailLabel.Text = Localization.GetLocalizedText("Your email", lang);
 
         messageEditor.Placeholder = $"{Localization.GetLocalizedText("Write your message here", lang)}...";
-        emailEntry.Placeholder = Localization.GetLocalizedText("Optional (for receiving reply)", lang);
 
         sendButton.Text = Localization.GetLocalizedText("Send", lang);
 
@@ -79,6 +79,20 @@ public partial class FeedbackPage : ContentPage
 
         CategoryValueLabel.Text = Localization.GetLocalizedText(_selectedCategoryKey, lang);
         RefreshCategoryUnderline();
+    }
+
+    private void UpdateEmailPlaceholder()
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+
+        if (_selectedCategoryKey == "Question")
+        {
+            emailEntry.Placeholder = Localization.GetLocalizedText("Email (required for reply)", lang);
+        }
+        else
+        {
+            emailEntry.Placeholder = Localization.GetLocalizedText("Email (optional)", lang);
+        }
     }
 
     private void OnCategoryTapped(object sender, TappedEventArgs e)
@@ -110,6 +124,7 @@ public partial class FeedbackPage : ContentPage
         CategoryArrow.Text = "▼";
 
         RefreshCategoryUnderline();
+        UpdateEmailPlaceholder();
     }
 
     private void OnCategoryBugTapped(object sender, TappedEventArgs e) => SetCategory("Bug report");
@@ -173,6 +188,16 @@ public partial class FeedbackPage : ContentPage
         }
 
         string? email = emailEntry.Text?.Trim();
+        bool isQuestionCategory = _selectedCategoryKey == "Question";
+        if (isQuestionCategory && string.IsNullOrWhiteSpace(email))
+        {
+            await DisplayAlert(
+                Localization.GetLocalizedText("Validation", lang),
+                Localization.GetLocalizedText("Email is required for questions so we can reply to you.", lang),
+                "OK");
+            return;
+        }
+       
         if (!string.IsNullOrWhiteSpace(email) && !IsValidEmail(email))
         {
             await DisplayAlert(

@@ -55,6 +55,20 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         set => SetProperty(ref _flyoutExitTitle, value);
     }
 
+    private string _flyoutAppTitle = "Personal Astrological Diary";
+    public string FlyoutAppTitle
+    {
+        get => _flyoutAppTitle;
+        set => SetProperty(ref _flyoutAppTitle, value);
+    }
+
+    private string _flyoutVersionText = "Version: 1.0.0";
+    public string FlyoutVersionText
+    {
+        get => _flyoutVersionText;
+        set => SetProperty(ref _flyoutVersionText, value);
+    }
+
     public AppShell()
     {
         InitializeComponent();
@@ -131,6 +145,9 @@ public partial class AppShell : Shell, INotifyPropertyChanged
     public void RefreshFlyoutTitles()
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
+
+        FlyoutAppTitle = Localization.GetLocalizedText("Personal Astrological Diary", lang);
+        FlyoutVersionText = $"{Localization.GetLocalizedText("Version", lang)}: {AppInfo.VersionString}";
 
         FlyoutCalendarTitle = Localization.GetLocalizedText("Calendar", lang);
         FlyoutProfilesTitle = Localization.GetLocalizedText("Profiles", lang);
