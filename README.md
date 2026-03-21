@@ -7,7 +7,7 @@ The application helps users choose favorable timing for daily activities based o
 ## ✨ Features
 
 - Daily transit overview
-- Detailed time segments (padas, nakshatras, yogas, etc.)
+- Detailed time segments
 - Lagna and Moon-based analysis
 - Natal and Transit Charts
 - Visual calendar with color-coded segments
@@ -20,6 +20,7 @@ The application helps users choose favorable timing for daily activities based o
 - Android (primary)
 - Windows (for development/testing)
 - iOS (in progress)
+- MacOS (coming soon)
 
 ## ⚙️ Technology
 
