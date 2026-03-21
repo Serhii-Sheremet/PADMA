@@ -72,6 +72,9 @@ public partial class AboutPage : ContentPage
 
         lblRights.Text = Localization.GetLocalizedText("All rights reserved.", lang);
 
+        lblPrivacyPolicyLabel.Text = Localization.GetLocalizedText("Privacy Policy", lang);
+        btnPrivcyPolicy.Text = Localization.GetLocalizedText("Privacy Policy", lang);
+
         lblQuoteLabel.Text = Localization.GetLocalizedText("Created with love for practical Jyotish work.", lang);
         versionLabel.Text = $"{Localization.GetLocalizedText("Version", lang)}: {AppInfo.VersionString}";
     }
@@ -81,6 +84,18 @@ public partial class AboutPage : ContentPage
         await Shell.Current.GoToAsync(nameof(FeedbackPage), true);
     }
 
+    private async void OnPrivacyPolicyClicked(object sender, EventArgs e)
+    {
+        var url = "https://serhii-sheremet.github.io/padma-app/"; 
 
+        try
+        {
+            await Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred);
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
 
 }
