@@ -303,7 +303,7 @@ namespace PADMA.UI.ViewModels
             List<LagnaSlice>? lagnaSlices = null;
 
             Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>? transitPack = null;
-            Dictionary<DateTime, EclipseData> eclipseByLocalDay = null;
+            Dictionary<DateTime, EclipseData> eclipseByLocalDay = new();
 
             Profile? profile = DataCache.Instance.ActiveProfile;
             var ctx = DataCache.Instance.ProfileContextService.Current;
@@ -430,13 +430,13 @@ namespace PADMA.UI.ViewModels
                 };
 
                 // ---- Preparing Eclipces dictionary ----
-                eclipseByLocalDay = eclipsesData
-                        .GroupBy(e =>
-                        {
-                            var local = TimeZoneInfo.ConvertTimeFromUtc(e.Date, tzInfo);
-                            return local.Date;
-                        })
-                        .ToDictionary(g => g.Key, g => g.First());
+                eclipseByLocalDay = (eclipsesData ?? Enumerable.Empty<EclipseData>())
+                .GroupBy(e =>
+                {
+                    var local = TimeZoneInfo.ConvertTimeFromUtc(e.Date, tzInfo);
+                    return local.Date;
+                })
+                .ToDictionary(g => g.Key, g => g.First());
 
             }
             else
