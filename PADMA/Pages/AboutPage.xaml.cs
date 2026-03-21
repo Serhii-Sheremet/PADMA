@@ -70,6 +70,9 @@ public partial class AboutPage : ContentPage
         lblContactsLabel.Text = Localization.GetLocalizedText("Contact us", lang);
         btnSendFeedback.Text = Localization.GetLocalizedText("Send feedback", lang);
 
+        lblSupportLabel.Text = $"{Localization.GetLocalizedText("Support", lang)} PADma";
+        btnSupport.Text = Localization.GetLocalizedText("Support the project", lang);
+
         lblRights.Text = Localization.GetLocalizedText("All rights reserved.", lang);
 
         lblPrivacyPolicyLabel.Text = Localization.GetLocalizedText("Privacy Policy", lang);
@@ -82,6 +85,11 @@ public partial class AboutPage : ContentPage
     private async void OnSendFeedbackClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(FeedbackPage), true);
+    }
+
+    private async void OnSupportClicked(object sender, EventArgs e)
+    {
+        await Browser.Default.OpenAsync("https://paypal.me/ssheremet71");
     }
 
     private async void OnPrivacyPolicyClicked(object sender, EventArgs e)
