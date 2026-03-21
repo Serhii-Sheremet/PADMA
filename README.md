@@ -1,10 +1,53 @@
-# PADMA (Personal Astrological Diary with MAUI)
+# PADMA (Personal Astrological Diary mobile application)
 
-This project is the intellectual property of **Serhii Sheremet**.  
-All rights reserved.  
+PADMA is a personal astrological diary designed for practical use in Jyotish (Vedic astrology).
 
-The source code, database, and any other resources included in this repository **cannot be copied, used, or distributed** without explicit permission from the author.  
+The application helps users choose favorable timing for daily activities based on planetary transits, nakshatras, yogas, and other traditional calculations.
 
-The project is currently published for demonstration and collaboration purposes only.  
+## ✨ Features
+
+- Daily transit overview
+- Detailed time segments (padas, nakshatras, yogas, etc.)
+- Lagna and Moon-based analysis
+- Natal and Transit Charts
+- Visual calendar with color-coded segments
+- User events and reminders
+- Customizable calculation settings
+- Customizable color settings
+
+## 📱 Platforms
+
+- Android (primary)
+- Windows (for development/testing)
+- iOS (in progress)
+
+## ⚙️ Technology
+
+- .NET MAUI
+- Swiss Ephemeris
+- Syncfusion UI components
+
+## ⚠️ Disclaimer
+
+This application is intended for informational and personal use only.  
+It does not provide professional, medical, financial, or legal advice.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🔗 Third-Party Libraries
+
+This project uses **Swiss Ephemeris**, which is licensed under the AGPL.
+
+See: https://www.astro.com/swisseph/
+
+## ❤️ Support
+
+If you find this project useful, you can support its development.
+
+(Donation link will be added in the app)
+
+---
 
 © 2017–2026 Serhii Sheremet
