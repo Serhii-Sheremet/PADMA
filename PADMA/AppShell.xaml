@@ -9,15 +9,15 @@
         <Grid
             BackgroundColor="#C94D7F"
             Padding="10,10,10,10"
-            ColumnDefinitions="84,*"
+            ColumnDefinitions="82,*"
             ColumnSpacing="10"
             MinimumHeightRequest="104">
 
             <Image
                 Grid.Column="0"
                 Source="flyout_logo.png"
-                HeightRequest="68"
-                WidthRequest="68"
+                HeightRequest="64"
+                WidthRequest="64"
                 Aspect="AspectFit"
                 VerticalOptions="Center"
                 HorizontalOptions="Center" />
@@ -29,12 +29,21 @@
 
                 <Label
                     Text="{Binding FlyoutAppTitle}"
-                    FontFamily="OpenSansSemibold"
+                    FontFamily="HarringtonNormal"
                     FontSize="20"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
                     TextColor="#FFD700"
                     LineBreakMode="WordWrap" />
+
+                <Label
+                    Text="{Binding FlyoutAppSubtitle}"
+                    FontFamily="HarringtonNormal"
+                    FontSize="14"
+                    HorizontalTextAlignment="Center"
+                    TextColor="#FFD700"
+                    Opacity="0.85"
+                    LineBreakMode="NoWrap" />
 
             </VerticalStackLayout>
         </Grid>
