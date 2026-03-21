@@ -106,13 +106,19 @@
                                FontAttributes="Bold"/>
 
                         <Button x:Name="btnSupport"
-                                Margin="6,0,6,6"
+                                Margin="6,0,6,2"
                                 HeightRequest="34"
                                 FontAttributes="Bold"
                                 BackgroundColor="#2196F3"
                                 TextColor="White"
                                 CornerRadius="10"
                                 Clicked="OnSupportClicked" />
+
+                        <Label x:Name="lblSubSupportLabel"
+                               Margin="2,0,2,2"
+                               FontSize="10"
+                               FontAttributes="Italic"
+                               HorizontalTextAlignment="Start"/>
                     </VerticalStackLayout>
                 </Border>
 

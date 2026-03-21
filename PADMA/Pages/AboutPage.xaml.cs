@@ -72,8 +72,9 @@ public partial class AboutPage : ContentPage
 
         lblSupportLabel.Text = $"{Localization.GetLocalizedText("Support", lang)} PADma";
         btnSupport.Text = Localization.GetLocalizedText("Support the project", lang);
+        lblSubSupportLabel.Text = Localization.GetLocalizedText("Voluntary support", lang);
 
-        lblRights.Text = Localization.GetLocalizedText("All rights reserved.", lang);
+        lblRights.Text = Localization.GetLocalizedText("Licensed under MIT License", lang);
 
         lblPrivacyPolicyLabel.Text = Localization.GetLocalizedText("Privacy Policy", lang);
         btnPrivcyPolicy.Text = Localization.GetLocalizedText("Privacy Policy", lang);
