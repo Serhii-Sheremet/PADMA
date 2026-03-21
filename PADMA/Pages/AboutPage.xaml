@@ -20,11 +20,11 @@
         <!-- Scrollable content -->
         <ScrollView Grid.Row="0">
 
-            <VerticalStackLayout Padding="20" Spacing="4">
+            <VerticalStackLayout Padding="10" Spacing="4">
 
                 <!-- Title -->
                 <Label x:Name="appNameLabel"
-                       FontSize="20"
+                       FontSize="18"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
                        HorizontalTextAlignment="Center"
@@ -33,7 +33,7 @@
                 <Label x:Name="appSubNameLabel"
                        FontAttributes="Italic"
                        HorizontalOptions="Center"
-                       FontSize="14"/>
+                       FontSize="12"/>
 
                 <!-- Description -->
                 <Label x:Name="appDesclabel"
