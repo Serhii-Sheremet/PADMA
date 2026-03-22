@@ -2,7 +2,7 @@
 
 PADMA is a personal astrological diary designed for practical use in Jyotish (Vedic astrology).
 
-The application helps users choose favorable timing for daily activities based on planetary transits, nakshatras, yogas, and other traditional calculations.
+It helps users identify favorable timing for daily activities based on planetary transits, nakshatras, yogas, and other traditional calculations.
 
 ## ✨ Features
 
@@ -18,7 +18,7 @@ The application helps users choose favorable timing for daily activities based o
 ## 📱 Platforms
 
 - Android (primary)
-- Windows (for development/testing)
+- Windows (for development and testing)
 - iOS (in progress)
 - MacOS (coming soon)
 
@@ -40,6 +40,8 @@ This project is licensed under the MIT License.
 ## 🔗 Third-Party Libraries
 
 This project uses **Swiss Ephemeris**, which is licensed under the AGPL.
+
+This means that the application is distributed in compliance with the AGPL license requirements.
 
 See: https://www.astro.com/swisseph/
 
