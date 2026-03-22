@@ -16,6 +16,8 @@ namespace PADMA.Pages
         private bool _needsRefreshAfterConfig = false;
         private bool _notificationsPermissionChecked;
 
+        private bool _firstRunHintChecked = false;
+
         public MainPage()
         {
             InitializeComponent();
@@ -59,7 +61,7 @@ namespace PADMA.Pages
             UpdateDaysHeader();
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
@@ -110,6 +112,29 @@ namespace PADMA.Pages
                 });
             }
 
+            if (!_firstRunHintChecked)
+            {
+                _firstRunHintChecked = true;
+                await Task.Delay(100);
+                await CheckAndShowFirstRunHintAsync();
+            }
+        }
+
+        private async Task CheckAndShowFirstRunHintAsync()
+        {
+            var profiles = DataCache.Instance.ProfileList;
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            bool hasProfiles = profiles?.Any() == true;
+            bool hasActiveProfile = profiles?.Any(p => p.Checked) == true;
+
+            if (!hasProfiles || !hasActiveProfile)
+            {
+                await DisplayAlert(
+                    Localization.GetLocalizedText("Welcome to PADMA!", lang),
+                    Localization.GetLocalizedText("CreateProfileHint", lang),
+                    "OK");
+            }
         }
 
         protected override void OnSizeAllocated(double width, double height)
