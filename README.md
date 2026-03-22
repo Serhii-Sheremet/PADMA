@@ -1,8 +1,8 @@
 # PADMA (Personal Astrological Diary mobile application)
 
-PADMA is a personal astrological diary designed for practical use in Jyotish (Vedic astrology).
+PADMA is a personal astrological diary designed for practitioners of Jyotish (Vedic astrology).
 
-It helps users identify favorable timing for daily activities based on planetary transits, nakshatras, yogas, and other traditional calculations.
+It provides detailed analysis of planetary transits, nakshatras, yogas, and other traditional calculations, helping users evaluate time periods for their own astrological interpretation and practice.
 
 ## ✨ Features
 
