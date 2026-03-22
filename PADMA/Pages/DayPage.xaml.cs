@@ -2443,7 +2443,9 @@ namespace PADMA.Pages
                 if (vedhaList.Count == 0)
                     return;
 
-                AddTooltipBlock(forLagna ? "Vedha from Lagna" : "Vedha from Moon", "#");
+
+                AddTooltipBlock(forLagna ? Localization.GetLocalizedText("Vedha from Lagna", lang) 
+                            : Localization.GetLocalizedText("Vedha from Moon", lang), "#");
 
                 foreach (var ve in vedhaList)
                 {

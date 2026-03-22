@@ -292,7 +292,7 @@ namespace PADMA.Pages
                     Localization.GetLocalizedText("Transit planet positions", lang);
 
                 LabelTransitNavamsa.Text =
-                    Localization.GetLocalizedText("Transit navamsa", lang);
+                    Localization.GetLocalizedText("Transit Navamsa", lang);
             }
             else
             {
@@ -300,7 +300,7 @@ namespace PADMA.Pages
                     Localization.GetLocalizedText("Natal planet positions", lang);
 
                 LabelTransitNavamsa.Text =
-                    Localization.GetLocalizedText("Natal navamsa", lang);
+                    Localization.GetLocalizedText("Natal Navamsa", lang);
             }
         }
 

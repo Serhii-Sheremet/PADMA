@@ -95,7 +95,7 @@ public partial class AboutPage : ContentPage
 
     private async void OnPrivacyPolicyClicked(object sender, EventArgs e)
     {
-        var url = "https://serhii-sheremet.github.io/padma-app/"; 
+        var url = "https://serhii-sheremet.github.io/PADMA/PADMA/docs/"; 
 
         try
         {

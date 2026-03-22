@@ -1,4 +1,4 @@
-UPDATE APP_META SET VALUE = '0.0.62' WHERE KEY = 'DB_VERSION';
+UPDATE APP_META SET VALUE = '0.0.63' WHERE KEY = 'DB_VERSION';
 
 
 dotnet publish PADMA.csproj -f net9.0-android -c Release
@@ -24,19 +24,6 @@ For publish-debug:
 
 --------------------
 
-SELECT *
-FROM TRANSIT_DESC
-WHERE TRANSITID = 1
+keytool -genkeypair -v -keystore padma-release.keystore -alias ssheremet_padma -keyalg RSA -keysize 2048 -validity 10000
 
-
-UPDATE TRANSIT_DESC
-SET DESCRIPTION = CASE LANGUAGECODE
-    WHEN 'en' THEN 'English text'
-    WHEN 'uk' THEN 'Ukrainian text'
-    WHEN 'pl' THEN 'Polish text'
-    WHEN 'ru' THEN 'Russian text'
-END
-WHERE TRANSITID = 1
-  AND LANGUAGECODE IN ('en','uk','pl','ru');
-  
-----------------------  
+--------------------

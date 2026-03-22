@@ -68,14 +68,6 @@ namespace PADMA.Pages
             BindingContext = this;
 
             OpenProfileCommand = new Command<ProfileViewItem>(async p => await NavigateToProfile(p));
-
-            // локализация заголовка и кнопки
-            string lang = DataCache.Instance.CurrentLanguageCode;
-            Title = Localization.GetLocalizedText("Profiles", lang);
-            btnAddProfile.Text = Localization.GetLocalizedText("Add new profile", lang);
-            btnDetails.Text = Localization.GetLocalizedText("Details", lang);
-            btnSetDefault.Text = Localization.GetLocalizedText("Set default", lang);
-            btnChoose.Text = Localization.GetLocalizedText("Choose", lang);
         }
 
         private void SubscribeMessages()
@@ -94,6 +86,23 @@ namespace PADMA.Pages
             base.OnAppearing();
             LoadProfiles();
             ClearSelection();
+
+            MessagingCenter.Unsubscribe<object>(this, "SettingsChanged");
+            MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
+            {
+                ApplyLocalization();
+            });
+            ApplyLocalization();
+        }
+
+        private void ApplyLocalization()
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            Title = Localization.GetLocalizedText("Profiles", lang);
+            btnAddProfile.Text = Localization.GetLocalizedText("Add new profile", lang);
+            btnDetails.Text = Localization.GetLocalizedText("Details", lang);
+            btnSetDefault.Text = Localization.GetLocalizedText("Set default", lang);
+            btnChoose.Text = Localization.GetLocalizedText("Choose", lang);
         }
 
         private void LoadProfiles()

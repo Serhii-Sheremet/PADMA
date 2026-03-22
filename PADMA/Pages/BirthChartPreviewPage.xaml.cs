@@ -257,7 +257,7 @@ public partial class BirthChartPreviewPage : ContentPage, IQueryAttributable
         StepMinutesOptionLabel.Text = Localization.GetLocalizedText("Minutes", lang);
         StepHoursOptionLabel.Text = Localization.GetLocalizedText("Hours", lang);
 
-        LabelTransitNavamsa.Text = Localization.GetLocalizedText("Natal navamsa", lang);
+        LabelTransitNavamsa.Text = Localization.GetLocalizedText("Natal Navamsa", lang);
 
         SelectedStepUnitText = GetLocalizedStepUnitText(SelectedStepUnit, lang);
         StepUnitLabel.Text = SelectedStepUnitText;
