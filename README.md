@@ -45,9 +45,11 @@ See: https://www.astro.com/swisseph/
 
 ## ❤️ Support
 
-If you find this project useful, you can support its development.
+If you find this project useful and would like to support its development, you can do so here:
 
-(Donation link will be added in the app)
+👉 **https://paypal.me/ssheremet71**
+
+Your support is completely voluntary and greatly appreciated.
 
 ---
 
