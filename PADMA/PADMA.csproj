@@ -79,6 +79,7 @@
   <ItemGroup>
     <!-- Embedded database -->
     <MauiAsset Include="Resources\Raw\PADMADB.db3" LogicalName="PADMADB.db3" />
+	<MauiAsset Include="Resources\Raw\faq_*.html" LogicalName="%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- XAML Dependencies -->
@@ -112,6 +113,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\DayPage.xaml" Generator="MSBuild:Compile" />
+    <MauiXaml Update="Pages\FaqPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\FeedbackPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

@@ -197,6 +197,30 @@
 
         </VerticalStackLayout>
 
-    </Grid>
+        <!--  Busy overlay -->
+        <Grid Grid.Row="0"
+              Grid.ColumnSpan="2"
+              IsVisible="{Binding IsBusy, FallbackValue=False}"
+              InputTransparent="False"
+              BackgroundColor="#80000000"
+              ZIndex="999">
 
+            <VerticalStackLayout
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="12">
+
+                <ActivityIndicator
+                    IsRunning="True"
+                    WidthRequest="48"
+                    HeightRequest="48" />
+
+                <Label Text="{Binding BusyText}"
+                       TextColor="White"
+                       FontSize="Medium"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
 </ContentPage>

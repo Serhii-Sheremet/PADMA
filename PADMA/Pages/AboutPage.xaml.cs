@@ -5,6 +5,30 @@ namespace PADMA.Pages;
 
 public partial class AboutPage : ContentPage
 {
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            if (_isBusy == value) return;
+            _isBusy = value;
+            OnPropertyChanged(nameof(IsBusy));
+        }
+    }
+
+    private string _busyText = "Please waitЕ";
+    public string BusyText
+    {
+        get => _busyText;
+        set
+        {
+            if (_busyText == value) return;
+            _busyText = value;
+            OnPropertyChanged(nameof(BusyText));
+        }
+    }
+
     public AboutPage()
 	{
 		InitializeComponent();
@@ -40,14 +64,14 @@ public partial class AboutPage : ContentPage
 
     private async void OnCloseClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("//main", true);
+        await CloseAsync();
     }
 
     protected override bool OnBackButtonPressed()
     {
         Dispatcher.Dispatch(async () =>
         {
-            await Shell.Current.GoToAsync("//main");
+            await CloseAsync();
         });
         return true;
     }
@@ -105,6 +129,27 @@ public partial class AboutPage : ContentPage
         {
             await DisplayAlert("Error", ex.Message, "OK");
         }
+    }
+
+    private async Task CloseAsync()
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+        await RunBusyAsync(Localization.GetLocalizedText("Please waitЕ", lang), async () =>
+        {
+            await Shell.Current.GoToAsync("//main");
+            await Task.Yield();
+        });
+    }
+
+    private async Task RunBusyAsync(string text, Func<Task> action)
+    {
+        BusyText = text;
+        IsBusy = true;
+
+        await Task.Yield(); // дать UI шанс отрисовать overlay
+
+        try { await action(); }
+        finally { IsBusy = false; }
     }
 
 }

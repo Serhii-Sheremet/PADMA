@@ -80,6 +80,10 @@
         <ShellContent ContentTemplate="{DataTemplate pages:AboutPage}" />
     </FlyoutItem>
 
+    <FlyoutItem Title="{Binding FlyoutFAQTitle}" Route="faq">
+        <ShellContent ContentTemplate="{DataTemplate pages:FaqPage}" />
+    </FlyoutItem>
+
     <MenuItem Text="{Binding FlyoutExitTitle}"
               Clicked="OnExitMenuItemClicked" />
 
