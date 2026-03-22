@@ -224,6 +224,7 @@ namespace PADMA.Core.Services
             AppSettingsList = db.GetAppSettingsList();
             CurrentLanguageCode = db.GetActiveLanguageCode();
             AppTextsList = db.GetAppTextsList(CurrentLanguageCode);
+            DayOfWeek = db.GetFirstDayOfWeekFromDb();
             ColorList = db.GetColors();
         }
 
