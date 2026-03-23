@@ -114,7 +114,7 @@ public partial class AboutPage : ContentPage
 
     private async void OnSupportClicked(object sender, EventArgs e)
     {
-        await Browser.Default.OpenAsync("https://paypal.me/ssheremet71");
+        await Shell.Current.GoToAsync(nameof(PaymentPage), true);
     }
 
     private async void OnPrivacyPolicyClicked(object sender, EventArgs e)

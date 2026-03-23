@@ -101,6 +101,7 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         // Регистрируем маршрут для AboutPage
         Routing.RegisterRoute(nameof(AboutPage), typeof(AboutPage));
         Routing.RegisterRoute(nameof(FeedbackPage), typeof(FeedbackPage));
+        Routing.RegisterRoute(nameof(PaymentPage), typeof(PaymentPage));
 
         // Регистрируем маршрут для FaqPage
         Routing.RegisterRoute(nameof(FaqPage), typeof(FaqPage));

@@ -159,6 +159,7 @@
                 <!-- Quote -->
                 <Label x:Name="lblQuoteLabel"
                        Margin="0,2,0,0"
+                       FontSize="12"
                        FontAttributes="Italic"
                        HorizontalTextAlignment="Center"
                        Opacity="0.8"/>

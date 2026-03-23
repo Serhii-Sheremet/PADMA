@@ -131,7 +131,7 @@ namespace PADMA.Pages
             if (!hasProfiles || !hasActiveProfile)
             {
                 await DisplayAlert(
-                    Localization.GetLocalizedText("Welcome to PADMA!", lang),
+                    Localization.GetLocalizedText("Welcome to PADma!", lang),
                     Localization.GetLocalizedText("CreateProfileHint", lang),
                     "OK");
             }
