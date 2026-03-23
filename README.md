@@ -49,7 +49,9 @@ See: https://www.astro.com/swisseph/
 
 If you find this project useful and would like to support its development, you can do so here:
 
-👉 **https://paypal.me/ssheremet71**
+👉 PayPal:  **https://paypal.me/ssheremet71**
+
+👉 Ko-Fi:   **https://ko-fi.com/ssheremet**
 
 Your support is completely voluntary and greatly appreciated.
 
