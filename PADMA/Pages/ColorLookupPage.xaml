@@ -5,9 +5,9 @@
              x:Class="PADMA.Pages.ColorLookupPage"
              Title="Select color">
 
-    <Grid RowDefinitions="*,Auto"
-      Padding="16"
-      RowSpacing="12">
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="16"
+          RowSpacing="12">
 
         <inputs:SfColorPicker x:Name="picker"
                           Grid.Row="0"
@@ -15,22 +15,39 @@
                           VerticalOptions="Start"
                           HorizontalOptions="FillAndExpand"
                           ColorMode="Spectrum"
-                          IsColorModeSwitcherVisible="True"
+                          IsColorModeSwitcherVisible="False"
                           IsActionButtonsVisible="False"
                           ShowInputArea="True"
                           ShowAlphaSlider="True"
                           ColorChanged="OnColorChanged" />
 
-        <Button x:Name="SelectButon"
-            Grid.Row="1"
-            Text="{Binding SelectButon}"
-            HeightRequest="44"
-            HorizontalOptions="FillAndExpand"
-            Clicked="OnSelectClicked"
-            BackgroundColor="#2196F3"
-            TextColor="White"
-            CornerRadius="10"/>
+        <Border Grid.Row="1"
+                Stroke="#D0D0D0"
+                BackgroundColor="White"
+                Padding="8">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10"/>
+            </Border.StrokeShape>
 
+            <Border x:Name="SelectedColorPreview"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill"
+                    BackgroundColor="Transparent">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+            </Border>
+        </Border>
+
+        <Button x:Name="SelectButon"
+                Grid.Row="2"
+                Text="{Binding SelectButon}"
+                HeightRequest="44"
+                HorizontalOptions="FillAndExpand"
+                Clicked="OnSelectClicked"
+                BackgroundColor="#2196F3"
+                TextColor="White"
+                CornerRadius="10"/>
     </Grid>
 
 </ContentPage>

@@ -56,7 +56,7 @@ public static class MauiProgram
             #endif
         });
 
-        SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWX1fcXVXQ2BdWUBxWERWYEs=");
+        SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWXxcdHRdQ2RcV0V+X0ZWYEo=");
 
         builder
             .UseMauiApp<App>()

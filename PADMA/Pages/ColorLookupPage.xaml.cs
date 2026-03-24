@@ -37,6 +37,7 @@ public partial class ColorLookupPage : ContentPage
         {
             var c = CalendarDrawingHelper.ColorFromArgbInt(_startArgb);
             picker.SelectedColor = c;
+            SelectedColorPreview.BackgroundColor = c;
             _selectedArgb = _startArgb;
         });
     }
@@ -51,6 +52,10 @@ public partial class ColorLookupPage : ContentPage
     private void OnColorChanged(object? sender, ColorChangedEventArgs e)
     {
         _selectedArgb = CalendarDrawingHelper.ColorToArgbInt(e.NewColor);
+        if (e.NewColor is not null)
+        {
+            SelectedColorPreview.BackgroundColor = e.NewColor; 
+        }
     }
 
     private async void OnSelectClicked(object sender, EventArgs e)
