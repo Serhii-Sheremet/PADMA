@@ -309,6 +309,7 @@ Each page includes:
 | MuhurtasPage |MUHURTAGHATI | MUHURTAGHATIDAYNIGHT, MUHURTAGHATIEQUAL, MUHURTAGHATIFROM6 | Chooses Muhurta & Ghati calculation method |
 | MrityuBhaga| MRITYUBHAGA | NEQUAL, NLESS, NMORE, NERNST | Chooses Mrityu Bhaga calculation method |
 | Sunrise | SUNRISE | TIP, CENTER | Chooses Sunrise calculation method |
+|Notifications|NOTEREMINDER|OFF, MIN5, MIN15, MIN30|Choose notifications method|
 
 ### 🔄 Global Behavior  
 
@@ -330,6 +331,7 @@ Each page includes:
 | *_DESC | Language-specific descriptions for reference tables |
 | LOCATION | Geographic data (limited to predefined entries) |
 | PROFILE | User profiles linked to LOCATION |
+| USER_EVENTS | Stores user notes linked to profile|
 
 ## 🧩 Architecture Notes
 
@@ -421,8 +423,11 @@ The feature is accessible from the main **Shell** menu (burger menu).
 **Current menu structure:**  
 ```
 Calendar  
-Profiles   ← new section  
+Profiles   
+Transit charts  
 Settings  
+About...
+FAQs
 Exit
 ```
 
@@ -727,7 +732,6 @@ Maps directly to the `PLANET` table in the database.
 | `Saturn` | `"SATURN"` | Saturn |
 | `Rahu` | `"RAHU"` | North Node |
 | `Ketu` | `"KETU"` | South Node |
-| ... | ... | (others as defined in DB) |
 
 ### 🔧 Planet ID Mapping
 
@@ -760,10 +764,8 @@ SwissUtility.GetPlanetSWEConstByPlanetId(int planetId)
 | 5 | Jupiter | `SE_JUPITER` |  |
 | 6 | Venus | `SE_VENUS` |  |
 | 7 | Saturn | `SE_SATURN` |  |
-| 8 | Rahu (Mean Node) | `SE_MEAN_NODE` | Direct Swiss Ephemeris calculation |
-| 9 | Ketu (Mean Node) | — | Derived as Rahu + 180° |
-| 10 | Rahu (True Node) | `SE_TRUE_NODE` | Direct Swiss Ephemeris calculation |
-| 11 | Ketu (True Node) | — | Derived as Rahu + 180° |
+| 8 | Rahu (Mean/True Node) | `SE_MEAN_NODE/SE_TRUE_NODE` | Direct Swiss Ephemeris calculation |
+| 9 | Ketu | — | Derived as Rahu + 180° |
 
 **Notes:**  
 - `PlanetId` represents PADMA’s internal model and database linkage.  
@@ -1384,9 +1386,7 @@ Both house systems are stored inside each slice.
 
 ## 7.8 Output
 
-For each planet:
-
-List<PlanetSlice>
+For each planet: `List<PlanetSlice>`
 
 Properties:
 
@@ -1475,7 +1475,7 @@ cache.GetNakshatraDesc(nakshatraId)
 NakshatraSlice remains minimal and computation-oriented.
 
 ### 8.7 Output
-List<NakshatraSlice> chronologically ordered.
+`List<NakshatraSlice>` chronologically ordered.
 
 ### 8.8. Status: Completed
 
@@ -1551,7 +1551,7 @@ cache.TaraBalaDescList.FirstOrDefault(d => d.TaraBalaId == slice.TaraBalaId)
 Slice remains computational and minimal.
 
 ### 9.7. Output
-List<TaraBalaSlice>
+`List<TaraBalaSlice>`
 
 ## 9.8. Status: Completed
 
@@ -1600,7 +1600,7 @@ public static List<TithiSlice> BuildTithiSlices(List<TithiData> list)
 UI uses DataCache.Instance.GetTithiDesc(tithiId) for localized text.
 
 ### 10.7 Output
-List<TithiSlice> chronologically ordered.
+`List<TithiSlice>` chronologically ordered.
 
 ### 10.8. Status: Completed
 
@@ -1668,7 +1668,7 @@ cache.KaranaDescList.FirstOrDefault(d => d.KaranaId == slice.KaranaId)
 Slice remains purely computational and minimal.
 
 ### 11.6 Output
-List<KaranaSlice> chronologically ordered.
+`List<KaranaSlice>` chronologically ordered.
 
 ## 11.7. Status: Completed
 
@@ -1739,7 +1739,7 @@ cache.NityaYogaDescList.FirstOrDefault(d => d.NityaYogaId == slice.NityaYogaId)
 Slice remains minimal and computational.
 
 ### 12.6 Output
-List<NityaYogaSlice> chronologically ordered.
+`List<NityaYogaSlice>` chronologically ordered.
 
 ### 12.7. Status: Completed
 
@@ -1811,7 +1811,7 @@ UI may use:
 Slice is strictly computational.
 
 ### 13.6 Output
-List<ChandraBalaSlice> chronologically ordered.
+`List<ChandraBalaSlice>` chronologically ordered.
 
 ### 13.7. Status: Completed
 
@@ -1966,7 +1966,7 @@ For each Vara (DayOfWeek), MRITYU activates on specific **TithiIds**:
 | Tuesday | 5, 7, 20, 22 |
 | Wednesday | 3, 8, 18, 23 |
 | Thursday | 6, 9, 21, 24 |
-| Friday | 8, 9, 10, 23, 24, 25 |
+| Friday | 8, 9, 10, 23, 24 |
 | Saturday | 7, 9, 11, 22, 24, 26 |
 | Sunday | 4, 9 |
 
@@ -3615,16 +3615,7 @@ Implemented:
 
 ## Implemented Transit Lanes
 
--   Nakshatra
--   Tara Bala
--   Tithi
--   Karana
--   Nitya Yoga
--   Chandra Bala
-
-Next steps:
-- Add remaining Panchanga and transit lanes
-- User-defined event lane (add events feature)
+All transit lanes are implemented.
 
 ---------
 
@@ -3734,10 +3725,6 @@ Implemented:
 - Two-step tap interaction model
 - Centered tooltip overlay with backdrop
 - Safe coexistence with vertical and horizontal scrolling
-
-Planned:
-- Structured tooltip content (sections, icons, formatting)
-- Reuse of the same selection/tooltip mechanism for all transit lanes
 
 ---------
 
@@ -4522,7 +4509,7 @@ Rules:
 
 ## Output
 
-List<VedhaEntity>
+`List<VedhaEntity>`
 
 Each entity:
 
@@ -4658,7 +4645,6 @@ Range: dd.MM.yyyy HH:mm:ss – dd.MM.yyyy HH:mm:ss
 Hora is profile-aware, timezone-aware and fully configurable via AppSettings.
 
 ---------
-
 
 # Muhurta30 and Ghati60
 
