@@ -1,0 +1,1 @@
+Astrological Diary for analyzing transits and choosing favorable timing.

@@ -128,7 +128,7 @@
                             </VerticalStackLayout>
 
                             <!-- MUHURTAS (one block, 5 stripes) -->
-                            <VerticalStackLayout Margin="0,3,0,0"
+                            <VerticalStackLayout Margin="0,4,0,0"
                                      Spacing="0"
                                      BindableLayout.ItemsSource="{Binding Overview.MuhurtaStripes}">
 
