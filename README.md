@@ -6,7 +6,7 @@ It provides detailed analysis of planetary transits, nakshatras, yogas, and othe
 
 ## ✨ Features
 
-- Daily transit overview
+- Daily and Monthly transits overview
 - Detailed time segments
 - Lagna and Moon-based analysis
 - Natal and Transit Charts
@@ -14,6 +14,8 @@ It provides detailed analysis of planetary transits, nakshatras, yogas, and othe
 - User events and reminders
 - Customizable calculation settings
 - Customizable color settings
+- Profiles system
+- Multi-language support
 
 ## 📱 Platforms
 
