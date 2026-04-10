@@ -1,1 +1,0 @@
-Dziennik Astrologiczny do analizy tranzytów i wyboru korzystnego czasu.
