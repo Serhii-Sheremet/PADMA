@@ -305,8 +305,13 @@ namespace PADMA.Pages
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
             var culture = new CultureInfo(lang);
+
             if (Day != null)
-                Title = Day.Date.ToString("dd MMMM yyyy", culture);
+            {
+                string dayOfWeek = culture.DateTimeFormat.GetDayName(Day.Date.DayOfWeek);
+                string date = Day.Date.ToString("dd MMMM yyyy", culture);
+                Title = $"{dayOfWeek}, {date}";
+            }
         }
 
         public void ApplyQueryAttributes(IDictionary<string, object> query)

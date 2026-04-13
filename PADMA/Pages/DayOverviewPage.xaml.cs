@@ -187,7 +187,11 @@ namespace PADMA.Pages
             var culture = new CultureInfo(lang);
 
             if (Day != null)
-                Title = Day.Date.ToString("dd MMMM yyyy", culture);
+            {
+                string dayOfWeek = culture.DateTimeFormat.GetDayName(Day.Date.DayOfWeek);
+                string date = Day.Date.ToString("dd MMMM yyyy", culture);
+                Title = $"{dayOfWeek}, {date}";
+            }
 
             OpenDayDetailsButton.Text = Localization.GetLocalizedText("Open Day Details", lang);
         }
