@@ -156,7 +156,6 @@ namespace PADMA.Pages
             var prev = new ToolbarItem
             {
                 IconImageSource = "left_arrow.png",
-                Text = "Prev"
             };
             prev.Clicked += (s, e) =>
             {
@@ -168,7 +167,6 @@ namespace PADMA.Pages
             var next = new ToolbarItem
             {
                 IconImageSource = "right_arrow.png",
-                Text = "Next"
             };
             next.Clicked += (s, e) =>
             {
@@ -329,7 +327,6 @@ namespace PADMA.Pages
         {
             Vm?.HideNotesOverlay();
         }
-
 
 
     }

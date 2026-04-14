@@ -17,6 +17,7 @@
             <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
                 <Label Text="{Binding MonthYearTitle}"
                    FontAttributes="Bold"
+                   FontSize="20"
                    VerticalOptions="Center" />
                 <Label Text="▼" VerticalOptions="Center" />
             </HorizontalStackLayout>
