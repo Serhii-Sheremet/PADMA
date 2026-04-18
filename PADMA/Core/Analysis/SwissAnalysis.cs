@@ -784,6 +784,7 @@ namespace PADMA.Core.Analysis
             var maxLookforward = TimeSpan.FromDays(90);
 
             DateTime cur = fromUtc;
+            DateTime prevCur = fromUtc;
 
             bool inZone = false;
             MrityuBhagaData? current = null;
@@ -817,6 +818,7 @@ namespace PADMA.Core.Analysis
                 var st = GetMrityuBhagaState(planetId, cur, nodeType, mbList, mbSettingMode, tol);
                 if (st.mb == null)
                 {
+                    prevCur = cur;
                     cur = cur.AddMinutes(15);
                     continue;
                 }
@@ -825,12 +827,67 @@ namespace PADMA.Core.Analysis
                 int zodId = st.zodId;
                 bool retro = st.retro;
 
+                // --- zodiac/retro change ---
+                // если состояние сменилось по знаку или ретроградности, закрываем предыдущий интервал
+                // с уточнением границы между prevCur и cur
+                if (hasLast)
+                {
+                    bool changedContext = SwissUtility.GetZodiacIdFromDegree(lastLon) != zodId || retro != lastRetro;
+                    if (changedContext)
+                    {
+                        if (inZone && current != null)
+                        {
+                            DateTime exactEnd = cur;
+
+                            // если на предыдущей точке были inside, а на текущей уже outside/другой контекст,
+                            // уточняем границу бинарно
+                            var stPrev = GetMrityuBhagaState(planetId, prevCur, nodeType, mbList, mbSettingMode, tol);
+                            if (stPrev.mb != null && stPrev.inside && prevCur < cur)
+                            {
+                                exactEnd = RefineBoundaryBinary(
+                                    planetId,
+                                    prevCur,
+                                    cur,
+                                    targetInsideAtT1: false,
+                                    nodeType,
+                                    mbList,
+                                    mbSettingMode,
+                                    tol);
+                            }
+
+                            current.DateToUtc = exactEnd;
+                            results.Add(current);
+                        }
+
+                        inZone = false;
+                        current = null;
+                    }
+                }
+
                 // --- entry ---
                 if (inside && !inZone)
                 {
-                    // refine entry using previous sample time (prevCur)
-                    // to do that, keep prevCur; simplest: store it
-                    // (see note below)
+                    DateTime exactStart = cur;
+
+                    // если стартовали не с fromUtc-inside case, а вошли внутрь в цикле,
+                    // уточняем границу между prevCur (outside) и cur (inside)
+                    if (prevCur < cur)
+                    {
+                        var stPrev = GetMrityuBhagaState(planetId, prevCur, nodeType, mbList, mbSettingMode, tol);
+                        if (stPrev.mb != null && !stPrev.inside)
+                        {
+                            exactStart = RefineBoundaryBinary(
+                                planetId,
+                                prevCur,
+                                cur,
+                                targetInsideAtT1: true,
+                                nodeType,
+                                mbList,
+                                mbSettingMode,
+                                tol);
+                        }
+                    }
+
                     inZone = true;
                     current = new MrityuBhagaData
                     {
@@ -840,39 +897,43 @@ namespace PADMA.Core.Analysis
                         MrityuBhagaSetting = mbSettingMode,
                         LongitudeFrom = st.fromDeg,
                         LongitudeTo = st.toDeg,
-                        DateFromUtc = cur // можно уточнить бинарно, см. ниже
+                        DateFromUtc = exactStart
                     };
                 }
 
                 // --- exit ---
                 if (!inside && inZone && current != null)
                 {
-                    current.DateToUtc = cur; // можно уточнить бинарно
+                    DateTime exactEnd = cur;
+
+                    if (prevCur < cur)
+                    {
+                        var stPrev = GetMrityuBhagaState(planetId, prevCur, nodeType, mbList, mbSettingMode, tol);
+                        if (stPrev.mb != null && stPrev.inside)
+                        {
+                            exactEnd = RefineBoundaryBinary(
+                                planetId,
+                                prevCur,
+                                cur,
+                                targetInsideAtT1: false,
+                                nodeType,
+                                mbList,
+                                mbSettingMode,
+                                tol);
+                        }
+                    }
+
+                    current.DateToUtc = exactEnd;
                     results.Add(current);
                     inZone = false;
                     current = null;
-                }
-
-                // --- zodiac/retro change ---
-                if (hasLast)
-                {
-                    if (SwissUtility.GetZodiacIdFromDegree(lastLon) != zodId || retro != lastRetro)
-                    {
-                        if (inZone && current != null)
-                        {
-                            current.DateToUtc = cur;
-                            results.Add(current);
-                        }
-                        inZone = false;
-                        current = null;
-                    }
                 }
 
                 lastLon = st.lon;
                 lastRetro = retro;
                 hasLast = true;
 
-                // --- step ---
+                prevCur = cur;
                 cur = inZone ? cur.AddMinutes(1) : cur.AddMinutes(15);
             }
 

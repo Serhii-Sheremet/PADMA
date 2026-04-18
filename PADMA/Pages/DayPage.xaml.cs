@@ -3,6 +3,7 @@ using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
+using PADMA.Core.Analysis;
 using PADMA.Core.TransitBuilder;
 using PADMA.Core.Utilities;
 using PADMA.UI;
@@ -2433,8 +2434,7 @@ namespace PADMA.Pages
                 var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(dayStartLocal, tzInfo);
                 var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
 
-                static DateTime AsUtc(DateTime dt) =>
-                    dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                
 
                 vedhaList = vedhaList
                     .Where(v =>
@@ -2478,9 +2478,44 @@ namespace PADMA.Pages
                 AddTransitSection(forLagna: useLagna);
             }
 
+            // ---- Блок 4: Mrytiu Bhaga ----
+            var mrityuBhagaList = SwissAnalysis.CalculateMrityuBhagaDataList_London(
+                slice.PlanetId,
+                seg.TransitStart,
+                seg.TransitEnd,
+                slice.NodeType);
+
+            mrityuBhagaList = mrityuBhagaList
+                .Where(mb =>
+                {
+                    var s = AsUtc(mb.DateFromUtc);
+                    var e = AsUtc(mb.DateToUtc);
+                    return e > seg.TransitStart && s < seg.TransitEnd;
+                })
+                .OrderBy(mb => AsUtc(mb.DateFromUtc))
+                .ToList();
+
+            if (mrityuBhagaList.Count > 0)
+            {
+                AddTooltipBlock("Mrityu Bhaga", "#");
+
+                foreach (var mb in mrityuBhagaList)
+                {
+                    var mbStartLocal = TimeZoneInfo.ConvertTimeFromUtc(AsUtc(mb.DateFromUtc), tzInfo);
+                    var mbEndLocal = TimeZoneInfo.ConvertTimeFromUtc(AsUtc(mb.DateToUtc), tzInfo);
+
+                    AddTooltipBlock(
+                        pName,
+                        $"({mbStartLocal:dd.MM.yyyy HH:mm:ss} – {mbEndLocal:dd.MM.yyyy HH:mm:ss})");
+                }
+            }
+
             UpdateTooltipBodyHeight();
             Dispatcher.Dispatch(UpdateTooltipBodyHeight);
         }
+
+        private static DateTime AsUtc(DateTime dt) =>
+                    dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
 
         private void ShowHoraTooltip(PanchangaSegment seg)
         {
