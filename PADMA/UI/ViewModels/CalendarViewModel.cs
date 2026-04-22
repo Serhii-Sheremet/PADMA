@@ -131,7 +131,17 @@ namespace PADMA.UI.ViewModels
         // === Culture initialization ===
         public void InitializeCulture()
         {
-            ReloadCultureAndRefresh();
+            try
+            {
+                var langCode = DataCache.Instance.CurrentLanguageCode;
+                CultureCode = DataCache.Instance.GetCurrentCultureCode(langCode);
+            }
+            catch
+            {
+                CultureCode = CultureInfo.CurrentUICulture.Name;
+            }
+
+            OnPropertyChanged(nameof(CurrentCulture));
         }
 
         public void ReloadCultureAndRefresh()

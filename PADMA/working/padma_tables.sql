@@ -402,7 +402,7 @@ INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (24,'N
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (25,'NOTEREMINDER','MIN5',1);
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (26,'NOTEREMINDER','MIN15',0);
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (27,'NOTEREMINDER','MIN30',0);
-INSERT INTO "APP_META" ("KEY","VALUE") VALUES ('DB_VERSION','0.0.66');
+INSERT INTO "APP_META" ("KEY","VALUE") VALUES ('DB_VERSION','0.0.67');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (1,'Language','Language','en');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (2,'Language','Мова','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (3,'Language','Język','pl');
@@ -1335,6 +1335,18 @@ INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES 
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (938,'Support is completely voluntary.','Підтримка є повністю добровільною.','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (939,'Support is completely voluntary.','Wsparcie jest całkowicie dobrowolne.','pl');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (940,'Support is completely voluntary.','Поддержка является полностью добровольной.','ru');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (941,'Information','Information','en');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (942,'Information','Інформація','uk');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (943,'Information','Informacja','pl');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (944,'Information','Информация','ru');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (945,'Reached maximum supported date','Reached maximum supported date','en');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (946,'Reached maximum supported date','Досягнуто максимально підтримуваної дати','uk');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (947,'Reached maximum supported date','Osiągnięto maksymalną obsługiwaną datę','pl');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (948,'Reached maximum supported date','Достигнута максимальная поддерживаемая дата','ru');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (949,'Reached minimum supported date','Reached minimum supported date','en');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (950,'Reached minimum supported date','Досягнуто мінімально підтримуваної дати','uk');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (951,'Reached minimum supported date','Osiągnięto minimalną obsługiwaną datę','pl');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (952,'Reached minimum supported date','Достигнута минимальная поддерживаемая дата','ru');
 INSERT INTO "COLOR" ("ID","CODE","ARGBVALUE") VALUES (1,'GREEN',-13631697);
 INSERT INTO "COLOR" ("ID","CODE","ARGBVALUE") VALUES (2,'RED',-45233);
 INSERT INTO "COLOR" ("ID","CODE","ARGBVALUE") VALUES (3,'LIGHTGREEN',-4587591);

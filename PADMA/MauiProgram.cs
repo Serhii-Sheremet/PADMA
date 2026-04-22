@@ -29,7 +29,7 @@ public static class MauiProgram
                                 await app.EnsureDefaultProfileContextAsync();
                         });
                     });
-            
+                    /*
                     android.OnResume(activity =>
                     {
                         Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(async () =>
@@ -37,7 +37,7 @@ public static class MauiProgram
                             if (Microsoft.Maui.Controls.Application.Current is App app)
                                 await app.EnsureDefaultProfileContextAsync();
                         });
-                    });
+                    });*/
                 });
             #endif
             

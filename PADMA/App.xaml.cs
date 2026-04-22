@@ -14,26 +14,27 @@ public partial class App : Application
         UserAppTheme = AppTheme.Light;
         MainPage = new AppShell();
     }
-
+    
     protected override async void OnStart()
     {
         base.OnStart();
+        _initializedOnce = true;
 
+        /*
         try
         {
-            _initializedOnce = true;
-            await EnsureDefaultProfileContextAsync();
+            //await EnsureDefaultProfileContextAsync();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfileContext] OnStart failed: {ex}");
-        }
+        }*/
     }
 
     protected override async void OnResume()
     {
         base.OnResume();
-        try
+        /*try
         {
             // при возврате в приложение тоже приводим к дефолту
             await EnsureDefaultProfileContextAsync();
@@ -41,7 +42,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ProfileContext] OnResume failed: {ex}");
-        }
+        }*/
     }
 
     public async Task EnsureDefaultProfileContextAsync()
