@@ -12,7 +12,11 @@ namespace PADMA.Pages
     public partial class TransitChartsPage : ConfigBasePage
     {
         private bool _showCurrentTransits = true;
-        
+        private bool _maxDateReachedShown = false;
+        private bool _minDateReachedShown = false;
+        private bool _maximumTransitDateMessageShown;
+        private bool _minimumTransitDateMessageShown;
+
         private bool _isAspectsExpanded;
         private bool _aspectAllSelected;
         private bool _aspectSunSelected;
@@ -729,12 +733,13 @@ namespace PADMA.Pages
 
         private void ShiftTransitTime(int direction)
         {
+            var lang = DataCache.Instance.CurrentLanguageCode;
             SelectedStepValue = GetParsedStepValue();
             StepValueEntry.Text = SelectedStepValue.ToString();
 
             int value = SelectedStepValue * direction;
 
-            CurrentTransitLocalDateTime = SelectedStepUnit switch
+            var newTransitLocalDateTime = SelectedStepUnit switch
             {
                 ETransitStepUnit.Seconds => CurrentTransitLocalDateTime.AddSeconds(value),
                 ETransitStepUnit.Minutes => CurrentTransitLocalDateTime.AddMinutes(value),
@@ -744,6 +749,43 @@ namespace PADMA.Pages
                 ETransitStepUnit.Years => CurrentTransitLocalDateTime.AddYears(value),
                 _ => CurrentTransitLocalDateTime
             };
+
+            if (transitDatePicker != null)
+            {
+                if (newTransitLocalDateTime.Date > transitDatePicker.MaximumDate)
+                {
+                    if (!_maximumTransitDateMessageShown)
+                    {
+                        _maximumTransitDateMessageShown = true;
+
+                        DisplayAlert(
+                            Localization.GetLocalizedText("Information", lang),
+                            Localization.GetLocalizedText("Reached maximum supported date", lang),
+                            "OK");
+                    }
+
+                    return;
+                }
+
+                if (newTransitLocalDateTime.Date < transitDatePicker.MinimumDate)
+                {
+                    if (!_minimumTransitDateMessageShown)
+                    {
+                        _minimumTransitDateMessageShown = true;
+                        DisplayAlert(
+                            Localization.GetLocalizedText("Information", lang),
+                            Localization.GetLocalizedText("Reached minimum supported date", lang),
+                            "OK");
+                    }
+
+                    return;
+                }
+            }
+
+            _maximumTransitDateMessageShown = false;
+            _minimumTransitDateMessageShown = false;
+
+            CurrentTransitLocalDateTime = newTransitLocalDateTime;
 
             transitDatePicker.Date = CurrentTransitLocalDateTime.Date;
             transitTimePicker.Time = CurrentTransitLocalDateTime.TimeOfDay;
@@ -1037,6 +1079,8 @@ namespace PADMA.Pages
             {
                 Format = "D",
                 Date = currentDate,
+                MinimumDate = new DateTime(1900, 1, 1),
+                MaximumDate = new DateTime(2100, 12, 31),
                 HeightRequest = 38,
                 MinimumHeightRequest = 38,
                 HorizontalOptions = LayoutOptions.CenterAndExpand,

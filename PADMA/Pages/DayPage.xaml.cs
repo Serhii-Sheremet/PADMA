@@ -2478,7 +2478,7 @@ namespace PADMA.Pages
                 AddTransitSection(forLagna: useLagna);
             }
 
-            // ---- Блок 4: Mrytiu Bhaga ----
+            // ---- Блок 4: Mrityu Bhaga ----
             var mrityuBhagaList = SwissAnalysis.CalculateMrityuBhagaDataList_London(
                 slice.PlanetId,
                 seg.TransitStart,
