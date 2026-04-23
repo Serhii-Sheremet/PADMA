@@ -712,11 +712,11 @@ namespace PADMA.UI.ViewModels
                         transition.Value,
                         baseOffset);
                 }
-            }
 
-            ActiveLocationTimeZoneDisplay = string.IsNullOrWhiteSpace(locality)
+                ActiveLocationTimeZoneDisplay = string.IsNullOrWhiteSpace(locality)
                     ? $"{tzInfo.Id}, {offsetText}{transitionSuffix}"
                     : $"{locality}, {offsetText}{transitionSuffix}";
+            }
         }
 
         private static DateTime GetMonthSampleLocalTime(int year, int month)

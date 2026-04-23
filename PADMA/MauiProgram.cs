@@ -109,9 +109,187 @@ public static class MauiProgram
             needReplace = true; // если ошибка — заменяем базу
         }
 
+        var preservedLocations = new List<LocationBackupRow>();
+        var preservedProfiles = new List<ProfileBackupRow>();
+        var preservedUserEvents = new List<UserEventBackupRow>();
+
         if (needReplace)
         {
+            try
+            {
+                if (File.Exists(dbPath))
+                {
+                    using var oldDb = new SQLite.SQLiteConnection(dbPath);
+
+                    preservedLocations = oldDb.Query<LocationBackupRow>(@"
+                        SELECT
+                            ID,
+                            LOCALITY,
+                            LATITUDE,
+                            LONGITUDE,
+                            REGION,
+                            STATE,
+                            COUNTRY,
+                            COUNTRYCODE,
+                            LANGUAGECODE,
+                            LOCALITY_NORM,
+                            REGION_NORM,
+                            STATE_NORM,
+                            COUNTRY_NORM
+                        FROM LOCATION
+                    ");
+
+                    preservedProfiles = oldDb.Query<ProfileBackupRow>(@"
+                        SELECT
+                            ID,
+                            PROFILENAME,
+                            PERSONNAME,
+                            PERSONSURNAME,
+                            DATEOFBIRTH,
+                            PLACEOFBIRTHID,
+                            PLACEOFLIVINGID,
+                            MESSAGE,
+                            CHECKED
+                        FROM PROFILE
+                    ");
+
+                    preservedUserEvents = oldDb.Query<UserEventBackupRow>(@"
+                        SELECT
+                            ID,
+                            PROFILEID,
+                            DATESTART,
+                            DATEEND,
+                            NAME,
+                            MESSAGE,
+                            ARGBVALUE
+                        FROM USER_EVENTS
+                    ");
+
+                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved LOCATION rows: {preservedLocations.Count}");
+                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved PROFILE rows: {preservedProfiles.Count}");
+                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved USER_EVENTS rows: {preservedUserEvents.Count}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DB] Preserve user data failed: {ex.Message}");
+            }
+
             File.Copy(tempPath, dbPath, overwrite: true);
+
+            try
+            {
+                using var newLocalDb = new SQLite.SQLiteConnection(dbPath);
+
+                newLocalDb.RunInTransaction(() =>
+                {
+                    newLocalDb.Execute("PRAGMA foreign_keys = OFF;");
+
+                    newLocalDb.Execute("DELETE FROM USER_EVENTS;");
+                    newLocalDb.Execute("DELETE FROM PROFILE;");
+                    newLocalDb.Execute("DELETE FROM LOCATION;");
+
+                    newLocalDb.Execute("DELETE FROM sqlite_sequence WHERE name='USER_EVENTS';");
+                    newLocalDb.Execute("DELETE FROM sqlite_sequence WHERE name='PROFILE';");
+                    newLocalDb.Execute("DELETE FROM sqlite_sequence WHERE name='LOCATION';");
+
+                    foreach (var loc in preservedLocations)
+                    {
+                        newLocalDb.Execute(@"
+                            INSERT INTO LOCATION
+                            (
+                                ID,
+                                LOCALITY,
+                                LATITUDE,
+                                LONGITUDE,
+                                REGION,
+                                STATE,
+                                COUNTRY,
+                                COUNTRYCODE,
+                                LANGUAGECODE,
+                                LOCALITY_NORM,
+                                REGION_NORM,
+                                STATE_NORM,
+                                COUNTRY_NORM
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                            loc.ID,
+                            loc.LOCALITY,
+                            loc.LATITUDE,
+                            loc.LONGITUDE,
+                            loc.REGION,
+                            loc.STATE,
+                            loc.COUNTRY,
+                            loc.COUNTRYCODE,
+                            loc.LANGUAGECODE,
+                            loc.LOCALITY_NORM,
+                            loc.REGION_NORM,
+                            loc.STATE_NORM,
+                            loc.COUNTRY_NORM
+                        );
+                    }
+
+                    foreach (var profile in preservedProfiles)
+                    {
+                        newLocalDb.Execute(@"
+                            INSERT INTO PROFILE
+                            (
+                                ID,
+                                PROFILENAME,
+                                PERSONNAME,
+                                PERSONSURNAME,
+                                DATEOFBIRTH,
+                                PLACEOFBIRTHID,
+                                PLACEOFLIVINGID,
+                                MESSAGE,
+                                CHECKED
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                            profile.ID,
+                            profile.PROFILENAME,
+                            profile.PERSONNAME,
+                            profile.PERSONSURNAME,
+                            profile.DATEOFBIRTH,
+                            profile.PLACEOFBIRTHID,
+                            profile.PLACEOFLIVINGID,
+                            profile.MESSAGE,
+                            profile.CHECKED
+                        );
+                    }
+
+                    foreach (var ev in preservedUserEvents)
+                    {
+                        newLocalDb.Execute(@"
+                            INSERT INTO USER_EVENTS
+                            (
+                                ID,
+                                PROFILEID,
+                                DATESTART,
+                                DATEEND,
+                                NAME,
+                                MESSAGE,
+                                ARGBVALUE
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?);",
+                            ev.ID,
+                            ev.PROFILEID,
+                            ev.DATESTART,
+                            ev.DATEEND,
+                            ev.NAME,
+                            ev.MESSAGE,
+                            ev.ARGBVALUE
+                        );
+                    }
+
+                    newLocalDb.Execute("PRAGMA foreign_keys = ON;");
+                });
+
+                //System.Diagnostics.Debug.WriteLine("[DB] User data restored after DB replace.");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DB] Restore user data failed: {ex.Message}");
+            }
         }
 
         // === Регистрация сервисов ===
@@ -140,7 +318,48 @@ public static class MauiProgram
         ServiceLocator.Services = app.Services;
 
         return app;
-
-
     }
+
+    private sealed class LocationBackupRow
+    {
+        public int ID { get; set; }
+        public string LOCALITY { get; set; } = string.Empty;
+        public string LATITUDE { get; set; } = string.Empty;
+        public string LONGITUDE { get; set; } = string.Empty;
+        public string REGION { get; set; } = string.Empty;
+        public string STATE { get; set; } = string.Empty;
+        public string COUNTRY { get; set; } = string.Empty;
+        public string COUNTRYCODE { get; set; } = string.Empty;
+        public string LANGUAGECODE { get; set; } = string.Empty;
+        public string LOCALITY_NORM { get; set; } = string.Empty;
+        public string REGION_NORM { get; set; } = string.Empty;
+        public string STATE_NORM { get; set; } = string.Empty;
+        public string COUNTRY_NORM { get; set; } = string.Empty;
+    }
+
+    private sealed class ProfileBackupRow
+    {
+        public int ID { get; set; }
+        public string PROFILENAME { get; set; } = string.Empty;
+        public string PERSONNAME { get; set; } = string.Empty;
+        public string PERSONSURNAME { get; set; } = string.Empty;
+        public string DATEOFBIRTH { get; set; } = string.Empty;
+        public int? PLACEOFBIRTHID { get; set; }
+        public int? PLACEOFLIVINGID { get; set; }
+        public string MESSAGE { get; set; } = string.Empty;
+        public int CHECKED { get; set; }
+    }
+
+    private sealed class UserEventBackupRow
+    {
+        public int ID { get; set; }
+        public int PROFILEID { get; set; }
+        public string DATESTART { get; set; } = string.Empty;
+        public string DATEEND { get; set; } = string.Empty;
+        public string NAME { get; set; } = string.Empty;
+        public string MESSAGE { get; set; } = string.Empty;
+        public int ARGBVALUE { get; set; }
+    }
+
+
 }

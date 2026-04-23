@@ -402,7 +402,7 @@ INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (24,'N
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (25,'NOTEREMINDER','MIN5',1);
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (26,'NOTEREMINDER','MIN15',0);
 INSERT INTO "APPSETTING" ("ID","GROUPCODE","SETTINGCODE","ACTIVE") VALUES (27,'NOTEREMINDER','MIN30',0);
-INSERT INTO "APP_META" ("KEY","VALUE") VALUES ('DB_VERSION','0.0.67');
+INSERT INTO "APP_META" ("KEY","VALUE") VALUES ('DB_VERSION','0.0.68');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (1,'Language','Language','en');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (2,'Language','Мова','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (3,'Language','Język','pl');
@@ -1315,10 +1315,10 @@ INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES 
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (918,'Welcome to PADma!','Ласкаво просимо до PADma!','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (919,'Welcome to PADma!','Witamy w PADma!','pl');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (920,'Welcome to PADma!','Добро пожаловать в PADma!','ru');
-INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (921,'CreateProfileHint','To begin, please create a user profile and mark it as default.','en');
-INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (922,'CreateProfileHint','Щоб почати, створіть профіль користувача та зробіть його типовим.','uk');
-INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (923,'CreateProfileHint','Aby rozpocząć, utwórz profil użytkownika i ustaw go jako domyślny.','pl');
-INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (924,'CreateProfileHint','Чтобы начать, создайте профиль пользователя и сделайте его активным по умолчанию.','ru');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (921,'CreateProfileHint','To begin, please create a user profile and select it. You can also set it as default for automatic loading.','en');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (922,'CreateProfileHint','Щоб розпочати, створіть профіль користувача та виберіть його. Ви також можете встановити його за замовчуванням для автоматичного завантаження.','uk');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (923,'CreateProfileHint','Aby rozpocząć, utwórz profil użytkownika i wybierz go. Możesz również ustawić go jako domyślny, aby był ładowany automatycznie.','pl');
+INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (924,'CreateProfileHint','Чтобы начать, создайте профиль пользователя и выберите его. Вы также можете установить его по умолчанию для автоматической загрузки.','ru');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (925,'is an independent project.','is an independent project.','en');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (926,'is an independent project.','є незалежним проєктом.','uk');
 INSERT INTO "APP_TEXTS" ("ID","NATIVETEXT","FOREIGNTEXT","LANGUAGECODE") VALUES (927,'is an independent project.','jest niezależnym projektem.','pl');
