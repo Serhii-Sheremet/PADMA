@@ -319,6 +319,10 @@ public static class MauiProgram
                         );
                     }
 
+                    SyncSqliteSequence(newLocalDb, "LOCATION");
+                    SyncSqliteSequence(newLocalDb, "PROFILE");
+                    SyncSqliteSequence(newLocalDb, "USER_EVENTS");
+
                     newLocalDb.Execute("PRAGMA foreign_keys = ON;");
                 });
             }
@@ -355,6 +359,30 @@ public static class MauiProgram
         ServiceLocator.Services = app.Services;
 
         return app;
+    }
+
+    private static void SyncSqliteSequence(SQLite.SQLiteConnection db, string tableName)
+    {
+        var maxId = db.ExecuteScalar<int>($"SELECT IFNULL(MAX(ID), 0) FROM {tableName};");
+
+        var exists = db.ExecuteScalar<int>(
+            "SELECT COUNT(*) FROM sqlite_sequence WHERE name = ?;",
+            tableName);
+
+        if (exists > 0)
+        {
+            db.Execute(
+                "UPDATE sqlite_sequence SET seq = ? WHERE name = ?;",
+                maxId,
+                tableName);
+        }
+        else
+        {
+            db.Execute(
+                "INSERT INTO sqlite_sequence(name, seq) VALUES (?, ?);",
+                tableName,
+                maxId);
+        }
     }
 
     private sealed class LocationBackupRow
