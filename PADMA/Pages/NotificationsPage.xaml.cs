@@ -76,7 +76,12 @@ namespace PADMA.Pages
                 var db = ServiceLocator.Services.GetService<DatabaseService>();
                 db.SetAppSettingActive("NOTEREMINDER", _currentSettingCode);
                 DataCache.Instance.Refresh(db);
-                MessagingCenter.Send<object>(this, "SettingsChanged");
+                
+                var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>();
+                if (reminder != null)
+                    await reminder.RefreshAsync();
+
+                MessagingCenter.Send<object>(this, "NotificationSettingsChanged");
             }
         }
     }

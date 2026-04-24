@@ -1761,6 +1761,25 @@ namespace PADMA.Core.Services
             }
         }
 
+        public int PurgeUserEventsEndedBefore(DateTime cutoffLocal)
+        {
+            try
+            {
+                var cutoffStr = UserEventDateHelper.ToDbString(cutoffLocal);
+
+                const string sql = @"
+                    DELETE FROM USER_EVENTS
+                    WHERE DATEEND < ?;";
+
+                return _connection.Execute(sql, cutoffStr);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[PADMA] DB PurgeUserEventsEndedBefore error: {ex.Message}");
+                return 0;
+            }
+        }
+
         #endregion
 
 

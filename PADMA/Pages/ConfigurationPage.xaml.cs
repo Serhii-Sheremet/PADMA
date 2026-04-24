@@ -57,6 +57,18 @@ namespace PADMA.Pages
                 ApplyLocalization();
                 await ShowSettingsUpdatedMessage();
             });
+
+            MessagingCenter.Subscribe<object>(this, "NotificationSettingsChanged", async _ =>
+            {
+                ApplyLocalization();
+                await ShowSettingsUpdatedMessage();
+            });
+
+            MessagingCenter.Subscribe<object>(this, "RetentionPolicyChanged", async _ =>
+            {
+                ApplyLocalization();
+                await ShowSettingsUpdatedMessage();
+            });
         }
 
         protected override void OnAppearing()
@@ -79,8 +91,9 @@ namespace PADMA.Pages
             btnMuhurta.Text = Localization.GetLocalizedText("30 Muhurtas (60 Ghatis)", lang);
             btnMrityuBhaga.Text = Localization.GetLocalizedText("Mrityu Bhaga", lang);
             btnSunrise.Text = Localization.GetLocalizedText("Sunrise calculation", lang);
-            btnNotifications.Text = Localization.GetLocalizedText("Notifications", lang);
             btnColorSettings.Text = Localization.GetLocalizedText("Color settings", lang);
+            btnNotifications.Text = Localization.GetLocalizedText("Notifications", lang);
+            btnRetention.Text = Localization.GetLocalizedText("Retention policy", lang);
         }
 
         private async Task ShowSettingsUpdatedMessage()
@@ -169,14 +182,19 @@ namespace PADMA.Pages
             await Shell.Current.GoToAsync("SunrisePage");
         }
 
+        private async void OnColorSettingsClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("ColorSettingsPage");
+        }
+
         private async void OnNotificationsClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("NotificationsPage");
         }
 
-        private async void OnColorSettingsClicked(object sender, EventArgs e)
+        private async void OnRetentionClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("ColorSettingsPage");
+            await Shell.Current.GoToAsync("RetentionPage");
         }
 
     }

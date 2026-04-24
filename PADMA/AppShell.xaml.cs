@@ -120,9 +120,10 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         Routing.RegisterRoute(nameof(MuhurtasPage), typeof(MuhurtasPage));
         Routing.RegisterRoute(nameof(MrityuBhagaPage), typeof(MrityuBhagaPage));
         Routing.RegisterRoute(nameof(SunrisePage), typeof(SunrisePage));
-        Routing.RegisterRoute(nameof(NotificationsPage), typeof(NotificationsPage));
         Routing.RegisterRoute(nameof(ColorSettingsPage), typeof(ColorSettingsPage));
         Routing.RegisterRoute(nameof(ColorLookupPage), typeof(ColorLookupPage));
+        Routing.RegisterRoute(nameof(NotificationsPage), typeof(NotificationsPage));
+        Routing.RegisterRoute(nameof(RetentionPage), typeof(RetentionPage));
 
         ExitCommand = new Command(async () =>
         {

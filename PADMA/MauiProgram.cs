@@ -112,6 +112,7 @@ public static class MauiProgram
         var preservedLocations = new List<LocationBackupRow>();
         var preservedProfiles = new List<ProfileBackupRow>();
         var preservedUserEvents = new List<UserEventBackupRow>();
+        var preservedAppSettings = new List<AppSettingBackupRow>();
 
         if (needReplace)
         {
@@ -165,9 +166,18 @@ public static class MauiProgram
                         FROM USER_EVENTS
                     ");
 
+                    preservedAppSettings = oldDb.Query<AppSettingBackupRow>(@"
+                        SELECT
+                            GROUPCODE,
+                            SETTINGCODE,
+                            ACTIVE
+                        FROM APPSETTING
+                    ");
+
                     //System.Diagnostics.Debug.WriteLine($"[DB] Preserved LOCATION rows: {preservedLocations.Count}");
                     //System.Diagnostics.Debug.WriteLine($"[DB] Preserved PROFILE rows: {preservedProfiles.Count}");
                     //System.Diagnostics.Debug.WriteLine($"[DB] Preserved USER_EVENTS rows: {preservedUserEvents.Count}");
+                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved APPSETTING rows: {preservedAppSettings.Count}");
                 }
             }
             catch (Exception ex)
@@ -281,6 +291,19 @@ public static class MauiProgram
                         );
                     }
 
+                    foreach (var setting in preservedAppSettings)
+                    {
+                        newLocalDb.Execute(@"
+                            UPDATE APPSETTING
+                            SET ACTIVE = ?
+                            WHERE GROUPCODE = ?
+                              AND SETTINGCODE = ?;",
+                            setting.ACTIVE,
+                            setting.GROUPCODE,
+                            setting.SETTINGCODE
+                        );
+                    }
+
                     newLocalDb.Execute("PRAGMA foreign_keys = ON;");
                 });
 
@@ -310,6 +333,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<NavigationDataStore>();
         builder.Services.AddSingleton<ILocalNotificationProvider, PluginLocalNotificationProvider>();
         builder.Services.AddSingleton<IUserNoteReminderService, UserNoteReminderService>();
+        builder.Services.AddSingleton<UserEventRetentionService>();
         builder.Services.AddSingleton<IDayComputationService, DayComputationService>();
 
         var app = builder.Build();
@@ -361,5 +385,11 @@ public static class MauiProgram
         public int ARGBVALUE { get; set; }
     }
 
+    private sealed class AppSettingBackupRow
+    {
+        public string GROUPCODE { get; set; } = string.Empty;
+        public string SETTINGCODE { get; set; } = string.Empty;
+        public int ACTIVE { get; set; }
+    }
 
 }

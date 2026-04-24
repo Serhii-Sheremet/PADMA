@@ -47,13 +47,17 @@
                         Text="Sunrise calculation"
                         Clicked="OnSunriseClicked" />
 
+                <Button x:Name="btnColorSettings"
+                        Text="Color settings"
+                        Clicked="OnColorSettingsClicked" />
+
                 <Button x:Name="btnNotifications"
                         Text="Notifications"
                         Clicked="OnNotificationsClicked" />
 
-                <Button x:Name="btnColorSettings"
-                        Text="Color settings"
-                        Clicked="OnColorSettingsClicked" />
+                <Button x:Name="btnRetention"
+                        Text="Retention policy"
+                        Clicked="OnRetentionClicked" />
 
             </VerticalStackLayout>
         </ScrollView>

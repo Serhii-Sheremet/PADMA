@@ -67,8 +67,26 @@ public partial class App : Application
                 }
             }
 
-            if (reminder != null && DataCache.Instance.ProfileContextService.Current != null)
-                await reminder.RefreshAsync();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(1500);
+
+                    var retention = ServiceLocator.Services.GetService<UserEventRetentionService>();
+                    var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>();
+
+                    if (retention != null)
+                        await retention.ApplyAsync();
+
+                    if (reminder != null && DataCache.Instance.ProfileContextService.Current != null)
+                        await reminder.RefreshAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PADMA] Background retention/reminder refresh failed: {ex.Message}");
+                }
+            });
         }
         finally
         {
