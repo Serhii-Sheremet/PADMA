@@ -113,6 +113,7 @@ public static class MauiProgram
         var preservedProfiles = new List<ProfileBackupRow>();
         var preservedUserEvents = new List<UserEventBackupRow>();
         var preservedAppSettings = new List<AppSettingBackupRow>();
+        var preservedColors = new List<ColorBackupRow>();
 
         if (needReplace)
         {
@@ -174,10 +175,13 @@ public static class MauiProgram
                         FROM APPSETTING
                     ");
 
-                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved LOCATION rows: {preservedLocations.Count}");
-                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved PROFILE rows: {preservedProfiles.Count}");
-                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved USER_EVENTS rows: {preservedUserEvents.Count}");
-                    //System.Diagnostics.Debug.WriteLine($"[DB] Preserved APPSETTING rows: {preservedAppSettings.Count}");
+                    preservedColors = oldDb.Query<ColorBackupRow>(@"
+                        SELECT
+                            CODE,
+                            ARGBVALUE
+                        FROM COLOR
+                    ");
+
                 }
             }
             catch (Exception ex)
@@ -304,10 +308,19 @@ public static class MauiProgram
                         );
                     }
 
+                    foreach (var color in preservedColors)
+                    {
+                        newLocalDb.Execute(@"
+                            UPDATE COLOR
+                            SET ARGBVALUE = ?
+                            WHERE CODE = ?;",
+                            color.ARGBVALUE,
+                            color.CODE
+                        );
+                    }
+
                     newLocalDb.Execute("PRAGMA foreign_keys = ON;");
                 });
-
-                //System.Diagnostics.Debug.WriteLine("[DB] User data restored after DB replace.");
             }
             catch (Exception ex)
             {
@@ -390,6 +403,12 @@ public static class MauiProgram
         public string GROUPCODE { get; set; } = string.Empty;
         public string SETTINGCODE { get; set; } = string.Empty;
         public int ACTIVE { get; set; }
+    }
+
+    private sealed class ColorBackupRow
+    {
+        public string CODE { get; set; } = string.Empty;
+        public int ARGBVALUE { get; set; }
     }
 
 }
