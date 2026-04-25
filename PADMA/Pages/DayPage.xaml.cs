@@ -585,14 +585,22 @@ namespace PADMA.Pages
 
         private void UpdateTooltipBodyHeight()
         {
-            if (!IsTooltipVisible) return;
-            if (!HasTooltipBlocks) { TooltipBodyHeight = -1; return; }
-            if (TooltipBodyStack == null) return;
+            if (!HasTooltipBlocks)
+            {
+                TooltipBodyHeight = -1;
+                return;
+            }
+
+            if (TooltipBodyStack == null)
+                return;
 
             double availableWidth = Math.Max(0, TooltipMaxWidth - 40);
 
             var size = TooltipBodyStack.Measure(availableWidth, double.PositiveInfinity);
             var desired = size.Height;
+
+            if (desired <= 0)
+                return;
 
             TooltipBodyHeight = Math.Min(desired, TooltipBodyMaxHeight);
         }
@@ -1618,8 +1626,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(nak, NakshatraTooltipFields);
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private static readonly (string NativeLabel, Func<NakshatraDesc, string?> GetValue)[] NakshatraTooltipFields =
@@ -1642,8 +1650,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(tb, TaraBalaTooltipFields);
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private static readonly (string NativeLabel, Func<TaraBalaDesc, string?> GetValue)[] TaraBalaTooltipFields =
@@ -1679,8 +1687,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ti, TithiTooltipFields);
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private static readonly (string NativeLabel, Func<TithiDesc, string?> GetValue)[] TithiTooltipFields =
@@ -1701,8 +1709,8 @@ namespace PADMA.Pages
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
             FillTooltipBlocks(ka, KaranaTooltipFields);
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private static readonly (string NativeLabel, Func<KaranaDesc, string?> GetValue)[] KaranaTooltipFields =
@@ -1724,17 +1732,17 @@ namespace PADMA.Pages
 
             TooltipItems.Clear();
 
-            // 1) Управитель (планета)
+            // Управитель (планета)
             var rulerName = PanchangaHelper.GetPlanetDescEntity(ny.YogiPlanetId)?.Name;
             AddTooltipBlock("Ruler", rulerName);
 
-            // 2) Накшатра
+            // Накшатра
             var nakName = PanchangaHelper.GetNakshatraDescEntity(ny.NakshatraId)?.Name;
             AddTooltipBlock("Nakshatra", nakName);
 
             FillTooltipBlocks(nyd, NityaYogaTooltipFields, false);
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private static readonly (string NativeLabel, Func<NityaYogaDesc, string?> GetValue)[] NityaYogaTooltipFields =
@@ -1750,8 +1758,8 @@ namespace PADMA.Pages
             var text = StripLeadingTime(seg.Text);
             TooltipTitle = $"{text}";
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private static string StripLeadingTime(string? text)
@@ -1973,8 +1981,8 @@ namespace PADMA.Pages
                     TooltipItems.Add(new TooltipSpacer { Height = 8 });
                 }
             }
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private static FormattedString FsHeader(string text)
@@ -2166,8 +2174,8 @@ namespace PADMA.Pages
                     TooltipItems.Add(new TooltipSpacer { Height = 8 });
                 }
             }
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+            RefreshTooltipLayout();
         }
 
         private string GetVaraName(DayOfWeek dow)
@@ -2311,6 +2319,8 @@ namespace PADMA.Pages
             // переводим в local
             var startLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitStart, tzInfo);
             var endLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitEnd, tzInfo);
+            
+            ResetTooltipBodyMeasure();
 
             // Заголовок и диапазон – в стиле остальных тултипов
             var pName = PanchangaHelper.GetPlanetDescEntity((int)planet)?.Name ?? planet.ToString();
@@ -2510,12 +2520,34 @@ namespace PADMA.Pages
                 }
             }
 
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+            ScheduleTooltipBodyHeightUpdate();
+        }
+
+        private void ResetTooltipBodyMeasure()
+        {
+            TooltipBodyHeight = -1;
+            TooltipBodyStack?.InvalidateMeasure();
+        }
+
+        private void ScheduleTooltipBodyHeightUpdate()
+        {
+            Dispatcher.Dispatch(async () =>
+            {
+                await Task.Yield();
+
+                TooltipBodyStack?.InvalidateMeasure();
+                UpdateTooltipBodyHeight();
+            });
         }
 
         private static DateTime AsUtc(DateTime dt) =>
                     dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+
+        private void RefreshTooltipLayout()
+        {
+            ResetTooltipBodyMeasure();
+            ScheduleTooltipBodyHeightUpdate();
+        }
 
         private void ShowHoraTooltip(PanchangaSegment seg)
         {
@@ -2523,8 +2555,7 @@ namespace PADMA.Pages
             TooltipTitle = seg.Text ?? string.Empty;
             TooltipRange = $"{seg.TransitStart:dd.MM.yyyy HH:mm:ss} – {seg.TransitEnd:dd.MM.yyyy HH:mm:ss}";
 
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+            RefreshTooltipLayout();
         }
 
         private void ShowMuhurta30Tooltip(PanchangaSegment seg)
@@ -2538,8 +2569,7 @@ namespace PADMA.Pages
             TooltipItems.Clear();
             FillTooltipBlocks(m30desc, Muhurta30TooltipFields, false);
 
-            UpdateTooltipBodyHeight();
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+            RefreshTooltipLayout();
         }
 
         private static readonly (string NativeLabel, Func<Muhurta30Desc, string?> GetValue)[] Muhurta30TooltipFields =
@@ -2558,7 +2588,7 @@ namespace PADMA.Pages
             TooltipItems.Clear();
             FillTooltipBlocks(gdesc, Ghati60TooltipFields, false);
 
-            Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+            RefreshTooltipLayout();
         }
 
         private static readonly (string NativeLabel, Func<Ghati60Desc, string?> GetValue)[] Ghati60TooltipFields =
@@ -2694,8 +2724,8 @@ namespace PADMA.Pages
                     }
                     AddTooltipBlock("Drekkana", string.Join(", ", parts));
                 }
-                UpdateTooltipBodyHeight();
-                Dispatcher.Dispatch(UpdateTooltipBodyHeight);
+
+                RefreshTooltipLayout();
             }
         }
 
