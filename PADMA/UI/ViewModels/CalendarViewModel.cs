@@ -276,7 +276,7 @@ namespace PADMA.UI.ViewModels
 
                 NotesOverlayItems.Add(new NotesOverlayItem
                 {
-                    Text = $"{ev.Name}: {from} - {to}",
+                    Text = $"{from} - {to}: {ev.Name}",
                     BackgroundColor = CalendarDrawingHelper.ColorFromArgbInt(ev.ArgbValue)
                 });
             }
