@@ -16,46 +16,68 @@
             <VerticalStackLayout Padding="20" Spacing="15">
 
                 <Button x:Name="btnLanguage"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Language"
                         Clicked="OnLanguageClicked" />
 
                 <Button x:Name="btnFirstDayOfWeek"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="First day of week"
                         Clicked="OnFirstDayOfWeekClicked" />
 
                 <Button x:Name="btnTransits"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Planetary transits"
                         Clicked="OnTransitsClicked" />
 
                 <Button x:Name="btnNodes"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Nodes (Rahu and Ketu)"
                         Clicked="OnNodesClicked" />
 
                 <Button x:Name="btnHora"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Hora"
                         Clicked="OnHoraClicked" />
 
                 <Button x:Name="btnMuhurta"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="30 Muhurtas (60 Ghatis)"
                         Clicked="OnMuhurtasClicked" />
 
                 <Button x:Name="btnMrityuBhaga"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Mrityu Bhaga"
                         Clicked="OnMrityuBhagaClicked" />
 
                 <Button x:Name="btnSunrise"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Sunrise calculation"
                         Clicked="OnSunriseClicked" />
 
                 <Button x:Name="btnColorSettings"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Color settings"
                         Clicked="OnColorSettingsClicked" />
 
                 <Button x:Name="btnNotifications"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Notifications"
                         Clicked="OnNotificationsClicked" />
 
                 <Button x:Name="btnRetention"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Text="Retention policy"
                         Clicked="OnRetentionClicked" />
 

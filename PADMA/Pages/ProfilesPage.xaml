@@ -20,6 +20,8 @@
         <Button
             Grid.Row="0"
             x:Name="btnAddProfile"
+            BackgroundColor="#2196F3"
+            TextColor="White"
             Text="Add new profile"
             Clicked="OnAddProfileClicked"
             FontSize="16"

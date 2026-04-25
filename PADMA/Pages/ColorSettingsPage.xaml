@@ -88,9 +88,13 @@
             <Grid Grid.Row="1" ColumnSpacing="10"
                   ColumnDefinitions="*,*">
                 <Button x:Name="ApplySystemButton"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Grid.Column="0"
                         Clicked="OnApplySystemClicked"/>
                 <Button x:Name="ChangeButton"
+                        BackgroundColor="#2196F3"
+                        TextColor="White"
                         Grid.Column="1"
                         Clicked="OnChangeClicked"
                         IsEnabled="False"/>
