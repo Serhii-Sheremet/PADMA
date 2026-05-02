@@ -1,3 +1,5 @@
+using static PADMA.UI.Services.DayComputationService;
+
 namespace PADMA.UI;
 
 public sealed class YogaOverviewStripe
@@ -28,5 +30,16 @@ public sealed class YogaTimeSegment
 
     public string StartText { get; set; } = "";   // "HH:mm" or ""
     public string EndText { get; set; } = "";     // "HH:mm" or ""
+
+    public List<YogaSegmentDetail> Details { get; } = new();
+}
+
+public sealed class YogaSegmentDetail
+{
+    public DayOfWeek Vara { get; set; }
+    public int NakshatraId { get; set; }
+    public int TithiId { get; set; }
+    public DateTime StartLocal { get; set; }
+    public DateTime EndLocal { get; set; }
 }
 

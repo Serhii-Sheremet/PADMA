@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using PADMA.Core.Enums;
+﻿using PADMA.Core.Enums;
 using PADMA.Core.Analysis;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
@@ -355,19 +350,8 @@ namespace PADMA.UI.Services
 
                         foreach (var s in slices)
                         {
-                            // overlap with civil day (UTC)
-                            if (s.EndUtc <= dayStartUtc || s.StartUtc >= dayEndUtc)
-                                continue;
-
                             var startLocal = TimeZoneInfo.ConvertTimeFromUtc(s.StartUtc, tzInfo);
                             var endLocal = TimeZoneInfo.ConvertTimeFromUtc(s.EndUtc, tzInfo);
-
-                            // clamp to civil day (local)
-                            if (endLocal <= dayStartLocal || startLocal >= dayEndLocal)
-                                continue;
-
-                            if (startLocal < dayStartLocal) startLocal = dayStartLocal;
-                            if (endLocal > dayEndLocal) endLocal = dayEndLocal;
 
                             raw.Add((yogaId, title, vara, (int)s.NakshatraCode, s.TithiId, color, startLocal, endLocal));
                         }
@@ -409,49 +393,75 @@ namespace PADMA.UI.Services
 
                         var ordered = g
                             .OrderBy(x => x.StartLocal)
-                            .Select(x => (s: x.StartLocal, e: x.EndLocal))
                             .ToList();
 
-                        // merge overlaps/touches
-                        var merged = new List<(DateTime s, DateTime e)>();
+                        var merged = new List<YogaTimeSegment>();
+
                         foreach (var it in ordered)
                         {
+                            var detail = new YogaSegmentDetail
+                            {
+                                Vara = it.vara,
+                                NakshatraId = it.NakshatraId,
+                                TithiId = it.TithiId,
+                                StartLocal = it.StartLocal,
+                                EndLocal = it.EndLocal
+                            };
+
                             if (merged.Count == 0)
                             {
-                                merged.Add(it);
+                                var segment = new YogaTimeSegment
+                                {
+                                    StartLocal = it.StartLocal,
+                                    EndLocal = it.EndLocal
+                                };
+
+                                segment.Details.Add(detail);
+                                merged.Add(segment);
                                 continue;
                             }
 
                             var last = merged[^1];
-                            if (it.s <= last.e + tol)
+
+                            if (it.StartLocal <= last.EndLocal + tol)
                             {
-                                var newEnd = it.e > last.e ? it.e : last.e;
-                                merged[^1] = (last.s, newEnd);
+                                if (it.EndLocal > last.EndLocal)
+                                    last.EndLocal = it.EndLocal;
+
+                                last.Details.Add(detail);
                             }
                             else
                             {
-                                merged.Add(it);
+                                var segment = new YogaTimeSegment
+                                {
+                                    StartLocal = it.StartLocal,
+                                    EndLocal = it.EndLocal
+                                };
+
+                                segment.Details.Add(detail);
+                                merged.Add(segment);
                             }
                         }
 
                         foreach (var m in merged)
                         {
-                            bool showStart = m.s > dayStartLocal;
-                            bool showEnd = m.e < dayEndLocal;
+                            if (m.EndLocal <= dayStartLocal || m.StartLocal >= dayEndLocal)
+                                continue;
 
-                            stripe.Segments.Add(new YogaTimeSegment
-                            {
-                                StartLocal = m.s,
-                                EndLocal = m.e,
-                                ShowStartBoundary = showStart,
-                                ShowEndBoundary = showEnd,
-                                StartText = showStart ? m.s.ToString("HH:mm") : "",
-                                EndText = showEnd ? m.e.ToString("HH:mm") : ""
-                            });
+                            bool showStart = m.StartLocal > dayStartLocal;
+                            bool showEnd = m.EndLocal < dayEndLocal;
+
+                            m.ShowStartBoundary = showStart;
+                            m.ShowEndBoundary = showEnd;
+                            m.StartText = showStart ? m.StartLocal.ToString("HH:mm") : "";
+                            m.EndText = showEnd ? m.EndLocal.ToString("HH:mm") : "";
+
+                            stripe.Segments.Add(m);
                         }
 
                         return stripe;
                     })
+                    .Where(s => s.Segments.Count > 0)
                     .OrderBy(s => s.Segments.Count == 0 ? DateTime.MaxValue : s.Segments[0].StartLocal)
                     .ToList();
 

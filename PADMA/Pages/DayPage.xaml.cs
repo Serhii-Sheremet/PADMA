@@ -2110,19 +2110,35 @@ namespace PADMA.Pages
                 .Where(s => ids.Contains(s.YogaId))
                 .Select(s =>
                 {
-                    var cover = s.Segments.FirstOrDefault(x => x.StartLocal <= seg.Start && seg.End <= x.EndLocal);
+                    var cover = s.Segments.FirstOrDefault(x =>
+                        x.StartLocal <= seg.Start &&
+                        seg.End <= x.EndLocal);
+
+                    if (cover == null)
+                        return null;
+
+                    var detail = cover.Details.FirstOrDefault(d =>
+                        d.StartLocal <= seg.Start &&
+                        seg.End <= d.EndLocal);
+
+                    detail ??= cover.Details.FirstOrDefault();
+
+                    if (detail == null)
+                        return null;
+
                     return new
                     {
                         s.YogaId,
                         s.ColorId,
-                        Vara = s.Vara,
-                        NakshatraId = s.NakshatraId,
-                        TithiId = s.TithiId,
-                        Start = cover?.StartLocal ?? seg.Start,
-                        End = cover?.EndLocal ?? seg.End
+                        Vara = detail.Vara,
+                        NakshatraId = detail.NakshatraId,
+                        TithiId = detail.TithiId,
+                        Start = cover.StartLocal,
+                        End = cover.EndLocal
                     };
                 })
-                .OrderBy(x => x.Start)
+                .Where(x => x != null)
+                .OrderBy(x => x!.Start)
                 .ToList();
 
             if (items.Count == 0)
