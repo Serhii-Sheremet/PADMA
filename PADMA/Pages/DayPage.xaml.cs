@@ -2018,7 +2018,7 @@ namespace PADMA.Pages
             var overlapColorId = (int)EColor.YOGAMERGE;
 
             // Flatten all yoga time intervals for the day
-            var intervals = new List<(int YogaId, int ColorId, string Title, DateTime Start, DateTime End)>();
+            var intervals = new List<(int YogaId, int ColorId, string Title, DateTime Start, DateTime End, YogaTimeSegment Source)>();
             foreach (var s in stripes)
             {
                 if (s?.Segments == null || s.Segments.Count == 0)
@@ -2032,7 +2032,7 @@ namespace PADMA.Pages
                     if (b <= a)
                         continue;
 
-                    intervals.Add((s.YogaId, s.ColorId, s.Title ?? string.Empty, a, b));
+                    intervals.Add((s.YogaId, s.ColorId, s.Title ?? string.Empty, a, b, seg));
                 }
             }
 
@@ -2045,6 +2045,18 @@ namespace PADMA.Pages
             {
                 points.Add(it.Start);
                 points.Add(it.End);
+
+                foreach (var d in it.Source.Details)
+                {
+                    var ds = d.StartLocal < dayStartLocal ? dayStartLocal : d.StartLocal;
+                    var de = d.EndLocal > dayEndLocal ? dayEndLocal : d.EndLocal;
+
+                    if (ds > it.Start && ds < it.End)
+                        points.Add(ds);
+
+                    if (de > it.Start && de < it.End)
+                        points.Add(de);
+                }
             }
 
             points = points.Distinct().OrderBy(x => x).ToList();
@@ -2117,36 +2129,32 @@ namespace PADMA.Pages
                     if (cover == null)
                         return null;
 
-                    var detail = cover.Details.FirstOrDefault(d =>
-                        d.StartLocal <= seg.Start &&
-                        seg.End <= d.EndLocal);
+                    var details = cover.Details
+                            .Where(d => !(d.EndLocal <= seg.Start || d.StartLocal >= seg.End))
+                            .OrderBy(d => d.StartLocal)
+                            .ThenBy(d => d.EndLocal)
+                            .ToList();
 
-                    detail ??= cover.Details.FirstOrDefault();
-
-                    if (detail == null)
+                    if (details.Count == 0)
                         return null;
 
                     return new
                     {
                         s.YogaId,
                         s.ColorId,
-                        Vara = detail.Vara,
-                        NakshatraId = detail.NakshatraId,
-                        TithiId = detail.TithiId,
-                        Start = cover.StartLocal,
-                        End = cover.EndLocal
+                        SegmentStart = cover.StartLocal,
+                        SegmentEnd = cover.EndLocal,
+                        Details = details
                     };
                 })
                 .Where(x => x != null)
-                .OrderBy(x => x!.Start)
+                .OrderBy(x => x!.SegmentStart)
+                .ThenBy(x => x!.SegmentEnd)
                 .ToList();
 
             if (items.Count == 0)
                 return;
-
-            var distinctColors = items.Select(x => x.ColorId).Where(c => c != 0).Distinct().ToList();
-            bool isMixed = distinctColors.Count > 1;
-
+            
             IsTooltipVisible = true;
             TooltipTitle = string.Empty;
             TooltipRange = string.Empty;
@@ -2155,39 +2163,57 @@ namespace PADMA.Pages
             for (int i = 0; i < items.Count; i++)
             {
                 var it = items[i];
+
                 var yogaItem = PanchangaHelper.GetYogaDescEntity(it.YogaId);
-                if (yogaItem == null) continue;
+                if (yogaItem == null)
+                    continue;
 
-                TooltipItems.Add(FsHeader(yogaItem.Name));
-                TooltipItems.Add(new TooltipRangeLine { Text = $"{it.Start:dd.MM.yyyy HH:mm:ss} – {it.End:dd.MM.yyyy HH:mm:ss}" });
-
-                // Vara
-                var vara = GetVaraName(it.Vara);
-                AddTooltipBlock("Vara", vara);
-
-                // Nakshatra
-                if (it.NakshatraId != 0)
+                for (int j = 0; j < it.Details.Count; j++)
                 {
-                    var nakEntity = PanchangaHelper.GetNakshatraDescEntity(it.NakshatraId);
-                    var nakName = nakEntity != null ? $"{it.NakshatraId}.{nakEntity.Name}" : string.Empty;
-                    AddTooltipBlock("Nakshatra", nakName);
+                    var d = it.Details[j];
+
+                    TooltipItems.Add(FsHeader(yogaItem.Name));
+
+                    TooltipItems.Add(new TooltipRangeLine
+                    {
+                        Text = $"{d.StartLocal:dd.MM.yyyy HH:mm:ss} – {d.EndLocal:dd.MM.yyyy HH:mm:ss}"
+                    });
+
+                    AddTooltipBlock("Vara", GetVaraName(d.Vara));
+
+                    if (d.NakshatraId != 0)
+                    {
+                        var nakEntity = PanchangaHelper.GetNakshatraDescEntity(d.NakshatraId);
+                        var nakName = nakEntity != null
+                            ? $"{d.NakshatraId}.{nakEntity.Name}"
+                            : string.Empty;
+
+                        AddTooltipBlock("Nakshatra", nakName);
+                    }
+
+                    if (d.TithiId != 0)
+                    {
+                        var tiEntity = PanchangaHelper.GetTithiDescEntity(d.TithiId);
+                        var tiName = tiEntity != null
+                            ? $"{d.TithiId}.{tiEntity.Name}"
+                            : string.Empty;
+
+                        AddTooltipBlock("Tithi", tiName);
+                    }
+
+                    FillTooltipBlocks(yogaItem, YogaTooltipFields, clearFirst: false);
+
+                    if (j < it.Details.Count - 1)
+                    {
+                        TooltipItems.Add(new TooltipDivider());
+                        TooltipItems.Add(new TooltipSpacer { Height = 8 });
+                    }
                 }
 
-                // Tithi
-                if (it.TithiId != 0)
-                {
-                    var tiEntity = PanchangaHelper.GetTithiDescEntity(it.TithiId);
-                    var tiName = tiEntity != null ? $"{it.TithiId}.{tiEntity.Name}" : string.Empty;
-                    AddTooltipBlock("Tithi", tiName);
-                }
-
-                FillTooltipBlocks(yogaItem, YogaTooltipFields, clearFirst: false);
-
-                // divider между йогами — но НЕ после последней
                 if (i < items.Count - 1)
                 {
                     TooltipItems.Add(new TooltipDivider());
-                    TooltipItems.Add(new TooltipSpacer { Height = 8 });
+                    TooltipItems.Add(new TooltipSpacer { Height = 10 });
                 }
             }
 

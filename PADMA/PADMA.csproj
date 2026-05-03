@@ -15,7 +15,7 @@
     <ApplicationTitle>Personal Astrological Diary</ApplicationTitle>
     <ApplicationId>com.ssheremet.padma</ApplicationId>
     <ApplicationDisplayVersion>0.5.4</ApplicationDisplayVersion>
-    <ApplicationVersion>9</ApplicationVersion>
+    <ApplicationVersion>10</ApplicationVersion>
 
     <!-- Windows -->
     <WindowsPackageType>None</WindowsPackageType>
