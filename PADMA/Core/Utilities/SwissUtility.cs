@@ -132,14 +132,6 @@ namespace PADMA.Core.Utilities
                 ?.Navamsa ?? 0;
         }
 
-        public static double CalculateAscendantWithTimeZone(
-            DateTime dateUtc, double latitude, double longitude, double altitude, char hsys = 'O')
-        {
-            double offset = TimeZoneService.GetUtcOffsetHours(dateUtc, latitude, longitude);
-            DateTime local = dateUtc.AddHours(offset);
-            return SwissService.CalculateAscendantForDate(local, latitude, longitude, altitude, hsys);
-        }
-
         /// <summary>
         /// Converts decimal degrees to formatted string "DD°MM′SS″".
         /// </summary>

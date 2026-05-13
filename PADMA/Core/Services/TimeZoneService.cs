@@ -27,16 +27,44 @@ namespace PADMA.Core.Services
             return TZConvert.IanaToWindows(tzIana);
         }
 
-        /// <summary>
-        /// Returns UTC offset (in hours) for the given date/time and coordinates using NodaTime tzdb.
-        /// </summary>
-        public static double GetUtcOffsetHours(DateTime dateTimeUtc, double latitude, double longitude)
+        public static DateTime ConvertLocalToUtcHistorical(DateTime localDateTime, double latitude, double longitude)
         {
             string tzIana = GetIanaTimeZoneId(latitude, longitude);
             var zone = DateTimeZoneProviders.Tzdb[tzIana];
-            var instant = Instant.FromDateTimeUtc(DateTime.SpecifyKind(dateTimeUtc, DateTimeKind.Utc));
-            var offset = zone.GetZoneInterval(instant).StandardOffset;
-            return offset.ToTimeSpan().TotalHours;
+
+            var unspecifiedLocal = DateTime.SpecifyKind(localDateTime, DateTimeKind.Unspecified);
+            var local = LocalDateTime.FromDateTime(unspecifiedLocal);
+
+            var zoned = local.InZoneLeniently(zone);
+
+            return zoned.ToInstant().ToDateTimeUtc();
+        }
+
+        public static double GetHistoricalUtcOffsetHoursForLocal(
+            DateTime localDateTime,
+            double latitude,
+            double longitude)
+        {
+            string tzIana = GetIanaTimeZoneId(latitude, longitude);
+            var zone = DateTimeZoneProviders.Tzdb[tzIana];
+
+            var local = LocalDateTime.FromDateTime(
+                DateTime.SpecifyKind(localDateTime, DateTimeKind.Unspecified));
+
+            var zoned = local.InZoneLeniently(zone);
+
+            return zoned.Offset.ToTimeSpan().TotalHours;
+        }
+
+        public static string FormatUtcOffset(double offsetHours)
+        {
+            var sign = offsetHours >= 0 ? "+" : "-";
+            var abs = Math.Abs(offsetHours);
+
+            int hours = (int)Math.Floor(abs);
+            int minutes = (int)Math.Round((abs - hours) * 60);
+
+            return $"UTC{sign}{hours:00}:{minutes:00}";
         }
 
         public static DateTime ShiftDateByDaylightDelta(DateTime date, TimeZoneInfo.AdjustmentRule[] adjustmentRules)

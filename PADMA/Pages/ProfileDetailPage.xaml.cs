@@ -3,6 +3,7 @@ using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.Pages;
+using System.Globalization;
 using System.Text.Json;
 
 namespace PADMA.Pages;
@@ -71,6 +72,7 @@ public partial class ProfileDetailPage : ContentPage
         // сохраняем время, меняем только дату
         var t = timeOfBirthTime.Time;
         _profile.DateOfBirth = e.NewDate.Date + t;
+        RefreshLocationLabels();
 
         MarkChanged();
     }
@@ -84,6 +86,7 @@ public partial class ProfileDetailPage : ContentPage
         var d = dateOfBirthDate.Date;
         var t = timeOfBirthTime.Time;
         _profile.DateOfBirth = d.Date + t;
+        RefreshLocationLabels();
 
         MarkChanged();
     }
@@ -165,9 +168,9 @@ public partial class ProfileDetailPage : ContentPage
         BindingContext = _profile;
 
         // 3) Обновить контролы из модели (важно: чтобы DatePicker/TimePicker не ломали время)
-        RefreshLocationLabels();
         dateOfBirthDate.Date = _profile.DateOfBirth.Date;
         timeOfBirthTime.Time = _profile.DateOfBirth.TimeOfDay;
+        RefreshLocationLabels();
 
         // 4) Локализация (зависит от языка, не от режима)
         ApplyLocalization();
@@ -575,6 +578,7 @@ public partial class ProfileDetailPage : ContentPage
         {
             _profile.DateOfBirth = newBirthDateTime;
             _tempProfile = _profile;
+            RefreshLocationLabels();
         }
     }
 
@@ -604,13 +608,48 @@ public partial class ProfileDetailPage : ContentPage
     {
         string lang = DataCache.Instance.CurrentLanguageCode;
 
-        lblPlaceOfBirthValue.Text = string.IsNullOrWhiteSpace(_profile?.PlaceOfBirthLocality)
-            ? Localization.GetLocalizedText("Select location...", lang)
-            : _profile!.PlaceOfBirthLocality;
+        lblPlaceOfBirthValue.Text = BuildBirthLocationDisplayText();
 
         lblPlaceOfLivingValue.Text = string.IsNullOrWhiteSpace(_profile?.PlaceOfLivingLocality)
             ? Localization.GetLocalizedText("Select location...", lang)
             : _profile!.PlaceOfLivingLocality;
+    }
+
+    private string BuildBirthLocationDisplayText()
+    {
+        string lang = DataCache.Instance.CurrentLanguageCode;
+
+        if (_birthLocation == null)
+            return Localization.GetLocalizedText("Select location...", lang);
+
+        var locality = _birthLocation.Locality?.Trim();
+
+        if (string.IsNullOrWhiteSpace(locality))
+            return Localization.GetLocalizedText("Select location...", lang);
+
+        try
+        {
+            var birthDateTime = dateOfBirthDate.Date + timeOfBirthTime.Time;
+
+            if (!double.TryParse(_birthLocation.Latitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var lat) ||
+                !double.TryParse(_birthLocation.Longitude, NumberStyles.Float, CultureInfo.InvariantCulture, out var lon))
+            {
+                return locality;
+            }
+
+            double offset = TimeZoneService.GetHistoricalUtcOffsetHoursForLocal(
+                birthDateTime,
+                lat,
+                lon);
+
+            string utcOffset = TimeZoneService.FormatUtcOffset(offset);
+
+            return $"{locality}   ({utcOffset})";
+        }
+        catch
+        {
+            return locality;
+        }
     }
 
     private void ApplyMode(ProfileUiMode mode)

@@ -287,8 +287,7 @@ public partial class BirthChartPreviewPage : ContentPage, IQueryAttributable
                 double.TryParse(_birthLocation.Longitude, NumberStyles.Float, CultureInfo.InvariantCulture, out birthLon))
         {
             // Birth reference calculations
-            double offset = TimeZoneService.GetUtcOffsetHours(CurrentTransitLocalDateTime, birthLat, birthLon);
-            DateTime birthUtc = DateTime.SpecifyKind(CurrentTransitLocalDateTime.AddHours(-offset), DateTimeKind.Utc);
+            DateTime birthUtc = TimeZoneService.ConvertLocalToUtcHistorical(CurrentTransitLocalDateTime, birthLat, birthLon);
 
             char hsys = 'O'; // Placidus
             var pdList = SwissAnalysis.CalculatePlanetPositionsForDate(birthUtc, birthLat, birthLon, nodeMode);

@@ -1,3 +1,4 @@
+using NodaTime;
 using PADMA.Core.Analysis;       
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
@@ -50,8 +51,7 @@ public sealed class ProfileContextService : IProfileContextService
                 double.TryParse(birthLoc.Longitude, NumberStyles.Float, CultureInfo.InvariantCulture, out birthLon))
             {
                 // Birth reference calculations
-                double offset = TimeZoneService.GetUtcOffsetHours(profile.DateOfBirth, birthLat, birthLon);
-                localBirthDate = DateTime.SpecifyKind(profile.DateOfBirth.AddHours(-offset), DateTimeKind.Utc);
+                localBirthDate = TimeZoneService.ConvertLocalToUtcHistorical(profile.DateOfBirth, birthLat, birthLon);
 
                 char hsys = 'O'; // Placidus
                 bdPlanetData = SwissAnalysis.CalculatePlanetPositionsForDate(localBirthDate, birthLat, birthLon, nodeMode);
