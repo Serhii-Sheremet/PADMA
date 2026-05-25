@@ -6268,3 +6268,149 @@ These enhancements provide:
 
 ---------
 
+## Monthly Planet Transits Page
+
+### Purpose
+
+The Monthly Planet Transits page is a mobile adaptation of the legacy PAD monthly transits screen.
+Unlike the full legacy desktop screen, the PADMA version focuses only on monthly planetary transit analysis. It does not aim to reproduce all panchanga rows from the legacy screen in the first implementation.
+The page is intended to become the main interactive monthly analysis screen for planetary transits.
+
+### Scope
+
+The first implementation includes:
+
+- month day scale;
+- weekday scale;
+- Masa/Shunya row;
+- monthly transit groups for the 9 planets:
+  - Sun;
+  - Moon;
+  - Mars;
+  - Mercury;
+  - Jupiter;
+  - Venus;
+  - Saturn;
+  - Rahu;
+  - Ketu.
+
+The first implementation excludes:
+
+- global Nakshatra row;
+- Tara Bala row;
+- Tithi row;
+- Karana row;
+- Nitya Yoga row;
+- Chandra Bala row;
+- BTN / VTN Yoga rows;
+- other full panchanga rows from the legacy PAD screen.
+
+### Planet Group Structure
+
+Each planet is displayed as a vertical group of transit lanes.
+In the first implementation, each planet group contains the same four lanes as in the legacy PAD screen.
+The internal data model must not hard-code the assumption that a planet always has exactly four lanes. It must allow additional lanes to be added later without redesigning the page structure.
+
+### Planet Transit Lanes
+
+Each planet group contains the following lanes in the first implementation:
+
+- zodiac transit;
+- nakshatra transit;
+- pada transit;
+- tara bala transit.
+
+These four lanes reproduce the current legacy PAD monthly planet transit structure.
+The internal model must support adding more lanes later, because the Product Owner may request additional planet transit components in future versions.
+
+### Transit Color Mode
+
+The monthly planet transit page must respect the existing global transit display setting from `EAppSetting`:
+
+- `TRANZITMOON` — display transit result from the natal Moon;
+- `TRANZITLAGNA` — display transit result from Lagna;
+- `TRANZITMOONANDLAGNA` — display both results in the same interval.
+
+When `TRANZITMOONANDLAGNA` is active, a transit interval is visually split horizontally into two colored parts:
+
+- top part: result from natal Moon;
+- bottom part: result from Lagna.
+
+This behavior must be consistent with the existing implementation used by Day Overview / Day Page transit rendering.
+
+### Horizontal Time Axis
+
+The horizontal axis represents one full calendar month.
+
+The top header displays:
+
+- day of week;
+- day number;
+- visual separation between days.
+
+Transit intervals are drawn proportionally between their start and end time within the month.
+
+### Scrolling
+
+The page must support:
+
+- horizontal scrolling across the month;
+- vertical scrolling across planet groups;
+- readable fixed or sticky row labels where technically feasible.
+
+The first implementation should prioritize correctness, full data visibility, and interaction over compact visual optimization.
+
+### Interaction
+
+The page is interactive.
+
+When the user taps a transit interval:
+
+- the tapped interval becomes selected;
+- the related day is visually highlighted on the monthly timeline;
+- the selected date boundaries are shown in the timeline area;
+- detailed information for the selected transit is displayed in a mobile-adapted details area.
+
+The mobile details area may be implemented as a tooltip, bottom panel, popup, or another suitable mobile UI pattern. The exact presentation may be refined during implementation.
+
+### Transit Details
+
+The details for a selected transit should preserve the meaning of the legacy PAD details table.
+
+Legacy detail fields include:
+
+- transit type;
+- start time;
+- end time;
+- zodiac sign;
+- nakshatra;
+- pada;
+- description;
+- vedha from;
+- mrityu bhaga.
+
+The exact set of fields may depend on the selected transit lane and must be generated from the same calculation logic as the visual interval.
+
+### Calculation Rules
+
+The page must reuse existing PADMA transit calculation logic where possible.
+The implementation should extend the current transit builder approach used by `DayPage`.
+Additional builders may be added only for monthly planet transit lanes that are present in legacy PAD but are not currently produced by existing PADMA builders.
+The calculation behavior must follow legacy PAD logic unless explicitly changed by the Product Owner.
+
+### Reuse of Existing Transit Logic
+
+The Monthly Planet Transits page must reuse existing PADMA transit calculation, coloring, and split-color logic wherever possible.
+If the current logic is embedded in Day Overview or Day Page specific code, it may be extracted into shared services or utilities so that both the existing daily/month overview screens and the new monthly planet transits page use the same source of truth.
+The implementation must avoid duplicating transit color rules, Moon/Lagna transit mode handling, and tooltip/detail generation logic.
+
+### Tooltip and Details Reuse
+
+The Monthly Planet Transits page must reuse the existing Day Page tooltip organization where possible.
+Transit details should be presented as structured blocks/sections rather than as a single plain text string.
+The implementation should reuse existing tooltip content builders, such as planet transit tooltip utilities, and existing Moon/Lagna detail composition logic.
+If the current Day Page tooltip rendering code is too tightly coupled to `DayPage`, the shared tooltip structure or rendering helpers may be extracted into reusable UI services/components.
+The monthly page tooltip/details UI may have a different mobile presentation if needed, but its content structure and calculation meaning must remain consistent with `DayPage`.
+
+------------
+
