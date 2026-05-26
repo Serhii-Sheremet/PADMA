@@ -6283,16 +6283,21 @@ The first implementation includes:
 - month day scale;
 - weekday scale;
 - Masa/Shunya row;
-- monthly transit groups for the 9 planets:
-  - Sun;
-  - Moon;
-  - Mars;
-  - Mercury;
-  - Jupiter;
-  - Venus;
-  - Saturn;
-  - Rahu;
-  - Ketu.
+- monthly transit groups for the 9 planets.
+
+The planet display order is:
+
+1. Sun;
+2. Moon;
+3. Mars;
+4. Mercury;
+5. Jupiter;
+6. Venus;
+7. Saturn;
+8. Rahu;
+9. Ketu.
+
+This order follows the weekday / classical planetary order.
 
 The first implementation excludes:
 

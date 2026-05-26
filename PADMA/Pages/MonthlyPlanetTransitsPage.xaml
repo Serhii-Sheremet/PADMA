@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="PADMA.Pages.MonthlyPlanetTransitsPage">
+             x:Class="PADMA.Pages.MonthlyPlanetTransitsPage"
+             x:Name="RootPage">
 
     <Shell.TitleView>
         <Grid Padding="0" VerticalOptions="Center">
@@ -46,16 +47,80 @@
                    VerticalOptions="Center" />
         </Grid>
 
-        <!-- Placeholder for the future two-dimensional monthly transit timeline. -->
+        <!-- Monthly transits row -->
         <Grid Grid.Row="1"
-              Padding="12"
-              BackgroundColor="White" />
+              BackgroundColor="White"
+              RowSpacing="0"
+              ColumnSpacing="0">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- top-left corner -->
+            <Border Grid.Row="0"
+                    Grid.Column="0"
+                    Stroke="#D0D0D0"
+                    StrokeThickness="1"
+                    BackgroundColor="#F7F7F7" />
+
+            <!-- day header -->
+            <ScrollView x:Name="HeaderHorizontalScroll"
+                Grid.Row="0"
+                Grid.Column="1"
+                Orientation="Horizontal"
+                HorizontalScrollBarVisibility="Never"
+                VerticalScrollBarVisibility="Never"
+                Scrolled="OnHeaderHorizontalScrolled">
+
+                <GraphicsView x:Name="HeaderGraphicsView"
+                      HeightRequest="44" />
+            </ScrollView>
+
+            <!-- fixed left labels -->
+            <ScrollView x:Name="LabelsVerticalScroll"
+                Grid.Row="1"
+                Grid.Column="0"
+                Orientation="Vertical"
+                HorizontalScrollBarVisibility="Never"
+                VerticalScrollBarVisibility="Never"
+                Scrolled="OnLabelsVerticalScrolled">
+
+                <GraphicsView x:Name="LabelsGraphicsView"
+                      WidthRequest="96" />
+            </ScrollView>
+
+            <!-- body -->
+            <ScrollView x:Name="BodyHorizontalScroll"
+                Grid.Row="1"
+                Grid.Column="1"
+                Orientation="Horizontal"
+                HorizontalScrollBarVisibility="Always"
+                VerticalScrollBarVisibility="Never"
+                Scrolled="OnBodyHorizontalScrolled">
+
+                <ScrollView x:Name="BodyVerticalScroll"
+                    Orientation="Vertical"
+                    HorizontalScrollBarVisibility="Never"
+                    VerticalScrollBarVisibility="Always"
+                    Scrolled="OnBodyVerticalScrolled">
+
+                    <GraphicsView x:Name="BodyGraphicsView" />
+                </ScrollView>
+            </ScrollView>
+        </Grid>
 
 
         <!--  Busy overlay -->
         <Grid Grid.Row="1"
               Grid.ColumnSpan="2"
-              IsVisible="{Binding IsBusy, FallbackValue=False}"
+              IsVisible="{Binding IsBusy, Source={x:Reference RootPage}, FallbackValue=False}"
               InputTransparent="False"
               BackgroundColor="#80000000"
               ZIndex="999">
@@ -70,7 +135,7 @@
                     WidthRequest="48"
                     HeightRequest="48" />
 
-                <Label Text="{Binding BusyText}"
+                <Label Text="{Binding BusyText, Source={x:Reference RootPage}}"
                        TextColor="White"
                        FontSize="Medium"
                        HorizontalTextAlignment="Center" />
