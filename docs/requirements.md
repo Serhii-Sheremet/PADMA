@@ -6313,12 +6313,12 @@ The internal data model must not hard-code the assumption that a planet always h
 
 ### Planet Transit Lanes
 
-Each planet group contains the following lanes in the first implementation:
+The initial lane order inside each planet group is:
 
-- zodiac transit;
-- nakshatra transit;
-- pada transit;
-- tara bala transit.
+1. zodiac transit;
+2. nakshatra transit;
+3. pada transit;
+4. tara bala transit.
 
 These four lanes reproduce the current legacy PAD monthly planet transit structure.
 The internal model must support adding more lanes later, because the Product Owner may request additional planet transit components in future versions.
@@ -6358,24 +6358,106 @@ The page must support:
 - vertical scrolling across planet groups;
 - readable fixed or sticky row labels where technically feasible.
 
+The left planet/group label column should remain visible during horizontal scrolling where technically feasible.
+The horizontal scroll position of the day header and the transit timeline body must stay synchronized.
 The first implementation should prioritize correctness, full data visibility, and interaction over compact visual optimization.
+
+### Page Type and Navigation
+
+The Monthly Planet Transits page is a root-level application page available from the burger menu / Shell flyout.
+
+A new flyout item is added:
+- Native text: `Transits for month`
+
+The page must behave like other root Shell pages:
+
+- the burger menu must be available from the page;
+- the page must not be opened as a nested detail page from Configuration;
+- the page must not require the user to press a close button to return to the main application flow;
+- switching to another root page is done through the Shell flyout.
+
+The page should be implemented as a dedicated `ContentPage`, not as a configuration/detail page, because it requires a custom two-dimensional scrollable layout, timeline header, sticky labels, selection overlay, and tooltip/details area.
+The page may reuse visual styles, localization patterns, helper services, and shared controls from existing pages, but it should not inherit from a template that imposes a vertical `ScrollView` around the whole page if that interferes with horizontal and vertical timeline scrolling.
+
+### Month Navigation
+
+The page displays one full calendar month at a time.
+The initial month is the current month.
+
+The user must be able to move between months directly from the page toolbar:
+
+- previous month;
+- next month.
+
+The toolbar month navigation should be consistent with the existing `MainPage` month navigation pattern, using left and right arrow toolbar icons where possible.
+
+When the user changes the month:
+
+- the page recalculates the monthly transit data for the selected month;
+- the horizontal day scale is rebuilt;
+- all planet transit lanes are refreshed;
+- any selected transit interval from the previous month is cleared unless explicitly preserved by future requirements.
+
+### Page Header and Toolbar
+
+The Monthly Planet Transits page uses a toolbar/header layout consistent with the existing Main Page calendar toolbar.
+
+The flyout menu item title is localized as:
+- Native text: `Transits for month`
+
+However, the page toolbar title itself does not display this static page name.
+Instead, the toolbar title area displays the currently selected month and year, localized according to the current application language, for example:
+
+- `Травень 2026`
+- `May 2026`
+
+The toolbar contains:
+
+- burger menu button on the left, because the page is a root Shell flyout page;
+- localized month/year selector in the title area;
+- previous month toolbar button;
+- next month toolbar button.
+
+The month/year selector should reuse the same interaction pattern as the existing Main Page month/year selector.
+
+When the user taps the month/year title component, the page opens the same or equivalent month/year selection component used by the Main Page, allowing the user to jump directly to any month and year.
+
+After the user selects another month/year:
+
+- the selected month is updated;
+- the toolbar title is refreshed;
+- the monthly transit timeline is recalculated;
+- the day header is rebuilt;
+- all planet transit lanes are refreshed;
+- the current interval selection is cleared.
+
+### Reuse of Month Navigation UI
+
+The implementation should reuse the existing Main Page month navigation UI and month/year picker logic where possible.
+If the current Main Page implementation is too tightly coupled to the calendar page, the shared month navigation component may be extracted into a reusable control or helper so that both Main Page and Monthly Planet Transits Page use the same behavior.
+
+### Close and Back Behavior
+
+Because the page is a root Shell flyout page, it should not use the standard `close_icon.png` toolbar button used by nested configuration/detail pages.
+The user can leave the page by opening the burger menu and selecting another root page.
+The Android back button behavior should follow the normal Shell root page behavior and must not accidentally close the whole app or navigate to an invalid previous page.
 
 ### Interaction
 
 The page is interactive.
 
-When the user taps a transit interval:
+When the user taps inside a transit interval:
 
 - the tapped interval becomes selected;
-- the related day is visually highlighted on the monthly timeline;
-- the selected date boundaries are shown in the timeline area;
+- the selected day is determined from the tap position on the monthly time axis;
+- the selected day boundaries are shown across the visible timeline area;
 - detailed information for the selected transit is displayed in a mobile-adapted details area.
 
 The mobile details area may be implemented as a tooltip, bottom panel, popup, or another suitable mobile UI pattern. The exact presentation may be refined during implementation.
 
 ### Transit Details
 
-The details for a selected transit should preserve the meaning of the legacy PAD details table.
+The details area may show either the selected interval details or a grouped set of related transit details for the selected planet and selected day, depending on the lane and available legacy logic.
 
 Legacy detail fields include:
 
@@ -6397,6 +6479,18 @@ The page must reuse existing PADMA transit calculation logic where possible.
 The implementation should extend the current transit builder approach used by `DayPage`.
 Additional builders may be added only for monthly planet transit lanes that are present in legacy PAD but are not currently produced by existing PADMA builders.
 The calculation behavior must follow legacy PAD logic unless explicitly changed by the Product Owner.
+
+### Calculation Range
+
+The monthly calculation range covers the full selected calendar month in the active living location timezone.
+The implementation must correctly display intervals that started before the beginning of the month or end after the end of the month by clipping them visually to the visible month range.
+Builders may calculate with a small time buffer before and after the selected month when needed to detect boundary-crossing intervals correctly.
+
+### Profile and Location Context
+
+The page uses the active profile context from `DataCache`.
+All calculations must use the same profile, natal data, living location, timezone, ayanamsa/node settings, and app settings as the existing Day Page and transit calculations.
+If no active profile is available, the page should follow the same empty/error behavior pattern as other profile-dependent pages.
 
 ### Reuse of Existing Transit Logic
 

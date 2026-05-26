@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PADMA.Pages.MonthlyPlanetTransitsPage">
+
+    <Shell.TitleView>
+        <Grid Padding="0" VerticalOptions="Center">
+            <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                <Label Text="{Binding MonthYearTitle}"
+                       FontAttributes="Bold"
+                       FontSize="20"
+                       VerticalOptions="Center" />
+                <Label Text="▼" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnMonthTitleTapped" />
+            </Grid.GestureRecognizers>
+        </Grid>
+    </Shell.TitleView>
+
+    <Grid Padding="0" RowSpacing="0" ColumnSpacing="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Active profile row -->
+        <Grid Grid.Row="0"
+              Padding="8,2"
+              ColumnSpacing="8"
+              ColumnDefinitions="*,Auto"
+              Opacity="0.85">
+
+            <Label Grid.Column="0"
+                   Text="{Binding ActiveProfileDisplay}"
+                   FontSize="14"
+                   LineBreakMode="TailTruncation"
+                   VerticalOptions="Center" />
+
+            <Label Grid.Column="1"
+                   Text="{Binding ActiveLocationTimeZoneDisplay}"
+                   FontSize="14"
+                   LineBreakMode="TailTruncation"
+                   HorizontalTextAlignment="End"
+                   VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Placeholder for the future two-dimensional monthly transit timeline. -->
+        <Grid Grid.Row="1"
+              Padding="12"
+              BackgroundColor="White" />
+
+
+        <!--  Busy overlay -->
+        <Grid Grid.Row="1"
+              Grid.ColumnSpan="2"
+              IsVisible="{Binding IsBusy, FallbackValue=False}"
+              InputTransparent="False"
+              BackgroundColor="#80000000"
+              ZIndex="999">
+
+            <VerticalStackLayout
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="12">
+
+                <ActivityIndicator
+                    IsRunning="True"
+                    WidthRequest="48"
+                    HeightRequest="48" />
+
+                <Label Text="{Binding BusyText}"
+                       TextColor="White"
+                       FontSize="Medium"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
+</ContentPage>

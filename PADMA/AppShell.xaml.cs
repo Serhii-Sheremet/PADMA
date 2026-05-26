@@ -34,6 +34,13 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         set => SetProperty(ref _flyoutTransitChartsTitle, value);
     }
 
+    private string _flyoutMonthlyTransitsTitle = "Transits for month";
+    public string FlyoutMonthlyTransitsTitle
+    {
+        get => _flyoutMonthlyTransitsTitle;
+        set => SetProperty(ref _flyoutMonthlyTransitsTitle, value);
+    }
+
     private string _flyoutSettingsTitle = "Settings";
     public string FlyoutSettingsTitle
     {
@@ -97,6 +104,9 @@ public partial class AppShell : Shell, INotifyPropertyChanged
 
         // Регистрируем маршрут для TransitChartsPage
         Routing.RegisterRoute(nameof(TransitChartsPage), typeof(TransitChartsPage));
+
+        // Регистрируем маршрут для MonthlyPlanetTransitsPage
+        Routing.RegisterRoute(nameof(MonthlyPlanetTransitsPage), typeof(MonthlyPlanetTransitsPage));
 
         // Регистрируем маршрут для AboutPage
         Routing.RegisterRoute(nameof(AboutPage), typeof(AboutPage));
@@ -171,6 +181,7 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         FlyoutCalendarTitle = Localization.GetLocalizedText("Calendar", lang);
         FlyoutProfilesTitle = Localization.GetLocalizedText("Profiles", lang);
         FlyoutTransitChartsTitle = Localization.GetLocalizedText("Transit charts", lang);
+        FlyoutMonthlyTransitsTitle = Localization.GetLocalizedText("Transits for month", lang);
         FlyoutSettingsTitle = Localization.GetLocalizedText("Settings", lang);
         FlyoutAboutTitle = $"{Localization.GetLocalizedText("About application", lang)}...";
         FlyoutFAQTitle = Localization.GetLocalizedText("FAQs", lang);

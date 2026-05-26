@@ -137,6 +137,7 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Pages\MrityuPage.xaml" Generator="MSBuild:Compile" />
+	<MauiXaml Update="Pages\MonthlyPlanetTransitsPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\MuhurtasPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\NodesPage.xaml" Generator="MSBuild:Compile" />
     <MauiXaml Update="Pages\NotificationsPage.xaml">
