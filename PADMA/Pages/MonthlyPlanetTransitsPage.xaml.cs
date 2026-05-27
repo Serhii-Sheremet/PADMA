@@ -322,21 +322,6 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         };
     }
 
-    private static string GetShortDayOfWeek(DateTime date, CultureInfo culture)
-    {
-        var text = culture.DateTimeFormat.GetAbbreviatedDayName(date.DayOfWeek);
-
-        if (string.IsNullOrWhiteSpace(text))
-            return string.Empty;
-
-        text = text.Replace(".", string.Empty);
-
-        if (text.Length <= 2)
-            return text;
-
-        return text[..2];
-    }
-
     private static string GetPlanetName(EPlanet planet)
     {
         return DataCache.Instance.PlanetDescList
