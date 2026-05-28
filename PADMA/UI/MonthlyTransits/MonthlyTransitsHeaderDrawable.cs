@@ -2,7 +2,7 @@
 using System.Globalization;
 using GFont = Microsoft.Maui.Graphics.Font;
 
-namespace PADMA.UI;
+namespace PADMA.UI.MonthlyTransits;
 
 public sealed class MonthlyTransitsHeaderDrawable : IDrawable
 {

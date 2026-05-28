@@ -1,7 +1,7 @@
 ﻿using PADMA.Core.Enums;
 using System.Globalization;
 
-namespace PADMA.UI;
+namespace PADMA.UI.MonthlyTransits;
 
 public sealed class MonthlyTransitsLayout
 {
@@ -28,6 +28,8 @@ public sealed class MonthlyTransitsLayout
     public double PlanetGroupHeight => PlanetContentHeight + PlanetGap;
 
     public double ContentHeight => TopBandHeight + Planets.Count * PlanetGroupHeight;
+
+    public MonthlyPlanetTransitsData? Data { get; init; }
 }
 
 public sealed class MonthlyTransitsPlanetRow

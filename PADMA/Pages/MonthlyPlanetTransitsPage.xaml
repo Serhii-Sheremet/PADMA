@@ -116,6 +116,16 @@
             </ScrollView>
         </Grid>
 
+        <!-- Structural separator between day header and timeline body -->
+        <BoxView Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            HeightRequest="1"
+            VerticalOptions="Start"
+            HorizontalOptions="Fill"
+            Color="#D0D0D0"
+            InputTransparent="True" />
+
 
         <!--  Busy overlay -->
         <Grid Grid.Row="1"

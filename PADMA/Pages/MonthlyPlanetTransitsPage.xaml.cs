@@ -2,12 +2,12 @@ using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Extensions;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
-using PADMA.UI;
 using PADMA.UI.ViewModels;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using System.ComponentModel;
 using System.Globalization;
+using PADMA.UI.MonthlyTransits;
 
 namespace PADMA.Pages;
 
@@ -26,6 +26,10 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
     private bool _syncingHorizontalScroll;
     private bool _syncingVerticalScroll;
+
+    private readonly MonthlyPlanetTransitsDataService _dataService = new();
+    private MonthlyPlanetTransitsData? _monthlyData;
+    private CancellationTokenSource? _buildCts;
 
     private bool _isClosing;
     private bool _isBusy;
@@ -132,7 +136,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             Localization.GetLocalizedText("Calculating transits", DataCache.Instance.CurrentLanguageCode),
             async () =>
             {
-                await RebuildTimelineAsync();
+                await RebuildMonthlyDataAsync();
             });
     }
 
@@ -172,7 +176,15 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             e.PropertyName == nameof(MonthlyPlanetTransitsViewModel.Month) ||
             e.PropertyName == nameof(MonthlyPlanetTransitsViewModel.CultureCode))
         {
-            MainThread.BeginInvokeOnMainThread(RebuildTimelineSkeleton);
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await RunBusyAsync(
+                    Localization.GetLocalizedText("Calculating transits", DataCache.Instance.CurrentLanguageCode),
+                    async () =>
+                    {
+                        await RebuildMonthlyDataAsync();
+                    });
+            });
         }
     }
 
@@ -312,6 +324,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             Month = Vm.Month,
             Culture = Vm.CurrentCulture,
             TopBandLabel = Localization.GetLocalizedText("Masa/Shunya", DataCache.Instance.CurrentLanguageCode),
+            Data = _monthlyData,
             Planets = PlanetOrder
                 .Select(x => new MonthlyTransitsPlanetRow
                 {
@@ -394,6 +407,22 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         {
             _syncingVerticalScroll = false;
         }
+    }
+
+    private async Task RebuildMonthlyDataAsync()
+    {
+        if (Vm is null)
+            return;
+
+        _buildCts?.Cancel();
+        _buildCts?.Dispose();
+        _buildCts = new CancellationTokenSource();
+
+        var ct = _buildCts.Token;
+
+        _monthlyData = await _dataService.BuildAsync(Vm.Year, Vm.Month, ct);
+
+        RebuildTimelineSkeleton();
     }
 
 

@@ -638,9 +638,9 @@ namespace PADMA.Core.Analysis
             EAppSetting mbSettingMode,
             double tol)
         {
-            var planet = SwissService.GetPlanetPosition(utc, planetId, nodeType);
-            double lon = SwissService.NormalizeDegrees(planet[0]);
-            bool retro = planet[3] < 0;
+            var pos = GetMrityuBhagaPlanetPosition(planetId, utc, nodeType);
+            double lon = pos.lon;
+            bool retro = pos.retro;
             int zodId = SwissUtility.GetZodiacIdFromDegree(lon);
 
             var mb = mbList.FirstOrDefault(x => x.PlanetId == planetId && x.ZodiacId == zodId);
@@ -662,6 +662,34 @@ namespace PADMA.Core.Analysis
 
             bool inside = IsWithinDegrees(lon, fromDeg, toDeg);
             return (inside, zodId, lon, retro, mb, fromDeg, toDeg);
+        }
+
+        private static (double lon, bool retro) GetMrityuBhagaPlanetPosition(
+            int planetId,
+            DateTime utc,
+            EAppSetting nodeType)
+        {
+            if (planetId == (int)EPlanet.KETU)
+            {
+                var rahu = SwissService.GetPlanetPosition(
+                    utc,
+                    (int)EPlanet.RAHU,
+                    nodeType);
+
+                var ketuLon = SwissService.NormalizeDegrees(rahu[0] + 180.0);
+
+                // Ketu is derived from Rahu, so use Rahu speed direction as the node motion marker.
+                // For Mrityu Bhaga zone detection the longitude is the important value.
+                bool retro = rahu[3] < 0;
+
+                return (ketuLon, retro);
+            }
+
+            var planet = SwissService.GetPlanetPosition(utc, planetId, nodeType);
+            var lon = SwissService.NormalizeDegrees(planet[0]);
+            var isRetro = planet[3] < 0;
+
+            return (lon, isRetro);
         }
 
         private static DateTime RefineBoundaryBinary(
