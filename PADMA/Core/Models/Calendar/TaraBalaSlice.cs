@@ -14,7 +14,7 @@ namespace PADMA.Core.Models.Calendar
             Kind = ETransitKind.TaraBala;
         }
 
-        internal static int GetTaraBalaColorId(int taraBalaId, int percent)
+        public static int GetTaraBalaColorId(int taraBalaId, int percent)
         {
             int colorId = DataCache.Instance.TaraBalaList
                 .FirstOrDefault(t => t.Id == taraBalaId)?

@@ -16,7 +16,8 @@ public sealed class MonthlyTransitsLayout
     public double HeaderHeight { get; init; } = 44;
     public double LabelWidth { get; init; } = 96;
 
-    public double TopBandHeight { get; init; } = 20;
+    public double TopBandHeight { get; init; } = 26;
+    public double TopBandPaddingY { get; init; } = 2;
 
     public double LaneHeight { get; init; } = 20;
     public double PlanetGap { get; init; } = 2;

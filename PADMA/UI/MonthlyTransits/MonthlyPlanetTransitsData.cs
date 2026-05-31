@@ -3,6 +3,13 @@ using PADMA.Core.Models.Calendar;
 
 namespace PADMA.UI.MonthlyTransits;
 
+public sealed class MonthlyMasaShunyaBand
+{
+    public IReadOnlyList<MonthlyTransitSegment> MasaSegments { get; init; } = [];
+    public IReadOnlyList<MonthlyTransitOverlaySegment> ShunyaNakshatraOverlays { get; init; } = [];
+    public IReadOnlyList<MonthlyTransitOverlaySegment> ShunyaTithiOverlays { get; init; } = [];
+}
+
 public sealed class MonthlyPlanetTransitsData
 {
     public int Year { get; init; }
@@ -10,6 +17,8 @@ public sealed class MonthlyPlanetTransitsData
 
     public DateTime MonthStartLocal { get; init; }
     public DateTime MonthEndLocal { get; init; }
+
+    public MonthlyMasaShunyaBand? MasaShunya { get; init; }
 
     public IReadOnlyList<MonthlyPlanetGroup> PlanetGroups { get; init; } = [];
 }

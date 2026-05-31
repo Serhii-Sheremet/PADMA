@@ -32,10 +32,6 @@ public sealed class MonthlyTransitsBodyDrawable : IDrawable
         canvas.FillColor = Colors.White;
         canvas.FillRectangle(0, 0, width, height);
 
-        // Top band background: Masa/Shunya placeholder area
-        canvas.FillColor = Color.FromArgb("#FFFFFF");
-        canvas.FillRectangle(0, 0, width, topBandHeight);
-
         // Planet lane backgrounds
         for (int p = 0; p < layout.Planets.Count; p++)
         {
@@ -96,6 +92,84 @@ public sealed class MonthlyTransitsBodyDrawable : IDrawable
         }
 
         DrawSegments(canvas, layout);
+        
+        // Masa/Shunya is a top-level band and must be drawn above the background day grid.
+        DrawMasaShunyaBand(canvas, layout);
+    }
+
+    private static void DrawMasaShunyaBand(ICanvas canvas, MonthlyTransitsLayout layout)
+    {
+        var band = layout.Data?.MasaShunya;
+        if (band == null)
+            return;
+
+        float y = 0;
+        float h = (float)layout.TopBandHeight;
+        float padY = 2f;
+        float innerY = y + padY;
+        float innerH = h - padY * 2;
+
+        // base Masa segments
+        foreach (var segment in band.MasaSegments)
+        {
+            float x = (float)GetX(layout, segment.StartLocal);
+            float x2 = (float)GetX(layout, segment.EndLocal);
+            float w = Math.Max(1, x2 - x);
+
+            canvas.FillColor = segment.Color ?? Colors.White;
+            canvas.FillRectangle(x, innerY, w, innerH);
+
+            DrawSegmentText(canvas, segment.Text, x, innerY, w, innerH);
+        }
+
+        // Shunya Nakshatra: top half
+        foreach (var overlay in band.ShunyaNakshatraOverlays)
+        {
+            float x = (float)GetX(layout, overlay.StartLocal);
+            float x2 = (float)GetX(layout, overlay.EndLocal);
+            float w = Math.Max(1, x2 - x);
+
+            canvas.FillColor = overlay.Color;
+            canvas.FillRectangle(x, innerY, w, innerH / 2f);
+        }
+
+        // Shunya Tithi: bottom half
+        foreach (var overlay in band.ShunyaTithiOverlays)
+        {
+            float x = (float)GetX(layout, overlay.StartLocal);
+            float x2 = (float)GetX(layout, overlay.EndLocal);
+            float w = Math.Max(1, x2 - x);
+
+            canvas.FillColor = overlay.Color;
+            canvas.FillRectangle(x, innerY + innerH / 2f, w, innerH / 2f);
+        }
+
+        // Masa segment borders: show where a new Masa starts/ends.
+        foreach (var segment in band.MasaSegments)
+        {
+            float x = (float)GetX(layout, segment.StartLocal);
+            float x2 = (float)GetX(layout, segment.EndLocal);
+            float w = Math.Max(1, x2 - x);
+
+            canvas.StrokeColor = Colors.Black;
+            canvas.StrokeSize = 0.5f;
+            canvas.DrawRectangle(x, innerY, w, innerH);
+        }
+
+        // text again on top, so overlays do not hide Masa label
+        foreach (var segment in band.MasaSegments)
+        {
+            float x = (float)GetX(layout, segment.StartLocal);
+            float x2 = (float)GetX(layout, segment.EndLocal);
+            float w = Math.Max(1, x2 - x);
+
+            DrawSegmentText(canvas, segment.Text, x, innerY, w, innerH);
+        }
+
+        canvas.StrokeColor = Color.FromArgb("#D0D0D0");
+        canvas.StrokeSize = 1;
+        canvas.DrawLine(0, 0.5f, (float)layout.ContentWidth, 0.5f);
+        canvas.DrawLine(0, h - 0.5f, (float)layout.ContentWidth, h - 0.5f);
     }
 
     private static void DrawSegments(ICanvas canvas, MonthlyTransitsLayout layout)
@@ -226,12 +300,12 @@ public sealed class MonthlyTransitsBodyDrawable : IDrawable
     }
 
     private static void DrawSegmentText(
-    ICanvas canvas,
-    string text,
-    float x,
-    float y,
-    float w,
-    float h)
+        ICanvas canvas,
+        string text,
+        float x,
+        float y,
+        float w,
+        float h)
     {
         if (string.IsNullOrWhiteSpace(text) || w < 12 || h < 10)
             return;

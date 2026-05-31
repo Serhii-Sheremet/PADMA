@@ -50,6 +50,27 @@ public sealed class MonthlyPlanetTransitsDataService
         var nodeMode = DataCache.Instance.GetActiveNodeSetting();
         var transitMode = DataCache.Instance.GetActiveTransitSettings();
 
+        var moonDataForMasa = SwissAnalysis.CalculatePlanetDataList_London(
+            (int)EPlanet.MOON,
+            bufferStartUtc,
+            bufferEndUtc,
+            nodeMode,
+            true);
+
+        var tithiData = SwissAnalysis.CalculateTithiDataList_London(
+            bufferStartUtc,
+            bufferEndUtc,
+            nodeMode);
+
+        var masaShunya = MasaShunyaBuilder.Build(
+            moonDataForMasa,
+            tithiData,
+            bufferStartUtc,
+            bufferEndUtc,
+            monthStartLocal,
+            monthEndLocal,
+            tzInfo);
+
         var groups = new List<MonthlyPlanetGroup>();
 
         List<PlanetData>? rahuDataCache = null;
@@ -128,7 +149,22 @@ public sealed class MonthlyPlanetTransitsDataService
                         monthStartLocal,
                         monthEndLocal,
                         tzInfo,
-                        transitMode)
+                        transitMode),
+
+                    BuildPadaLane(
+                        planet,
+                        clippedSlices,
+                        monthStartLocal,
+                        monthEndLocal,
+                        tzInfo),
+
+                    BuildTaraBalaLane(
+                        planet,
+                        clippedSlices,
+                        monthStartLocal,
+                        monthEndLocal,
+                        tzInfo)
+
                 ]
             };
 
@@ -141,6 +177,7 @@ public sealed class MonthlyPlanetTransitsDataService
             Month = month,
             MonthStartLocal = monthStartLocal,
             MonthEndLocal = monthEndLocal,
+            MasaShunya = masaShunya,
             PlanetGroups = groups
         };
     }
@@ -522,5 +559,227 @@ public sealed class MonthlyPlanetTransitsDataService
 
         return DataCache.Instance.GetColor((EColor)nakshatra.ColorId);
     }
+
+    private static MonthlyTransitLane BuildPadaLane(
+        EPlanet planet,
+        IReadOnlyList<PlanetSlice> slices,
+        DateTime monthStartLocal,
+        DateTime monthEndLocal,
+        TimeZoneInfo tzInfo)
+    {
+        var segments = new List<MonthlyTransitSegment>();
+
+        foreach (var slice in slices.OrderBy(s => s.StartUtc))
+        {
+            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(slice.StartUtc, tzInfo);
+            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(slice.EndUtc, tzInfo);
+
+            if (endLocal <= monthStartLocal || startLocal >= monthEndLocal)
+                continue;
+
+            var visibleStart = Max(startLocal, monthStartLocal);
+            var visibleEnd = Min(endLocal, monthEndLocal);
+
+            if (visibleEnd <= visibleStart)
+                continue;
+
+            if (segments.Count > 0)
+            {
+                var prev = segments[^1].SourceSlice;
+
+                if (prev != null &&
+                    prev.PadaId == slice.PadaId &&
+                    prev.NavamsaZodiacId == slice.NavamsaZodiacId)
+                {
+                    var previous = segments[^1];
+
+                    segments[^1] = new MonthlyTransitSegment
+                    {
+                        StartLocal = previous.StartLocal,
+                        EndLocal = visibleEnd,
+                        Text = previous.Text,
+                        Color = previous.Color,
+                        ColorTop = previous.ColorTop,
+                        ColorBottom = previous.ColorBottom,
+                        IsSplitColor = previous.IsSplitColor,
+                        SourceSlice = previous.SourceSlice
+                    };
+
+                    continue;
+                }
+            }
+
+            var color = GetPadaColor(slice);
+
+            segments.Add(new MonthlyTransitSegment
+            {
+                StartLocal = visibleStart,
+                EndLocal = visibleEnd,
+                Text = BuildPadaText(planet, slice),
+                Color = color,
+                ColorTop = null,
+                ColorBottom = null,
+                IsSplitColor = false,
+                SourceSlice = slice
+            });
+        }
+
+        return new MonthlyTransitLane
+        {
+            Kind = MonthlyTransitLaneKind.Pada,
+            Title = "Pada",
+            Segments = segments
+        };
+    }
+
+    private static string BuildPadaText(EPlanet planet, PlanetSlice slice)
+    {
+        var padaNumber = SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
+        var navamsaZodiacId = slice.NavamsaZodiacId;
+
+        var marker = BuildNavamsaExaltationMarker(planet, navamsaZodiacId);
+
+        return $"{padaNumber}-{navamsaZodiacId}{marker}";
+    }
+
+    private static string BuildNavamsaExaltationMarker(EPlanet planet, int navamsaZodiacId)
+    {
+        if (planet == EPlanet.RAHU || planet == EPlanet.KETU)
+            return string.Empty;
+
+        if (navamsaZodiacId < 1 || navamsaZodiacId > 12)
+            return string.Empty;
+
+        var ex = ExaltationUtility.GetPlanetExaltation(
+            planet,
+            (EZodiac)navamsaZodiacId);
+
+        return ex switch
+        {
+            EExaltation.EXALTATION => "↑",
+            EExaltation.DEBILITATION => "↓",
+            _ => string.Empty
+        };
+    }
+
+    private static Color GetPadaColor(PlanetSlice slice)
+    {
+        var padaNumber = SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
+
+        var pada = DataCache.Instance.PadaList
+            .FirstOrDefault(x =>
+                x.NakshatraId == slice.NakshatraId &&
+                x.PadaNumber == padaNumber);
+
+        if (pada == null || pada.ColorId == 0)
+            return Colors.White;
+
+        return DataCache.Instance.GetColor((EColor)pada.ColorId);
+    }
+
+    private static MonthlyTransitLane BuildTaraBalaLane(
+        EPlanet planet,
+        IReadOnlyList<PlanetSlice> slices,
+        DateTime monthStartLocal,
+        DateTime monthEndLocal,
+        TimeZoneInfo tzInfo)
+    {
+        var segments = new List<MonthlyTransitSegment>();
+
+        foreach (var slice in slices.OrderBy(s => s.StartUtc))
+        {
+            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(slice.StartUtc, tzInfo);
+            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(slice.EndUtc, tzInfo);
+
+            if (endLocal <= monthStartLocal || startLocal >= monthEndLocal)
+                continue;
+
+            var visibleStart = Max(startLocal, monthStartLocal);
+            var visibleEnd = Min(endLocal, monthEndLocal);
+
+            if (visibleEnd <= visibleStart)
+                continue;
+
+            if (segments.Count > 0)
+            {
+                var prev = segments[^1].SourceSlice;
+
+                if (prev != null &&
+                    prev.TaraBalaId == slice.TaraBalaId &&
+                    prev.TaraBalaPercent == slice.TaraBalaPercent)
+                {
+                    var previous = segments[^1];
+
+                    segments[^1] = new MonthlyTransitSegment
+                    {
+                        StartLocal = previous.StartLocal,
+                        EndLocal = visibleEnd,
+                        Text = previous.Text,
+                        Color = previous.Color,
+                        ColorTop = previous.ColorTop,
+                        ColorBottom = previous.ColorBottom,
+                        IsSplitColor = previous.IsSplitColor,
+                        SourceSlice = previous.SourceSlice
+                    };
+
+                    continue;
+                }
+            }
+
+            var color = DataCache.Instance.GetColor((EColor)TaraBalaSlice.GetTaraBalaColorId(slice.TaraBalaId, slice.TaraBalaPercent));
+
+            segments.Add(new MonthlyTransitSegment
+            {
+                StartLocal = visibleStart,
+                EndLocal = visibleEnd,
+                Text = BuildTaraBalaText(planet, slice),
+                Color = color,
+                ColorTop = null,
+                ColorBottom = null,
+                IsSplitColor = false,
+                SourceSlice = slice
+            });
+        }
+
+        return new MonthlyTransitLane
+        {
+            Kind = MonthlyTransitLaneKind.TaraBala,
+            Title = "Tara Bala",
+            Segments = segments
+        };
+    }
+
+    private static string BuildTaraBalaText(EPlanet planet, PlanetSlice slice)
+    {
+        if (planet == EPlanet.MOON)
+            return slice.TaraBalaId.ToString();
+
+        var name = GetTaraBalaName(slice.TaraBalaId);
+
+        var prefix = string.IsNullOrWhiteSpace(name)
+            ? slice.TaraBalaId.ToString()
+            : $"{slice.TaraBalaId}.{name}";
+
+        return $"{prefix} {slice.TaraBalaPercent}%";
+    }
+
+    private static string GetTaraBalaName(int taraBalaId)
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+
+        var desc = DataCache.Instance.TaraBalaDescList
+            .FirstOrDefault(x =>
+                x.TaraBalaId == taraBalaId &&
+                string.Equals(x.LanguageCode, lang, StringComparison.OrdinalIgnoreCase));
+
+        if (desc == null)
+            return string.Empty;
+
+        return !string.IsNullOrWhiteSpace(desc.ShortName)
+            ? desc.ShortName
+            : desc.Name ?? string.Empty;
+    }
+
+
 
 }
