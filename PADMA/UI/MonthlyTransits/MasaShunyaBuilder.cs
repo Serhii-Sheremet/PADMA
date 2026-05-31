@@ -1,9 +1,11 @@
+using Microsoft.Maui;
 using PADMA.Core.Analysis;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
 using PADMA.Core.TransitBuilder;
+using System.Runtime.InteropServices;
 
 namespace PADMA.UI.MonthlyTransits;
 
@@ -30,7 +32,7 @@ public static class MasaShunyaBuilder
 
         var masaPeriods = BuildMasaPeriods(
             moonSlices,
-            tithiData,
+            tithiSlices,
             bufferStartUtc,
             bufferEndUtc);
 
@@ -73,14 +75,14 @@ public static class MasaShunyaBuilder
 
     private static List<MasaPeriod> BuildMasaPeriods(
         IReadOnlyList<PlanetSlice> moonSlices,
-        IReadOnlyList<TithiData> tithiData,
+        IReadOnlyList<TithiSlice> tithiSlices,
         DateTime bufferStartUtc,
         DateTime bufferEndUtc)
     {
         var result = new List<MasaPeriod>();
 
-        var points = tithiData
-            .OrderBy(x => x.DateTimeUtc)
+        var points = tithiSlices
+            .OrderBy(x => x.StartUtc)
             .ToList();
 
         if (points.Count == 0)
@@ -89,14 +91,13 @@ public static class MasaShunyaBuilder
         var firstTithiOne = points.FirstOrDefault(x => x.TithiId == 1);
 
         DateTime currentStart = bufferStartUtc;
-        DateTime? currentFullMoonUtc = null;
 
         int currentMasaId;
 
         if (firstTithiOne != null)
         {
             currentMasaId = GetPreviousMasaId(
-                GetMasaIdByMoonZodiac(moonSlices, firstTithiOne.DateTimeUtc));
+                GetMasaIdByMoonZodiac(moonSlices, firstTithiOne.StartUtc));
         }
         else
         {
@@ -105,15 +106,12 @@ public static class MasaShunyaBuilder
 
         foreach (var point in points)
         {
-            var utc = point.DateTimeUtc;
-
-            if (utc < bufferStartUtc || utc > bufferEndUtc)
+            if (point.TithiId != 1)
                 continue;
 
-            if (point.TithiId == 16)
-                currentFullMoonUtc = utc;
+            var utc = point.StartUtc;
 
-            if (point.TithiId != 1)
+            if (utc < bufferStartUtc || utc > bufferEndUtc)
                 continue;
 
             if (utc > currentStart && currentMasaId != 0)
@@ -123,13 +121,15 @@ public static class MasaShunyaBuilder
                     StartUtc = currentStart,
                     EndUtc = utc,
                     MasaId = currentMasaId,
-                    FullMoonUtc = currentFullMoonUtc
+                    FullMoonUtc = FindFullMoonUtcInsidePeriod(
+                        currentStart,
+                        utc,
+                        tithiSlices)
                 });
             }
 
             currentStart = utc;
             currentMasaId = GetMasaIdByMoonZodiac(moonSlices, utc);
-            currentFullMoonUtc = null;
         }
 
         if (currentStart < bufferEndUtc && currentMasaId != 0)
@@ -139,13 +139,41 @@ public static class MasaShunyaBuilder
                 StartUtc = currentStart,
                 EndUtc = bufferEndUtc,
                 MasaId = currentMasaId,
-                FullMoonUtc = currentFullMoonUtc
+                FullMoonUtc = FindFullMoonUtcInsidePeriod(
+                    currentStart,
+                    bufferEndUtc,
+                    tithiSlices)
             });
         }
 
         return result;
     }
 
+    private static DateTime? FindFullMoonUtcInsidePeriod(
+        DateTime masaStartUtc,
+        DateTime masaEndUtc,
+        IReadOnlyList<TithiSlice> tithiSlices)
+    {
+        var purnima = tithiSlices
+            .Where(x =>
+                x.TithiId == 15 &&
+                x.EndUtc > masaStartUtc &&
+                x.StartUtc < masaEndUtc)
+            .OrderBy(x => x.StartUtc)
+            .FirstOrDefault();
+
+        if (purnima == null)
+            return null;
+
+        var startUtc = Max(purnima.StartUtc, masaStartUtc);
+        var endUtc = Min(purnima.EndUtc, masaEndUtc);
+
+        if (endUtc <= startUtc)
+            return null;
+
+        // Берём середину 15-й титхи, чтобы не попасть на границу смены титхи/накшатры.
+        return startUtc + TimeSpan.FromTicks((endUtc - startUtc).Ticks / 2);
+    }
 
     private static int GetMasaIdByMoonZodiac(
         IReadOnlyList<PlanetSlice> moonSlices,

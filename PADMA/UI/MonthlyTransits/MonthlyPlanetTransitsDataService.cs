@@ -39,6 +39,13 @@ public sealed class MonthlyPlanetTransitsDataService
         var monthStartLocal = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Unspecified);
         var monthEndLocal = monthStartLocal.AddMonths(1);
 
+        // Masa shunya calculation requires a larger buffer to correctly determine the lunar month for intervals that start/end near month boundaries.
+        var masaBufferStartLocal = monthStartLocal.AddDays(-45);
+        var masaBufferEndLocal = monthEndLocal.AddDays(45);
+
+        var masaBufferStartUtc = TimeZoneInfo.ConvertTimeToUtc(masaBufferStartLocal, tzInfo);
+        var masaBufferEndUtc = TimeZoneInfo.ConvertTimeToUtc(masaBufferEndLocal, tzInfo);
+
         // Buffer is required to correctly detect intervals that started before the visible month
         // or end after the visible month.
         var bufferStartLocal = monthStartLocal.AddDays(-7);
@@ -52,21 +59,20 @@ public sealed class MonthlyPlanetTransitsDataService
 
         var moonDataForMasa = SwissAnalysis.CalculatePlanetDataList_London(
             (int)EPlanet.MOON,
-            bufferStartUtc,
-            bufferEndUtc,
+            masaBufferStartUtc,
+            masaBufferEndUtc,
             nodeMode,
             true);
-
-        var tithiData = SwissAnalysis.CalculateTithiDataList_London(
-            bufferStartUtc,
-            bufferEndUtc,
+        var tithiDataForMasa = SwissAnalysis.CalculateTithiDataList_London(
+            masaBufferStartUtc,
+            masaBufferEndUtc,
             nodeMode);
 
         var masaShunya = MasaShunyaBuilder.Build(
             moonDataForMasa,
-            tithiData,
-            bufferStartUtc,
-            bufferEndUtc,
+            tithiDataForMasa,
+            masaBufferStartUtc,
+            masaBufferEndUtc,
             monthStartLocal,
             monthEndLocal,
             tzInfo);

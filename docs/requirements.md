@@ -6355,6 +6355,42 @@ The top header displays:
 
 Transit intervals are drawn proportionally between their start and end time within the month.
 
+### Masa/Shunya Row
+
+The page includes a dedicated `Masa/Shunya` row above the planet groups.
+
+This row is not a regular planet transit lane. It is a separate monthly background band that combines:
+
+- Masa period;
+- Shunya Nakshatra overlays;
+- Shunya Tithi overlays.
+
+The base Masa segment is drawn across the full row height, clipped to the visible month range.
+
+The Masa label format is:
+`<Masa name> (<ruler>)`
+
+The ruler is calculated from the Moon Nakshatra during Purnima Tithi (`TithiId == 15`) inside the corresponding Masa period.
+The ruler must not be calculated from the start of `TithiId == 16`, because `TithiId == 16` already belongs to the waning half and may produce a wrong Nakshatra ruler.
+Masa periods start at New Moon / `TithiId == 1` and continue until the next New Moon / next `TithiId == 1`.
+Masa must not be recalculated from the first day of the calendar month. When the selected calendar month starts inside an already active Masa period, the page must search back far enough to find the actual Masa start.
+For this reason, the Masa/Shunya calculation may use a larger buffer before and after the visible calendar month than the regular planet transit calculation.
+
+Shunya overlays are drawn on top of the base Masa segment:
+- Shunya Nakshatra is drawn in the upper half of the Masa/Shunya row;
+- Shunya Tithi is drawn in the lower half of the Masa/Shunya row.
+
+Shunya Nakshatra and Shunya Tithi periods are calculated as intersections of the active Masa period with the corresponding Nakshatra or Tithi periods.
+
+The Shunya rules are taken from the `Masa` data loaded into `DataCache`, including:
+- `ShunyaNakshatraIdArray`;
+- `ShunyaTithiIdArray`.
+
+The row should visually preserve the legacy meaning:
+- Masa as the main background band;
+- Shunya Nakshatra and Shunya Tithi as smaller overlay zones;
+- vertical borders only at actual Masa segment boundaries, not at every day boundary.
+
 ### Scrolling
 
 The page must support:
@@ -6366,6 +6402,21 @@ The page must support:
 The left planet/group label column should remain visible during horizontal scrolling where technically feasible.
 The horizontal scroll position of the day header and the transit timeline body must stay synchronized.
 The first implementation should prioritize correctness, full data visibility, and interaction over compact visual optimization.
+
+### Rendering Approach
+
+The monthly timeline body should be rendered using `GraphicsView` / custom drawable logic instead of building the table from many individual MAUI controls.
+This is required for performance because the page displays many long horizontal time intervals across a full month.
+The implementation may use separate drawables or drawing helpers for:
+
+- day header;
+- fixed left labels;
+- timeline body;
+- Masa/Shunya band;
+- planet transit segments;
+- selection overlay.
+
+Important structural separators may still be drawn by regular XAML elements when this is more reliable than drawing them inside a `GraphicsView`.
 
 ### Page Type and Navigation
 
@@ -6489,7 +6540,9 @@ The calculation behavior must follow legacy PAD logic unless explicitly changed 
 
 The monthly calculation range covers the full selected calendar month in the active living location timezone.
 The implementation must correctly display intervals that started before the beginning of the month or end after the end of the month by clipping them visually to the visible month range.
-Builders may calculate with a small time buffer before and after the selected month when needed to detect boundary-crossing intervals correctly.
+Regular planet transit builders may calculate with a small time buffer before and after the selected month when needed to detect boundary-crossing intervals correctly.
+The Masa/Shunya calculation requires a larger buffer before and after the visible month, because Masa periods are based on New Moon boundaries and may start in the previous calendar month.
+The calculation must search far enough before the selected month to find the active Masa period at the beginning of the visible month.
 
 ### Profile and Location Context
 
