@@ -422,9 +422,42 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         _monthlyData = await _dataService.BuildAsync(Vm.Year, Vm.Month, ct);
 
+        //DebugTestPlanetDayDetails();
+
         RebuildTimelineSkeleton();
     }
 
+    private void DebugTestPlanetDayDetails()
+    {
+        #if DEBUG
+        if (_monthlyData == null)
+            return;
+
+        // Проверочный пример: Ketu, 1 июня выбранного года.
+        // Если открыт не июнь, всё равно можно тестировать июнь выбранного года.
+        var testDate = new DateTime(_monthlyData.Year, 6, 5);
+
+        var details = MonthlyPlanetDayDetailsBuilder.Build(
+            _monthlyData,
+            EPlanet.MARS,
+            testDate);
+
+        System.Diagnostics.Debug.WriteLine("========== MONTHLY PLANET DAY DETAILS ==========");
+        System.Diagnostics.Debug.WriteLine($"{details.Title} | {details.Subtitle}");
+
+        foreach (var block in details.Blocks)
+        {
+            System.Diagnostics.Debug.WriteLine($"--- {block.Title} ---");
+
+            foreach (var row in block.Rows)
+            {
+                System.Diagnostics.Debug.WriteLine($"{row.RangeText}: {row.Value}");
+            }
+        }
+
+        System.Diagnostics.Debug.WriteLine("================================================");
+        #endif
+    }
 
 
 }

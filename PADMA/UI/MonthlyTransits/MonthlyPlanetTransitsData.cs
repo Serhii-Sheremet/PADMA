@@ -21,6 +21,8 @@ public sealed class MonthlyPlanetTransitsData
     public MonthlyMasaShunyaBand? MasaShunya { get; init; }
 
     public IReadOnlyList<MonthlyPlanetGroup> PlanetGroups { get; init; } = [];
+    public IReadOnlyDictionary<EPlanet, IReadOnlyList<PlanetSlice>> TransitPack { get; init; }
+    = new Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>();
 }
 
 public sealed class MonthlyPlanetGroup
@@ -50,6 +52,11 @@ public sealed class MonthlyTransitSegment
 {
     public DateTime StartLocal { get; init; }
     public DateTime EndLocal { get; init; }
+
+    // Real, non-visual-clipped period boundaries.
+    // Tooltip/details should prefer these values.
+    public DateTime RealStartLocal { get; init; }
+    public DateTime RealEndLocal { get; init; }
 
     public string Text { get; init; } = string.Empty;
 

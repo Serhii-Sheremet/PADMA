@@ -80,6 +80,7 @@ public sealed class MonthlyPlanetTransitsDataService
         var groups = new List<MonthlyPlanetGroup>();
 
         List<PlanetData>? rahuDataCache = null;
+        var transitPack = new Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>();
 
         foreach (var planet in PlanetOrder)
         {
@@ -124,7 +125,9 @@ public sealed class MonthlyPlanetTransitsDataService
                 .Where(s => s.EndUtc > bufferStartUtc && s.StartUtc < bufferEndUtc)
                 .OrderBy(s => s.StartUtc)
                 .ToList();
-
+            
+            transitPack[planet] = clippedSlices;
+    
             var mrityuBhagaSegments = BuildMrityuBhagaOverlays(
                 planet,
                 bufferStartUtc,
@@ -184,7 +187,8 @@ public sealed class MonthlyPlanetTransitsDataService
             MonthStartLocal = monthStartLocal,
             MonthEndLocal = monthEndLocal,
             MasaShunya = masaShunya,
-            PlanetGroups = groups
+            PlanetGroups = groups,
+            TransitPack = transitPack
         };
     }
 
@@ -230,6 +234,8 @@ public sealed class MonthlyPlanetTransitsDataService
             {
                 StartLocal = visibleStart,
                 EndLocal = visibleEnd,
+                RealStartLocal = startLocal,
+                RealEndLocal = endLocal,
                 Text = BuildZodiacText(planet, slice),
                 IsSplitColor = color.IsSplitColor,
                 Color = color.Color,
@@ -361,6 +367,10 @@ public sealed class MonthlyPlanetTransitsDataService
                     {
                         StartLocal = previous.StartLocal,
                         EndLocal = visibleEnd,
+                        RealStartLocal = previous.RealStartLocal == default
+                                            ? previous.StartLocal
+                                            : previous.RealStartLocal,
+                        RealEndLocal = endLocal,
                         Text = previous.Text,
                         Color = previous.Color,
                         ColorTop = previous.ColorTop,
@@ -379,6 +389,8 @@ public sealed class MonthlyPlanetTransitsDataService
             {
                 StartLocal = visibleStart,
                 EndLocal = visibleEnd,
+                RealStartLocal = startLocal,
+                RealEndLocal = endLocal,
                 Text = BuildZodiacText(planet, slice),
                 Color = color.Color,
                 ColorTop = color.ColorTop,
@@ -491,6 +503,10 @@ public sealed class MonthlyPlanetTransitsDataService
                     {
                         StartLocal = previous.StartLocal,
                         EndLocal = visibleEnd,
+                        RealStartLocal = previous.RealStartLocal == default
+                                            ? previous.StartLocal
+                                            : previous.RealStartLocal,
+                        RealEndLocal = endLocal,
                         Text = previous.Text,
                         Color = previous.Color,
                         ColorTop = previous.ColorTop,
@@ -509,6 +525,8 @@ public sealed class MonthlyPlanetTransitsDataService
             {
                 StartLocal = visibleStart,
                 EndLocal = visibleEnd,
+                RealStartLocal = startLocal,
+                RealEndLocal = endLocal,
                 Text = BuildNakshatraText(planet, slice),
                 Color = color,
                 ColorTop = null,
@@ -603,6 +621,10 @@ public sealed class MonthlyPlanetTransitsDataService
                     {
                         StartLocal = previous.StartLocal,
                         EndLocal = visibleEnd,
+                        RealStartLocal = previous.RealStartLocal == default
+                                            ? previous.StartLocal
+                                            : previous.RealStartLocal,
+                        RealEndLocal = endLocal,
                         Text = previous.Text,
                         Color = previous.Color,
                         ColorTop = previous.ColorTop,
@@ -621,6 +643,8 @@ public sealed class MonthlyPlanetTransitsDataService
             {
                 StartLocal = visibleStart,
                 EndLocal = visibleEnd,
+                RealStartLocal = startLocal,
+                RealEndLocal = endLocal,
                 Text = BuildPadaText(planet, slice),
                 Color = color,
                 ColorTop = null,
@@ -720,6 +744,10 @@ public sealed class MonthlyPlanetTransitsDataService
                     {
                         StartLocal = previous.StartLocal,
                         EndLocal = visibleEnd,
+                        RealStartLocal = previous.RealStartLocal == default
+                                            ? previous.StartLocal
+                                            : previous.RealStartLocal,
+                        RealEndLocal = endLocal,
                         Text = previous.Text,
                         Color = previous.Color,
                         ColorTop = previous.ColorTop,
@@ -738,6 +766,8 @@ public sealed class MonthlyPlanetTransitsDataService
             {
                 StartLocal = visibleStart,
                 EndLocal = visibleEnd,
+                RealStartLocal = startLocal,
+                RealEndLocal = endLocal,
                 Text = BuildTaraBalaText(planet, slice),
                 Color = color,
                 ColorTop = null,

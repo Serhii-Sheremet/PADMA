@@ -6566,3 +6566,127 @@ The monthly page tooltip/details UI may have a different mobile presentation if 
 
 ------------
 
+# Monthly Planet Transits — Planet Day Details Requirements
+
+## Planet Day Details
+
+The Monthly Planet Transits page does not select individual transit segments as the main interaction target.
+Instead, the user selects a combination of:
+
+- planet;
+- calendar day.
+
+When the user taps a planet transit area, the page determines the selected day and the selected planet from the tap position.
+The selected area is highlighted by a selection rectangle covering:
+
+- the full width of the selected day;
+- all transit lanes of the selected planet;
+- only the selected planet group.
+
+The selection rectangle must not cover the whole monthly timeline height. It must be limited to the selected planet group.
+
+## Details Panel Purpose
+
+The page displays a Planet Day Details panel for the selected planet and selected day.
+The panel summarizes all relevant transit periods of the selected planet that intersect the selected calendar day.
+The details panel is not limited to the visible part of the selected day.
+If a transit period started before the selected day or ends after the selected day, the panel must show the real full transit period start and end.
+
+Example:
+`15.05.2026 02:52:02 – 15.06.2026 09:23:01`
+
+not:
+`01.06.2026 00:00:00 – 01.06.2026 23:59:59`
+
+The selected day is used only as a filter: show all transit periods that are active at any moment during that day.
+
+## Details Panel Structure
+
+The details panel is organized into structured blocks.
+The initial block set includes:
+
+- Zodiac;
+- Nakshatra;
+- Pada;
+- Tara Bala;
+- Navamsha;
+- Vedha;
+- Mrityu Bhaga.
+
+Each block may contain one or more rows.
+Each row represents a real transit period that intersects the selected day.
+
+The row format should include:
+
+- full period start date/time;
+- full period end date/time;
+- value/description for that period.
+
+Date/time values should use the full local format:
+`dd.MM.yyyy HH:mm:ss`
+
+The display must use the active profile living timezone.
+
+## Period Handling
+
+The details panel must preserve real transit period boundaries.
+It must not clip the displayed period ranges to the selected day.
+This rule applies to all long-duration and derived transit data, including:
+
+- zodiac transit;
+- nakshatra transit;
+- pada transit;
+- tara bala;
+- navamsha;
+- vedha;
+- mrityu bhaga.
+
+The selected day is only used to determine whether a period should be included:
+
+A period is included if:
+
+- `period.EndLocal > selectedDayStartLocal`
+- and `period.StartLocal < selectedDayEndLocal`
+
+## Vedha and Mrityu Bhaga
+
+Vedha and Mrityu Bhaga must be calculated using the same underlying logic as the existing DayPage tooltip.
+The implementation must not depend on the visible monthly calculation range or on the monthly timeline clipping boundaries.
+For slow-moving planets, the real transit period may span months or years. The details panel must restore and display the real start and end of such periods.
+Example:
+
+A Vedha from the Sun for Ketu may be active on 01.06.2026 even if it started on 15.05.2026 and ends on 15.06.2026. In that case, the details panel must display the full Vedha period:
+`15.05.2026 02:52:02 – 15.06.2026 09:23:01`
+
+## Relationship to DayPage Tooltip
+
+The Monthly Planet Transits details panel must reuse existing DayPage tooltip calculation logic wherever possible.
+However, unlike DayPage, the monthly page details are not based on one selected segment.
+
+DayPage tooltip:
+- selected object: one exact segment;
+- period shown: selected segment period.
+
+Monthly transits details:
+- selected object: planet + day;
+- periods shown: all relevant periods intersecting the selected day;
+- each period keeps its own real start/end boundaries.
+
+The visual organization should remain similar to DayPage tooltips:
+- title;
+- date/planet context;
+- structured blocks;
+- rows with labels and values.
+
+## Future Extension
+
+The details panel may later be extended with:
+- House from Moon;
+- House from Lagna;
+- Transit Description;
+
+without redesigning the panel structure.
+These values may be calculated internally earlier if it is useful for consistency with DayPage logic, but they are not required to be shown in the first implementation.
+
+---------
+
