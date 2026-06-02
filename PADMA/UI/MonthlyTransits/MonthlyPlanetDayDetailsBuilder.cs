@@ -10,9 +10,9 @@ namespace PADMA.UI.MonthlyTransits;
 public static class MonthlyPlanetDayDetailsBuilder
 {
     public static MonthlyPlanetDayDetailsModel Build(
-        MonthlyPlanetTransitsData data,
-        EPlanet planet,
-        DateTime selectedDayLocal)
+    MonthlyPlanetTransitsData data,
+    EPlanet planet,
+    DateTime selectedDayLocal)
     {
         var selectedDate = selectedDayLocal.Date;
         var dayStart = selectedDate;
@@ -29,87 +29,34 @@ public static class MonthlyPlanetDayDetailsBuilder
                 SelectedDayLocal = selectedDate,
                 Title = GetPlanetName(planet),
                 Subtitle = selectedDate.ToString("dd.MM.yyyy"),
-                Blocks = []
+                PadaPeriodBlocks = [],
+                ExtraBlocks = []
             };
         }
 
-        var blocks = new List<MonthlyPlanetDayDetailsBlock>();
-
-        AddLaneBlock(
-            blocks,
-            "Zodiac Sign",
-            group,
-            MonthlyTransitLaneKind.Zodiac,
-            dayStart,
-            dayEnd,
-            x => x.Text);
-
-        AddLaneBlock(
-            blocks,
-            "Nakshatra",
-            group,
-            MonthlyTransitLaneKind.Nakshatra,
-            dayStart,
-            dayEnd,
-            x => x.Text);
-
-        AddLaneBlock(
-            blocks,
-            "Pada",
-            group,
-            MonthlyTransitLaneKind.Pada,
-            dayStart,
-            dayEnd,
-            x => x.Text);
-
-        AddLaneBlock(
-            blocks,
-            "Tara Bala",
-            group,
-            MonthlyTransitLaneKind.TaraBala,
-            dayStart,
-            dayEnd,
-            x => x.Text);
-
-        AddNavamshaBlock(
-            blocks,
+        var padaPeriodBlocks = BuildPadaPeriodBlocks(
             group,
             planet,
             dayStart,
             dayEnd);
 
-        AddSpecialNavamshaBlock(
-            blocks,
-            group,
-            dayStart,
-            dayEnd);
-
-        AddMaleficNavamshaBlock(
-            blocks,
-            group,
-            dayStart,
-            dayEnd);
-
-        AddDrekkanaBlock(
-            blocks,
-            group,
-            dayStart,
-            dayEnd);
-
-        AddMrityuBhagaBlock(
-            blocks,
-            planet,
-            dayStart,
-            dayEnd,
-            data);
+        var extraBlocks = new List<MonthlyPlanetDayDetailsBlock>();
 
         AddVedhaBlocks(
-            blocks,
+            extraBlocks,
             data,
             group,
             planet,
             dayStart,
             dayEnd);
+
+        AddMrityuBhagaBlock(
+            extraBlocks,
+            planet,
+            dayStart,
+            dayEnd,
+            data);
+        
 
         return new MonthlyPlanetDayDetailsModel
         {
@@ -117,91 +64,343 @@ public static class MonthlyPlanetDayDetailsBuilder
             SelectedDayLocal = selectedDate,
             Title = GetPlanetName(planet),
             Subtitle = selectedDate.ToString("dd.MM.yyyy"),
-            Blocks = blocks
+            PadaPeriodBlocks = padaPeriodBlocks,
+            ExtraBlocks = extraBlocks
         };
     }
 
-    private static void AddLaneBlock(
-        List<MonthlyPlanetDayDetailsBlock> blocks,
-        string title,
-        MonthlyPlanetGroup group,
-        MonthlyTransitLaneKind laneKind,
-        DateTime dayStart,
-        DateTime dayEnd,
-        Func<MonthlyTransitSegment, string> valueSelector)
-    {
-        var lane = group.Lanes.FirstOrDefault(x => x.Kind == laneKind);
-        if (lane == null)
-            return;
-
-        var rows = lane.Segments
-            .Where(x => Intersects(GetRealStartLocal(x), GetRealEndLocal(x), dayStart, dayEnd))
-            .Select(x => new MonthlyPlanetDayDetailsRow
-            {
-                StartLocal = GetRealStartLocal(x),
-                EndLocal = GetRealEndLocal(x),
-                Value = valueSelector(x)
-            })
-            .Where(x => !string.IsNullOrWhiteSpace(x.Value))
-            .OrderBy(x => x.StartLocal)
-            .ToList();
-
-        if (rows.Count == 0)
-            return;
-
-        blocks.Add(new MonthlyPlanetDayDetailsBlock
-        {
-            Title = Localize(title),
-            Rows = rows
-        });
-    }
-
-    private static void AddNavamshaBlock(
-        List<MonthlyPlanetDayDetailsBlock> blocks,
+    private static IReadOnlyList<MonthlyPlanetDayPadaPeriodBlock> BuildPadaPeriodBlocks(
         MonthlyPlanetGroup group,
         EPlanet planet,
         DateTime dayStart,
         DateTime dayEnd)
     {
-        var padaLane = group.Lanes.FirstOrDefault(x => x.Kind == MonthlyTransitLaneKind.Pada);
+        var padaLane = group.Lanes
+            .FirstOrDefault(x => x.Kind == MonthlyTransitLaneKind.Pada);
+
         if (padaLane == null)
-            return;
+            return [];
 
-        var rows = new List<MonthlyPlanetDayDetailsRow>();
+        var result = new List<MonthlyPlanetDayPadaPeriodBlock>();
 
-        foreach (var segment in padaLane.Segments)
+        var padaSegments = padaLane.Segments
+            .Where(x => Intersects(GetRealStartLocal(x), GetRealEndLocal(x), dayStart, dayEnd))
+            .OrderBy(x => GetRealStartLocal(x))
+            .ToList();
+
+        foreach (var segment in padaSegments)
         {
-            var start = GetRealStartLocal(segment);
-            var end = GetRealEndLocal(segment);
-
-            if (!Intersects(start, end, dayStart, dayEnd))
-                continue;
-
             var slice = segment.SourceSlice;
             if (slice == null)
                 continue;
 
-            var navamsaText = BuildNavamshaText(planet, slice);
-            if (string.IsNullOrWhiteSpace(navamsaText))
+            var start = GetRealStartLocal(segment);
+            var end = GetRealEndLocal(segment);
+
+            var lines = BuildPadaPeriodLines(group, planet, segment);
+
+            if (lines.Count == 0)
                 continue;
 
-            rows.Add(new MonthlyPlanetDayDetailsRow
+            result.Add(new MonthlyPlanetDayPadaPeriodBlock
             {
                 StartLocal = start,
                 EndLocal = end,
-                Value = navamsaText
+                Title = BuildPadaPeriodTitle(planet, slice),
+                Lines = lines
             });
         }
 
-        rows = MergeAdjacentRows(rows);
+        return result;
+    }
 
-        if (rows.Count == 0)
+    private static IReadOnlyList<MonthlyPlanetDayDetailsLine> BuildPadaPeriodLines(
+        MonthlyPlanetGroup group,
+        EPlanet planet,
+        MonthlyTransitSegment padaSegment)
+    {
+        var lines = new List<MonthlyPlanetDayDetailsLine>();
+
+        var slice = padaSegment.SourceSlice;
+        if (slice == null)
+            return lines;
+
+        var padaStart = GetRealStartLocal(padaSegment);
+        var padaEnd = GetRealEndLocal(padaSegment);
+
+        var zodiacSegment = FindRelatedSegment(
+            group,
+            MonthlyTransitLaneKind.Zodiac,
+            padaStart,
+            padaEnd);
+
+        var nakshatraSegment = FindRelatedSegment(
+            group,
+            MonthlyTransitLaneKind.Nakshatra,
+            padaStart,
+            padaEnd);
+
+
+        var taraBalaSegment = FindRelatedSegment(
+            group,
+            MonthlyTransitLaneKind.TaraBala,
+            padaStart,
+            padaEnd);
+
+        if (zodiacSegment != null)
+        {
+            AddLine(
+                lines,
+                "Zodiac Sign",
+                BuildZodiacText(planet, slice),
+                GetRealStartLocal(zodiacSegment),
+                GetRealEndLocal(zodiacSegment));
+        }
+        else
+        {
+            AddLine(lines, "Zodiac Sign", BuildZodiacText(planet, slice));
+        }
+
+        if (nakshatraSegment != null)
+        {
+            AddLine(
+                lines,
+                "Nakshatra",
+                BuildNakshatraText(planet, slice),
+                GetRealStartLocal(nakshatraSegment),
+                GetRealEndLocal(nakshatraSegment));
+        }
+        else
+        {
+            AddLine(lines, "Nakshatra", BuildNakshatraText(planet, slice));
+        }
+
+        if (padaSegment != null)
+        {
+            AddLine(
+            lines,
+            "Pada",
+            BuildPadaNumberText(slice),
+            padaStart,
+            padaEnd);
+        }
+        else
+        {
+            AddLine(lines, "Pada", BuildPadaNumberText(slice));
+        }
+
+        if (taraBalaSegment != null)
+        {
+            AddLine(
+                lines,
+                "Tara Bala",
+                BuildTaraBalaText(planet, slice),
+                GetRealStartLocal(taraBalaSegment),
+                GetRealEndLocal(taraBalaSegment));
+        }
+        else
+        {
+            AddLine(lines, "Tara Bala", BuildTaraBalaText(planet, slice));
+        }
+
+        AddLine(
+            lines,
+            "Navamsa",
+            BuildNavamshaText(planet, slice),
+            padaStart,
+            padaEnd);
+
+        AddLine(lines, "Special Navamsa", BuildSpecialNavamshaText(slice));
+        AddLine(lines, "Malefic Navamsa", BuildMaleficNavamshaText(slice));
+        AddLine(lines, "Drekkana", BuildDrekkanaText(slice));
+
+        return lines;
+    }
+
+    private static MonthlyTransitSegment? FindRelatedSegment(
+        MonthlyPlanetGroup group,
+        MonthlyTransitLaneKind laneKind,
+        DateTime periodStart,
+        DateTime periodEnd)
+    {
+        var lane = group.Lanes.FirstOrDefault(x => x.Kind == laneKind);
+        if (lane == null)
+            return null;
+
+        return lane.Segments
+            .Where(x => Intersects(
+                GetRealStartLocal(x),
+                GetRealEndLocal(x),
+                periodStart,
+                periodEnd))
+            .OrderByDescending(x =>
+            {
+                var start = Max(GetRealStartLocal(x), periodStart);
+                var end = Min(GetRealEndLocal(x), periodEnd);
+                return (end - start).Ticks;
+            })
+            .FirstOrDefault();
+    }
+
+    private static string BuildPadaPeriodTitle(EPlanet planet, PlanetSlice slice)
+    {
+        var zodiacName = GetZodiacName(slice.ZodiacId);
+        var nakshatraName = GetNakshatraShortName(slice.NakshatraId);
+
+        var padaNumber = SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
+        var navamsaZodiacId = slice.NavamsaZodiacId;
+
+        var navamsaMarker = BuildNavamshaExaltationMarker(planet, navamsaZodiacId);
+
+        var nakshatraPart = string.IsNullOrWhiteSpace(nakshatraName)
+            ? slice.NakshatraId.ToString()
+            : nakshatraName;
+
+        return $"{zodiacName}-{nakshatraPart}-{padaNumber}-{navamsaZodiacId}{navamsaMarker}";
+    }
+
+    private static string BuildZodiacText(EPlanet planet, PlanetSlice slice)
+    {
+        var zodiac = GetZodiacName(slice.ZodiacId);
+        var marker = BuildZodiacStateMarker(planet, slice);
+
+        return string.IsNullOrWhiteSpace(marker)
+            ? zodiac
+            : $"{zodiac}{marker}";
+    }
+
+    private static string BuildZodiacStateMarker(EPlanet planet, PlanetSlice slice)
+    {
+        if (planet == EPlanet.RAHU || planet == EPlanet.KETU)
+            return string.Empty;
+
+        if (slice.IsRetrograde)
+            return ".R";
+
+        var ex = ExaltationUtility.GetPlanetExaltation(
+            planet,
+            (EZodiac)slice.ZodiacId);
+
+        return ex switch
+        {
+            EExaltation.EXALTATION => "↑",
+            EExaltation.DEBILITATION => "↓",
+            _ => string.Empty
+        };
+    }
+
+    private static string BuildNakshatraText(EPlanet planet, PlanetSlice slice)
+    {
+        _ = planet;
+
+        var name = GetNakshatraShortName(slice.NakshatraId);
+
+        return string.IsNullOrWhiteSpace(name)
+            ? slice.NakshatraId.ToString()
+            : $"{slice.NakshatraId}.{name}";
+    }
+
+    private static string GetNakshatraShortName(int nakshatraId)
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+
+        var desc = DataCache.Instance.NakshatraDescList
+            .FirstOrDefault(x =>
+                x.NakshatraId == nakshatraId &&
+                string.Equals(x.LanguageCode, lang, StringComparison.OrdinalIgnoreCase));
+
+        if (desc == null)
+            return string.Empty;
+
+        return !string.IsNullOrWhiteSpace(desc.ShortName)
+            ? desc.ShortName
+            : desc.Name ?? string.Empty;
+    }
+
+    private static string BuildPadaNumberText(PlanetSlice slice)
+    {
+        var padaNumber = SwissUtility.GetPadaNumberByPadaId(slice.PadaId);
+        return padaNumber > 0 ? padaNumber.ToString() : string.Empty;
+    }
+
+    private static string BuildTaraBalaText(EPlanet planet, PlanetSlice slice)
+    {
+        _ = planet;
+
+        var name = GetTaraBalaName(slice.TaraBalaId);
+
+        var prefix = string.IsNullOrWhiteSpace(name)
+            ? slice.TaraBalaId.ToString()
+            : $"{slice.TaraBalaId}.{name}";
+
+        return $"{prefix} {slice.TaraBalaPercent}%";
+    }
+
+    private static string GetTaraBalaName(int taraBalaId)
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+
+        var desc = DataCache.Instance.TaraBalaDescList
+            .FirstOrDefault(x =>
+                x.TaraBalaId == taraBalaId &&
+                string.Equals(x.LanguageCode, lang, StringComparison.OrdinalIgnoreCase));
+
+        if (desc == null)
+            return string.Empty;
+
+        return !string.IsNullOrWhiteSpace(desc.ShortName)
+            ? desc.ShortName
+            : desc.Name ?? string.Empty;
+    }
+
+    private static string BuildNavamshaText(EPlanet planet, PlanetSlice slice)
+    {
+        var navamsaZodiacId = slice.NavamsaZodiacId;
+
+        if (navamsaZodiacId < 1 || navamsaZodiacId > 12)
+            return string.Empty;
+
+        var zodiacName = GetZodiacName(navamsaZodiacId);
+        var marker = BuildNavamshaExaltationMarker(planet, navamsaZodiacId);
+
+        return string.IsNullOrWhiteSpace(marker)
+            ? zodiacName
+            : $"{zodiacName}{marker}";
+    }
+
+    private static string BuildNavamshaExaltationMarker(EPlanet planet, int navamsaZodiacId)
+    {
+        if (planet == EPlanet.RAHU || planet == EPlanet.KETU)
+            return string.Empty;
+
+        var ex = ExaltationUtility.GetPlanetExaltation(
+            planet,
+            (EZodiac)navamsaZodiacId);
+
+        return ex switch
+        {
+            EExaltation.EXALTATION => "↑",
+            EExaltation.DEBILITATION => "↓",
+            _ => string.Empty
+        };
+    }
+
+    private static void AddLine(
+        List<MonthlyPlanetDayDetailsLine> lines,
+        string labelNative,
+        string value,
+        DateTime? startLocal = null,
+        DateTime? endLocal = null)
+    {
+        if (string.IsNullOrWhiteSpace(value))
             return;
 
-        blocks.Add(new MonthlyPlanetDayDetailsBlock
+        lines.Add(new MonthlyPlanetDayDetailsLine
         {
-            Title = Localize("Navamsa"),
-            Rows = rows
+            Label = Localize(labelNative),
+            Value = value,
+            StartLocal = startLocal,
+            EndLocal = endLocal
         });
     }
 
@@ -246,38 +445,6 @@ public static class MonthlyPlanetDayDetailsBuilder
         }
 
         return result;
-    }
-
-    private static string BuildNavamshaText(EPlanet planet, PlanetSlice slice)
-    {
-        var navamsaZodiacId = slice.NavamsaZodiacId;
-
-        if (navamsaZodiacId < 1 || navamsaZodiacId > 12)
-            return string.Empty;
-
-        var zodiacName = GetZodiacName(navamsaZodiacId);
-        var marker = BuildNavamshaExaltationMarker(planet, navamsaZodiacId);
-
-        return string.IsNullOrWhiteSpace(marker)
-            ? zodiacName
-            : $"{zodiacName}{marker}";
-    }
-
-    private static string BuildNavamshaExaltationMarker(EPlanet planet, int navamsaZodiacId)
-    {
-        if (planet == EPlanet.RAHU || planet == EPlanet.KETU)
-            return string.Empty;
-
-        var ex = ExaltationUtility.GetPlanetExaltation(
-            planet,
-            (EZodiac)navamsaZodiacId);
-
-        return ex switch
-        {
-            EExaltation.EXALTATION => "↑",
-            EExaltation.DEBILITATION => "↓",
-            _ => string.Empty
-        };
     }
 
     private static bool Intersects(
@@ -384,21 +551,6 @@ public static class MonthlyPlanetDayDetailsBuilder
         });
     }
 
-    private static void AddSpecialNavamshaBlock(
-        List<MonthlyPlanetDayDetailsBlock> blocks,
-        MonthlyPlanetGroup group,
-        DateTime dayStart,
-        DateTime dayEnd)
-    {
-        AddPadaDerivedBlock(
-            blocks,
-            "Special Navamsa",
-            group,
-            dayStart,
-            dayEnd,
-            BuildSpecialNavamshaText);
-    }
-
     private static string BuildSpecialNavamshaText(PlanetSlice slice)
     {
         var pada = DataCache.Instance.PadaList
@@ -410,21 +562,6 @@ public static class MonthlyPlanetDayDetailsBuilder
         var text = PlanetTooltipUtility.GetSpecNavamsha(pada);
 
         return CleanCommaText(text);
-    }
-
-    private static void AddMaleficNavamshaBlock(
-        List<MonthlyPlanetDayDetailsBlock> blocks,
-        MonthlyPlanetGroup group,
-        DateTime dayStart,
-        DateTime dayEnd)
-    {
-        AddPadaDerivedBlock(
-            blocks,
-            "Malefic Navamsa",
-            group,
-            dayStart,
-            dayEnd,
-            BuildMaleficNavamshaText);
     }
 
     private static string BuildMaleficNavamshaText(PlanetSlice slice)
@@ -445,21 +582,6 @@ public static class MonthlyPlanetDayDetailsBuilder
             L);
 
         return CleanCommaText(text);
-    }
-
-    private static void AddDrekkanaBlock(
-        List<MonthlyPlanetDayDetailsBlock> blocks,
-        MonthlyPlanetGroup group,
-        DateTime dayStart,
-        DateTime dayEnd)
-    {
-        AddPadaDerivedBlock(
-            blocks,
-            "Drekkana",
-            group,
-            dayStart,
-            dayEnd,
-            BuildDrekkanaText);
     }
 
     private static string BuildDrekkanaText(PlanetSlice slice)
@@ -722,6 +844,17 @@ public static class MonthlyPlanetDayDetailsBuilder
     {
         return a > b ? a : b;
     }
+
+    private static DateTime Max(DateTime a, DateTime b)
+    {
+        return a > b ? a : b;
+    }
+
+    private static DateTime Min(DateTime a, DateTime b)
+    {
+        return a < b ? a : b;
+    }
+
 
 
 }

@@ -95,6 +95,27 @@ public sealed class MonthlyTransitsBodyDrawable : IDrawable
         
         // Masa/Shunya is a top-level band and must be drawn above the background day grid.
         DrawMasaShunyaBand(canvas, layout);
+
+        DrawSelection(canvas, layout);
+    }
+
+    private static void DrawSelection(ICanvas canvas, MonthlyTransitsLayout layout)
+    {
+        var selection = layout.Selection;
+        if (selection == null)
+            return;
+
+        float x = (float)(selection.DayIndex * layout.DayWidth);
+        float y = (float)(
+            layout.TopBandHeight +
+            selection.PlanetIndex * layout.PlanetGroupHeight);
+
+        float w = (float)layout.DayWidth;
+        float h = (float)layout.PlanetContentHeight;
+
+        canvas.StrokeColor = Colors.Gold;
+        canvas.StrokeSize = 2;
+        canvas.DrawRectangle(x + 1, y + 1, w - 2, h - 2);
     }
 
     private static void DrawMasaShunyaBand(ICanvas canvas, MonthlyTransitsLayout layout)

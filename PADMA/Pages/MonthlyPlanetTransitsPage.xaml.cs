@@ -1,13 +1,14 @@
-using CommunityToolkit.Maui;
+п»їusing CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Extensions;
-using PADMA.Core.Services;
-using PADMA.Core.Utilities;
-using PADMA.UI.ViewModels;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
-using System.ComponentModel;
-using System.Globalization;
+using PADMA.Core.Services;
+using PADMA.Core.Utilities;
 using PADMA.UI.MonthlyTransits;
+using PADMA.UI.ViewModels;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace PADMA.Pages;
 
@@ -31,6 +32,57 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private MonthlyPlanetTransitsData? _monthlyData;
     private CancellationTokenSource? _buildCts;
 
+    private MonthlyPlanetDaySelection? _selection;
+    private MonthlyPlanetDayDetailsModel? _detailsModel;
+
+    public ObservableCollection<object> TooltipItems { get; } = new();
+
+    private string _tooltipTitle = string.Empty;
+    public string TooltipTitle
+    {
+        get => _tooltipTitle;
+        set
+        {
+            if (_tooltipTitle == value)
+                return;
+
+            _tooltipTitle = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private bool _isTooltipVisible;
+    public bool IsTooltipVisible
+    {
+        get => _isTooltipVisible;
+        set
+        {
+            if (_isTooltipVisible == value)
+                return;
+
+            _isTooltipVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private double _tooltipHeight = 420;
+    public double TooltipHeight
+    {
+        get => _tooltipHeight;
+        private set
+        {
+            if (Math.Abs(_tooltipHeight - value) < 0.1)
+                return;
+
+            _tooltipHeight = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public double TooltipMaxHeight { get; private set; } = 520;
+    public double TooltipMaxWidth { get; private set; } = 360;
+    public double TooltipBodyHeight { get; private set; } = 420;
+
     private bool _isClosing;
     private bool _isBusy;
     public bool IsBusy
@@ -44,7 +96,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         }
     }
 
-    private string _busyText = "Please wait…";
+    private string _busyText = "Please waitвЂ¦";
     public string BusyText
     {
         get => _busyText;
@@ -72,6 +124,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     public MonthlyPlanetTransitsPage()
     {
         InitializeComponent();
+        BindingContext = this;
 
         if (BindingContext is not MonthlyPlanetTransitsViewModel)
             BindingContext = new MonthlyPlanetTransitsViewModel();
@@ -105,7 +158,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         _isPageAppeared = true;
 
-        // Дать Shell шанс закрыть burger menu перед тяжелым построением UI.
+        // Р”Р°С‚СЊ Shell С€Р°РЅСЃ Р·Р°РєСЂС‹С‚СЊ burger menu РїРµСЂРµРґ С‚СЏР¶РµР»С‹Рј РїРѕСЃС‚СЂРѕРµРЅРёРµРј UI.
         if (Shell.Current is not null)
             Shell.Current.FlyoutIsPresented = false;
 
@@ -210,7 +263,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         try
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
-            await RunBusyAsync(Localization.GetLocalizedText("Please wait…", lang), async () =>
+            await RunBusyAsync(Localization.GetLocalizedText("Please waitвЂ¦", lang), async () =>
             {
                 await Shell.Current.GoToAsync("//main");
                 await Task.Yield();
@@ -227,7 +280,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         BusyText = text;
         IsBusy = true;
 
-        await Task.Yield(); // дать UI шанс отрисовать overlay
+        await Task.Yield(); // РґР°С‚СЊ UI С€Р°РЅСЃ РѕС‚СЂРёСЃРѕРІР°С‚СЊ overlay
 
         try { await action(); }
         finally { IsBusy = false; }
@@ -323,8 +376,9 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             Year = Vm.Year,
             Month = Vm.Month,
             Culture = Vm.CurrentCulture,
-            TopBandLabel = Localization.GetLocalizedText("Masa/Shunya", DataCache.Instance.CurrentLanguageCode),
+            TopBandLabel = "Masa/Shunya",
             Data = _monthlyData,
+            Selection = _selection,
             Planets = PlanetOrder
                 .Select(x => new MonthlyTransitsPlanetRow
                 {
@@ -333,6 +387,207 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
                 })
                 .ToList()
         };
+    }
+
+    private void OnBodyGraphicsTapped(object? sender, TappedEventArgs e)
+    {
+        if (_monthlyData == null)
+            return;
+
+        var point = e.GetPosition(BodyGraphicsView);
+        if (point == null)
+            return;
+
+        var layout = CreateLayout();
+
+        var tappedSelection = MonthlyTransitsHitTestHelper.HitTestPlanetDay(
+            layout,
+            point.Value.X,
+            point.Value.Y);
+
+        if (tappedSelection == null)
+            return;
+
+        var isSecondTapOnSameSelection = IsSameSelection(_selection, tappedSelection);
+
+        _selection = tappedSelection;
+
+        _detailsModel = MonthlyPlanetDayDetailsBuilder.Build(
+            _monthlyData,
+            tappedSelection.Planet,
+            tappedSelection.DayLocal);
+
+        RebuildTimelineSkeleton();
+
+        if (isSecondTapOnSameSelection && _detailsModel != null)
+        {
+            ShowMonthlyPlanetDayDetailsTooltip(_detailsModel);
+        }
+    }
+
+    private static bool IsSameSelection(
+        MonthlyPlanetDaySelection? current,
+        MonthlyPlanetDaySelection tapped)
+    {
+        return current != null &&
+               current.Planet == tapped.Planet &&
+               current.DayLocal.Date == tapped.DayLocal.Date;
+    }
+
+    private void OnTooltipBackdropTapped(object? sender, TappedEventArgs e)
+    {
+        IsTooltipVisible = false;
+    }
+
+    private void UpdateTooltipSize()
+    {
+        var displayInfo = DeviceDisplay.Current.MainDisplayInfo;
+
+        var screenWidth = displayInfo.Width / displayInfo.Density;
+        var screenHeight = displayInfo.Height / displayInfo.Density;
+
+        TooltipMaxWidth = Math.Min(screenWidth - 36, 380);
+        TooltipMaxHeight = Math.Min(screenHeight * 0.68, 560);
+
+        var estimatedContentHeight = EstimateTooltipContentHeight();
+        TooltipHeight = Math.Min(TooltipMaxHeight, Math.Max(170, estimatedContentHeight));
+
+        TooltipBodyHeight = Math.Max(90, TooltipHeight - 62);
+
+        OnPropertyChanged(nameof(TooltipMaxWidth));
+        OnPropertyChanged(nameof(TooltipMaxHeight));
+        OnPropertyChanged(nameof(TooltipBodyHeight));
+    }
+
+    private double EstimateTooltipContentHeight()
+    {
+        // Header + top divider + padding
+        double h = 62;
+
+        foreach (var item in TooltipItems)
+        {
+            h += item switch
+            {
+                MonthlyTooltipHeaderItem => 26,
+                MonthlyTooltipLineItem line => EstimateLineHeight(line.Value),
+                MonthlyTooltipRangeItem range => EstimateRangeHeight(range.Text),
+                MonthlyTooltipShortDividerItem => 8,
+                MonthlyTooltipDividerItem => 10,
+                MonthlyTooltipSpacerItem spacer => spacer.Height,
+                _ => 20
+            };
+        }
+
+        // Frame padding bottom/top safety
+        return h + 18;
+    }
+
+    private static double EstimateLineHeight(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return 20;
+
+        // rough wrap estimate for mobile tooltip width
+        return text.Length > 55 ? 38 : 22;
+    }
+
+    private static double EstimateRangeHeight(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return 18;
+
+        return text.Length > 55 ? 34 : 18;
+    }
+
+    private void ShowMonthlyPlanetDayDetailsTooltip(MonthlyPlanetDayDetailsModel model)
+    {
+        TooltipTitle = $"{model.Title} {model.Subtitle}";
+
+        FillTooltipItemsFromMonthlyDetails(model);
+
+        UpdateTooltipSize();
+
+        IsTooltipVisible = true;
+    }
+
+    private void FillTooltipItemsFromMonthlyDetails(MonthlyPlanetDayDetailsModel model)
+    {
+        TooltipItems.Clear();
+
+        for (int i = 0; i < model.PadaPeriodBlocks.Count; i++)
+        {
+            var padaBlock = model.PadaPeriodBlocks[i];
+
+            TooltipItems.Add(new MonthlyTooltipHeaderItem
+            {
+                Text = $"{padaBlock.Title}"
+            });
+
+            foreach (var line in padaBlock.Lines)
+            {
+                if (line.HasRange)
+                {
+                    TooltipItems.Add(new MonthlyTooltipTwoLineRangeItem
+                    {
+                        Label = line.Label,
+                        Value = line.Value,
+                        RangeText = line.RangeText
+                    });
+                }
+                else
+                {
+                    TooltipItems.Add(new MonthlyTooltipLineItem
+                    {
+                        Label = line.Label,
+                        Value = line.Value
+                    });
+                }
+            }
+
+            bool hasNextPadaBlock = i < model.PadaPeriodBlocks.Count - 1;
+            bool hasExtraBlocks = model.ExtraBlocks.Count > 0;
+
+            if (hasNextPadaBlock || hasExtraBlocks)
+            {
+                TooltipItems.Add(new MonthlyTooltipDividerItem());
+                TooltipItems.Add(new MonthlyTooltipSpacerItem { Height = 6 });
+            }
+        }
+
+        for (int i = 0; i < model.ExtraBlocks.Count; i++)
+        {
+            var block = model.ExtraBlocks[i];
+
+            TooltipItems.Add(new MonthlyTooltipHeaderItem
+            {
+                Text = block.Title
+            });
+
+            foreach (var row in block.Rows)
+            {
+                TooltipItems.Add(new MonthlyTooltipSimpleRangeLineItem
+                {
+                    Label = row.Value,
+                    RangeText = row.RangeText
+                });
+            }
+
+            if (i < model.ExtraBlocks.Count - 1)
+            {
+                TooltipItems.Add(new MonthlyTooltipDividerItem());
+                TooltipItems.Add(new MonthlyTooltipSpacerItem { Height = 6 });
+            }
+        }
+    }
+
+    protected override void OnSizeAllocated(double width, double height)
+    {
+        base.OnSizeAllocated(width, height);
+
+        if (IsTooltipVisible)
+        {
+            UpdateTooltipSize();
+        }
     }
 
     private static string GetPlanetName(EPlanet planet)
@@ -422,42 +677,79 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         _monthlyData = await _dataService.BuildAsync(Vm.Year, Vm.Month, ct);
 
-        //DebugTestPlanetDayDetails();
-
         RebuildTimelineSkeleton();
     }
 
-    private void DebugTestPlanetDayDetails()
-    {
-        #if DEBUG
-        if (_monthlyData == null)
-            return;
-
-        // Проверочный пример: Ketu, 1 июня выбранного года.
-        // Если открыт не июнь, всё равно можно тестировать июнь выбранного года.
-        var testDate = new DateTime(_monthlyData.Year, 6, 5);
-
-        var details = MonthlyPlanetDayDetailsBuilder.Build(
-            _monthlyData,
-            EPlanet.MARS,
-            testDate);
-
-        System.Diagnostics.Debug.WriteLine("========== MONTHLY PLANET DAY DETAILS ==========");
-        System.Diagnostics.Debug.WriteLine($"{details.Title} | {details.Subtitle}");
-
-        foreach (var block in details.Blocks)
-        {
-            System.Diagnostics.Debug.WriteLine($"--- {block.Title} ---");
-
-            foreach (var row in block.Rows)
-            {
-                System.Diagnostics.Debug.WriteLine($"{row.RangeText}: {row.Value}");
-            }
-        }
-
-        System.Diagnostics.Debug.WriteLine("================================================");
-        #endif
-    }
 
 
 }
+
+public sealed class MonthlyTooltipHeaderItem
+{
+    public string Text { get; init; } = string.Empty;
+}
+
+public sealed class MonthlyTooltipLineItem
+{
+    public string Label { get; init; } = string.Empty;
+    public string Value { get; init; } = string.Empty;
+}
+
+public sealed class MonthlyTooltipTwoLineRangeItem
+{
+    public string Label { get; init; } = string.Empty;
+    public string Value { get; init; } = string.Empty;
+    public string RangeText { get; init; } = string.Empty;
+}
+
+public sealed class MonthlyTooltipSimpleRangeLineItem
+{
+    public string Label { get; init; } = string.Empty;
+    public string RangeText { get; init; } = string.Empty;
+}
+
+public sealed class MonthlyTooltipRangeItem
+{
+    public string Text { get; init; } = string.Empty;
+}
+
+public sealed class MonthlyTooltipShortDividerItem
+{
+}
+
+public sealed class MonthlyTooltipDividerItem
+{
+}
+
+public sealed class MonthlyTooltipSpacerItem
+{
+    public double Height { get; init; } = 8;
+}
+
+public sealed class MonthlyTooltipItemTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate? HeaderTemplate { get; set; }
+    public DataTemplate? LineTemplate { get; set; }
+    public DataTemplate? RangeTemplate { get; set; }
+    public DataTemplate? ShortDividerTemplate { get; set; }
+    public DataTemplate? DividerTemplate { get; set; }
+    public DataTemplate? SpacerTemplate { get; set; }
+
+    public DataTemplate? TwoLineRangeTemplate { get; set; }
+    public DataTemplate? SimpleRangeLineTemplate { get; set; }
+
+    protected override DataTemplate? OnSelectTemplate(object item, BindableObject container)
+    {
+        return item switch
+        {
+            MonthlyTooltipHeaderItem => HeaderTemplate,
+            MonthlyTooltipLineItem => LineTemplate,
+            MonthlyTooltipTwoLineRangeItem => TwoLineRangeTemplate,
+            MonthlyTooltipSimpleRangeLineItem => SimpleRangeLineTemplate,
+            MonthlyTooltipDividerItem => DividerTemplate,
+            MonthlyTooltipSpacerItem => SpacerTemplate,
+            _ => LineTemplate
+        };
+    }
+}
+
