@@ -485,7 +485,8 @@ public static class MonthlyPlanetDayDetailsBuilder
         TimeZoneInfo tzInfo,
         Dictionary<string, (DateTime StartLocal, DateTime EndLocal)> cache)
     {
-        var key = $"{planet}|zodiac|{slice.ZodiacId}";
+        var anchorUtc = GetAnchorUtc(slice);
+        var key = $"{planet}|zodiac|{slice.ZodiacId}|{anchorUtc:yyyyMMddHHmmss}";
 
         if (cache.TryGetValue(key, out var cached))
             return cached;
@@ -501,7 +502,8 @@ public static class MonthlyPlanetDayDetailsBuilder
         TimeZoneInfo tzInfo,
         Dictionary<string, (DateTime StartLocal, DateTime EndLocal)> cache)
     {
-        var key = $"{planet}|nakshatra|{slice.NakshatraId}";
+        var anchorUtc = GetAnchorUtc(slice);
+        var key = $"{planet}|nakshatra|{slice.NakshatraId}|{anchorUtc:yyyyMMddHHmmss}";
 
         if (cache.TryGetValue(key, out var cached))
             return cached;

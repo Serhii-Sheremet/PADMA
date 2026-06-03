@@ -72,19 +72,22 @@ namespace PADMA.Core.Analysis
             DateTime utcT,
             EAppSetting nodeType)
         {
+            if (utcT.Kind != DateTimeKind.Utc)
+                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
+
             var stateAtT = CalculatePlanetDataForBoundarySearch(
                 planetId,
                 utcT,
                 nodeType);
 
-            return FindPreviousStateChangeUtc_ListDriven(
+            return FindPreviousStateBoundaryUtc_ByDirectBinarySearch(
                 planetId,
                 utcT,
                 nodeType,
                 x => x.NakshatraId,
                 stateAtT.NakshatraId,
                 TimeSpan.FromDays(1),
-                TimeSpan.FromDays(1200));
+                TimeSpan.FromDays(1500));
         }
 
         public static DateTime FindNextNakshatraChangeUtc(
@@ -92,19 +95,156 @@ namespace PADMA.Core.Analysis
             DateTime utcT,
             EAppSetting nodeType)
         {
+            if (utcT.Kind != DateTimeKind.Utc)
+                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
+
             var stateAtT = CalculatePlanetDataForBoundarySearch(
                 planetId,
                 utcT,
                 nodeType);
 
-            return FindNextStateChangeUtc_ListDriven(
+            return FindNextStateBoundaryUtc_ByDirectBinarySearch(
                 planetId,
                 utcT,
                 nodeType,
                 x => x.NakshatraId,
                 stateAtT.NakshatraId,
                 TimeSpan.FromDays(1),
-                TimeSpan.FromDays(1200));
+                TimeSpan.FromDays(1500));
+        }
+
+        private static DateTime FindPreviousStateBoundaryUtc_ByDirectBinarySearch(
+            int planetId,
+            DateTime anchorUtc,
+            EAppSetting nodeType,
+            Func<PlanetData, int> stateSelector,
+            int targetState,
+            TimeSpan scanStep,
+            TimeSpan maxLookback)
+        {
+            if (anchorUtc.Kind != DateTimeKind.Utc)
+                anchorUtc = DateTime.SpecifyKind(anchorUtc, DateTimeKind.Utc);
+
+            bool IsTarget(DateTime utc)
+            {
+                var data = CalculatePlanetDataForBoundarySearch(
+                    planetId,
+                    utc,
+                    nodeType);
+
+                return stateSelector(data) == targetState;
+            }
+
+            var insideUtc = anchorUtc;
+            var probeUtc = anchorUtc - scanStep;
+            var minUtc = anchorUtc - maxLookback;
+
+            while (probeUtc >= minUtc)
+            {
+                if (!IsTarget(probeUtc))
+                {
+                    return BinarySearchFirstTargetUtc(
+                        probeUtc,
+                        insideUtc,
+                        IsTarget);
+                }
+
+                insideUtc = probeUtc;
+                probeUtc -= scanStep;
+            }
+
+            return minUtc;
+        }
+
+        private static DateTime FindNextStateBoundaryUtc_ByDirectBinarySearch(
+            int planetId,
+            DateTime anchorUtc,
+            EAppSetting nodeType,
+            Func<PlanetData, int> stateSelector,
+            int targetState,
+            TimeSpan scanStep,
+            TimeSpan maxLookforward)
+        {
+            if (anchorUtc.Kind != DateTimeKind.Utc)
+                anchorUtc = DateTime.SpecifyKind(anchorUtc, DateTimeKind.Utc);
+
+            bool IsTarget(DateTime utc)
+            {
+                var data = CalculatePlanetDataForBoundarySearch(
+                    planetId,
+                    utc,
+                    nodeType);
+
+                return stateSelector(data) == targetState;
+            }
+
+            var insideUtc = anchorUtc;
+            var probeUtc = anchorUtc + scanStep;
+            var maxUtc = anchorUtc + maxLookforward;
+
+            while (probeUtc <= maxUtc)
+            {
+                if (!IsTarget(probeUtc))
+                {
+                    return BinarySearchFirstNonTargetUtc(
+                        insideUtc,
+                        probeUtc,
+                        IsTarget);
+                }
+
+                insideUtc = probeUtc;
+                probeUtc += scanStep;
+            }
+
+            return maxUtc;
+        }
+
+        private static DateTime BinarySearchFirstTargetUtc(
+            DateTime outsideUtc,
+            DateTime insideUtc,
+            Func<DateTime, bool> isTarget)
+        {
+            // outsideUtc = not target
+            // insideUtc  = target
+
+            var low = outsideUtc;
+            var high = insideUtc;
+
+            while ((high - low).TotalSeconds > 1)
+            {
+                var mid = low + TimeSpan.FromTicks((high - low).Ticks / 2);
+
+                if (isTarget(mid))
+                    high = mid;
+                else
+                    low = mid;
+            }
+
+            return high;
+        }
+
+        private static DateTime BinarySearchFirstNonTargetUtc(
+            DateTime insideUtc,
+            DateTime outsideUtc,
+            Func<DateTime, bool> isTarget)
+        {
+            // insideUtc  = target
+            // outsideUtc = not target
+
+            var low = insideUtc;
+            var high = outsideUtc;
+
+            while ((high - low).TotalSeconds > 1)
+            {
+                var mid = low + TimeSpan.FromTicks((high - low).Ticks / 2);
+
+                if (isTarget(mid))
+                    low = mid;
+                else
+                    high = mid;
+            }
+
+            return high;
         }
 
         public static void ClearNakshatraBoundaryCache()
@@ -227,110 +367,6 @@ namespace PADMA.Core.Analysis
                     utc,
                     nodeType));
             }
-        }
-
-        private static DateTime FindPreviousStateChangeUtc_ListDriven(
-            int planetId,
-            DateTime utcT,
-            EAppSetting nodeType,
-            Func<PlanetData, int> stateSelector,
-            int targetState,
-            TimeSpan initialStep,
-            TimeSpan maxLookback)
-        {
-            if (utcT.Kind != DateTimeKind.Utc)
-                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
-
-            var stateAtT = CalculatePlanetDataForBoundarySearch(
-                planetId,
-                utcT,
-                nodeType);
-
-            var step = initialStep;
-
-            while (step <= maxLookback)
-            {
-                var from = utcT - step;
-                var to = utcT;
-
-                var list = CalculatePlanetDataListForBoundarySearch(
-                    planetId,
-                    from,
-                    to,
-                    nodeType);
-
-                EnsureBoundaryAnchorAt(list, planetId, utcT, nodeType);
-
-                list = list
-                    .OrderBy(x => x.DateTimeUtc)
-                    .GroupBy(x => x.DateTimeUtc)
-                    .Select(g => g.Last())
-                    .ToList();
-
-                for (int i = list.Count - 2; i >= 0; i--)
-                {
-                    if (stateSelector(list[i]) != targetState)
-                    {
-                        return list[i + 1].DateTimeUtc;
-                    }
-                }
-
-                step = TimeSpan.FromTicks(step.Ticks * 2);
-            }
-
-            return utcT - maxLookback;
-        }
-
-        private static DateTime FindNextStateChangeUtc_ListDriven(
-            int planetId,
-            DateTime utcT,
-            EAppSetting nodeType,
-            Func<PlanetData, int> stateSelector,
-            int targetState,
-            TimeSpan initialStep,
-            TimeSpan maxLookforward)
-        {
-            if (utcT.Kind != DateTimeKind.Utc)
-                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
-
-            var stateAtT = CalculatePlanetDataForBoundarySearch(
-                planetId,
-                utcT,
-                nodeType);
-
-            var step = initialStep;
-
-            while (step <= maxLookforward)
-            {
-                var from = utcT;
-                var to = utcT + step;
-
-                var list = CalculatePlanetDataListForBoundarySearch(
-                    planetId,
-                    from,
-                    to,
-                    nodeType);
-
-                EnsureBoundaryAnchorAt(list, planetId, utcT, nodeType);
-
-                list = list
-                    .OrderBy(x => x.DateTimeUtc)
-                    .GroupBy(x => x.DateTimeUtc)
-                    .Select(g => g.Last())
-                    .ToList();
-
-                for (int i = 1; i < list.Count; i++)
-                {
-                    if (stateSelector(list[i]) != targetState)
-                    {
-                        return list[i].DateTimeUtc;
-                    }
-                }
-
-                step = TimeSpan.FromTicks(step.Ticks * 2);
-            }
-
-            return utcT + maxLookforward;
         }
 
         public static List<PlanetData> CalculatePlanetDataList_London(
@@ -474,12 +510,15 @@ namespace PADMA.Core.Analysis
             DateTime utcT,
             EAppSetting nodeType)
         {
+            if (utcT.Kind != DateTimeKind.Utc)
+                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
+
             var stateAtT = CalculatePlanetDataForBoundarySearch(
                 planetId,
                 utcT,
                 nodeType);
 
-            return FindPreviousStateChangeUtc_ListDriven(
+            return FindPreviousStateBoundaryUtc_ByDirectBinarySearch(
                 planetId,
                 utcT,
                 nodeType,
@@ -494,12 +533,15 @@ namespace PADMA.Core.Analysis
             DateTime utcT,
             EAppSetting nodeType)
         {
+            if (utcT.Kind != DateTimeKind.Utc)
+                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
+
             var stateAtT = CalculatePlanetDataForBoundarySearch(
                 planetId,
                 utcT,
                 nodeType);
 
-            return FindNextStateChangeUtc_ListDriven(
+            return FindNextStateBoundaryUtc_ByDirectBinarySearch(
                 planetId,
                 utcT,
                 nodeType,
@@ -508,6 +550,8 @@ namespace PADMA.Core.Analysis
                 TimeSpan.FromDays(2),
                 TimeSpan.FromDays(1500));
         }
+
+
 
         private static int FindTransitionEpoch(int planetId, PlanetData fromState, PlanetData toState, int startEpoch, int endEpoch, EAppSetting nodeType)
         {
