@@ -28,6 +28,145 @@ namespace PADMA.Core.Analysis
         private static readonly Dictionary<string, (DateTime StartUtc, DateTime EndUtc)> _zodiacBoundaryCache = new();
         private static readonly object _zodiacBoundaryCacheLock = new();
 
+        private static readonly Dictionary<string, (DateTime StartUtc, DateTime EndUtc)> _nakshatraBoundaryCache = new();
+        private static readonly object _nakshatraBoundaryCacheLock = new();
+
+        public static (DateTime StartUtc, DateTime EndUtc) GetNakshatraBoundariesCached(
+            int planetId,
+            int nakshatraId,
+            DateTime anchorUtc,
+            EAppSetting nodeType)
+        {
+            if (anchorUtc.Kind != DateTimeKind.Utc)
+                anchorUtc = DateTime.SpecifyKind(anchorUtc, DateTimeKind.Utc);
+
+            var anchorKey = anchorUtc.Date.ToString("yyyyMMdd");
+            var key = $"{planetId}:{nakshatraId}:{(int)nodeType}:{anchorKey}";
+
+            lock (_nakshatraBoundaryCacheLock)
+            {
+                if (_nakshatraBoundaryCache.TryGetValue(key, out var cached))
+                    return cached;
+            }
+
+            var start = FindPreviousNakshatraChangeUtc(
+                planetId,
+                anchorUtc,
+                nodeType);
+
+            var end = FindNextNakshatraChangeUtc(
+                planetId,
+                anchorUtc,
+                nodeType);
+
+            lock (_nakshatraBoundaryCacheLock)
+            {
+                _nakshatraBoundaryCache[key] = (start, end);
+            }
+
+            return (start, end);
+        }
+
+        public static DateTime FindPreviousNakshatraChangeUtc(
+            int planetId,
+            DateTime utcT,
+            EAppSetting nodeType)
+        {
+            var stateAtT = CalculatePlanetDataForBoundarySearch(
+                planetId,
+                utcT,
+                nodeType);
+
+            return FindPreviousStateChangeUtc_ListDriven(
+                planetId,
+                utcT,
+                nodeType,
+                x => x.NakshatraId,
+                stateAtT.NakshatraId,
+                TimeSpan.FromDays(1),
+                TimeSpan.FromDays(1200));
+        }
+
+        public static DateTime FindNextNakshatraChangeUtc(
+            int planetId,
+            DateTime utcT,
+            EAppSetting nodeType)
+        {
+            var stateAtT = CalculatePlanetDataForBoundarySearch(
+                planetId,
+                utcT,
+                nodeType);
+
+            return FindNextStateChangeUtc_ListDriven(
+                planetId,
+                utcT,
+                nodeType,
+                x => x.NakshatraId,
+                stateAtT.NakshatraId,
+                TimeSpan.FromDays(1),
+                TimeSpan.FromDays(1200));
+        }
+
+        public static void ClearNakshatraBoundaryCache()
+        {
+            lock (_nakshatraBoundaryCacheLock)
+                _nakshatraBoundaryCache.Clear();
+        }
+
+        public static void ClearTransitBoundaryCaches()
+        {
+            ClearZodiacBoundaryCache();
+            ClearNakshatraBoundaryCache();
+        }
+
+        private static PlanetData CalculatePlanetDataForBoundarySearch(
+            int planetId,
+            DateTime utcDate,
+            EAppSetting nodeType)
+        {
+            if (planetId == (int)EPlanet.KETU)
+            {
+                var rahuData = CalculatePlanetData(
+                    (int)EPlanet.RAHU,
+                    utcDate,
+                    nodeType);
+
+                return CalculateKetuData(rahuData);
+            }
+
+            return CalculatePlanetData(
+                planetId,
+                utcDate,
+                nodeType);
+        }
+
+        private static List<PlanetData> CalculatePlanetDataListForBoundarySearch(
+            int planetId,
+            DateTime startUtc,
+            DateTime endUtc,
+            EAppSetting nodeType)
+        {
+            if (planetId == (int)EPlanet.KETU)
+            {
+                var rahuList = CalculatePlanetDataList_London(
+                    (int)EPlanet.RAHU,
+                    startUtc,
+                    endUtc,
+                    nodeType);
+
+                return rahuList
+                    .Select(CalculateKetuData)
+                    .OrderBy(x => x.DateTimeUtc)
+                    .ToList();
+            }
+
+            return CalculatePlanetDataList_London(
+                planetId,
+                startUtc,
+                endUtc,
+                nodeType);
+        }
+
         public static (DateTime StartUtc, DateTime EndUtc) GetZodiacBoundariesCached(
             int planetId,
             int zodiacId,
@@ -73,6 +212,125 @@ namespace PADMA.Core.Analysis
         {
             if (list.Count == 0 || list.All(x => x.DateTimeUtc != utc))
                 list.Add(CalculatePlanetData(planetId, utc, nodeType));
+        }
+
+        private static void EnsureBoundaryAnchorAt(
+            List<PlanetData> list,
+            int planetId,
+            DateTime utc,
+            EAppSetting nodeType)
+        {
+            if (list.Count == 0 || list.All(x => x.DateTimeUtc != utc))
+            {
+                list.Add(CalculatePlanetDataForBoundarySearch(
+                    planetId,
+                    utc,
+                    nodeType));
+            }
+        }
+
+        private static DateTime FindPreviousStateChangeUtc_ListDriven(
+            int planetId,
+            DateTime utcT,
+            EAppSetting nodeType,
+            Func<PlanetData, int> stateSelector,
+            int targetState,
+            TimeSpan initialStep,
+            TimeSpan maxLookback)
+        {
+            if (utcT.Kind != DateTimeKind.Utc)
+                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
+
+            var stateAtT = CalculatePlanetDataForBoundarySearch(
+                planetId,
+                utcT,
+                nodeType);
+
+            var step = initialStep;
+
+            while (step <= maxLookback)
+            {
+                var from = utcT - step;
+                var to = utcT;
+
+                var list = CalculatePlanetDataListForBoundarySearch(
+                    planetId,
+                    from,
+                    to,
+                    nodeType);
+
+                EnsureBoundaryAnchorAt(list, planetId, utcT, nodeType);
+
+                list = list
+                    .OrderBy(x => x.DateTimeUtc)
+                    .GroupBy(x => x.DateTimeUtc)
+                    .Select(g => g.Last())
+                    .ToList();
+
+                for (int i = list.Count - 2; i >= 0; i--)
+                {
+                    if (stateSelector(list[i]) != targetState)
+                    {
+                        return list[i + 1].DateTimeUtc;
+                    }
+                }
+
+                step = TimeSpan.FromTicks(step.Ticks * 2);
+            }
+
+            return utcT - maxLookback;
+        }
+
+        private static DateTime FindNextStateChangeUtc_ListDriven(
+            int planetId,
+            DateTime utcT,
+            EAppSetting nodeType,
+            Func<PlanetData, int> stateSelector,
+            int targetState,
+            TimeSpan initialStep,
+            TimeSpan maxLookforward)
+        {
+            if (utcT.Kind != DateTimeKind.Utc)
+                utcT = DateTime.SpecifyKind(utcT, DateTimeKind.Utc);
+
+            var stateAtT = CalculatePlanetDataForBoundarySearch(
+                planetId,
+                utcT,
+                nodeType);
+
+            var step = initialStep;
+
+            while (step <= maxLookforward)
+            {
+                var from = utcT;
+                var to = utcT + step;
+
+                var list = CalculatePlanetDataListForBoundarySearch(
+                    planetId,
+                    from,
+                    to,
+                    nodeType);
+
+                EnsureBoundaryAnchorAt(list, planetId, utcT, nodeType);
+
+                list = list
+                    .OrderBy(x => x.DateTimeUtc)
+                    .GroupBy(x => x.DateTimeUtc)
+                    .Select(g => g.Last())
+                    .ToList();
+
+                for (int i = 1; i < list.Count; i++)
+                {
+                    if (stateSelector(list[i]) != targetState)
+                    {
+                        return list[i].DateTimeUtc;
+                    }
+                }
+
+                step = TimeSpan.FromTicks(step.Ticks * 2);
+            }
+
+            return utcT + maxLookforward;
         }
 
         public static List<PlanetData> CalculatePlanetDataList_London(
@@ -216,42 +474,19 @@ namespace PADMA.Core.Analysis
             DateTime utcT,
             EAppSetting nodeType)
         {
-            var stateAtT = CalculatePlanetData(planetId, utcT, nodeType);
+            var stateAtT = CalculatePlanetDataForBoundarySearch(
+                planetId,
+                utcT,
+                nodeType);
 
-            var step = TimeSpan.FromDays(2);
-            var maxLookback = TimeSpan.FromDays(365); // защитный лимит (можно 730)
-
-            while (step <= maxLookback)
-            {
-                var from = utcT - step;
-                var to = utcT;
-
-                var list = CalculatePlanetDataList_London(planetId, from, to, nodeType);
-
-                // гарантируем, что конец соответствует utcT
-                var endData = CalculatePlanetData(planetId, utcT, nodeType);
-                if (list.Count == 0 || list[^1].DateTimeUtc != utcT)
-                {
-                    // если последний элемент не в utcT, добавим endData как опорную точку
-                    // (если он равен последнему по состоянию - всё равно не мешает)
-                    list.Add(endData);
-                }
-
-                // ищем границу: последнее "не такое", после которого начинается stateAtT
-                for (int i = list.Count - 2; i >= 0; i--)
-                {
-                    if (list[i].ZodiacId != stateAtT.ZodiacId)
-                    {
-                        return list[i + 1].DateTimeUtc; // начало текущего состояния
-                    }
-                }
-
-                // Если в диапазоне всё ещё одно и то же состояние — расширяемся
-                step = TimeSpan.FromTicks(step.Ticks * 2);
-            }
-
-            // если не нашли — возвращаем "как есть" (в крайнем случае)
-            return utcT - maxLookback;
+            return FindPreviousStateChangeUtc_ListDriven(
+                planetId,
+                utcT,
+                nodeType,
+                x => x.ZodiacId,
+                stateAtT.ZodiacId,
+                TimeSpan.FromDays(2),
+                TimeSpan.FromDays(1500));
         }
 
         public static DateTime FindNextZodiacChangeUtc(
@@ -259,37 +494,19 @@ namespace PADMA.Core.Analysis
             DateTime utcT,
             EAppSetting nodeType)
         {
-            var stateAtT = CalculatePlanetData(planetId, utcT, nodeType);
+            var stateAtT = CalculatePlanetDataForBoundarySearch(
+                planetId,
+                utcT,
+                nodeType);
 
-            var step = TimeSpan.FromDays(2);
-            var maxLookforward = TimeSpan.FromDays(365);
-
-            while (step <= maxLookforward)
-            {
-                var from = utcT;
-                var to = utcT + step;
-
-                var list = CalculatePlanetDataList_London(planetId, from, to, nodeType);
-
-                // гарантируем старт
-                if (list.Count == 0 || list[0].DateTimeUtc != utcT)
-                {
-                    list.Insert(0, stateAtT);
-                }
-
-                // ищем первое "не такое" после utcT
-                for (int i = 1; i < list.Count; i++)
-                {
-                    if (list[i].ZodiacId != stateAtT.ZodiacId)
-                    {
-                        return list[i].DateTimeUtc; // конец текущего состояния
-                    }
-                }
-
-                step = TimeSpan.FromTicks(step.Ticks * 2);
-            }
-
-            return utcT + maxLookforward;
+            return FindNextStateChangeUtc_ListDriven(
+                planetId,
+                utcT,
+                nodeType,
+                x => x.ZodiacId,
+                stateAtT.ZodiacId,
+                TimeSpan.FromDays(2),
+                TimeSpan.FromDays(1500));
         }
 
         private static int FindTransitionEpoch(int planetId, PlanetData fromState, PlanetData toState, int startEpoch, int endEpoch, EAppSetting nodeType)

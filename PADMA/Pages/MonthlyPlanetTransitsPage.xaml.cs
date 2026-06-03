@@ -158,11 +158,25 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         _isPageAppeared = true;
 
-        // Дать Shell шанс закрыть burger menu перед тяжелым построением UI.
         if (Shell.Current is not null)
             Shell.Current.FlyoutIsPresented = false;
 
         await Task.Delay(150);
+
+        ResetTransientUiState();
+
+        var today = DateTime.Today;
+
+        if (Vm is not null &&
+            (Vm.Year != today.Year || Vm.Month != today.Month))
+        {
+            Vm.SetMonthYear(today.Year, today.Month);
+
+            await Task.Yield();
+            await ResetScrollPositionsAsync();
+
+            return;
+        }
 
         if (_needsRefreshAfterConfig)
         {
@@ -179,7 +193,8 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
                     Vm?.ReloadCultureAndRefresh();
 
-                    await RebuildTimelineAsync();
+                    await RebuildMonthlyDataAsync();
+                    await ResetScrollPositionsAsync();
                 });
 
             return;
@@ -190,6 +205,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             async () =>
             {
                 await RebuildMonthlyDataAsync();
+                await ResetScrollPositionsAsync();
             });
     }
 
@@ -231,11 +247,14 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         {
             MainThread.BeginInvokeOnMainThread(async () =>
             {
+                ResetTransientUiState();
+
                 await RunBusyAsync(
                     Localization.GetLocalizedText("Calculating transits", DataCache.Instance.CurrentLanguageCode),
                     async () =>
                     {
                         await RebuildMonthlyDataAsync();
+                        await ResetScrollPositionsAsync();
                     });
             });
         }
@@ -389,7 +408,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         };
     }
 
-    private void OnBodyGraphicsTapped(object? sender, TappedEventArgs e)
+    private async void OnBodyGraphicsTapped(object? sender, TappedEventArgs e)
     {
         if (_monthlyData == null)
             return;
@@ -412,17 +431,37 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         _selection = tappedSelection;
 
-        _detailsModel = MonthlyPlanetDayDetailsBuilder.Build(
-            _monthlyData,
-            tappedSelection.Planet,
-            tappedSelection.DayLocal);
-
-        RebuildTimelineSkeleton();
-
-        if (isSecondTapOnSameSelection && _detailsModel != null)
+        // First tap or tap on another planet/day:
+        // only move selection rectangle, do not build heavy details.
+        if (!isSecondTapOnSameSelection)
         {
-            ShowMonthlyPlanetDayDetailsTooltip(_detailsModel);
+            _detailsModel = null;
+            RebuildTimelineSkeleton();
+            return;
         }
+
+        // Second tap on the same selected planet/day:
+        // now build details and open tooltip.
+        await RunBusyAsync(
+            Localization.GetLocalizedText("Calculating tooltip...", DataCache.Instance.CurrentLanguageCode),
+            async () =>
+            {
+                await Task.Yield();
+
+                _detailsModel = await Task.Run(() =>
+                    MonthlyPlanetDayDetailsBuilder.Build(
+                        _monthlyData,
+                        tappedSelection.Planet,
+                        tappedSelection.DayLocal));
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    RebuildTimelineSkeleton();
+
+                    if (_detailsModel != null)
+                        ShowMonthlyPlanetDayDetailsTooltip(_detailsModel);
+                });
+            });
     }
 
     private static bool IsSameSelection(
@@ -447,39 +486,128 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         var screenHeight = displayInfo.Height / displayInfo.Density;
 
         TooltipMaxWidth = Math.Min(screenWidth - 36, 380);
-        TooltipMaxHeight = Math.Min(screenHeight * 0.68, 560);
+
+        // Было 0.68 — маловато для portrait.
+        TooltipMaxHeight = Math.Min(screenHeight * 0.78, 620);
 
         var estimatedContentHeight = EstimateTooltipContentHeight();
-        TooltipHeight = Math.Min(TooltipMaxHeight, Math.Max(170, estimatedContentHeight));
 
-        TooltipBodyHeight = Math.Max(90, TooltipHeight - 62);
+        TooltipHeight = Math.Min(
+            TooltipMaxHeight,
+            Math.Max(220, estimatedContentHeight));
+
+        TooltipBodyHeight = Math.Max(120, TooltipHeight - 62);
 
         OnPropertyChanged(nameof(TooltipMaxWidth));
         OnPropertyChanged(nameof(TooltipMaxHeight));
         OnPropertyChanged(nameof(TooltipBodyHeight));
     }
 
+    private void ResetTransientUiState()
+    {
+        _selection = null;
+        _detailsModel = null;
+
+        IsTooltipVisible = false;
+        TooltipItems.Clear();
+        TooltipTitle = string.Empty;
+
+        // Reset tooltip dimensions to safe defaults.
+        TooltipMaxHeight = 620;
+        TooltipMaxWidth = 380;
+        TooltipBodyHeight = 420;
+        TooltipHeight = 480;
+
+        OnPropertyChanged(nameof(TooltipMaxHeight));
+        OnPropertyChanged(nameof(TooltipMaxWidth));
+        OnPropertyChanged(nameof(TooltipBodyHeight));
+        OnPropertyChanged(nameof(TooltipHeight));
+    }
+
+    private async Task ResetScrollPositionsAsync()
+    {
+        _syncingHorizontalScroll = true;
+        _syncingVerticalScroll = true;
+
+        try
+        {
+            await HeaderHorizontalScroll.ScrollToAsync(0, 0, false);
+            await BodyHorizontalScroll.ScrollToAsync(0, 0, false);
+            await LabelsVerticalScroll.ScrollToAsync(0, 0, false);
+            await BodyVerticalScroll.ScrollToAsync(0, 0, false);
+        }
+        finally
+        {
+            _syncingHorizontalScroll = false;
+            _syncingVerticalScroll = false;
+        }
+    }
+
+    private void ResetToCurrentMonth()
+    {
+        if (Vm is null)
+            return;
+
+        var today = DateTime.Today;
+
+        if (Vm.Year != today.Year || Vm.Month != today.Month)
+        {
+            Vm.SetMonthYear(today.Year, today.Month);
+        }
+    }
+
     private double EstimateTooltipContentHeight()
     {
-        // Header + top divider + padding
-        double h = 62;
+        // Tooltip title + top divider + frame padding.
+        double h = 58;
 
         foreach (var item in TooltipItems)
         {
             h += item switch
             {
-                MonthlyTooltipHeaderItem => 26,
-                MonthlyTooltipLineItem line => EstimateLineHeight(line.Value),
-                MonthlyTooltipRangeItem range => EstimateRangeHeight(range.Text),
-                MonthlyTooltipShortDividerItem => 8,
+                MonthlyTooltipHeaderItem header => EstimateHeaderHeight(header.Text),
+
+                MonthlyTooltipLineItem line =>
+                    EstimateLineHeight($"{line.Label}: {line.Value}"),
+
+                MonthlyTooltipTwoLineRangeItem twoLine =>
+                    EstimateTwoLineRangeHeight(twoLine),
+
+                MonthlyTooltipSimpleRangeLineItem simple =>
+                    EstimateSimpleRangeLineHeight(simple),
+
                 MonthlyTooltipDividerItem => 10,
                 MonthlyTooltipSpacerItem spacer => spacer.Height,
+
                 _ => 20
             };
         }
 
-        // Frame padding bottom/top safety
         return h + 18;
+    }
+
+    private static double EstimateHeaderHeight(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return 24;
+
+        return text.Length > 42 ? 42 : 28;
+    }
+
+    private static double EstimateTwoLineRangeHeight(MonthlyTooltipTwoLineRangeItem item)
+    {
+        // First line: label.
+        // Second line: value + date range, often wraps on phone width.
+        var secondLine = $"{item.Value}: {item.RangeText}";
+
+        return secondLine.Length > 62 ? 52 : 40;
+    }
+
+    private static double EstimateSimpleRangeLineHeight(MonthlyTooltipSimpleRangeLineItem item)
+    {
+        var text = $"{item.Label}: {item.RangeText}";
+
+        return text.Length > 62 ? 34 : 22;
     }
 
     private static double EstimateLineHeight(string text)
@@ -487,16 +615,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         if (string.IsNullOrWhiteSpace(text))
             return 20;
 
-        // rough wrap estimate for mobile tooltip width
         return text.Length > 55 ? 38 : 22;
-    }
-
-    private static double EstimateRangeHeight(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return 18;
-
-        return text.Length > 55 ? 34 : 18;
     }
 
     private void ShowMonthlyPlanetDayDetailsTooltip(MonthlyPlanetDayDetailsModel model)

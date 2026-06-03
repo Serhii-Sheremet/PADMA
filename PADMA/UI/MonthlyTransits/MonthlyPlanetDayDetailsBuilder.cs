@@ -4,6 +4,7 @@ using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.Core.TransitBuilder;
 
 namespace PADMA.UI.MonthlyTransits;
 
@@ -14,6 +15,7 @@ public static class MonthlyPlanetDayDetailsBuilder
     EPlanet planet,
     DateTime selectedDayLocal)
     {
+        var rangeCache = new Dictionary<string, (DateTime StartLocal, DateTime EndLocal)>();
         var selectedDate = selectedDayLocal.Date;
         var dayStart = selectedDate;
         var dayEnd = selectedDate.AddDays(1);
@@ -38,7 +40,8 @@ public static class MonthlyPlanetDayDetailsBuilder
             group,
             planet,
             dayStart,
-            dayEnd);
+            dayEnd,
+            rangeCache);
 
         var extraBlocks = new List<MonthlyPlanetDayDetailsBlock>();
 
@@ -73,7 +76,8 @@ public static class MonthlyPlanetDayDetailsBuilder
         MonthlyPlanetGroup group,
         EPlanet planet,
         DateTime dayStart,
-        DateTime dayEnd)
+        DateTime dayEnd,
+        Dictionary<string, (DateTime StartLocal, DateTime EndLocal)> rangeCache)
     {
         var padaLane = group.Lanes
             .FirstOrDefault(x => x.Kind == MonthlyTransitLaneKind.Pada);
@@ -97,7 +101,7 @@ public static class MonthlyPlanetDayDetailsBuilder
             var start = GetRealStartLocal(segment);
             var end = GetRealEndLocal(segment);
 
-            var lines = BuildPadaPeriodLines(group, planet, segment);
+            var lines = BuildPadaPeriodLines(group, planet, segment, rangeCache);
 
             if (lines.Count == 0)
                 continue;
@@ -114,10 +118,246 @@ public static class MonthlyPlanetDayDetailsBuilder
         return result;
     }
 
+    private static (DateTime StartLocal, DateTime EndLocal) GetRealZodiacRangeLocal(
+        EPlanet planet,
+        PlanetSlice anchorSlice,
+        TimeZoneInfo tzInfo)
+    {
+        var nodeMode = DataCache.Instance.GetActiveNodeSetting();
+        var anchorUtc = GetAnchorUtc(anchorSlice);
+
+        var (startUtc, endUtc) = SwissAnalysis.GetZodiacBoundariesCached(
+            (int)planet,
+            anchorSlice.ZodiacId,
+            anchorUtc,
+            nodeMode);
+
+        return (
+            TimeZoneInfo.ConvertTimeFromUtc(AsUtc(startUtc), tzInfo),
+            TimeZoneInfo.ConvertTimeFromUtc(AsUtc(endUtc), tzInfo));
+    }
+
+    private static (DateTime StartLocal, DateTime EndLocal) GetRealNakshatraRangeLocal(
+        EPlanet planet,
+        PlanetSlice anchorSlice,
+        TimeZoneInfo tzInfo)
+    {
+        var nodeMode = DataCache.Instance.GetActiveNodeSetting();
+        var anchorUtc = GetAnchorUtc(anchorSlice);
+
+        var (startUtc, endUtc) = SwissAnalysis.GetNakshatraBoundariesCached(
+            (int)planet,
+            anchorSlice.NakshatraId,
+            anchorUtc,
+            nodeMode);
+
+        return (
+            TimeZoneInfo.ConvertTimeFromUtc(AsUtc(startUtc), tzInfo),
+            TimeZoneInfo.ConvertTimeFromUtc(AsUtc(endUtc), tzInfo));
+    }
+
+    private static DateTime GetAnchorUtc(PlanetSlice slice)
+    {
+        return slice.StartUtc + TimeSpan.FromTicks(
+            Math.Max(1, (slice.EndUtc - slice.StartUtc).Ticks / 2));
+    }
+
+    private static TimeSpan GetInitialSearchStep(EPlanet planet)
+    {
+        return planet switch
+        {
+            EPlanet.MOON => TimeSpan.FromHours(2),
+            EPlanet.SUN => TimeSpan.FromDays(1),
+            EPlanet.MERCURY => TimeSpan.FromDays(1),
+            EPlanet.VENUS => TimeSpan.FromDays(1),
+            EPlanet.MARS => TimeSpan.FromDays(2),
+            EPlanet.JUPITER => TimeSpan.FromDays(7),
+            EPlanet.SATURN => TimeSpan.FromDays(14),
+            EPlanet.RAHU => TimeSpan.FromDays(7),
+            EPlanet.KETU => TimeSpan.FromDays(7),
+            _ => TimeSpan.FromDays(1)
+        };
+    }
+
+    private static DateTime BinarySearchFirstTargetUtc(
+    DateTime outsideUtc,
+    DateTime insideUtc,
+    Func<DateTime, bool> isTarget)
+    {
+        var low = outsideUtc; // not target
+        var high = insideUtc; // target
+
+        while ((high - low).TotalSeconds > 1)
+        {
+            var mid = low + TimeSpan.FromTicks((high - low).Ticks / 2);
+
+            if (isTarget(mid))
+                high = mid;
+            else
+                low = mid;
+        }
+
+        return high;
+    }
+
+    private static (DateTime StartUtc, DateTime EndUtc) FindContinuousStateRangeUtc(
+        EPlanet planet,
+        DateTime anchorUtc,
+        Func<PlanetSlice, int> stateSelector,
+        int targetState,
+        TimeSpan initialStep,
+        TimeSpan maxSearchSpan)
+    {
+        var ctx = DataCache.Instance.ProfileContextService?.Current;
+        if (ctx == null)
+            return (anchorUtc, anchorUtc);
+
+        var nodeMode = DataCache.Instance.GetActiveNodeSetting();
+
+        bool IsTarget(DateTime utc)
+        {
+            var s = GetPlanetSliceAtUtc(planet, utc, ctx, nodeMode);
+            return s != null && stateSelector(s) == targetState;
+        }
+
+        var startUtc = FindBackwardBoundaryUtc(
+            anchorUtc,
+            IsTarget,
+            initialStep,
+            maxSearchSpan);
+
+        var endUtc = FindForwardBoundaryUtc(
+            anchorUtc,
+            IsTarget,
+            initialStep,
+            maxSearchSpan);
+
+        return (startUtc, endUtc);
+    }
+
+    private static DateTime FindBackwardBoundaryUtc(
+        DateTime anchorUtc,
+        Func<DateTime, bool> isTarget,
+        TimeSpan initialStep,
+        TimeSpan maxSearchSpan)
+    {
+        var inside = anchorUtc;
+        var step = initialStep;
+
+        var minUtc = anchorUtc - maxSearchSpan;
+        var outside = inside - step;
+
+        while (outside > minUtc && isTarget(outside))
+        {
+            inside = outside;
+            step = TimeSpan.FromTicks(step.Ticks * 2);
+            outside = inside - step;
+        }
+
+        if (outside < minUtc)
+            outside = minUtc;
+
+        return BinarySearchFirstTargetUtc(outside, inside, isTarget);
+    }
+
+    private static DateTime FindForwardBoundaryUtc(
+        DateTime anchorUtc,
+        Func<DateTime, bool> isTarget,
+        TimeSpan initialStep,
+        TimeSpan maxSearchSpan)
+    {
+        var inside = anchorUtc;
+        var step = initialStep;
+
+        var maxUtc = anchorUtc + maxSearchSpan;
+        var outside = inside + step;
+
+        while (outside < maxUtc && isTarget(outside))
+        {
+            inside = outside;
+            step = TimeSpan.FromTicks(step.Ticks * 2);
+            outside = inside + step;
+        }
+
+        if (outside > maxUtc)
+            outside = maxUtc;
+
+        return BinarySearchFirstNonTargetUtc(inside, outside, isTarget);
+    }
+
+    private static DateTime BinarySearchFirstNonTargetUtc(
+        DateTime insideUtc,
+        DateTime outsideUtc,
+        Func<DateTime, bool> isTarget)
+    {
+        var low = insideUtc; // target
+        var high = outsideUtc; // not target
+
+        while ((high - low).TotalSeconds > 1)
+        {
+            var mid = low + TimeSpan.FromTicks((high - low).Ticks / 2);
+
+            if (isTarget(mid))
+                low = mid;
+            else
+                high = mid;
+        }
+
+        return high;
+    }
+
+    private static PlanetSlice? GetPlanetSliceAtUtc(
+        EPlanet planet,
+        DateTime utc,
+        ProfileTransitContext ctx,
+        EAppSetting nodeMode)
+    {
+        var startUtc = utc.AddDays(-2);
+        var endUtc = utc.AddDays(2);
+
+        List<PlanetData> planetData;
+
+        if (planet == EPlanet.KETU)
+        {
+            var rahuData = SwissAnalysis.CalculatePlanetDataList_London(
+                (int)EPlanet.RAHU,
+                startUtc,
+                endUtc,
+                nodeMode,
+                true);
+
+            planetData = rahuData
+                .Select(SwissAnalysis.CalculateKetuData)
+                .ToList();
+        }
+        else
+        {
+            planetData = SwissAnalysis.CalculatePlanetDataList_London(
+                (int)planet,
+                startUtc,
+                endUtc,
+                nodeMode,
+                true);
+        }
+
+        var slices = PlanetTransitBuilder.BuildPlanetSlices(
+                planetData,
+                ctx.BirthNakshatraMoonId,
+                ctx.BirthZodiacMoonId,
+                ctx.BirthLagnaId,
+                nodeMode)
+            .OrderBy(x => x.StartUtc)
+            .ToList();
+
+        return slices.FirstOrDefault(x => x.StartUtc <= utc && x.EndUtc > utc)
+            ?? slices.OrderBy(x => Math.Abs((x.StartUtc - utc).TotalSeconds)).FirstOrDefault();
+    }
+
     private static IReadOnlyList<MonthlyPlanetDayDetailsLine> BuildPadaPeriodLines(
         MonthlyPlanetGroup group,
         EPlanet planet,
-        MonthlyTransitSegment padaSegment)
+        MonthlyTransitSegment padaSegment,
+        Dictionary<string, (DateTime StartLocal, DateTime EndLocal)> rangeCache)
     {
         var lines = new List<MonthlyPlanetDayDetailsLine>();
 
@@ -128,75 +368,97 @@ public static class MonthlyPlanetDayDetailsBuilder
         var padaStart = GetRealStartLocal(padaSegment);
         var padaEnd = GetRealEndLocal(padaSegment);
 
-        var zodiacSegment = FindRelatedSegment(
-            group,
-            MonthlyTransitLaneKind.Zodiac,
-            padaStart,
-            padaEnd);
+        var ctx = DataCache.Instance.ProfileContextService?.Current;
 
-        var nakshatraSegment = FindRelatedSegment(
-            group,
-            MonthlyTransitLaneKind.Nakshatra,
-            padaStart,
-            padaEnd);
+        (DateTime StartLocal, DateTime EndLocal)? zodiacRange = null;
+        (DateTime StartLocal, DateTime EndLocal)? nakshatraRange = null;
 
+        if (ctx != null && ShouldUseRealRangeCalculation(planet))
+        {
+            zodiacRange = GetCachedRealZodiacRangeLocal(
+                planet,
+                slice,
+                ctx.TimeZoneInfo,
+                rangeCache);
 
-        var taraBalaSegment = FindRelatedSegment(
-            group,
-            MonthlyTransitLaneKind.TaraBala,
-            padaStart,
-            padaEnd);
+            nakshatraRange = GetCachedRealNakshatraRangeLocal(
+                planet,
+                slice,
+                ctx.TimeZoneInfo,
+                rangeCache);
+        }
+        else
+        {
+            var zodiacSegment = FindRelatedSegment(
+                group,
+                MonthlyTransitLaneKind.Zodiac,
+                padaStart,
+                padaEnd);
 
-        if (zodiacSegment != null)
+            if (zodiacSegment != null)
+            {
+                zodiacRange = (
+                    GetRealStartLocal(zodiacSegment),
+                    GetRealEndLocal(zodiacSegment));
+            }
+
+            var nakshatraSegment = FindRelatedSegment(
+                group,
+                MonthlyTransitLaneKind.Nakshatra,
+                padaStart,
+                padaEnd);
+
+            if (nakshatraSegment != null)
+            {
+                nakshatraRange = (
+                    GetRealStartLocal(nakshatraSegment),
+                    GetRealEndLocal(nakshatraSegment));
+            }
+        }
+
+        if (zodiacRange.HasValue)
         {
             AddLine(
                 lines,
                 "Zodiac Sign",
                 BuildZodiacText(planet, slice),
-                GetRealStartLocal(zodiacSegment),
-                GetRealEndLocal(zodiacSegment));
+                zodiacRange.Value.StartLocal,
+                zodiacRange.Value.EndLocal);
         }
         else
         {
             AddLine(lines, "Zodiac Sign", BuildZodiacText(planet, slice));
         }
 
-        if (nakshatraSegment != null)
+        if (nakshatraRange.HasValue)
         {
             AddLine(
                 lines,
                 "Nakshatra",
                 BuildNakshatraText(planet, slice),
-                GetRealStartLocal(nakshatraSegment),
-                GetRealEndLocal(nakshatraSegment));
+                nakshatraRange.Value.StartLocal,
+                nakshatraRange.Value.EndLocal);
         }
         else
         {
             AddLine(lines, "Nakshatra", BuildNakshatraText(planet, slice));
         }
 
-        if (padaSegment != null)
-        {
-            AddLine(
+        AddLine(
             lines,
             "Pada",
             BuildPadaNumberText(slice),
             padaStart,
             padaEnd);
-        }
-        else
-        {
-            AddLine(lines, "Pada", BuildPadaNumberText(slice));
-        }
 
-        if (taraBalaSegment != null)
+        if (nakshatraRange.HasValue)
         {
             AddLine(
                 lines,
                 "Tara Bala",
                 BuildTaraBalaText(planet, slice),
-                GetRealStartLocal(taraBalaSegment),
-                GetRealEndLocal(taraBalaSegment));
+                nakshatraRange.Value.StartLocal,
+                nakshatraRange.Value.EndLocal);
         }
         else
         {
@@ -215,6 +477,38 @@ public static class MonthlyPlanetDayDetailsBuilder
         AddLine(lines, "Drekkana", BuildDrekkanaText(slice));
 
         return lines;
+    }
+
+    private static (DateTime StartLocal, DateTime EndLocal) GetCachedRealZodiacRangeLocal(
+        EPlanet planet,
+        PlanetSlice slice,
+        TimeZoneInfo tzInfo,
+        Dictionary<string, (DateTime StartLocal, DateTime EndLocal)> cache)
+    {
+        var key = $"{planet}|zodiac|{slice.ZodiacId}";
+
+        if (cache.TryGetValue(key, out var cached))
+            return cached;
+
+        var value = GetRealZodiacRangeLocal(planet, slice, tzInfo);
+        cache[key] = value;
+        return value;
+    }
+
+    private static (DateTime StartLocal, DateTime EndLocal) GetCachedRealNakshatraRangeLocal(
+        EPlanet planet,
+        PlanetSlice slice,
+        TimeZoneInfo tzInfo,
+        Dictionary<string, (DateTime StartLocal, DateTime EndLocal)> cache)
+    {
+        var key = $"{planet}|nakshatra|{slice.NakshatraId}";
+
+        if (cache.TryGetValue(key, out var cached))
+            return cached;
+
+        var value = GetRealNakshatraRangeLocal(planet, slice, tzInfo);
+        cache[key] = value;
+        return value;
     }
 
     private static MonthlyTransitSegment? FindRelatedSegment(
@@ -256,7 +550,7 @@ public static class MonthlyPlanetDayDetailsBuilder
             ? slice.NakshatraId.ToString()
             : nakshatraName;
 
-        return $"{zodiacName}-{nakshatraPart}-{padaNumber}-{navamsaZodiacId}{navamsaMarker}";
+        return $"{zodiacName} - {nakshatraPart} - {padaNumber} - {navamsaZodiacId}{navamsaMarker}";
     }
 
     private static string BuildZodiacText(EPlanet planet, PlanetSlice slice)
@@ -855,6 +1149,12 @@ public static class MonthlyPlanetDayDetailsBuilder
         return a < b ? a : b;
     }
 
+    private static bool ShouldUseRealRangeCalculation(EPlanet planet)
+    {
+        // Moon is fast enough; the monthly -7/+7 buffer always covers
+        // zodiac/nakshatra/tara-bala boundaries for selected day tooltip.
+        return planet != EPlanet.MOON;
+    }
 
 
 }
