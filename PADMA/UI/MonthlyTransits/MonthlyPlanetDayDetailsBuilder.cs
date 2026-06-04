@@ -4,7 +4,6 @@ using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
-using PADMA.Core.TransitBuilder;
 
 namespace PADMA.UI.MonthlyTransits;
 
@@ -121,10 +120,10 @@ public static class MonthlyPlanetDayDetailsBuilder
     private static (DateTime StartLocal, DateTime EndLocal) GetRealZodiacRangeLocal(
         EPlanet planet,
         PlanetSlice anchorSlice,
+        DateTime anchorUtc,
         TimeZoneInfo tzInfo)
     {
         var nodeMode = DataCache.Instance.GetActiveNodeSetting();
-        var anchorUtc = GetAnchorUtc(anchorSlice);
 
         var (startUtc, endUtc) = SwissAnalysis.GetZodiacBoundariesCached(
             (int)planet,
@@ -140,10 +139,10 @@ public static class MonthlyPlanetDayDetailsBuilder
     private static (DateTime StartLocal, DateTime EndLocal) GetRealNakshatraRangeLocal(
         EPlanet planet,
         PlanetSlice anchorSlice,
+        DateTime anchorUtc,
         TimeZoneInfo tzInfo)
     {
         var nodeMode = DataCache.Instance.GetActiveNodeSetting();
-        var anchorUtc = GetAnchorUtc(anchorSlice);
 
         var (startUtc, endUtc) = SwissAnalysis.GetNakshatraBoundariesCached(
             (int)planet,
@@ -160,197 +159,6 @@ public static class MonthlyPlanetDayDetailsBuilder
     {
         return slice.StartUtc + TimeSpan.FromTicks(
             Math.Max(1, (slice.EndUtc - slice.StartUtc).Ticks / 2));
-    }
-
-    private static TimeSpan GetInitialSearchStep(EPlanet planet)
-    {
-        return planet switch
-        {
-            EPlanet.MOON => TimeSpan.FromHours(2),
-            EPlanet.SUN => TimeSpan.FromDays(1),
-            EPlanet.MERCURY => TimeSpan.FromDays(1),
-            EPlanet.VENUS => TimeSpan.FromDays(1),
-            EPlanet.MARS => TimeSpan.FromDays(2),
-            EPlanet.JUPITER => TimeSpan.FromDays(7),
-            EPlanet.SATURN => TimeSpan.FromDays(14),
-            EPlanet.RAHU => TimeSpan.FromDays(7),
-            EPlanet.KETU => TimeSpan.FromDays(7),
-            _ => TimeSpan.FromDays(1)
-        };
-    }
-
-    private static DateTime BinarySearchFirstTargetUtc(
-    DateTime outsideUtc,
-    DateTime insideUtc,
-    Func<DateTime, bool> isTarget)
-    {
-        var low = outsideUtc; // not target
-        var high = insideUtc; // target
-
-        while ((high - low).TotalSeconds > 1)
-        {
-            var mid = low + TimeSpan.FromTicks((high - low).Ticks / 2);
-
-            if (isTarget(mid))
-                high = mid;
-            else
-                low = mid;
-        }
-
-        return high;
-    }
-
-    private static (DateTime StartUtc, DateTime EndUtc) FindContinuousStateRangeUtc(
-        EPlanet planet,
-        DateTime anchorUtc,
-        Func<PlanetSlice, int> stateSelector,
-        int targetState,
-        TimeSpan initialStep,
-        TimeSpan maxSearchSpan)
-    {
-        var ctx = DataCache.Instance.ProfileContextService?.Current;
-        if (ctx == null)
-            return (anchorUtc, anchorUtc);
-
-        var nodeMode = DataCache.Instance.GetActiveNodeSetting();
-
-        bool IsTarget(DateTime utc)
-        {
-            var s = GetPlanetSliceAtUtc(planet, utc, ctx, nodeMode);
-            return s != null && stateSelector(s) == targetState;
-        }
-
-        var startUtc = FindBackwardBoundaryUtc(
-            anchorUtc,
-            IsTarget,
-            initialStep,
-            maxSearchSpan);
-
-        var endUtc = FindForwardBoundaryUtc(
-            anchorUtc,
-            IsTarget,
-            initialStep,
-            maxSearchSpan);
-
-        return (startUtc, endUtc);
-    }
-
-    private static DateTime FindBackwardBoundaryUtc(
-        DateTime anchorUtc,
-        Func<DateTime, bool> isTarget,
-        TimeSpan initialStep,
-        TimeSpan maxSearchSpan)
-    {
-        var inside = anchorUtc;
-        var step = initialStep;
-
-        var minUtc = anchorUtc - maxSearchSpan;
-        var outside = inside - step;
-
-        while (outside > minUtc && isTarget(outside))
-        {
-            inside = outside;
-            step = TimeSpan.FromTicks(step.Ticks * 2);
-            outside = inside - step;
-        }
-
-        if (outside < minUtc)
-            outside = minUtc;
-
-        return BinarySearchFirstTargetUtc(outside, inside, isTarget);
-    }
-
-    private static DateTime FindForwardBoundaryUtc(
-        DateTime anchorUtc,
-        Func<DateTime, bool> isTarget,
-        TimeSpan initialStep,
-        TimeSpan maxSearchSpan)
-    {
-        var inside = anchorUtc;
-        var step = initialStep;
-
-        var maxUtc = anchorUtc + maxSearchSpan;
-        var outside = inside + step;
-
-        while (outside < maxUtc && isTarget(outside))
-        {
-            inside = outside;
-            step = TimeSpan.FromTicks(step.Ticks * 2);
-            outside = inside + step;
-        }
-
-        if (outside > maxUtc)
-            outside = maxUtc;
-
-        return BinarySearchFirstNonTargetUtc(inside, outside, isTarget);
-    }
-
-    private static DateTime BinarySearchFirstNonTargetUtc(
-        DateTime insideUtc,
-        DateTime outsideUtc,
-        Func<DateTime, bool> isTarget)
-    {
-        var low = insideUtc; // target
-        var high = outsideUtc; // not target
-
-        while ((high - low).TotalSeconds > 1)
-        {
-            var mid = low + TimeSpan.FromTicks((high - low).Ticks / 2);
-
-            if (isTarget(mid))
-                low = mid;
-            else
-                high = mid;
-        }
-
-        return high;
-    }
-
-    private static PlanetSlice? GetPlanetSliceAtUtc(
-        EPlanet planet,
-        DateTime utc,
-        ProfileTransitContext ctx,
-        EAppSetting nodeMode)
-    {
-        var startUtc = utc.AddDays(-2);
-        var endUtc = utc.AddDays(2);
-
-        List<PlanetData> planetData;
-
-        if (planet == EPlanet.KETU)
-        {
-            var rahuData = SwissAnalysis.CalculatePlanetDataList_London(
-                (int)EPlanet.RAHU,
-                startUtc,
-                endUtc,
-                nodeMode,
-                true);
-
-            planetData = rahuData
-                .Select(SwissAnalysis.CalculateKetuData)
-                .ToList();
-        }
-        else
-        {
-            planetData = SwissAnalysis.CalculatePlanetDataList_London(
-                (int)planet,
-                startUtc,
-                endUtc,
-                nodeMode,
-                true);
-        }
-
-        var slices = PlanetTransitBuilder.BuildPlanetSlices(
-                planetData,
-                ctx.BirthNakshatraMoonId,
-                ctx.BirthZodiacMoonId,
-                ctx.BirthLagnaId,
-                nodeMode)
-            .OrderBy(x => x.StartUtc)
-            .ToList();
-
-        return slices.FirstOrDefault(x => x.StartUtc <= utc && x.EndUtc > utc)
-            ?? slices.OrderBy(x => Math.Abs((x.StartUtc - utc).TotalSeconds)).FirstOrDefault();
     }
 
     private static IReadOnlyList<MonthlyPlanetDayDetailsLine> BuildPadaPeriodLines(
@@ -491,7 +299,7 @@ public static class MonthlyPlanetDayDetailsBuilder
         if (cache.TryGetValue(key, out var cached))
             return cached;
 
-        var value = GetRealZodiacRangeLocal(planet, slice, tzInfo);
+        var value = GetRealZodiacRangeLocal(planet, slice, anchorUtc, tzInfo);
         cache[key] = value;
         return value;
     }
@@ -508,7 +316,7 @@ public static class MonthlyPlanetDayDetailsBuilder
         if (cache.TryGetValue(key, out var cached))
             return cached;
 
-        var value = GetRealNakshatraRangeLocal(planet, slice, tzInfo);
+        var value = GetRealNakshatraRangeLocal(planet, slice, anchorUtc, tzInfo);
         cache[key] = value;
         return value;
     }
@@ -795,56 +603,6 @@ public static class MonthlyPlanetDayDetailsBuilder
         return Localization.GetLocalizedText(
             native,
             DataCache.Instance.CurrentLanguageCode);
-    }
-
-    private static void AddPadaDerivedBlock(
-        List<MonthlyPlanetDayDetailsBlock> blocks,
-        string title,
-        MonthlyPlanetGroup group,
-        DateTime dayStart,
-        DateTime dayEnd,
-        Func<PlanetSlice, string> valueSelector)
-    {
-        var padaLane = group.Lanes.FirstOrDefault(x => x.Kind == MonthlyTransitLaneKind.Pada);
-        if (padaLane == null)
-            return;
-
-        var rows = new List<MonthlyPlanetDayDetailsRow>();
-
-        foreach (var segment in padaLane.Segments)
-        {
-            var start = GetRealStartLocal(segment);
-            var end = GetRealEndLocal(segment);
-
-            if (!Intersects(start, end, dayStart, dayEnd))
-                continue;
-
-            var slice = segment.SourceSlice;
-            if (slice == null)
-                continue;
-
-            var value = valueSelector(slice);
-            if (string.IsNullOrWhiteSpace(value))
-                continue;
-
-            rows.Add(new MonthlyPlanetDayDetailsRow
-            {
-                StartLocal = start,
-                EndLocal = end,
-                Value = value
-            });
-        }
-
-        rows = MergeAdjacentRows(rows);
-
-        if (rows.Count == 0)
-            return;
-
-        blocks.Add(new MonthlyPlanetDayDetailsBlock
-        {
-            Title = Localize(title),
-            Rows = rows
-        });
     }
 
     private static string BuildSpecialNavamshaText(PlanetSlice slice)

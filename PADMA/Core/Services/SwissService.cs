@@ -107,6 +107,10 @@ namespace PADMA.Core.Services
             double[] xx = new double[6];
             int flags = SweConst.SEFLG_SWIEPH | SweConst.SEFLG_SPEED | SweConst.SEFLG_SIDEREAL;
 
+            // Critical:
+            // SEFLG_SIDEREAL only says "calculate sidereal".
+            // The exact sidereal mode must be explicitly set before calculation.
+            SwissEphemerisNative.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0, 0);
             int result = SwissEphemerisNative.swe_calc_ut(jd, swePlanetConst, flags, xx, serr);
             if (result < 0)
                 throw new InvalidOperationException($"Swiss Ephemeris error: {serr}");

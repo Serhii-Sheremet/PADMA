@@ -1,14 +1,8 @@
-﻿using Microsoft.Maui.Controls;
-using NodaTime;
-using NodaTime.Extensions;
-using PADMA.Core.Enums;
+﻿using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Native;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 
 namespace PADMA.Core.Analysis
@@ -20,9 +14,6 @@ namespace PADMA.Core.Analysis
     /// </summary>
     public static class SwissAnalysis
     {
-        private const double LondonLongitude = -0.17;
-        private const double LondonLatitude = 51.5;
-
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         private static readonly Dictionary<string, (DateTime StartUtc, DateTime EndUtc)> _zodiacBoundaryCache = new();
@@ -280,47 +271,14 @@ namespace PADMA.Core.Analysis
                 nodeType);
         }
 
-        private static List<PlanetData> CalculatePlanetDataListForBoundarySearch(
-            int planetId,
-            DateTime startUtc,
-            DateTime endUtc,
-            EAppSetting nodeType)
-        {
-            if (planetId == (int)EPlanet.KETU)
-            {
-                var rahuList = CalculatePlanetDataList_London(
-                    (int)EPlanet.RAHU,
-                    startUtc,
-                    endUtc,
-                    nodeType);
-
-                return rahuList
-                    .Select(CalculateKetuData)
-                    .OrderBy(x => x.DateTimeUtc)
-                    .ToList();
-            }
-
-            return CalculatePlanetDataList_London(
-                planetId,
-                startUtc,
-                endUtc,
-                nodeType);
-        }
-
+        
         public static (DateTime StartUtc, DateTime EndUtc) GetZodiacBoundariesCached(
             int planetId,
             int zodiacId,
             DateTime anchorUtc,
             EAppSetting nodeType)
         {
-            // Ketu -> Rahu для границ времени
-            if (planetId == (int)EPlanet.KETU)
-            {
-                planetId = (int)EPlanet.RAHU;
-                zodiacId = zodiacId >= 1 && zodiacId <= 12 ? ((zodiacId + 5) % 12) + 1 : zodiacId;
-            }
-
-            var anchorKey = anchorUtc.Date.ToString("yyyyMMdd");
+            var anchorKey = anchorUtc.ToString("yyyyMMddHHmm");
             if (anchorUtc.Kind != DateTimeKind.Utc)
                 anchorUtc = DateTime.SpecifyKind(anchorUtc, DateTimeKind.Utc);
             var key = $"{planetId}:{zodiacId}:{(int)nodeType}:{anchorKey}";
@@ -352,21 +310,6 @@ namespace PADMA.Core.Analysis
         {
             if (list.Count == 0 || list.All(x => x.DateTimeUtc != utc))
                 list.Add(CalculatePlanetData(planetId, utc, nodeType));
-        }
-
-        private static void EnsureBoundaryAnchorAt(
-            List<PlanetData> list,
-            int planetId,
-            DateTime utc,
-            EAppSetting nodeType)
-        {
-            if (list.Count == 0 || list.All(x => x.DateTimeUtc != utc))
-            {
-                list.Add(CalculatePlanetDataForBoundarySearch(
-                    planetId,
-                    utc,
-                    nodeType));
-            }
         }
 
         public static List<PlanetData> CalculatePlanetDataList_London(
@@ -567,7 +510,7 @@ namespace PADMA.Core.Analysis
                 return FindTransitionEpoch(planetId, midData, toState, midEpoch, endEpoch, nodeType);
         }
 
-        private static PlanetData CalculatePlanetData(int planetId, DateTime utcDate, EAppSetting nodeType)
+        public static PlanetData CalculatePlanetData(int planetId, DateTime utcDate, EAppSetting nodeType)
         {
             var position = SwissService.GetPlanetPosition(utcDate, planetId, nodeType);
             double lon = position[0];

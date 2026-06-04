@@ -1,14 +1,12 @@
 ﻿using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Extensions;
 using PADMA.Core.Enums;
-using PADMA.Core.Models;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
 using PADMA.UI.MonthlyTransits;
 using PADMA.UI.ViewModels;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 
 namespace PADMA.Pages;
 
