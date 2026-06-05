@@ -31,7 +31,7 @@ namespace PADMA.Core.Analysis
             if (anchorUtc.Kind != DateTimeKind.Utc)
                 anchorUtc = DateTime.SpecifyKind(anchorUtc, DateTimeKind.Utc);
 
-            var anchorKey = anchorUtc.Date.ToString("yyyyMMdd");
+            var anchorKey = anchorUtc.ToString("yyyyMMddHHmm");
             var key = $"{planetId}:{nakshatraId}:{(int)nodeType}:{anchorKey}";
 
             lock (_nakshatraBoundaryCacheLock)

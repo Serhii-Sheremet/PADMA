@@ -30,6 +30,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private MonthlyPlanetTransitsData? _monthlyData;
     private CancellationTokenSource? _buildCts;
 
+    private MonthlyMasaShunyaDaySelection? _masaShunyaSelection;
     private MonthlyPlanetDaySelection? _selection;
     private MonthlyPlanetDayDetailsModel? _detailsModel;
 
@@ -163,13 +164,8 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         ResetTransientUiState();
 
-        var today = DateTime.Today;
-
-        if (Vm is not null &&
-            (Vm.Year != today.Year || Vm.Month != today.Month))
+        if (ResetToCurrentMonth())
         {
-            Vm.SetMonthYear(today.Year, today.Month);
-
             await Task.Yield();
             await ResetScrollPositionsAsync();
 
@@ -388,13 +384,16 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
     private MonthlyTransitsLayout CreateLayout()
     {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+        var labelText = $"{Localization.GetLocalizedText("Masa", lang)}/{Localization.GetLocalizedText("Shunya", lang)}";
         return new MonthlyTransitsLayout
         {
             Year = Vm.Year,
             Month = Vm.Month,
             Culture = Vm.CurrentCulture,
-            TopBandLabel = "Masa/Shunya",
+            TopBandLabel = labelText,
             Data = _monthlyData,
+            MasaShunyaSelection = _masaShunyaSelection,
             Selection = _selection,
             Planets = PlanetOrder
                 .Select(x => new MonthlyTransitsPlanetRow
@@ -417,6 +416,32 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         var layout = CreateLayout();
 
+        var tappedMasaShunya = MonthlyTransitsHitTestHelper.HitTestMasaShunyaDay(
+            layout,
+            point.Value.X,
+            point.Value.Y);
+
+        if (tappedMasaShunya != null)
+        {
+            var isSecondTapOnSameMasaShunya =
+                IsSameMasaShunyaSelection(_masaShunyaSelection, tappedMasaShunya);
+
+            _selection = null;
+            _detailsModel = null;
+            _masaShunyaSelection = tappedMasaShunya;
+
+            if (!isSecondTapOnSameMasaShunya)
+            {
+                IsTooltipVisible = false;
+                RebuildTimelineSkeleton();
+                return;
+            }
+
+            RebuildTimelineSkeleton();
+            ShowMasaShunyaTooltip(tappedMasaShunya);
+            return;
+        }
+
         var tappedSelection = MonthlyTransitsHitTestHelper.HitTestPlanetDay(
             layout,
             point.Value.X,
@@ -428,6 +453,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         var isSecondTapOnSameSelection = IsSameSelection(_selection, tappedSelection);
 
         _selection = tappedSelection;
+        _masaShunyaSelection = null;
 
         // First tap or tap on another planet/day:
         // only move selection rectangle, do not build heavy details.
@@ -460,6 +486,14 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
                         ShowMonthlyPlanetDayDetailsTooltip(_detailsModel);
                 });
             });
+    }
+
+    private static bool IsSameMasaShunyaSelection(
+        MonthlyMasaShunyaDaySelection? current,
+        MonthlyMasaShunyaDaySelection tapped)
+    {
+        return current != null &&
+               current.DayLocal.Date == tapped.DayLocal.Date;
     }
 
     private static bool IsSameSelection(
@@ -504,6 +538,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private void ResetTransientUiState()
     {
         _selection = null;
+        _masaShunyaSelection = null;
         _detailsModel = null;
 
         IsTooltipVisible = false;
@@ -541,17 +576,18 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         }
     }
 
-    private void ResetToCurrentMonth()
+    private bool ResetToCurrentMonth()
     {
         if (Vm is null)
-            return;
+            return false;
 
         var today = DateTime.Today;
 
-        if (Vm.Year != today.Year || Vm.Month != today.Month)
-        {
-            Vm.SetMonthYear(today.Year, today.Month);
-        }
+        if (Vm.Year == today.Year && Vm.Month == today.Month)
+            return false;
+
+        Vm.SetMonthYear(today.Year, today.Month);
+        return true;
     }
 
     private double EstimateTooltipContentHeight()
@@ -625,6 +661,122 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         UpdateTooltipSize();
 
         IsTooltipVisible = true;
+    }
+
+    private void ShowMasaShunyaTooltip(MonthlyMasaShunyaDaySelection selection)
+    {
+        TooltipTitle = $"{selection.DayLocal:dd.MM.yyyy}";
+
+        FillTooltipItemsFromMasaShunyaDetails(selection.DayLocal);
+
+        UpdateTooltipSize();
+
+        IsTooltipVisible = true;
+    }
+
+    private static string Localize(string native)
+    {
+        return Localization.GetLocalizedText(
+            native,
+            DataCache.Instance.CurrentLanguageCode);
+    }
+
+    private void FillTooltipItemsFromMasaShunyaDetails(DateTime selectedDayLocal)
+    {
+        TooltipItems.Clear();
+
+        var band = _monthlyData?.MasaShunya;
+        if (band == null || band.DetailSegments.Count == 0)
+            return;
+
+        var dayStart = selectedDayLocal.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        var activeSegments = band.DetailSegments
+            .Where(x => x.EndLocal > dayStart && x.StartLocal < dayEnd)
+            .OrderBy(x => x.StartLocal)
+            .ThenBy(x => x.Kind)
+            .ToList();
+
+        for (int i = 0; i < activeSegments.Count; i++)
+        {
+            var segment = activeSegments[i];
+
+            TooltipItems.Add(new MonthlyTooltipHeaderItem
+            {
+                Text = GetMasaShunyaHeader(segment.Kind)
+            });
+
+            TooltipItems.Add(new MonthlyTooltipSimpleRangeLineItem
+            {
+                Label = segment.NameText,
+                RangeText = BuildRangeText(segment.StartLocal, segment.EndLocal)
+            });
+
+            if (!string.IsNullOrWhiteSpace(segment.RulerText))
+            {
+                TooltipItems.Add(new MonthlyTooltipLineItem
+                {
+                    Label = Localize("Ruler"),
+                    Value = segment.RulerText
+                });
+            }
+
+            if (!string.IsNullOrWhiteSpace(segment.FullMoonNakshatraText))
+            {
+                TooltipItems.Add(new MonthlyTooltipLineItem
+                {
+                    Label = Localize("Full Moon Nakshatra"),
+                    Value = segment.FullMoonNakshatraText
+                });
+            }
+
+            if (!string.IsNullOrWhiteSpace(segment.FullMoonNakshatraRulerText))
+            {
+                TooltipItems.Add(new MonthlyTooltipLineItem
+                {
+                    Label = Localize("Full Moon Nakshatra Ruler"),
+                    Value = segment.FullMoonNakshatraRulerText
+                });
+            }
+
+            if (i < activeSegments.Count - 1)
+            {
+                TooltipItems.Add(new MonthlyTooltipDividerItem());
+                TooltipItems.Add(new MonthlyTooltipSpacerItem { Height = 6 });
+            }
+        }
+    }
+
+    private static string GetMasaShunyaHeader(MonthlyMasaShunyaDetailKind kind)
+    {
+        return kind switch
+        {
+            MonthlyMasaShunyaDetailKind.Masa =>
+                Localize("Masa"),
+
+            MonthlyMasaShunyaDetailKind.ShunyaNakshatra =>
+                JoinLocalizedWords("Shunya", "Nakshatra"),
+
+            MonthlyMasaShunyaDetailKind.ShunyaTithi =>
+                JoinLocalizedWords("Shunya", "Tithi"),
+
+            _ => string.Empty
+        };
+    }
+
+    private static string JoinLocalizedWords(params string[] nativeKeys)
+    {
+        return string.Join(
+            " ",
+            nativeKeys
+                .Select(Localize)
+                .Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+
+    private static string BuildRangeText(DateTime startLocal, DateTime endLocal)
+    {
+        return $"{startLocal:dd.MM.yyyy HH:mm:ss} - {endLocal:dd.MM.yyyy HH:mm:ss}";
     }
 
     private void FillTooltipItemsFromMonthlyDetails(MonthlyPlanetDayDetailsModel model)

@@ -101,21 +101,35 @@ public sealed class MonthlyTransitsBodyDrawable : IDrawable
 
     private static void DrawSelection(ICanvas canvas, MonthlyTransitsLayout layout)
     {
+        var masaShunyaSelection = layout.MasaShunyaSelection;
+        if (masaShunyaSelection != null)
+        {
+            float x = (float)(masaShunyaSelection.DayIndex * layout.DayWidth);
+            float y = 0;
+
+            float w = (float)layout.DayWidth;
+            float h = (float)layout.TopBandHeight;
+
+            canvas.StrokeColor = Colors.Gold;
+            canvas.StrokeSize = 2;
+            canvas.DrawRectangle(x + 1, y + 1, w - 2, h - 2);
+        }
+
         var selection = layout.Selection;
-        if (selection == null)
-            return;
+        if (selection != null)
+        {
+            float x = (float)(selection.DayIndex * layout.DayWidth);
+            float y = (float)(
+                layout.TopBandHeight +
+                selection.PlanetIndex * layout.PlanetGroupHeight);
 
-        float x = (float)(selection.DayIndex * layout.DayWidth);
-        float y = (float)(
-            layout.TopBandHeight +
-            selection.PlanetIndex * layout.PlanetGroupHeight);
+            float w = (float)layout.DayWidth;
+            float h = (float)layout.PlanetContentHeight;
 
-        float w = (float)layout.DayWidth;
-        float h = (float)layout.PlanetContentHeight;
-
-        canvas.StrokeColor = Colors.Gold;
-        canvas.StrokeSize = 2;
-        canvas.DrawRectangle(x + 1, y + 1, w - 2, h - 2);
+            canvas.StrokeColor = Colors.Gold;
+            canvas.StrokeSize = 2;
+            canvas.DrawRectangle(x + 1, y + 1, w - 2, h - 2);
+        }
     }
 
     private static void DrawMasaShunyaBand(ICanvas canvas, MonthlyTransitsLayout layout)

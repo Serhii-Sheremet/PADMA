@@ -33,10 +33,18 @@ public sealed class MonthlyTransitsLayout
     public MonthlyPlanetTransitsData? Data { get; init; }
 
     public MonthlyPlanetDaySelection? Selection { get; init; }
+
+    public MonthlyMasaShunyaDaySelection? MasaShunyaSelection { get; init; }
 }
 
 public sealed class MonthlyTransitsPlanetRow
 {
     public EPlanet Planet { get; init; }
     public string Name { get; init; } = string.Empty;
+}
+
+public sealed class MonthlyMasaShunyaDaySelection
+{
+    public int DayIndex { get; init; }
+    public DateTime DayLocal { get; init; }
 }

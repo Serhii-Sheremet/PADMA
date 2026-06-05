@@ -57,12 +57,237 @@ public static class MasaShunyaBuilder
             monthEndLocal,
             tzInfo);
 
+        var detailSegments = BuildDetailSegments(
+            masaPeriods,
+            moonSlices,
+            nakshatraSlices,
+            tithiSlices,
+            monthStartLocal,
+            monthEndLocal,
+            tzInfo);
+
         return new MonthlyMasaShunyaBand
         {
             MasaSegments = masaSegments,
             ShunyaNakshatraOverlays = shunyaNakshatra,
-            ShunyaTithiOverlays = shunyaTithi
+            ShunyaTithiOverlays = shunyaTithi,
+            DetailSegments = detailSegments
         };
+    }
+
+    private static IReadOnlyList<MonthlyMasaShunyaDetailSegment> BuildDetailSegments(
+        IReadOnlyList<MasaPeriod> masaPeriods,
+        IReadOnlyList<PlanetSlice> moonSlices,
+        IReadOnlyList<NakshatraSlice> nakshatraSlices,
+        IReadOnlyList<TithiSlice> tithiSlices,
+        DateTime monthStartLocal,
+        DateTime monthEndLocal,
+        TimeZoneInfo tzInfo)
+    {
+        var result = new List<MonthlyMasaShunyaDetailSegment>();
+
+        AddMasaDetailSegments(
+            result,
+            masaPeriods,
+            moonSlices,
+            monthStartLocal,
+            monthEndLocal,
+            tzInfo);
+
+        AddShunyaNakshatraDetailSegments(
+            result,
+            masaPeriods,
+            nakshatraSlices,
+            monthStartLocal,
+            monthEndLocal,
+            tzInfo);
+
+        AddShunyaTithiDetailSegments(
+            result,
+            masaPeriods,
+            tithiSlices,
+            monthStartLocal,
+            monthEndLocal,
+            tzInfo);
+
+        return result
+            .OrderBy(x => x.StartLocal)
+            .ThenBy(x => x.Kind)
+            .ToList();
+    }
+
+    private static void AddMasaDetailSegments(
+        List<MonthlyMasaShunyaDetailSegment> result,
+        IReadOnlyList<MasaPeriod> masaPeriods,
+        IReadOnlyList<PlanetSlice> moonSlices,
+        DateTime monthStartLocal,
+        DateTime monthEndLocal,
+        TimeZoneInfo tzInfo)
+    {
+        foreach (var masa in masaPeriods)
+        {
+            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(masa.StartUtc, tzInfo);
+            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(masa.EndUtc, tzInfo);
+
+            if (endLocal <= monthStartLocal || startLocal >= monthEndLocal)
+                continue;
+
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            var fullMoonNakshatraId = masa.FullMoonUtc.HasValue
+                ? GetMoonNakshatraIdAt(moonSlices, masa.FullMoonUtc.Value)
+                : 0;
+
+            result.Add(new MonthlyMasaShunyaDetailSegment
+            {
+                Kind = MonthlyMasaShunyaDetailKind.Masa,
+                StartLocal = startLocal,
+                EndLocal = endLocal,
+                NameText = BuildMasaNameText(masa.MasaId),
+                RulerText = string.Empty,
+                FullMoonNakshatraText = fullMoonNakshatraId > 0
+                    ? BuildNakshatraNameText(fullMoonNakshatraId)
+                    : string.Empty,
+                FullMoonNakshatraRulerText = fullMoonNakshatraId > 0
+                    ? GetNakshatraRulerName(fullMoonNakshatraId, lang)
+                    : string.Empty
+            });
+        }
+    }
+
+    private static void AddShunyaNakshatraDetailSegments(
+        List<MonthlyMasaShunyaDetailSegment> result,
+        IReadOnlyList<MasaPeriod> masaPeriods,
+        IReadOnlyList<NakshatraSlice> nakshatraSlices,
+        DateTime monthStartLocal,
+        DateTime monthEndLocal,
+        TimeZoneInfo tzInfo)
+    {
+        foreach (var masa in masaPeriods)
+        {
+            var masaDef = DataCache.Instance.MasaList.FirstOrDefault(x => x.Id == masa.MasaId);
+            if (masaDef == null || masaDef.ShunyaNakshatraIdArray.Length == 0)
+                continue;
+
+            foreach (var nak in nakshatraSlices)
+            {
+                if (!masaDef.ShunyaNakshatraIdArray.Contains(nak.NakshatraId))
+                    continue;
+
+                var startUtc = Max(masa.StartUtc, nak.StartUtc);
+                var endUtc = Min(masa.EndUtc, nak.EndUtc);
+
+                if (endUtc <= startUtc)
+                    continue;
+
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tzInfo);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(endUtc, tzInfo);
+
+                if (endLocal <= monthStartLocal || startLocal >= monthEndLocal)
+                    continue;
+
+                result.Add(new MonthlyMasaShunyaDetailSegment
+                {
+                    Kind = MonthlyMasaShunyaDetailKind.ShunyaNakshatra,
+                    StartLocal = startLocal,
+                    EndLocal = endLocal,
+                    NameText = BuildNakshatraNameText(nak.NakshatraId),
+                    RulerText = GetNakshatraRulerName(
+                        nak.NakshatraId,
+                        DataCache.Instance.CurrentLanguageCode)
+                });
+            }
+        }
+    }
+
+    private static void AddShunyaTithiDetailSegments(
+        List<MonthlyMasaShunyaDetailSegment> result,
+        IReadOnlyList<MasaPeriod> masaPeriods,
+        IReadOnlyList<TithiSlice> tithiSlices,
+        DateTime monthStartLocal,
+        DateTime monthEndLocal,
+        TimeZoneInfo tzInfo)
+    {
+        foreach (var masa in masaPeriods)
+        {
+            var masaDef = DataCache.Instance.MasaList.FirstOrDefault(x => x.Id == masa.MasaId);
+            if (masaDef == null || masaDef.ShunyaTithiIdArray.Length == 0)
+                continue;
+
+            foreach (var tithi in tithiSlices)
+            {
+                if (!masaDef.ShunyaTithiIdArray.Contains(tithi.TithiId))
+                    continue;
+
+                var startUtc = Max(masa.StartUtc, tithi.StartUtc);
+                var endUtc = Min(masa.EndUtc, tithi.EndUtc);
+
+                if (endUtc <= startUtc)
+                    continue;
+
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tzInfo);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(endUtc, tzInfo);
+
+                if (endLocal <= monthStartLocal || startLocal >= monthEndLocal)
+                    continue;
+
+                result.Add(new MonthlyMasaShunyaDetailSegment
+                {
+                    Kind = MonthlyMasaShunyaDetailKind.ShunyaTithi,
+                    StartLocal = startLocal,
+                    EndLocal = endLocal,
+                    NameText = BuildTithiNameText(tithi.TithiId)
+                });
+            }
+        }
+    }
+
+    private static string BuildMasaNameText(int masaId)
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+
+        return DataCache.Instance.MasaDescList
+            .FirstOrDefault(x =>
+                x.MasaId == masaId &&
+                string.Equals(x.LanguageCode, lang, StringComparison.OrdinalIgnoreCase))
+            ?.Name
+            ?? masaId.ToString();
+    }
+
+    private static string BuildNakshatraNameText(int nakshatraId)
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+
+        var desc = DataCache.Instance.NakshatraDescList
+            .FirstOrDefault(x =>
+                x.NakshatraId == nakshatraId &&
+                string.Equals(x.LanguageCode, lang, StringComparison.OrdinalIgnoreCase));
+
+        var name = !string.IsNullOrWhiteSpace(desc?.ShortName)
+            ? desc.ShortName
+            : desc?.Name;
+
+        return string.IsNullOrWhiteSpace(name)
+            ? nakshatraId.ToString()
+            : $"{nakshatraId}.{name}";
+    }
+
+    private static string BuildTithiNameText(int tithiId)
+    {
+        var lang = DataCache.Instance.CurrentLanguageCode;
+
+        var desc = DataCache.Instance.TithiDescList
+            .FirstOrDefault(x =>
+                x.TithiId == tithiId &&
+                string.Equals(x.LanguageCode, lang, StringComparison.OrdinalIgnoreCase));
+
+        var name = !string.IsNullOrWhiteSpace(desc?.ShortName)
+            ? desc.ShortName
+            : desc?.Name;
+
+        return string.IsNullOrWhiteSpace(name)
+            ? tithiId.ToString()
+            : $"{tithiId}.{name}";
     }
 
     private sealed class MasaPeriod

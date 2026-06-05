@@ -8,6 +8,39 @@ public sealed class MonthlyMasaShunyaBand
     public IReadOnlyList<MonthlyTransitSegment> MasaSegments { get; init; } = [];
     public IReadOnlyList<MonthlyTransitOverlaySegment> ShunyaNakshatraOverlays { get; init; } = [];
     public IReadOnlyList<MonthlyTransitOverlaySegment> ShunyaTithiOverlays { get; init; } = [];
+
+    public IReadOnlyList<MonthlyMasaShunyaDetailSegment> DetailSegments { get; init; } = [];
+}
+
+public sealed class MonthlyMasaShunyaDetailSegment
+{
+    public MonthlyMasaShunyaDetailKind Kind { get; init; }
+
+    public DateTime StartLocal { get; init; }
+    public DateTime EndLocal { get; init; }
+
+    // Main line text, for example:
+    // "Джиештха", "7.Пунарвасу", "4.Чатуртхи"
+    public string NameText { get; init; } = string.Empty;
+
+    // Optional. Used for Masa and Shunya Nakshatra.
+    // For example: "Кету", "Юпитер".
+    public string RulerText { get; init; } = string.Empty;
+
+    // Optional. Used only for Masa.
+    // For example: "19.Мула".
+    public string FullMoonNakshatraText { get; init; } = string.Empty;
+
+    // Optional. Used only for Masa.
+    // For example: "Кету".
+    public string FullMoonNakshatraRulerText { get; init; } = string.Empty;
+}
+
+public enum MonthlyMasaShunyaDetailKind
+{
+    Masa,
+    ShunyaNakshatra,
+    ShunyaTithi
 }
 
 public sealed class MonthlyPlanetTransitsData

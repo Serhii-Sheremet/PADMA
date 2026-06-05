@@ -156,6 +156,8 @@ namespace PADMA.Core.Services
         /// </summary>
         public static double GetAyanamsa(DateTime utcDate)
         {
+            SwissEphemerisNative.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0, 0);
+
             double jd = SwissEphemerisNative.swe_julday(
                 utcDate.Year,
                 utcDate.Month,
