@@ -15,7 +15,7 @@
     <ApplicationTitle>Personal Astrological Diary</ApplicationTitle>
     <ApplicationId>com.ssheremet.padma</ApplicationId>
     <ApplicationDisplayVersion>0.6.1</ApplicationDisplayVersion>
-    <ApplicationVersion>14</ApplicationVersion>
+    <ApplicationVersion>16</ApplicationVersion>
 
     <!-- Windows -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -76,7 +76,7 @@
     <!-- Android-only ephemeris archive -->
     <MauiAsset Include="Resources\Raw\ephe.zip" LogicalName="ephe.zip" />
   
-    <!-- Android native Swiss Ephemeris libraries -->
+    <!-- Android native Swiss Ephemeris & sqlite libraries -->
     <AndroidNativeLibrary Include="Platforms\Android\libs\**\*.so" />
   </ItemGroup>
 
