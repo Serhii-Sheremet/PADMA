@@ -831,21 +831,8 @@ public static class MonthlyPlanetDayDetailsBuilder
                 !int.TryParse(tr.Vedha, out int vedhaDom))
                 continue;
 
-            var anchorUtc = MaxUtc(slice.StartUtc, dayStartUtc);
-
-            var (rangeStartUtc, rangeEndUtc) =
-                PlanetTooltipUtility.GetContinuousHouseRangeUtc(
-                    targetSlices,
-                    anchorUtc,
-                    isLagna: forLagna);
-
-            if (rangeEndUtc <= rangeStartUtc)
-                continue;
-
             var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(
-                targetPlanetId: slice.PlanetId,
-                targetStartUtc: rangeStartUtc,
-                targetEndUtc: rangeEndUtc,
+                targetSlice: slice,
                 transitPack: data.TransitPack,
                 vedhaDom: vedhaDom,
                 isLagna: forLagna,

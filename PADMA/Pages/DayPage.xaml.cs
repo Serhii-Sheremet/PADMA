@@ -2463,16 +2463,8 @@ namespace PADMA.Pages
                 if (!transitPack.TryGetValue(planetKey, out var slicesForPlanet) || slicesForPlanet == null || slicesForPlanet.Count == 0)
                     return;
 
-                var (rangeStartUtc, rangeEndUtc) =
-                    PlanetTooltipUtility.GetContinuousHouseRangeUtc(
-                        slicesForPlanet,
-                        seg.TransitStart,
-                        isLagna: forLagna);
-
                 var vedhaList = PlanetTooltipUtility.PrepareVedhaPlanetList(
-                    targetPlanetId: slice.PlanetId,
-                    targetStartUtc: rangeStartUtc,
-                    targetEndUtc: rangeEndUtc,
+                    targetSlice: slice,
                     transitPack: transitPack,
                     vedhaDom: vedhaDom,
                     isLagna: forLagna,

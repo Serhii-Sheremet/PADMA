@@ -1,4 +1,4 @@
-using System.Globalization;
+п»їusing System.Globalization;
 using PADMA.Core.Enums;
 using PADMA.Core.Models;
 using PADMA.Core.Models.Calendar;
@@ -21,12 +21,12 @@ namespace PADMA.Core.Utilities
         }
 
         /// <summary>
-        /// Аналог PAD DateTimeUtils.GetIntervalIntersection.
-        /// Возвращает пустой интервал (From=default, To=default), если пересечения нет.
+        /// РђРЅР°Р»РѕРі PAD DateTimeUtils.GetIntervalIntersection.
+        /// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїСѓСЃС‚РѕР№ РёРЅС‚РµСЂРІР°Р» (From=default, To=default), РµСЃР»Рё РїРµСЂРµСЃРµС‡РµРЅРёСЏ РЅРµС‚.
         /// </summary>
         public static (DateTime From, DateTime To) GetIntersection(DateTime from1, DateTime to1, DateTime from2, DateTime to2)
         {
-            // вне слева / вне справа (как в PAD: строгие < / >)
+            // РІРЅРµ СЃР»РµРІР° / РІРЅРµ СЃРїСЂР°РІР° (РєР°Рє РІ PAD: СЃС‚СЂРѕРіРёРµ < / >)
             if ((from1 < from2 && to1 < from2) || (from1 > to2 && to1 > to2))
                 return (default, default);
 
@@ -36,8 +36,8 @@ namespace PADMA.Core.Utilities
         }
 
         /// <summary>
-        /// Сдвигает список 108 пад так, чтобы стартовой стала birthPadaId (Pada.Id).
-        /// Это прямой аналог твоего SortingPadaListByBirthMoonOrLagna, но уже без поиска по nakshatra+padaNumber.
+        /// РЎРґРІРёРіР°РµС‚ СЃРїРёСЃРѕРє 108 РїР°Рґ С‚Р°Рє, С‡С‚РѕР±С‹ СЃС‚Р°СЂС‚РѕРІРѕР№ СЃС‚Р°Р»Р° birthPadaId (Pada.Id).
+        /// Р­С‚Рѕ РїСЂСЏРјРѕР№ Р°РЅР°Р»РѕРі С‚РІРѕРµРіРѕ SortingPadaListByBirthMoonOrLagna, РЅРѕ СѓР¶Рµ Р±РµР· РїРѕРёСЃРєР° РїРѕ nakshatra+padaNumber.
         /// </summary>
         private static List<Pada> SwapPadaListByStartPadaId(IReadOnlyList<Pada> source, int birthPadaId)
         {
@@ -56,8 +56,8 @@ namespace PADMA.Core.Utilities
 
         /// <summary>
         /// PAD: GetSpecNavamsha(Pada sPada, lang)
-        /// PADMA: берём имена из DataCache.SpecialNavamsaDescList.
-        /// Возвращает строку вида ", xxx, yyy" или пусто.
+        /// PADMA: Р±РµСЂС‘Рј РёРјРµРЅР° РёР· DataCache.SpecialNavamsaDescList.
+        /// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃС‚СЂРѕРєСѓ РІРёРґР° ", xxx, yyy" РёР»Рё РїСѓСЃС‚Рѕ.
         /// </summary>
         public static string GetSpecNavamsha(Pada sPada)
         {
@@ -100,8 +100,8 @@ namespace PADMA.Core.Utilities
 
         /// <summary>
         /// PAD: GetBadNavamsha(pId, lang)
-        /// Здесь pId = Pada.Id (1..108).
-        /// Возвращает строку вида "36 Navamsa from Natal Moon, 55 Navamsa from Lagna, " (как в PAD).
+        /// Р—РґРµСЃСЊ pId = Pada.Id (1..108).
+        /// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃС‚СЂРѕРєСѓ РІРёРґР° "36 Navamsa from Natal Moon, 55 Navamsa from Lagna, " (РєР°Рє РІ PAD).
         /// </summary>
         public static string GetBadNavamsha(int padaId, int birthPadaMoonId, int birthPadaLagnaId, Func<string, string> L)
         {
@@ -185,6 +185,20 @@ namespace PADMA.Core.Utilities
             return result;
         }
 
+        private static (DateTime StartUtc, DateTime EndUtc) GetRealZodiacHouseRangeUtc(
+            PlanetSlice slice,
+            EAppSetting nodeType)
+        {
+            var anchorUtc = slice.StartUtc + TimeSpan.FromTicks(
+                Math.Max(1, (slice.EndUtc - slice.StartUtc).Ticks / 2));
+
+            return SwissAnalysis.GetZodiacBoundariesCached(
+                slice.PlanetId,
+                slice.ZodiacId,
+                anchorUtc,
+                nodeType);
+        }
+
         /// <summary>
         /// PAD: CheckIfVedhaExistforPlanetCalendarTimeFrame
         /// </summary>
@@ -198,8 +212,8 @@ namespace PADMA.Core.Utilities
         }
 
         /// <summary>
-        /// PAD: PrepareVedhaPlanetList(...) но на PlanetSlice.
-        /// Ищет у каждой планеты слайсы в vedhaDom и пересекает время с target.
+        /// PAD: PrepareVedhaPlanetList(...) РЅРѕ РЅР° PlanetSlice.
+        /// РС‰РµС‚ Сѓ РєР°Р¶РґРѕР№ РїР»Р°РЅРµС‚С‹ СЃР»Р°Р№СЃС‹ РІ vedhaDom Рё РїРµСЂРµСЃРµРєР°РµС‚ РІСЂРµРјСЏ СЃ target.
         /// </summary>
         public static List<VedhaEntity> PrepareVedhaPlanetList(
             PlanetSlice targetSlice,
@@ -211,29 +225,72 @@ namespace PADMA.Core.Utilities
             var vList = new List<VedhaEntity>();
             var targetPlanet = (EPlanet)targetSlice.PlanetId;
 
+            // Real continuous house range of the target planet.
+            // In PADMA, the transit house from Moon/Lagna is determined by zodiac sign,
+            // so the real sign period is the correct continuous house range.
+            var (targetStartUtc, targetEndUtc) =
+                GetRealZodiacHouseRangeUtc(targetSlice, nodeType);
+
+            if (targetEndUtc <= targetStartUtc)
+                return vList;
+
             foreach (var kvp in transitPack)
             {
                 var vedhaPlanet = kvp.Key;
-                if (vedhaPlanet == targetPlanet) continue;
-                if (!CheckIfVedhaExist(targetPlanet, vedhaPlanet)) continue;
+
+                if (vedhaPlanet == targetPlanet)
+                    continue;
+
+                if (!CheckIfVedhaExist(targetPlanet, vedhaPlanet))
+                    continue;
 
                 var slices = kvp.Value;
-                if (slices == null || slices.Count == 0) continue;
+                if (slices == null || slices.Count == 0)
+                    continue;
 
                 foreach (var s in slices)
                 {
                     int dom = isLagna ? s.HouseFromLagna : s.HouseFromMoon;
-                    if (dom != vedhaDom) continue;
+                    if (dom != vedhaDom)
+                        continue;
 
-                    // пересечение в UTC (как безопаснее)
-                    var (from, to) = GetIntersection(targetSlice.StartUtc, targetSlice.EndUtc, s.StartUtc, s.EndUtc);
-                    if (from == default && to == default) continue;
+                    // Quick candidate check against the buffer-limited slice.
+                    // This avoids expanding completely irrelevant candidate slices.
+                    var (candidateFrom, candidateTo) = GetIntersection(
+                        targetStartUtc,
+                        targetEndUtc,
+                        s.StartUtc,
+                        s.EndUtc);
+
+                    if (candidateFrom == default && candidateTo == default)
+                        continue;
+
+                    // Real continuous house range of the Vedha planet.
+                    var (vedhaStartUtc, vedhaEndUtc) =
+                        GetRealZodiacHouseRangeUtc(s, nodeType);
+
+                    if (vedhaEndUtc <= vedhaStartUtc)
+                        continue;
+
+                    // Final Vedha interval:
+                    // target real house range в€© candidate real house range.
+                    var (finalFrom, finalTo) = GetIntersection(
+                        targetStartUtc,
+                        targetEndUtc,
+                        vedhaStartUtc,
+                        vedhaEndUtc);
+
+                    if (finalFrom == default && finalTo == default)
+                        continue;
+
+                    if (finalTo <= finalFrom)
+                        continue;
 
                     vList.Add(new VedhaEntity
                     {
                         PlanetCode = vedhaPlanet,
-                        DateStart = from,
-                        DateEnd = to
+                        DateStart = finalFrom,
+                        DateEnd = finalTo
                     });
                 }
             }
@@ -257,49 +314,39 @@ namespace PADMA.Core.Utilities
             {
                 var vedhaPlanet = kvp.Key;
 
-                if (vedhaPlanet == targetPlanet) continue;
-                if (!CheckIfVedhaExist(targetPlanet, vedhaPlanet)) continue;
+                if (vedhaPlanet == targetPlanet)
+                    continue;
+
+                if (!CheckIfVedhaExist(targetPlanet, vedhaPlanet))
+                    continue;
 
                 var slices = kvp.Value;
-                if (slices == null || slices.Count == 0) continue;
+                if (slices == null || slices.Count == 0)
+                    continue;
 
                 foreach (var s in slices)
                 {
                     int dom = isLagna ? s.HouseFromLagna : s.HouseFromMoon;
-                    if (dom != vedhaDom) continue;
+                    if (dom != vedhaDom)
+                        continue;
 
-                    var (from, to) = GetIntersection(targetStartUtc, targetEndUtc, s.StartUtc, s.EndUtc);
-                    if (from == default && to == default) continue;
+                    var (from, to) = GetIntersection(
+                        targetStartUtc,
+                        targetEndUtc,
+                        s.StartUtc,
+                        s.EndUtc);
 
-                    var anchorUtc = from;
+                    if (from == default && to == default)
+                        continue;
 
-                    DateTime zStartUtc;
-                    DateTime zEndUtc;
-                    try
-                    {
-                        (zStartUtc, zEndUtc) = SwissAnalysis.GetZodiacBoundariesCached(
-                            (int)vedhaPlanet,
-                            s.ZodiacId,
-                            anchorUtc,
-                            nodeType);
-                    }
-                    catch
-                    {
-                        zStartUtc = from;
-                        zEndUtc = to;
-                    }
-
-                    if (zEndUtc <= zStartUtc)
-                    {
-                        zStartUtc = from;
-                        zEndUtc = to;
-                    }
+                    if (to <= from)
+                        continue;
 
                     vList.Add(new VedhaEntity
                     {
                         PlanetCode = vedhaPlanet,
-                        DateStart = zStartUtc,
-                        DateEnd = zEndUtc
+                        DateStart = from,
+                        DateEnd = to
                     });
                 }
             }
@@ -334,7 +381,7 @@ namespace PADMA.Core.Utilities
             if (slices == null || slices.Count == 0)
                 return (tapUtc, tapUtc);
 
-            // найдём slice, который покрывает tapUtc
+            // РЅР°Р№РґС‘Рј slice, РєРѕС‚РѕСЂС‹Р№ РїРѕРєСЂС‹РІР°РµС‚ tapUtc
             int idx = -1;
             for (int i = 0; i < slices.Count; i++)
             {
@@ -345,7 +392,7 @@ namespace PADMA.Core.Utilities
                 }
             }
 
-            // fallback: если tapUtc на границе EndUtc, попробуем <=
+            // fallback: РµСЃР»Рё tapUtc РЅР° РіСЂР°РЅРёС†Рµ EndUtc, РїРѕРїСЂРѕР±СѓРµРј <=
             if (idx < 0)
             {
                 for (int i = 0; i < slices.Count; i++)
@@ -367,7 +414,7 @@ namespace PADMA.Core.Utilities
             DateTime start = anchor.StartUtc;
             DateTime end = anchor.EndUtc;
 
-            // назад
+            // РЅР°Р·Р°Рґ
             for (int i = idx - 1; i >= 0; i--)
             {
                 var s = slices[i];
@@ -377,7 +424,7 @@ namespace PADMA.Core.Utilities
                 start = s.StartUtc;
             }
 
-            // вперёд
+            // РІРїРµСЂС‘Рґ
             for (int i = idx + 1; i < slices.Count; i++)
             {
                 var s = slices[i];
@@ -394,7 +441,7 @@ namespace PADMA.Core.Utilities
         {
             if (list == null || list.Count == 0) return list;
 
-            // группируем по планете и сортируем по времени
+            // РіСЂСѓРїРїРёСЂСѓРµРј РїРѕ РїР»Р°РЅРµС‚Рµ Рё СЃРѕСЂС‚РёСЂСѓРµРј РїРѕ РІСЂРµРјРµРЅРё
             var result = new List<VedhaEntity>();
 
             foreach (var g in list
@@ -409,8 +456,8 @@ namespace PADMA.Core.Utilities
                 {
                     var n = ordered[i];
 
-                    // если стыкуются (или почти стыкуются) — склеиваем
-                    if (n.DateStart <= cur.DateEnd) // можно расширить до +1 сек если надо
+                    // РµСЃР»Рё СЃС‚С‹РєСѓСЋС‚СЃСЏ (РёР»Рё РїРѕС‡С‚Рё СЃС‚С‹РєСѓСЋС‚СЃСЏ) вЂ” СЃРєР»РµРёРІР°РµРј
+                    if (n.DateStart <= cur.DateEnd) // РјРѕР¶РЅРѕ СЂР°СЃС€РёСЂРёС‚СЊ РґРѕ +1 СЃРµРє РµСЃР»Рё РЅР°РґРѕ
                     {
                         if (n.DateEnd > cur.DateEnd)
                             cur.DateEnd = n.DateEnd;
