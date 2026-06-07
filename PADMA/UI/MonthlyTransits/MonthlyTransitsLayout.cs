@@ -35,6 +35,8 @@ public sealed class MonthlyTransitsLayout
     public MonthlyPlanetDaySelection? Selection { get; init; }
 
     public MonthlyMasaShunyaDaySelection? MasaShunyaSelection { get; init; }
+
+    public IReadOnlyList<MonthlyEclipseDayMarker> EclipseDays => Data?.EclipseDays ?? [];
 }
 
 public sealed class MonthlyTransitsPlanetRow

@@ -77,6 +77,13 @@ public sealed class MonthlyPlanetTransitsDataService
             monthEndLocal,
             tzInfo);
 
+        var eclipseDays = BuildEclipseDayMarkers(
+            bufferStartUtc,
+            bufferEndUtc,
+            monthStartLocal,
+            monthEndLocal,
+            tzInfo);
+
         var groups = new List<MonthlyPlanetGroup>();
 
         List<PlanetData>? rahuDataCache = null;
@@ -187,6 +194,7 @@ public sealed class MonthlyPlanetTransitsDataService
             MonthStartLocal = monthStartLocal,
             MonthEndLocal = monthEndLocal,
             MasaShunya = masaShunya,
+            EclipseDays = eclipseDays,
             PlanetGroups = groups,
             TransitPack = transitPack
         };
@@ -816,6 +824,44 @@ public sealed class MonthlyPlanetTransitsDataService
             : desc.Name ?? string.Empty;
     }
 
+    private static IReadOnlyList<MonthlyEclipseDayMarker> BuildEclipseDayMarkers(
+        DateTime fromUtc,
+        DateTime toUtc,
+        DateTime monthStartLocal,
+        DateTime monthEndLocal,
+        TimeZoneInfo tzInfo)
+    {
+        var eclipses = SwissAnalysis.CalculateEclipses_London(
+            fromUtc.AddDays(-2),
+            toUtc.AddDays(2));
+
+        if (eclipses.Count == 0)
+            return [];
+
+        return eclipses
+            .Select(e =>
+            {
+                var utc = e.Date.Kind == DateTimeKind.Utc
+                    ? e.Date
+                    : DateTime.SpecifyKind(e.Date, DateTimeKind.Utc);
+
+                var local = TimeZoneInfo.ConvertTimeFromUtc(utc, tzInfo);
+
+                return new MonthlyEclipseDayMarker
+                {
+                    DayLocal = local.Date,
+                    EclipseId = e.EclipseId
+                };
+            })
+            .Where(x =>
+                x.DayLocal >= monthStartLocal.Date &&
+                x.DayLocal < monthEndLocal.Date)
+            .GroupBy(x => new { x.DayLocal, x.EclipseId })
+            .Select(g => g.First())
+            .OrderBy(x => x.DayLocal)
+            .ThenBy(x => x.EclipseId)
+            .ToList();
+    }
 
 
 }

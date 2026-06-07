@@ -17,6 +17,14 @@ public sealed class MonthlyTransitsHeaderDrawable : IDrawable
         canvas.FillColor = Color.FromArgb("#F7F7F7");
         canvas.FillRectangle(dirtyRect);
 
+        var todayDayIndex = GetTodayDayIndex(layout);
+
+        var eclipseDayIndexes = layout.EclipseDays
+                .Select(x => x.DayLocal.Date)
+                .Where(x => x.Year == layout.Year && x.Month == layout.Month)
+                .Select(x => x.Day - 1)
+                .ToHashSet();
+
         var font = GFont.Default;
         canvas.Font = font;
         canvas.FontColor = Colors.Black;
@@ -29,7 +37,28 @@ public sealed class MonthlyTransitsHeaderDrawable : IDrawable
             var date = new DateTime(layout.Year, layout.Month, day);
             var dow = GetShortDayOfWeek(date, layout.Culture);
 
+            if (eclipseDayIndexes.Contains(day - 1))
+            {
+                canvas.FillColor = Color.FromArgb("#F7D1D1");
+                canvas.FillRectangle(
+                    x + 1,
+                    1,
+                    w - 2,
+                    (float)layout.HeaderHeight - 2);
+            }
+
+            if (todayDayIndex.HasValue && todayDayIndex.Value == day - 1)
+            {
+                canvas.FillColor = Color.FromArgb("#CFEFF7");
+                canvas.FillRectangle(
+                    x + 1,
+                    1,
+                    w - 2,
+                    (float)layout.HeaderHeight - 2);
+            }
+
             canvas.FontSize = 10;
+            canvas.FontColor = Colors.Black;
             canvas.DrawString(
                 dow,
                 x, 0,
@@ -39,6 +68,7 @@ public sealed class MonthlyTransitsHeaderDrawable : IDrawable
                 TextFlow.ClipBounds);
 
             canvas.FontSize = 13;
+            canvas.FontColor = Colors.Black;
             canvas.DrawString(
                 day.ToString(CultureInfo.InvariantCulture),
                 x, 20,
@@ -68,4 +98,15 @@ public sealed class MonthlyTransitsHeaderDrawable : IDrawable
 
         return text.Length <= 2 ? text : text[..2];
     }
+
+    private static int? GetTodayDayIndex(MonthlyTransitsLayout layout)
+    {
+        var today = DateTime.Today;
+
+        if (today.Year != layout.Year || today.Month != layout.Month)
+            return null;
+
+        return today.Day - 1;
+    }
+
 }

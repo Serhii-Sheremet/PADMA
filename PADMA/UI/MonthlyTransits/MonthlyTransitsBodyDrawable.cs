@@ -399,6 +399,6 @@ public sealed class MonthlyTransitsBodyDrawable : IDrawable
         canvas.RestoreState();
     }
 
-    
+
 
 }

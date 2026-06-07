@@ -18,6 +18,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private bool _isPageAppeared;
     private bool _isBuildingTimeline;
     private bool _timelineBuildPending;
+    private bool _skipNextAppearingReset;
 
     private readonly MonthlyTransitsHeaderDrawable _headerDrawable = new();
     private readonly MonthlyTransitsLabelsDrawable _labelsDrawable = new();
@@ -161,6 +162,13 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             Shell.Current.FlyoutIsPresented = false;
 
         await Task.Delay(150);
+        // MonthPickerPopup can trigger OnAppearing when it closes.
+        // This is not a real page re-entry, so do not reset the selected month back to today.
+        if (_skipNextAppearingReset)
+        {
+            _skipNextAppearingReset = false;
+            return;
+        }
 
         ResetTransientUiState();
 
@@ -333,7 +341,12 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
     private async void OnMonthTitleTapped(object sender, EventArgs e)
     {
-        if (Vm is null) return;
+        if (Vm is null)
+            return;
+
+        // Closing the popup may trigger OnAppearing().
+        // That appearing must not reset the selected month back to today.
+        _skipNextAppearingReset = true;
 
         var popup = new MonthPickerPopup(Vm.CurrentCulture, Vm.Year, Vm.Month);
 
@@ -346,8 +359,14 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             return;
 
         var dt = res.Result;
-        if (dt.HasValue)
-            Vm.SetMonthYear(dt.Value.Year, dt.Value.Month);
+        if (!dt.HasValue)
+            return;
+
+        // Do not rebuild if the user selected the already opened month.
+        if (Vm.Year == dt.Value.Year && Vm.Month == dt.Value.Month)
+            return;
+
+        Vm.SetMonthYear(dt.Value.Year, dt.Value.Month);
     }
 
     private void InitializeGraphicsViews()
@@ -938,15 +957,40 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         if (Vm is null)
             return;
 
+        var year = Vm.Year;
+        var month = Vm.Month;
+
         _buildCts?.Cancel();
-        _buildCts?.Dispose();
-        _buildCts = new CancellationTokenSource();
 
-        var ct = _buildCts.Token;
+        var cts = new CancellationTokenSource();
+        _buildCts = cts;
 
-        _monthlyData = await _dataService.BuildAsync(Vm.Year, Vm.Month, ct);
+        try
+        {
+            var data = await _dataService.BuildAsync(year, month, cts.Token);
 
-        RebuildTimelineSkeleton();
+            if (cts.IsCancellationRequested)
+                return;
+
+            if (!ReferenceEquals(_buildCts, cts))
+                return;
+
+            _monthlyData = data;
+
+            RebuildTimelineSkeleton();
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when a previous calculation is cancelled by a newer one,
+            // for example when Year and Month change together.
+        }
+        finally
+        {
+            if (ReferenceEquals(_buildCts, cts))
+                _buildCts = null;
+
+            cts.Dispose();
+        }
     }
 
 

@@ -53,9 +53,13 @@ public sealed class MonthlyPlanetTransitsData
 
     public MonthlyMasaShunyaBand? MasaShunya { get; init; }
 
+    public IReadOnlyList<MonthlyEclipseDayMarker> EclipseDays { get; init; } = [];
+
     public IReadOnlyList<MonthlyPlanetGroup> PlanetGroups { get; init; } = [];
+
     public IReadOnlyDictionary<EPlanet, IReadOnlyList<PlanetSlice>> TransitPack { get; init; }
     = new Dictionary<EPlanet, IReadOnlyList<PlanetSlice>>();
+    
 }
 
 public sealed class MonthlyPlanetGroup
@@ -107,4 +111,10 @@ public enum MonthlyTransitLaneKind
     Nakshatra,
     Pada,
     TaraBala
+}
+
+public sealed class MonthlyEclipseDayMarker
+{
+    public DateTime DayLocal { get; init; }
+    public int EclipseId { get; init; }
 }
