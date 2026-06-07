@@ -10,7 +10,7 @@ public sealed class MonthlyTransitsLayout
     public CultureInfo Culture { get; init; } = CultureInfo.CurrentUICulture;
     public IReadOnlyList<MonthlyTransitsPlanetRow> Planets { get; init; } = [];
 
-    public string TopBandLabel { get; init; } = "Masa/Shunya";
+    public string TopBandLabel { get; init; } = string.Empty;
 
     public double DayWidth { get; init; } = 42;
     public double HeaderHeight { get; init; } = 44;
