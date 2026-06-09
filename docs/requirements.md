@@ -6355,41 +6355,57 @@ The top header displays:
 
 Transit intervals are drawn proportionally between their start and end time within the month.
 
-### Masa/Shunya Row
+### Day Header Markers
 
-The page includes a dedicated `Masa/Shunya` row above the planet groups.
+The day header highlights special calendar days inside the currently displayed month.
+The current local day is highlighted in the day header with a pastel light-blue background, but only when the displayed month/year matches the current system date.
+Days with a solar or lunar eclipse are highlighted in the day header with a pastel light-red background.
+The highlight is applied only to the day header cell containing:
 
-This row is not a regular planet transit lane. It is a separate monthly background band that combines:
+* day of week;
+* day number.
 
-- Masa period;
-- Shunya Nakshatra overlays;
-- Shunya Tithi overlays.
+It must not fill the full vertical timeline column.
+If the current day and an eclipse day fall on the same date, the current-day highlight may visually take priority. A combined visual style may be added later if required by the Product Owner.
+Eclipse day markers are calculated from the existing Swiss eclipse calculation logic and converted to the active profile living timezone before determining the local calendar day.
 
-The base Masa segment is drawn across the full row height, clipped to the visible month range.
+### Masa/Shunya Row Interaction and Details
 
-The Masa label format is:
-`<Masa name> (<ruler>)`
+The `Masa/Shunya` row is interactive independently from planet transit groups.
 
-The ruler is calculated from the Moon Nakshatra during Purnima Tithi (`TithiId == 15`) inside the corresponding Masa period.
-The ruler must not be calculated from the start of `TithiId == 16`, because `TithiId == 16` already belongs to the waning half and may produce a wrong Nakshatra ruler.
-Masa periods start at New Moon / `TithiId == 1` and continue until the next New Moon / next `TithiId == 1`.
-Masa must not be recalculated from the first day of the calendar month. When the selected calendar month starts inside an already active Masa period, the page must search back far enough to find the actual Masa start.
-For this reason, the Masa/Shunya calculation may use a larger buffer before and after the visible calendar month than the regular planet transit calculation.
+When the user taps a day inside the `Masa/Shunya` row:
+* the selected Masa/Shunya day is highlighted by a selection rectangle;
+* the selection rectangle covers only the selected day cell inside the Masa/Shunya row;
+* the selection does not cover planet transit groups.
 
-Shunya overlays are drawn on top of the base Masa segment:
-- Shunya Nakshatra is drawn in the upper half of the Masa/Shunya row;
-- Shunya Tithi is drawn in the lower half of the Masa/Shunya row.
+The first tap selects the Masa/Shunya day.
+The second tap on the same selected Masa/Shunya day opens a mobile tooltip/details panel.
 
-Shunya Nakshatra and Shunya Tithi periods are calculated as intersections of the active Masa period with the corresponding Nakshatra or Tithi periods.
+The Masa/Shunya tooltip shows all Masa/Shunya detail segments that intersect the selected day, including:
+* Masa period;
+* Shunya Nakshatra period;
+* Shunya Tithi period.
 
-The Shunya rules are taken from the `Masa` data loaded into `DataCache`, including:
-- `ShunyaNakshatraIdArray`;
-- `ShunyaTithiIdArray`.
+The selected day is only used as a filter. Tooltip periods must preserve their real full start/end boundaries and must not be clipped to the selected day.
 
-The row should visually preserve the legacy meaning:
-- Masa as the main background band;
-- Shunya Nakshatra and Shunya Tithi as smaller overlay zones;
-- vertical borders only at actual Masa segment boundaries, not at every day boundary.
+Masa tooltip details include:
+* Masa name;
+* full Masa period;
+* Full Moon Nakshatra;
+* Full Moon Nakshatra ruler.
+
+Shunya Nakshatra tooltip details include:
+* Shunya Nakshatra name;
+* full Shunya Nakshatra period;
+* Nakshatra ruler.
+
+Shunya Tithi tooltip details include:
+* Shunya Tithi name;
+* full Shunya Tithi period.
+
+The visual `Masa/Shunya` row label may be composed from separately localized `Masa` and `Shunya` texts.
+Tooltip headers may compose `Shunya Nakshatra` and `Shunya Tithi` from separately localized `Shunya`, `Nakshatra`, and `Tithi` texts.
+Phrases that require language-specific grammar, such as `Full Moon Nakshatra` and `Full Moon Nakshatra Ruler`, must be localized as full phrases.
 
 ### Scrolling
 
@@ -6435,24 +6451,52 @@ The page must behave like other root Shell pages:
 The page should be implemented as a dedicated `ContentPage`, not as a configuration/detail page, because it requires a custom two-dimensional scrollable layout, timeline header, sticky labels, selection overlay, and tooltip/details area.
 The page may reuse visual styles, localization patterns, helper services, and shared controls from existing pages, but it should not inherit from a template that imposes a vertical `ScrollView` around the whole page if that interferes with horizontal and vertical timeline scrolling.
 
-### Month Navigation
+### Month Navigation and Page Re-entry Behavior
 
-The page displays one full calendar month at a time.
-The initial month is the current month.
+The page initially opens on the current month.
+When the user leaves the Monthly Planet Transits page and later opens it again as a root Shell page, the page resets to the current month.
+When the user opens the month/year picker from the toolbar title and then closes it, the page must not treat the popup close event as a real page re-entry.
+Closing the month/year picker must not automatically reset the page back to the current month.
+If the user selects the same month/year that is already displayed, the page must not recalculate monthly transit data.
 
-The user must be able to move between months directly from the page toolbar:
+If the user selects a different month/year:
+* the selected month/year is updated;
+* the monthly transit data is recalculated;
+* the day header is rebuilt;
+* all planet transit lanes are refreshed;
+* Masa/Shunya data is refreshed;
+* eclipse day markers are refreshed;
+* current selections and tooltips are cleared;
+* scroll positions are reset to the beginning.
 
-- previous month;
-- next month.
+The page must safely handle rapid month/year changes.
+If a previous monthly calculation is cancelled because a newer calculation has started, the cancellation must be treated as an expected workflow and must not crash the page.
 
-The toolbar month navigation should be consistent with the existing `MainPage` month navigation pattern, using left and right arrow toolbar icons where possible.
+### Selection Behavior
 
-When the user changes the month:
+The Monthly Planet Transits page supports two independent selection types:
 
-- the page recalculates the monthly transit data for the selected month;
-- the horizontal day scale is rebuilt;
-- all planet transit lanes are refreshed;
-- any selected transit interval from the previous month is cleared unless explicitly preserved by future requirements.
+1. Planet/day selection;
+2. Masa/Shunya day selection.
+
+For planet/day selection:
+* the selected day and planet are determined from the tap position;
+* the selection rectangle covers the full width of the selected day;
+* the selection rectangle covers only the selected planet group;
+* the rectangle covers all transit lanes of that planet;
+* it must not cover the full monthly timeline height.
+
+For Masa/Shunya day selection:
+* the selected day is determined from the tap position inside the Masa/Shunya row;
+* the selection rectangle covers only the selected day cell inside the Masa/Shunya row;
+* it must not cover planet groups.
+
+Selecting a planet/day clears any existing Masa/Shunya selection.
+Selecting a Masa/Shunya day clears any existing planet/day selection.
+
+The first tap changes the selection rectangle only.
+The second tap on the same selected target opens the corresponding tooltip/details panel.
+
 
 ### Page Header and Toolbar
 
@@ -6468,18 +6512,15 @@ Instead, the toolbar title area displays the currently selected month and year, 
 - `May 2026`
 
 The toolbar contains:
-
 - burger menu button on the left, because the page is a root Shell flyout page;
 - localized month/year selector in the title area;
 - previous month toolbar button;
 - next month toolbar button.
 
 The month/year selector should reuse the same interaction pattern as the existing Main Page month/year selector.
-
 When the user taps the month/year title component, the page opens the same or equivalent month/year selection component used by the Main Page, allowing the user to jump directly to any month and year.
 
 After the user selects another month/year:
-
 - the selected month is updated;
 - the toolbar title is refreshed;
 - the monthly transit timeline is recalculated;
@@ -6504,10 +6545,17 @@ The page is interactive.
 
 When the user taps inside a transit interval:
 
-- the tapped interval becomes selected;
-- the selected day is determined from the tap position on the monthly time axis;
-- the selected day boundaries are shown across the visible timeline area;
-- detailed information for the selected transit is displayed in a mobile-adapted details area.
+For planet/day selection:
+- the selected day and planet are determined from the tap position;
+- the selection rectangle covers the full width of the selected day;
+- the selection rectangle covers only the selected planet group;
+- the rectangle covers all transit lanes of that planet;
+- it must not cover the full monthly timeline height.
+
+For Masa/Shunya day selection:
+- the selected day is determined from the tap position inside the Masa/Shunya row;
+- the selection rectangle covers only the selected day cell inside the Masa/Shunya row;
+- it must not cover planet groups.
 
 The mobile details area may be implemented as a tooltip, bottom panel, popup, or another suitable mobile UI pattern. The exact presentation may be refined during implementation.
 
@@ -6516,7 +6564,6 @@ The mobile details area may be implemented as a tooltip, bottom panel, popup, or
 The details area may show either the selected interval details or a grouped set of related transit details for the selected planet and selected day, depending on the lane and available legacy logic.
 
 Legacy detail fields include:
-
 - transit type;
 - start time;
 - end time;
@@ -6648,15 +6695,36 @@ A period is included if:
 - `period.EndLocal > selectedDayStartLocal`
 - and `period.StartLocal < selectedDayEndLocal`
 
-## Vedha and Mrityu Bhaga
+### Vedha Calculation for Monthly and Day Tooltips
 
-Vedha and Mrityu Bhaga must be calculated using the same underlying logic as the existing DayPage tooltip.
-The implementation must not depend on the visible monthly calculation range or on the monthly timeline clipping boundaries.
-For slow-moving planets, the real transit period may span months or years. The details panel must restore and display the real start and end of such periods.
-Example:
+Vedha intervals must be calculated from real continuous zodiac/house ranges, not from the visible monthly timeline range and not from buffer-limited `PlanetSlice` boundaries.
 
-A Vedha from the Sun for Ketu may be active on 01.06.2026 even if it started on 15.05.2026 and ends on 15.06.2026. In that case, the details panel must display the full Vedha period:
-`15.05.2026 02:52:02 – 15.06.2026 09:23:01`
+For Vedha calculation:
+* the real continuous house range of the target planet is determined from the target planet’s real zodiac sign boundaries;
+* the real continuous house range of the Vedha candidate planet is determined from the candidate planet’s real zodiac sign boundaries;
+* the final Vedha interval is the intersection of these two real ranges.
+
+In PADMA, the transit house from the natal Moon or Lagna is determined by the planet’s zodiac sign. Therefore, the real zodiac sign period is used as the real continuous house range for Vedha purposes.
+
+The final Vedha interval must not be:
+* the full period of the Vedha candidate planet alone;
+* clipped to the selected day;
+* clipped to the visible monthly calculation window;
+* clipped to a page-specific buffer range.
+
+The same shared Vedha utility logic must be used by both:
+* DayPage tooltip;
+* Monthly Planet Transits tooltip.
+
+This ensures that the same planet/date combination shows the same Vedha period on both pages.
+For slow-moving planets, Vedha periods may start before the visible month and end after the visible month. The tooltip must still display the real full Vedha interval.
+Ketu zodiac boundaries must be resolved consistently with PADMA node logic. When required, Ketu period boundaries are resolved through the Rahu/Ketu calculation path used by the Swiss transit utilities.
+
+### Mrityu Bhaga in Monthly Details
+
+Mrityu Bhaga intervals are displayed as overlay periods on the monthly zodiac lane and as detail rows in the tooltip when they intersect the selected day.
+Mrityu Bhaga detail periods must preserve real start/end boundaries and must not be clipped to the selected day.
+The visual monthly overlay may be clipped to the visible month for drawing purposes, but the tooltip/details data must use the real calculated period.
 
 ## Relationship to DayPage Tooltip
 
