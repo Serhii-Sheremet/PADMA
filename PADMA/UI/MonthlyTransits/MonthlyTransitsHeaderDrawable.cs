@@ -19,6 +19,13 @@ public sealed class MonthlyTransitsHeaderDrawable : IDrawable
 
         var todayDayIndex = GetTodayDayIndex(layout);
 
+        var selectedDayIndex =
+                layout.HeaderSelectedDay.HasValue &&
+                layout.HeaderSelectedDay.Value.Year == layout.Year &&
+                layout.HeaderSelectedDay.Value.Month == layout.Month
+                    ? layout.HeaderSelectedDay.Value.Day - 1
+                    : (int?)null;
+
         var eclipseDayIndexes = layout.EclipseDays
                 .Select(x => x.DayLocal.Date)
                 .Where(x => x.Year == layout.Year && x.Month == layout.Month)
@@ -76,6 +83,17 @@ public sealed class MonthlyTransitsHeaderDrawable : IDrawable
                 HorizontalAlignment.Center,
                 VerticalAlignment.Center,
                 TextFlow.ClipBounds);
+
+            if (selectedDayIndex.HasValue && selectedDayIndex.Value == day - 1)
+            {
+                canvas.StrokeColor = Colors.Gold;
+                canvas.StrokeSize = 2;
+                canvas.DrawRectangle(
+                    x + 2,
+                    2,
+                    w - 4,
+                    (float)layout.HeaderHeight - 4);
+            }
 
             canvas.StrokeColor = Color.FromArgb("#D0D0D0");
             canvas.StrokeSize = 1;

@@ -34,6 +34,9 @@ public sealed class MonthlyPlanetTransitsDataService
         var ctx = DataCache.Instance.ProfileContextService.Current
             ?? await DataCache.Instance.ProfileContextService.RebuildAsync(ct);
 
+        if (ctx == null)
+            throw new InvalidOperationException("Monthly transits cannot be calculated without an active profile.");
+
         var tzInfo = ctx.TimeZoneInfo;
 
         var monthStartLocal = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Unspecified);
@@ -850,7 +853,8 @@ public sealed class MonthlyPlanetTransitsDataService
                 return new MonthlyEclipseDayMarker
                 {
                     DayLocal = local.Date,
-                    EclipseId = e.EclipseId
+                    EclipseId = e.EclipseId,
+                    EclipseDateUtc = utc
                 };
             })
             .Where(x =>

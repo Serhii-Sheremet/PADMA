@@ -117,4 +117,5 @@ public sealed class MonthlyEclipseDayMarker
 {
     public DateTime DayLocal { get; init; }
     public int EclipseId { get; init; }
+    public DateTime EclipseDateUtc { get; init; }
 }

@@ -3,6 +3,7 @@ using CommunityToolkit.Maui.Extensions;
 using PADMA.Core.Enums;
 using PADMA.Core.Services;
 using PADMA.Core.Utilities;
+using PADMA.UI.Services;
 using PADMA.UI.MonthlyTransits;
 using PADMA.UI.ViewModels;
 using System.Collections.ObjectModel;
@@ -20,6 +21,8 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private bool _timelineBuildPending;
     private bool _skipNextAppearingReset;
 
+    private DateTime? _headerSelectedDay;
+
     private readonly MonthlyTransitsHeaderDrawable _headerDrawable = new();
     private readonly MonthlyTransitsLabelsDrawable _labelsDrawable = new();
     private readonly MonthlyTransitsBodyDrawable _bodyDrawable = new();
@@ -28,6 +31,8 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private bool _syncingVerticalScroll;
 
     private readonly MonthlyPlanetTransitsDataService _dataService = new();
+    private readonly MonthlyDayNavBundleBuilder _dayNavBuilder;
+
     private MonthlyPlanetTransitsData? _monthlyData;
     private CancellationTokenSource? _buildCts;
 
@@ -121,6 +126,12 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         EPlanet.KETU
     ];
 
+    private static bool HasActiveProfile()
+    {
+        var profiles = DataCache.Instance.ProfileList;
+        return profiles?.Any(p => p.Checked) == true;
+    }
+
     public MonthlyPlanetTransitsPage()
     {
         InitializeComponent();
@@ -131,6 +142,11 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         Vm.InitializeCulture();
         Vm.PropertyChanged += OnViewModelPropertyChanged;
+
+        var dayService = ServiceLocator.Services.GetService(typeof(IDayComputationService)) as IDayComputationService
+                ?? throw new InvalidOperationException("IDayComputationService is not registered.");
+
+        _dayNavBuilder = new MonthlyDayNavBundleBuilder(dayService);
 
         MessagingCenter.Unsubscribe<object>(this, "SettingsChanged");
         MessagingCenter.Subscribe<object>(this, "SettingsChanged", _ =>
@@ -172,6 +188,14 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         ResetTransientUiState();
 
+        if (!HasActiveProfile())
+        {
+            _monthlyData = null;
+            RebuildTimelineSkeleton();
+            await ResetScrollPositionsAsync();
+            return;
+        }
+
         if (ResetToCurrentMonth())
         {
             await Task.Yield();
@@ -209,36 +233,6 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
                 await RebuildMonthlyDataAsync();
                 await ResetScrollPositionsAsync();
             });
-    }
-
-    private async Task RebuildTimelineAsync()
-    {
-        if (_isBuildingTimeline)
-        {
-            _timelineBuildPending = true;
-            return;
-        }
-
-        try
-        {
-            _isBuildingTimeline = true;
-
-            do
-            {
-                _timelineBuildPending = false;
-
-                await Task.Yield();
-
-                RebuildTimelineSkeleton();
-
-                await Task.Yield();
-            }
-            while (_timelineBuildPending);
-        }
-        finally
-        {
-            _isBuildingTimeline = false;
-        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -339,6 +333,64 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         ToolbarItems.Add(next);
     }
 
+    private async void OnHeaderGraphicsTapped(object? sender, TappedEventArgs e)
+    {
+        if (_monthlyData == null)
+            return;
+
+        var point = e.GetPosition(HeaderGraphicsView);
+        if (point == null)
+            return;
+
+        var layout = CreateLayout();
+
+        var tappedDay = MonthlyTransitsHitTestHelper.HitTestHeaderDay(
+            layout,
+            point.Value.X,
+            point.Value.Y);
+
+        if (!tappedDay.HasValue)
+            return;
+
+        var isSecondTap =
+            _headerSelectedDay.HasValue &&
+            _headerSelectedDay.Value.Date == tappedDay.Value.Date;
+
+        _headerSelectedDay = tappedDay.Value.Date;
+
+        // Header selection should clear body selections/tooltips.
+        _selection = null;
+        _masaShunyaSelection = null;
+        _detailsModel = null;
+        IsTooltipVisible = false;
+
+        RebuildTimelineSkeleton();
+
+        if (!isSecondTap)
+            return;
+
+        await RunBusyAsync(
+            Localization.GetLocalizedText("Please wait…", DataCache.Instance.CurrentLanguageCode),
+            async () =>
+            {
+                var bundle = await _dayNavBuilder.BuildAsync(
+                    _monthlyData,
+                    tappedDay.Value.Date);
+
+                var store = ServiceLocator.Services.GetService<NavigationDataStore>();
+                if (store == null)
+                    throw new InvalidOperationException("NavigationDataStore is not registered");
+
+                var token = store.Put(bundle);
+
+                await Shell.Current.GoToAsync("//day", true,
+                    new Dictionary<string, object>
+                    {
+                    { "token", token }
+                    });
+            });
+    }
+
     private async void OnMonthTitleTapped(object sender, EventArgs e)
     {
         if (Vm is null)
@@ -414,6 +466,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             Data = _monthlyData,
             MasaShunyaSelection = _masaShunyaSelection,
             Selection = _selection,
+            HeaderSelectedDay = _headerSelectedDay,
             Planets = PlanetOrder
                 .Select(x => new MonthlyTransitsPlanetRow
                 {
@@ -445,6 +498,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             var isSecondTapOnSameMasaShunya =
                 IsSameMasaShunyaSelection(_masaShunyaSelection, tappedMasaShunya);
 
+            _headerSelectedDay = null;
             _selection = null;
             _detailsModel = null;
             _masaShunyaSelection = tappedMasaShunya;
@@ -471,6 +525,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
         var isSecondTapOnSameSelection = IsSameSelection(_selection, tappedSelection);
 
+        _headerSelectedDay = null;
         _selection = tappedSelection;
         _masaShunyaSelection = null;
 
@@ -557,6 +612,7 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private void ResetTransientUiState()
     {
         _selection = null;
+        _headerSelectedDay = null;
         _masaShunyaSelection = null;
         _detailsModel = null;
 
@@ -956,6 +1012,16 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     {
         if (Vm is null)
             return;
+
+        if (!HasActiveProfile())
+        {
+            _buildCts?.Cancel();
+            _buildCts = null;
+
+            _monthlyData = null;
+            RebuildTimelineSkeleton();
+            return;
+        }
 
         var year = Vm.Year;
         var month = Vm.Month;

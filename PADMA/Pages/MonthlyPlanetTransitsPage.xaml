@@ -188,7 +188,11 @@
                 Scrolled="OnHeaderHorizontalScrolled">
 
                 <GraphicsView x:Name="HeaderGraphicsView"
-                      HeightRequest="44" />
+                              HeightRequest="44">
+                    <GraphicsView.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnHeaderGraphicsTapped" />
+                    </GraphicsView.GestureRecognizers>
+                </GraphicsView>
             </ScrollView>
 
             <!-- fixed left labels -->

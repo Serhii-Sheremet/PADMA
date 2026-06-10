@@ -6746,15 +6746,280 @@ The visual organization should remain similar to DayPage tooltips:
 - structured blocks;
 - rows with labels and values.
 
-## Future Extension
-
-The details panel may later be extended with:
-- House from Moon;
-- House from Lagna;
-- Transit Description;
-
-without redesigning the panel structure.
-These values may be calculated internally earlier if it is useful for consistency with DayPage logic, but they are not required to be shown in the first implementation.
-
 ---------
 
+# Monthly Planet Transits → DayPage Navigation
+
+## Purpose
+
+The Monthly Planet Transits page now supports opening the detailed DayPage directly from the day header row.
+This implementation allows the user to inspect a monthly transit chart, select a specific calendar day in the header, and open the full daily timeline for that date using the same DayPage infrastructure that is already used by the MainPage → DayOverviewPage → DayPage flow.
+The implementation must not introduce a separate shortcut navigation model based only on date. DayPage remains a consumer of prepared day data passed through `NavigationDataStore` as a `DayNavBundle`.
+
+## User Interaction
+
+### Header day selection
+
+The day header row in `MonthlyPlanetTransitsPage` supports tap interaction.
+
+Behavior:
+1. First tap on a day cell in the header:
+   - selects the day;
+   - draws a gold selection frame around the selected header day cell;
+   - clears any active planet transit selection;
+   - clears any active Masa/Shunya selection;
+   - hides any active tooltip.
+
+2. Second tap on the same selected day cell:
+   - starts preparation of a full `DayNavBundle`;
+   - shows the existing busy overlay while daily data is prepared;
+   - opens `DayPage` for the selected date.
+
+The wait during second tap preparation is acceptable. The Monthly Planet Transits page must remain lightweight and must not precompute all full DayPage data for the month during initial page load.
+
+## Selection Rules
+
+Only one selection frame may be visible at a time on the Monthly Planet Transits page.
+
+Selection priority rules:
+- tapping a header day clears:
+  - planet transit selection;
+  - Masa/Shunya selection;
+  - tooltip state.
+
+- tapping a planet transit cell clears:
+  - header day selection;
+  - Masa/Shunya selection.
+
+- tapping a Masa/Shunya cell clears:
+  - header day selection;
+  - planet transit selection.
+
+All selection frames on the page use the standard application gold selection color.
+
+## Navigation Model
+
+Navigation from `MonthlyPlanetTransitsPage` to `DayPage` uses the same token-based approach as the existing DayPage flow.
+
+The page must create a `DayNavBundle`, store it in `NavigationDataStore`, and navigate to DayPage using the generated token.
+
+Required navigation pattern:
+```csharp
+var token = store.Put(bundle);
+
+await Shell.Current.GoToAsync("//day", true,
+    new Dictionary<string, object>
+    {
+        { "token", token }
+    });
+```
+
+Important: the route must be absolute (`"//day"`), not relative (`"day"`).
+
+Reason:
+- `MonthlyPlanetTransitsPage` is a Flyout branch.
+- Relative navigation would push DayPage onto the Monthly Planet Transits branch stack.
+- After closing DayPage and returning to MainPage, opening Monthly Planet Transits from the burger menu would restore the old DayPage instance instead of the monthly page.
+- Absolute navigation opens DayPage as a root Shell route and avoids polluting the Monthly Planet Transits navigation stack.
+
+## DayNavBundle Preparation
+
+The Monthly Planet Transits page must not open DayPage by passing only a date.
+
+DayPage expects a prepared bundle:
+```csharp
+public sealed class DayNavBundle
+{
+    public DayItem Day { get; init; }
+    public DayOverviewData? Overview { get; init; }
+    public DayWindowContext? Window { get; init; }
+}
+```
+
+For navigation from Monthly Planet Transits:
+```csharp
+var bundle = new DayNavBundle
+{
+    Day = dayItem,
+    Overview = overviewData,
+    Window = null
+};
+```
+
+`Window` is intentionally `null`, because this navigation does not originate from the 42-day MainPage calendar window and does not require DayOverview carousel navigation.
+
+## MonthlyDayNavBundleBuilder
+
+A dedicated builder is used to prepare the DayPage-compatible bundle for a selected day.
+
+Recommended class:
+```text
+PADMA/UI/MonthlyTransits/MonthlyDayNavBundleBuilder.cs
+```
+
+Responsibility:
+- build a full `DayItem` for the selected local date;
+- reuse the already calculated monthly `TransitPack`;
+- calculate only the additional daily data required by DayPage;
+- call `IDayComputationService.GetOverviewAsync(...)`;
+- return a complete `DayNavBundle`.
+
+The builder keeps DayPage preparation logic out of `MonthlyPlanetTransitsPage.xaml.cs` and prevents `MonthlyPlanetTransitsDataService` from becoming a second CalendarViewModel.
+
+## Data Sources Used by the Builder
+
+### Reused from monthly data
+
+The builder reuses data already calculated for the monthly transit chart:
+```csharp
+monthlyData.TransitPack
+```
+
+This provides the planet transit slices required by DayPage.
+
+### Calculated lazily on second tap
+
+The following data is prepared only when the user second-taps a header day:
+- Panchanga segments:
+  - Nakshatra;
+  - TaraBala;
+  - Tithi;
+  - Karana;
+  - NityaYoga;
+  - ChandraBala.
+
+- Lagna slices for the selected day.
+- User event marker state for the selected day.
+- Day overview data through `IDayComputationService`.
+
+This avoids increasing initial load time of `MonthlyPlanetTransitsPage`.
+
+## Panchanga Preparation
+
+The builder prepares all six Panchanga lanes required by DayPage.
+This is intentional even though the Monthly Planet Transits page currently focuses mainly on planet transits.
+
+Reason:
+- DayPage already expects the full Panchanga lane set.
+- Tithi may later be displayed directly on the Monthly Planet Transits page.
+- Legacy PAD contained Panchanga information on this screen.
+- Preparing the full set for DayPage keeps the navigation result complete and compatible with existing daily timeline behavior.
+
+The Panchanga calculation must reuse existing transit builder logic and `PanchangaHelper.BuildSegmentsForDay(...)`.
+
+## Lagna Preparation
+
+Lagna slices are calculated lazily only for the selected day during second tap navigation.
+
+Reason:
+- Lagna is needed by DayPage.
+- Calculating Lagna for the full month during initial Monthly Planet Transits load is unnecessary.
+- A short busy overlay delay on second tap is acceptable.
+
+## DayOverviewData Preparation
+
+The builder must use the existing day computation service:
+```csharp
+var overview = await dayService.GetOverviewAsync(dayKey, dayItem, ct);
+```
+
+The Monthly Planet Transits page must not separately implement Muhurta or day Yoga calculation.
+
+`IDayComputationService` remains responsible for:
+- sunrise;
+- sunset;
+- eclipse overview data;
+- planet overview stripes;
+- Muhurta stripes;
+- VTN/day Yoga stripes.
+
+This keeps the monthly-to-day navigation aligned with the existing MainPage → DayOverviewPage → DayPage flow.
+
+## Eclipse Data
+
+Monthly eclipse markers must preserve the actual eclipse UTC time, not only the local day and eclipse type.
+
+`MonthlyEclipseDayMarker` includes:
+```csharp
+public sealed class MonthlyEclipseDayMarker
+{
+    public DateTime DayLocal { get; init; }
+    public int EclipseId { get; init; }
+    public DateTime EclipseDateUtc { get; init; }
+}
+```
+
+Reason:
+- DayPage and day overview data need the actual eclipse time.
+- A marker with only day and type is not sufficient for detailed day navigation.
+
+When building eclipse markers, `EclipseDateUtc` must be populated from the original eclipse UTC date/time.
+
+## Header Hit Testing
+
+The header row has its own tap handler.
+
+`MonthlyTransitsHitTestHelper` contains a header hit-test method:
+```csharp
+public static DateTime? HitTestHeaderDay(
+    MonthlyTransitsLayout layout,
+    double x,
+    double y)
+```
+
+It maps tap coordinates to a local date in the displayed month.
+Only taps inside the header height and valid day range produce a date.
+
+## Header Selection Rendering
+
+`MonthlyTransitsLayout` includes:
+
+```csharp
+public DateTime? HeaderSelectedDay { get; init; }
+```
+
+`MonthlyPlanetTransitsPage.CreateLayout()` passes the current header selection into the layout:
+
+```csharp
+HeaderSelectedDay = _headerSelectedDay,
+```
+
+`MonthlyTransitsHeaderDrawable` draws a gold rectangle around the selected day cell when `HeaderSelectedDay` belongs to the displayed year and month.
+
+The selected header day frame must use the same standard gold color as other selection frames on the page.
+
+## Busy Overlay
+
+Opening DayPage from Monthly Planet Transits must happen under the existing busy overlay.
+The busy overlay is shown only during second tap preparation and navigation.
+
+Expected behavior:
+1. User second-taps selected header day.
+2. Busy overlay appears.
+3. `MonthlyDayNavBundleBuilder.BuildAsync(...)` prepares the bundle.
+4. Bundle is stored in `NavigationDataStore`.
+5. App navigates to `//day`.
+
+This keeps the monthly page responsive during normal browsing and only performs expensive daily calculations when they are explicitly needed.
+
+## Current Implementation Status
+
+Implemented:
+- header day tap handling;
+- first tap selection;
+- second tap DayPage navigation;
+- lazy full daily bundle preparation;
+- reuse of monthly `TransitPack`;
+- lazy Panchanga preparation for selected day;
+- lazy Lagna preparation for selected day;
+- reuse of `IDayComputationService` for overview data;
+- absolute Shell navigation to `//day`;
+- gold selection frame for selected header day;
+- mutually exclusive selection frames between header, planet transits, and Masa/Shunya areas;
+- eclipse marker extended with `EclipseDateUtc`.
+
+Deferred / possible future extension:
+- precomputing a reusable `MonthlyPanchangaPack` if Panchanga or Tithi needs to be displayed directly on the Monthly Planet Transits page.
+- visual display of Tithi or other Panchanga lanes on the Monthly Planet Transits page.
+
+-------------

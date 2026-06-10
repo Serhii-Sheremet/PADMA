@@ -59,6 +59,19 @@ public static class MonthlyTransitsHitTestHelper
         };
     }
 
+    public static DateTime? HitTestHeaderDay(
+        MonthlyTransitsLayout layout,
+        double x,
+        double y)
+    {
+        if (x < 0 || y < 0 || y >= layout.HeaderHeight)
+            return null;
 
+        var dayIndex = (int)(x / layout.DayWidth);
+        if (dayIndex < 0 || dayIndex >= layout.DaysInMonth)
+            return null;
+
+        return new DateTime(layout.Year, layout.Month, dayIndex + 1);
+    }
 
 }

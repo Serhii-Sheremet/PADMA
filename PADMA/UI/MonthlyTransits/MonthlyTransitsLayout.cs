@@ -30,6 +30,8 @@ public sealed class MonthlyTransitsLayout
 
     public double ContentHeight => TopBandHeight + Planets.Count * PlanetGroupHeight;
 
+    public DateTime? HeaderSelectedDay { get; init; }
+
     public MonthlyPlanetTransitsData? Data { get; init; }
 
     public MonthlyPlanetDaySelection? Selection { get; init; }
