@@ -47,7 +47,7 @@ documents in this `docs` directory.
 | [user-events-notifications-retention.md](requirements/user-events-notifications-retention.md) | User events, cache, editor, reminders, retention behavior |
 | [transit-charts-and-rectification.md](requirements/transit-charts-and-rectification.md) | Transit charts and Birth Time Rectification Preview |
 | [monthly-planet-transits.md](requirements/monthly-planet-transits.md) | Monthly Planet Transits page, details, selections, Monthly → DayPage flow |
-| [yearly_planet_transits_requirements.md](requirements/yearly_planet_transits_requirements.md)| Yearly Planet Transits page, details, selections, Yearly → MonthlyPlanetTransitsPage flow |
+| [yearly-planet-transits.md](requirements/yearly-planet-transits.md)| Yearly Planet Transits page, details, selections, Yearly → MonthlyPlanetTransitsPage flow |
 | [database-updates-and-preservation.md](requirements/database-updates-and-preservation.md) | Embedded database replacement, user-data preservation, sequence synchronization |
 | [backlog.md](requirements/backlog.md) | Deferred or future items only |
 
