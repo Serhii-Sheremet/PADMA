@@ -76,6 +76,10 @@
         <ShellContent ContentTemplate="{DataTemplate pages:MonthlyPlanetTransitsPage}" />
     </FlyoutItem>
 
+    <FlyoutItem Title="{Binding FlyoutYearlyTransitsTitle}" Route="yearlyPlanetTransits">
+        <ShellContent ContentTemplate="{DataTemplate pages:YearlyPlanetTransitsPage}" />
+    </FlyoutItem>
+
     <FlyoutItem Title="{Binding FlyoutSettingsTitle}" Route="settings">
         <ShellContent ContentTemplate="{DataTemplate pages:ConfigurationPage}" />
     </FlyoutItem>

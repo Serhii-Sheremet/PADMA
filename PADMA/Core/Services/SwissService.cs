@@ -181,12 +181,23 @@ namespace PADMA.Core.Services
 
         public static DateTime FromJulianDay(double jd_ut)
         {
-            SwissEphemerisNative.swe_revjul(jd_ut, /*gregflag*/ 1, out int y, out int m, out int d, out double hour);
-            int hh = (int)Math.Floor(hour);
-            int mm = (int)Math.Floor((hour - hh) * 60.0);
-            double ss_d = (hour - hh) * 3600.0 - mm * 60.0;
-            int ss = (int)Math.Round(ss_d);
-            return new DateTime(y, m, d, hh, mm, ss, DateTimeKind.Utc);
+            SwissEphemerisNative.swe_revjul(
+                jd_ut,
+                /*gregflag*/ 1,
+                out int y,
+                out int m,
+                out int d,
+                out double hour);
+
+            // Convert the complete fractional day into a rounded number of seconds.
+            // AddSeconds correctly carries 60 seconds into the next minute,
+            // 60 minutes into the next hour, and 24 hours into the next day.
+            var totalSeconds = (long)Math.Round(
+                hour * 3600.0,
+                MidpointRounding.AwayFromZero);
+
+            return new DateTime(y, m, d, 0, 0, 0, DateTimeKind.Utc)
+                .AddSeconds(totalSeconds);
         }
 
         /// <summary>

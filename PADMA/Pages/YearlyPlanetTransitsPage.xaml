@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PADMA.Pages.YearlyPlanetTransitsPage"
+             x:Name="RootPage">
+
+    <Shell.TitleView>
+        <Grid Padding="0" VerticalOptions="Center">
+            <HorizontalStackLayout Margin="20,0,0,0"
+                       Spacing="6"
+                       VerticalOptions="Center">
+                <HorizontalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnYearTitleTapped" />
+                </HorizontalStackLayout.GestureRecognizers>
+
+                <Label Text="{Binding YearTitle}"
+                       FontAttributes="Bold"
+                       FontSize="20"
+                       VerticalOptions="Center" />
+
+                <Label Text="▼"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </Grid>
+    </Shell.TitleView>
+
+    <Grid Padding="0" RowSpacing="0" ColumnSpacing="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Active profile row: mirrors MonthlyPlanetTransitsPage. -->
+        <Grid Grid.Row="0"
+              Padding="8,2"
+              ColumnSpacing="8"
+              ColumnDefinitions="*,Auto"
+              Opacity="0.85">
+
+            <Label Grid.Column="0"
+                   Text="{Binding ActiveProfileDisplay}"
+                   FontSize="14"
+                   LineBreakMode="TailTruncation"
+                   VerticalOptions="Center" />
+
+            <Label Grid.Column="1"
+                   Text="{Binding ActiveLocationTimeZoneDisplay}"
+                   FontSize="14"
+                   LineBreakMode="TailTruncation"
+                   HorizontalTextAlignment="End"
+                   VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Yearly transit matrix. -->
+        <Grid Grid.Row="1"
+              BackgroundColor="White"
+              RowSpacing="0"
+              ColumnSpacing="0">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="96" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Top-left corner. -->
+            <Border Grid.Row="0"
+                    Grid.Column="0"
+                    Stroke="#D0D0D0"
+                    StrokeThickness="1"
+                    BackgroundColor="#F7F7F7" />
+
+            <!-- Month header. -->
+            <ScrollView x:Name="HeaderHorizontalScroll"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalScrollBarVisibility="Never"
+                        VerticalScrollBarVisibility="Never"
+                        Scrolled="OnHeaderHorizontalScrolled">
+
+                <GraphicsView x:Name="HeaderGraphicsView"
+                              HeightRequest="44" />
+            </ScrollView>
+
+            <!-- Fixed left labels. -->
+            <ScrollView x:Name="LabelsVerticalScroll"
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Orientation="Vertical"
+                        HorizontalScrollBarVisibility="Never"
+                        VerticalScrollBarVisibility="Never"
+                        Scrolled="OnLabelsVerticalScrolled">
+
+                <GraphicsView x:Name="LabelsGraphicsView"
+                              WidthRequest="96" />
+            </ScrollView>
+
+            <!-- Scrollable yearly matrix. -->
+            <ScrollView x:Name="BodyHorizontalScroll"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalScrollBarVisibility="Always"
+                        VerticalScrollBarVisibility="Never"
+                        Scrolled="OnBodyHorizontalScrolled"
+                        SizeChanged="OnBodyHorizontalScrollSizeChanged">
+
+                <ScrollView x:Name="BodyVerticalScroll"
+                            Orientation="Vertical"
+                            VerticalOptions="Fill"
+                            HorizontalScrollBarVisibility="Never"
+                            VerticalScrollBarVisibility="Always"
+                            Scrolled="OnBodyVerticalScrolled">
+
+                    <GraphicsView x:Name="BodyGraphicsView">
+                        <GraphicsView.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnBodyGraphicsTapped" />
+                        </GraphicsView.GestureRecognizers>
+                    </GraphicsView>
+                </ScrollView>
+            </ScrollView>
+        </Grid>
+
+        <!-- Structural separator between the month header and timeline body. -->
+        <BoxView Grid.Row="1"
+                 Grid.Column="0"
+                 Grid.ColumnSpan="2"
+                 HeightRequest="1"
+                 VerticalOptions="Start"
+                 HorizontalOptions="Fill"
+                 Color="#D0D0D0"
+                 InputTransparent="True" />
+
+        <!--  Busy overlay -->
+        <Grid Grid.Row="1"
+              Grid.ColumnSpan="2"
+              IsVisible="{Binding IsBusy, Source={x:Reference RootPage}, FallbackValue=False}"
+              InputTransparent="False"
+              BackgroundColor="#80000000"
+              ZIndex="999">
+            <VerticalStackLayout
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Spacing="12">
+
+                <ActivityIndicator
+                    IsRunning="True"
+                    WidthRequest="48"
+                    HeightRequest="48" />
+
+                <Label Text="{Binding BusyText, Source={x:Reference RootPage}}"
+                       TextColor="White"
+                       FontSize="Medium"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
+</ContentPage>

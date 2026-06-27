@@ -413,9 +413,9 @@ namespace PADMA.Core.Analysis
         {
             var results = new List<PlanetData>();
 
-            int startEpoch = DateTimeToEpoch(startUtc);
-            int endEpoch = DateTimeToEpoch(endUtc);
-            int currentEpoch = startEpoch;
+            long startEpoch = DateTimeToEpoch(startUtc);
+            long endEpoch = DateTimeToEpoch(endUtc);
+            long currentEpoch = startEpoch;
 
             int stepSeconds = 3600; // 1 hour step
             var prevData = CalculatePlanetData(planetId, EpochToDateTime(currentEpoch), nodeType);
@@ -428,7 +428,7 @@ namespace PADMA.Core.Analysis
 
                 if (HasStateChanged(prevData, newData))
                 {
-                    int preciseEpoch = FindTransitionEpoch(planetId, prevData, newData, currentEpoch - stepSeconds, currentEpoch, nodeType);
+                    long preciseEpoch = FindTransitionEpoch(planetId, prevData, newData, currentEpoch - stepSeconds, currentEpoch, nodeType);
                     var preciseData = CalculatePlanetData(planetId, EpochToDateTime(preciseEpoch), nodeType);
 
                     results.Add(preciseData);
@@ -496,12 +496,12 @@ namespace PADMA.Core.Analysis
 
 
 
-        private static int FindTransitionEpoch(int planetId, PlanetData fromState, PlanetData toState, int startEpoch, int endEpoch, EAppSetting nodeType)
+        private static long FindTransitionEpoch(int planetId, PlanetData fromState, PlanetData toState, long startEpoch, long endEpoch, EAppSetting nodeType)
         {
             if (endEpoch - startEpoch <= 1)
                 return endEpoch;
 
-            int midEpoch = startEpoch + (endEpoch - startEpoch) / 2;
+            long midEpoch = startEpoch + (endEpoch - startEpoch) / 2;
             var midData = CalculatePlanetData(planetId, EpochToDateTime(midEpoch), nodeType);
 
             if (HasStateChanged(fromState, midData))
@@ -550,10 +550,12 @@ namespace PADMA.Core.Analysis
             return data;
         }
 
-        private static int DateTimeToEpoch(DateTime date)
-            => (int)(date - Epoch).TotalSeconds;
+        private static long DateTimeToEpoch(DateTime date)
+            => (long)Math.Round(
+                (date.ToUniversalTime() - Epoch).TotalSeconds,
+                MidpointRounding.AwayFromZero);
 
-        private static DateTime EpochToDateTime(int epoch)
+        private static DateTime EpochToDateTime(long epoch)
             => Epoch.AddSeconds(epoch);
 
         public static List<PlanetData> CalculatePlanetPositionsForDate(DateTime date, double latitude, double longitude, EAppSetting nodeType)
@@ -1451,9 +1453,9 @@ namespace PADMA.Core.Analysis
         {
             var results = new List<LagnaData>();
 
-            int startEpoch = DateTimeToEpoch(startUtc);
-            int endEpoch = DateTimeToEpoch(endUtc);
-            int currentEpoch = startEpoch;
+            long startEpoch = DateTimeToEpoch(startUtc);
+            long endEpoch = DateTimeToEpoch(endUtc);
+            long currentEpoch = startEpoch;
 
             int stepSeconds = 120; // лагна меняет паду часто, 2 минуты безопасно
             var prevData = CalculateLagnaData(EpochToDateTime(currentEpoch), latitude, longitude, altitude, hsys);
@@ -1466,7 +1468,7 @@ namespace PADMA.Core.Analysis
 
                 if (HasLagnaStateChanged(prevData, newData))
                 {
-                    int preciseEpoch = FindLagnaTransitionEpoch(
+                    long preciseEpoch = FindLagnaTransitionEpoch(
                         prevData, newData,
                         currentEpoch - stepSeconds, currentEpoch,
                         latitude, longitude, altitude, hsys);
@@ -1489,11 +1491,11 @@ namespace PADMA.Core.Analysis
                 || a.PadaId != b.PadaId;
         }
 
-        private static int FindLagnaTransitionEpoch(
+        private static long FindLagnaTransitionEpoch(
             LagnaData fromState,
             LagnaData toState,
-            int startEpoch,
-            int endEpoch,
+            long startEpoch,
+            long endEpoch,
             double latitude,
             double longitude,
             double altitude,
@@ -1502,7 +1504,7 @@ namespace PADMA.Core.Analysis
             if (endEpoch - startEpoch <= 1)
                 return endEpoch;
 
-            int midEpoch = startEpoch + (endEpoch - startEpoch) / 2;
+            long midEpoch = startEpoch + (endEpoch - startEpoch) / 2;
             var midData = CalculateLagnaData(EpochToDateTime(midEpoch), latitude, longitude, altitude, hsys);
 
             if (HasLagnaStateChanged(fromState, midData))

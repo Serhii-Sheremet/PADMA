@@ -8,10 +8,11 @@ using PADMA.UI.MonthlyTransits;
 using PADMA.UI.ViewModels;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace PADMA.Pages;
 
-public partial class MonthlyPlanetTransitsPage : ContentPage
+public partial class MonthlyPlanetTransitsPage : ContentPage, IQueryAttributable
 {
     private MonthlyPlanetTransitsViewModel Vm => BindingContext as MonthlyPlanetTransitsViewModel;
     private bool _needsRefreshAfterConfig;
@@ -20,6 +21,10 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
     private bool _isBuildingTimeline;
     private bool _timelineBuildPending;
     private bool _skipNextAppearingReset;
+
+    private int? _requestedYear;
+    private int? _requestedMonth;
+    private bool _suppressVmTriggeredRebuild;
 
     private DateTime? _headerSelectedDay;
 
@@ -126,6 +131,55 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
         EPlanet.KETU
     ];
 
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (!TryGetQueryInt(query, "year", out var year) ||
+            !TryGetQueryInt(query, "month", out var month))
+        {
+            return;
+        }
+
+        if (month is < 1 or > 12)
+            return;
+
+        _requestedYear = year;
+        _requestedMonth = month;
+    }
+
+    private static bool TryGetQueryInt(
+        IDictionary<string, object> query,
+        string key,
+        out int value)
+    {
+        value = 0;
+
+        if (!query.TryGetValue(key, out var raw) || raw == null)
+            return false;
+
+        return int.TryParse(
+            raw.ToString(),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out value);
+    }
+
+    private bool TryConsumeRequestedMonth(out int year, out int month)
+    {
+        year = 0;
+        month = 0;
+
+        if (!_requestedYear.HasValue || !_requestedMonth.HasValue)
+            return false;
+
+        year = _requestedYear.Value;
+        month = _requestedMonth.Value;
+
+        _requestedYear = null;
+        _requestedMonth = null;
+
+        return true;
+    }
+
     private static bool HasActiveProfile()
     {
         var profiles = DataCache.Instance.ProfileList;
@@ -196,6 +250,30 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
             return;
         }
 
+        if (TryConsumeRequestedMonth(out var requestedYear, out var requestedMonth))
+        {
+            _suppressVmTriggeredRebuild = true;
+
+            try
+            {
+                Vm?.SetMonthYear(requestedYear, requestedMonth);
+            }
+            finally
+            {
+                _suppressVmTriggeredRebuild = false;
+            }
+
+            await RunBusyAsync(
+                Localization.GetLocalizedText("Calculating transits", DataCache.Instance.CurrentLanguageCode),
+                async () =>
+                {
+                    await RebuildMonthlyDataAsync();
+                    await ResetScrollPositionsAsync();
+                });
+
+            return;
+        }
+
         if (ResetToCurrentMonth())
         {
             await Task.Yield();
@@ -237,6 +315,9 @@ public partial class MonthlyPlanetTransitsPage : ContentPage
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_suppressVmTriggeredRebuild)
+            return;
+
         if (e.PropertyName == nameof(MonthlyPlanetTransitsViewModel.Year) ||
             e.PropertyName == nameof(MonthlyPlanetTransitsViewModel.Month) ||
             e.PropertyName == nameof(MonthlyPlanetTransitsViewModel.CultureCode))
