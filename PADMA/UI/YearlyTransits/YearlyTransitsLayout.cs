@@ -11,6 +11,8 @@ public sealed class YearlyTransitsLayout
 
     public string TopBandLabel { get; init; } = string.Empty;
 
+    public YearlyPlanetTransitsData? Data { get; init; }
+
     // Keep a day as the internal horizontal unit. Month widths therefore remain proportional
     // to their real day counts without displaying individual day labels.
     public double DayWidth { get; init; } = 10;

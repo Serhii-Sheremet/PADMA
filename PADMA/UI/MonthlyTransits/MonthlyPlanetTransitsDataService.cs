@@ -203,7 +203,7 @@ public sealed class MonthlyPlanetTransitsDataService
         };
     }
 
-    private static MonthlyTransitLane BuildZodiacLane(
+    internal static MonthlyTransitLane BuildZodiacLane(
         EPlanet planet,
         IReadOnlyList<PlanetSlice> slices,
         IReadOnlyList<MonthlyTransitOverlaySegment> mrityuBhagaOverlays,
@@ -278,7 +278,7 @@ public sealed class MonthlyPlanetTransitsDataService
         };
     }
 
-    private static IReadOnlyList<MonthlyTransitOverlaySegment> BuildMrityuBhagaOverlays(
+    internal static IReadOnlyList<MonthlyTransitOverlaySegment> BuildMrityuBhagaOverlays(
         EPlanet planet,
         DateTime bufferStartUtc,
         DateTime bufferEndUtc,
@@ -447,7 +447,7 @@ public sealed class MonthlyPlanetTransitsDataService
         return planet == EPlanet.RAHU || planet == EPlanet.KETU;
     }
 
-    private static string GetPlanetName(EPlanet planet)
+    internal static string GetPlanetName(EPlanet planet)
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
 
@@ -475,7 +475,7 @@ public sealed class MonthlyPlanetTransitsDataService
     private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
     private static DateTime Min(DateTime a, DateTime b) => a < b ? a : b;
 
-    private static MonthlyTransitLane BuildNakshatraLane(
+    internal static MonthlyTransitLane BuildNakshatraLane(
         EPlanet planet,
         IReadOnlyList<PlanetSlice> slices,
         DateTime monthStartLocal,
@@ -595,7 +595,7 @@ public sealed class MonthlyPlanetTransitsDataService
         return DataCache.Instance.GetColor((EColor)nakshatra.ColorId);
     }
 
-    private static MonthlyTransitLane BuildPadaLane(
+    internal static MonthlyTransitLane BuildPadaLane(
         EPlanet planet,
         IReadOnlyList<PlanetSlice> slices,
         DateTime monthStartLocal,
@@ -718,7 +718,7 @@ public sealed class MonthlyPlanetTransitsDataService
         return DataCache.Instance.GetColor((EColor)pada.ColorId);
     }
 
-    private static MonthlyTransitLane BuildTaraBalaLane(
+    internal static MonthlyTransitLane BuildTaraBalaLane(
         EPlanet planet,
         IReadOnlyList<PlanetSlice> slices,
         DateTime monthStartLocal,

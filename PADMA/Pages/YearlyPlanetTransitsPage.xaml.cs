@@ -18,12 +18,17 @@ public partial class YearlyPlanetTransitsPage : ContentPage
     private readonly YearlyTransitsHeaderDrawable _headerDrawable = new();
     private readonly YearlyTransitsLabelsDrawable _labelsDrawable = new();
     private readonly YearlyTransitsBodyDrawable _bodyDrawable = new();
+    private readonly YearlyPlanetTransitsDataService _dataService = new();
+
+    private YearlyPlanetTransitsData? _transitData;
+    private int? _loadedDataYear;
 
     private bool _syncingHorizontalScroll;
     private bool _syncingVerticalScroll;
     private bool _hasInitialized;
     private bool _needsRefreshAfterConfig;
     private int? _selectedMonth;
+    private bool _resetToCurrentYearOnNextAppear;
 
     private bool _isClosing;
     private bool _isBusy;
@@ -38,7 +43,7 @@ public partial class YearlyPlanetTransitsPage : ContentPage
         }
     }
 
-    private string _busyText = "Please wait…";
+    private string _busyText = "Please waitâ€¦";
     public string BusyText
     {
         get => _busyText;
@@ -83,6 +88,9 @@ public partial class YearlyPlanetTransitsPage : ContentPage
         MessagingCenter.Subscribe<object>(this, "ProfileChanged", _ =>
         {
             _selectedMonth = null;
+            _transitData = null;
+            _loadedDataYear = null;
+
             Vm?.ReloadCultureAndRefresh();
             RebuildTimeline();
         });
@@ -95,15 +103,24 @@ public partial class YearlyPlanetTransitsPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        
+
         await Task.Delay(150);
 
         if (Shell.Current is not null)
             Shell.Current.FlyoutIsPresented = false;
 
-        if (!_hasInitialized)
+        var shouldResetToCurrentYear =
+            _resetToCurrentYearOnNextAppear ||
+            !_hasInitialized;
+
+        if (shouldResetToCurrentYear)
         {
+            _resetToCurrentYearOnNextAppear = false;
             _hasInitialized = true;
+
+            _selectedMonth = null;
+            _loadedDataYear = null;
+
             Vm?.SetYear(DateTime.Today.Year);
         }
 
@@ -115,11 +132,22 @@ public partial class YearlyPlanetTransitsPage : ContentPage
             DataCache.Instance.Refresh(db);
 
             _selectedMonth = null;
+            _loadedDataYear = null;
+
             Vm?.ReloadCultureAndRefresh();
         }
 
         RebuildTimeline();
-        
+
+        if (NeedsYearDataLoad())
+        {
+            var lang = DataCache.Instance.CurrentLanguageCode;
+
+            await RunBusyAsync(
+                Localization.GetLocalizedText("Please waitâ€¦", lang),
+                () => LoadYearDataAsync());
+        }
+
         await Task.Yield();
         await ResetScrollPositionsAsync();
     }
@@ -146,8 +174,9 @@ public partial class YearlyPlanetTransitsPage : ContentPage
         try
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
-            await RunBusyAsync(Localization.GetLocalizedText("Please wait…", lang), async () =>
+            await RunBusyAsync(Localization.GetLocalizedText("Please waitâ€¦", lang), async () =>
             {
+                _resetToCurrentYearOnNextAppear = true;
                 await Shell.Current.GoToAsync("//main");
                 await Task.Yield();
             });
@@ -163,7 +192,7 @@ public partial class YearlyPlanetTransitsPage : ContentPage
         BusyText = text;
         IsBusy = true;
 
-        await Task.Yield(); // äàòü UI øàíñ îòðèñîâàòü overlay
+        await Task.Yield(); // Ð´Ð°Ñ‚ÑŒ UI ÑˆÐ°Ð½Ñ Ð¾Ñ‚Ñ€Ð¸ÑÐ¾Ð²Ð°Ñ‚ÑŒ overlay
 
         try { await action(); }
         finally { IsBusy = false; }
@@ -212,7 +241,7 @@ public partial class YearlyPlanetTransitsPage : ContentPage
 
         await RunBusyAsync(
             Localization.GetLocalizedText(
-                "Please wait…",
+                "Please waitâ€¦",
                 DataCache.Instance.CurrentLanguageCode),
             async () =>
             {
@@ -223,21 +252,33 @@ public partial class YearlyPlanetTransitsPage : ContentPage
             });
     }
 
-    private void ChangeYear(int delta)
+    private async void ChangeYear(int delta)
     {
-        if (Vm is null)
+        if (Vm is null || IsBusy)
             return;
 
         var newYear = Vm.Year + delta;
 
+        // Year 9999 cannot have an exclusive 1 January 10000 end boundary.
         if (newYear < DateTime.MinValue.Year ||
-            newYear > DateTime.MaxValue.Year)
+            newYear >= DateTime.MaxValue.Year)
         {
             return;
         }
 
         _selectedMonth = null;
-        Vm.SetYear(newYear);
+
+        var lang = DataCache.Instance.CurrentLanguageCode;
+        await RunBusyAsync(
+            Localization.GetLocalizedText("Please waitâ€¦", lang),
+            async () =>
+            {
+                Vm.SetYear(newYear);
+
+                await Task.Yield();
+                await LoadYearDataAsync();
+                await ResetScrollPositionsAsync();
+            });
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -295,6 +336,7 @@ public partial class YearlyPlanetTransitsPage : ContentPage
             Year = Vm.Year,
             Culture = Vm.CurrentCulture,
             TopBandLabel = topBandLabel,
+            Data = _loadedDataYear == Vm.Year ? _transitData : null,
             SelectedMonth = _selectedMonth,
             Planets = PlanetOrder
                 .Select(planet => new YearlyTransitsPlanetRow
@@ -351,6 +393,42 @@ public partial class YearlyPlanetTransitsPage : ContentPage
                 x.LanguageCode == DataCache.Instance.CurrentLanguageCode)
             ?.Name
             ?? planet.ToString();
+    }
+
+    private bool NeedsYearDataLoad()
+    {
+        return Vm != null &&
+               HasActiveProfile() &&
+               (_transitData == null || _loadedDataYear != Vm.Year);
+    }
+
+    private async Task LoadYearDataAsync()
+    {
+        if (Vm is null || !HasActiveProfile())
+        {
+            _transitData = null;
+            _loadedDataYear = null;
+            RebuildTimeline();
+            return;
+        }
+
+        var requestedYear = Vm.Year;
+
+        if (_transitData != null && _loadedDataYear == requestedYear)
+        {
+            RebuildTimeline();
+            return;
+        }
+
+        var data = await _dataService.BuildAsync(requestedYear);
+
+        // A year may have changed while the calculation was running.
+        if (Vm == null || Vm.Year != requestedYear)
+            return;
+
+        _transitData = data;
+        _loadedDataYear = requestedYear;
+        RebuildTimeline();
     }
 
     private async Task ResetScrollPositionsAsync()

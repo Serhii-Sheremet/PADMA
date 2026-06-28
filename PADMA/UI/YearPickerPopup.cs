@@ -15,31 +15,44 @@ public sealed class YearPickerPopup : Popup<int?>
     public YearPickerPopup(int initialYear)
     {
         _selectedYear = Math.Clamp(initialYear, MinYear, MaxYear);
+        Size size = new Size(250, 150);
 
         _yearLabel = new Label
         {
-            FontSize = 26,
+            FontSize = 24,
             FontAttributes = FontAttributes.Bold,
             HorizontalTextAlignment = TextAlignment.Center,
             VerticalTextAlignment = TextAlignment.Center,
-            MinimumWidthRequest = 110
+            LineBreakMode = LineBreakMode.NoWrap,
+            WidthRequest = 90,
+            MinimumWidthRequest = 90
         };
 
         _previousButton = new Button
         {
             Text = "‹",
-            FontSize = 30,
-            Padding = new Thickness(12, 2),
-            MinimumWidthRequest = 52
+            FontSize = 26,
+            Padding = new Thickness(8, 0),
+            HorizontalOptions = LayoutOptions.Start,
+            VerticalOptions = LayoutOptions.Center,
+            WidthRequest = 48,
+            HeightRequest = 44,
+            MinimumWidthRequest = 48,
+            MinimumHeightRequest = 44
         };
         _previousButton.Clicked += (_, _) => ChangeYear(-1);
 
         _nextButton = new Button
         {
             Text = "›",
-            FontSize = 30,
-            Padding = new Thickness(12, 2),
-            MinimumWidthRequest = 52
+            FontSize = 26,
+            Padding = new Thickness(8, 0),
+            HorizontalOptions = LayoutOptions.End,
+            VerticalOptions = LayoutOptions.Center,
+            WidthRequest = 48,
+            HeightRequest = 44,
+            MinimumWidthRequest = 48,
+            MinimumHeightRequest = 44
         };
         _nextButton.Clicked += (_, _) => ChangeYear(1);
 
@@ -49,8 +62,16 @@ public sealed class YearPickerPopup : Popup<int?>
                 "Cancel",
                 DataCache.Instance.CurrentLanguageCode),
             FontSize = 12,
-            MinimumHeightRequest = 32,
-            Padding = new Thickness(12, 6)
+            HorizontalOptions = LayoutOptions.Start,
+            VerticalOptions = LayoutOptions.Center,
+            WidthRequest = 86,
+            MinimumHeightRequest = 36,
+            Padding = new Thickness(10, 4),
+            BackgroundColor = Colors.White,
+            TextColor = Colors.DarkSlateGray,
+            BorderColor = Colors.MediumPurple,
+            BorderWidth = 1,
+            CornerRadius = 8
         };
         btnCancel.Clicked += async (_, _) => await CloseAsync(null);
 
@@ -58,8 +79,10 @@ public sealed class YearPickerPopup : Popup<int?>
         {
             Text = "OK",
             FontSize = 12,
-            MinimumHeightRequest = 32,
-            Padding = new Thickness(14, 6)
+            WidthRequest = 64,
+            MinimumHeightRequest = 36,
+            Padding = new Thickness(10, 4),
+            CornerRadius = 8
         };
         btnOk.Clicked += async (_, _) => await CloseAsync(_selectedYear);
 
@@ -67,12 +90,12 @@ public sealed class YearPickerPopup : Popup<int?>
         {
             ColumnDefinitions =
             {
-                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(new GridLength(48)),
                 new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(GridLength.Auto)
+                new ColumnDefinition(new GridLength(48))
             },
-            ColumnSpacing = 10,
-            Padding = new Thickness(4, 8)
+            ColumnSpacing = 18,
+            Padding = new Thickness(4, 2, 4, 0)
         };
 
         yearSelector.Add(_previousButton, 0, 0);
@@ -83,23 +106,28 @@ public sealed class YearPickerPopup : Popup<int?>
         {
             ColumnDefinitions =
             {
+                new ColumnDefinition(new GridLength(104)),
                 new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(GridLength.Auto)
+                new ColumnDefinition(new GridLength(64))
             },
             ColumnSpacing = 8,
             Padding = new Thickness(4, 0, 4, 2)
         };
 
         footer.Add(btnCancel, 0, 0);
-        footer.Add(btnOk, 1, 0);
+        footer.Add(btnOk, 2, 0);
 
         Content = new Frame
         {
-            Padding = 10,
-            CornerRadius = 16,
+            Padding = 8,
+            CornerRadius = 14,
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Fill,
             Content = new VerticalStackLayout
             {
-                Spacing = 8,
+                Spacing = 14,
+                Padding = 0,
+                VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
                     yearSelector,
