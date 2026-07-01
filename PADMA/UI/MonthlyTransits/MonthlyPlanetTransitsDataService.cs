@@ -43,16 +43,16 @@ public sealed class MonthlyPlanetTransitsDataService
         var monthEndLocal = monthStartLocal.AddMonths(1);
 
         // Masa shunya calculation requires a larger buffer to correctly determine the lunar month for intervals that start/end near month boundaries.
-        var masaBufferStartLocal = monthStartLocal.AddDays(-45);
-        var masaBufferEndLocal = monthEndLocal.AddDays(45);
+        var masaBufferStartLocal = monthStartLocal.AddDays(-35);
+        var masaBufferEndLocal = monthEndLocal.AddDays(35);
 
         var masaBufferStartUtc = TimeZoneInfo.ConvertTimeToUtc(masaBufferStartLocal, tzInfo);
         var masaBufferEndUtc = TimeZoneInfo.ConvertTimeToUtc(masaBufferEndLocal, tzInfo);
 
         // Buffer is required to correctly detect intervals that started before the visible month
         // or end after the visible month.
-        var bufferStartLocal = monthStartLocal.AddDays(-7);
-        var bufferEndLocal = monthEndLocal.AddDays(7);
+        var bufferStartLocal = monthStartLocal.AddDays(-2);
+        var bufferEndLocal = monthEndLocal.AddDays(2);
 
         var bufferStartUtc = TimeZoneInfo.ConvertTimeToUtc(bufferStartLocal, tzInfo);
         var bufferEndUtc = TimeZoneInfo.ConvertTimeToUtc(bufferEndLocal, tzInfo);

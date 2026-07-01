@@ -60,8 +60,8 @@ public sealed class YearlyPlanetTransitsDataService
         var yearEndLocal = yearStartLocal.AddYears(1);
 
         // Masa/Shunya needs a wider lunar-context buffer near the visible boundaries.
-        var masaBufferStartLocal = yearStartLocal.AddDays(-45);
-        var masaBufferEndLocal = yearEndLocal.AddDays(45);
+        var masaBufferStartLocal = yearStartLocal.AddDays(-35);
+        var masaBufferEndLocal = yearEndLocal.AddDays(35);
 
         var masaBufferStartUtc = TimeZoneInfo.ConvertTimeToUtc(
             masaBufferStartLocal, tzInfo);
@@ -70,8 +70,8 @@ public sealed class YearlyPlanetTransitsDataService
             masaBufferEndLocal, tzInfo);
 
         // Planet slices need outer context so a visible boundary can be clipped correctly.
-        var bufferStartLocal = yearStartLocal.AddDays(-7);
-        var bufferEndLocal = yearEndLocal.AddDays(7);
+        var bufferStartLocal = yearStartLocal.AddDays(-2);
+        var bufferEndLocal = yearEndLocal.AddDays(2);
 
         var bufferStartUtc = TimeZoneInfo.ConvertTimeToUtc(
             bufferStartLocal, tzInfo);
