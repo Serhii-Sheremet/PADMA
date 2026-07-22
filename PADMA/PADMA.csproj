@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- Обновлённые целевые фреймворки -->
-    <TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>
+	<TargetFrameworks>net9.0-android36.0;net9.0-ios;net9.0-maccatalyst;net9.0-windows10.0.19041.0</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
     <RootNamespace>PADMA</RootNamespace>
@@ -14,8 +14,8 @@
     <!-- App info -->
     <ApplicationTitle>Personal Astrological Diary</ApplicationTitle>
     <ApplicationId>com.ssheremet.padma</ApplicationId>
-    <ApplicationDisplayVersion>0.7.6</ApplicationDisplayVersion>
-    <ApplicationVersion>19</ApplicationVersion>
+    <ApplicationDisplayVersion>0.7.8</ApplicationDisplayVersion>
+    <ApplicationVersion>20</ApplicationVersion>
 
     <!-- Windows -->
     <WindowsPackageType>None</WindowsPackageType>
