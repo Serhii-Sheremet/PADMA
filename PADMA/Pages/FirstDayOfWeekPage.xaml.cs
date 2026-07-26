@@ -74,7 +74,7 @@ namespace PADMA.Pages
             base.OnNavigatingFrom(args);
         }
 
-        private async void OnCloseClicked(object sender, EventArgs e)
+        protected override async void OnCloseClicked(object sender, EventArgs e)
         {
             _isClosingByButton = true;
 

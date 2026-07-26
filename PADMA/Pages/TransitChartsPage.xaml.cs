@@ -179,7 +179,7 @@ namespace PADMA.Pages
             LoadSelectedTabContent();
         }
 
-        private async void OnCloseClicked(object sender, EventArgs e)
+        protected override async void OnCloseClicked(object sender, EventArgs e)
         {
             ResetTransientUiState();
             await Shell.Current.GoToAsync("//main", true);
