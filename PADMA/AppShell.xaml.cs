@@ -126,6 +126,9 @@ public partial class AppShell : Shell, INotifyPropertyChanged
         // Регистрируем маршрут для FaqPage
         Routing.RegisterRoute(nameof(FaqPage), typeof(FaqPage));
 
+        // Регистрируем маршрут для PrivacyPolicyPage
+        Routing.RegisterRoute(nameof(PrivacyPolicyPage), typeof(PrivacyPolicyPage));
+
         // Регистрируем маршрут для DayOverviewPage и DayPage
         Routing.RegisterRoute("dayOverview", typeof(DayOverviewPage));
         Routing.RegisterRoute("day", typeof(DayPage));

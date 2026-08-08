@@ -14,8 +14,8 @@
     <!-- App info -->
     <ApplicationTitle>Personal Astrological Diary</ApplicationTitle>
     <ApplicationId>com.ssheremet.padma</ApplicationId>
-    <ApplicationDisplayVersion>0.7.8</ApplicationDisplayVersion>
-    <ApplicationVersion>20</ApplicationVersion>
+    <ApplicationDisplayVersion>0.7.9</ApplicationDisplayVersion>
+    <ApplicationVersion>22</ApplicationVersion>
 
     <!-- Windows -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -70,6 +70,7 @@
 	<!-- Shared assets -->
 	<MauiAsset Include="Resources\Raw\PADMADB.db3" LogicalName="PADMADB.db3" />
 	<MauiAsset Include="Resources\Raw\faq_*.html" LogicalName="%(Filename)%(Extension)" />
+	<MauiAsset Include="Resources\Raw\privacy_policy.html" LogicalName="privacy_policy.html" />
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">

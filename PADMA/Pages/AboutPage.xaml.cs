@@ -17,7 +17,7 @@ public partial class AboutPage : ContentPage
         }
     }
 
-    private string _busyText = "Please wait…";
+    private string _busyText = "Please waitâ€¦";
     public string BusyText
     {
         get => _busyText;
@@ -52,8 +52,8 @@ public partial class AboutPage : ContentPage
 
         lblCopyright.Text =
             currentYear > startYear
-                ? $"© {startYear}–{currentYear} PADma"
-                : $"© {startYear} PADma";
+                ? $"Â© {startYear}â€“{currentYear} PADma"
+                : $"Â© {startYear} PADma";
     }
 
     protected override void OnDisappearing()
@@ -119,22 +119,13 @@ public partial class AboutPage : ContentPage
 
     private async void OnPrivacyPolicyClicked(object sender, EventArgs e)
     {
-        var url = "https://serhii-sheremet.github.io/PADMA/privacy-policy.html"; 
-
-        try
-        {
-            await Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred);
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", ex.Message, "OK");
-        }
+        await Shell.Current.GoToAsync(nameof(PrivacyPolicyPage), true);
     }
 
     private async Task CloseAsync()
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
-        await RunBusyAsync(Localization.GetLocalizedText("Please wait…", lang), async () =>
+        await RunBusyAsync(Localization.GetLocalizedText("Please waitâ€¦", lang), async () =>
         {
             await Shell.Current.GoToAsync("//main");
             await Task.Yield();
@@ -146,7 +137,7 @@ public partial class AboutPage : ContentPage
         BusyText = text;
         IsBusy = true;
 
-        await Task.Yield(); // äàòü UI øàíñ îòğèñîâàòü overlay
+        await Task.Yield(); // give the UI time to show the overlay
 
         try { await action(); }
         finally { IsBusy = false; }
