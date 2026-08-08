@@ -15,12 +15,12 @@ public sealed class CalendarCellHeightConverter : IMultiValueConverter
 
         if (width <= 0 || height <= 0) return 0d;
 
-        // Portrait: как было — влезают 6 рядов
+        // Portrait: page height split into 6 rows
         if (width <= height)
             return height / 6.0;
 
-        // Landscape: делаем клетки "нормальными" по высоте от ширины (чтобы появился скролл)
-        // Можно чуть уменьшить коэффициент, если будет тесно:
+        // Landscape: keep each cell roughly "square" вЂ” width divided by 7 (days per week)
+        // slightly reduced to leave room for spacing/margins:
         return (width / 7.0) * 0.98;
     }
 

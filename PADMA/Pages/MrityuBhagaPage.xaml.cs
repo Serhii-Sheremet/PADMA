@@ -24,10 +24,10 @@ namespace PADMA.Pages
             Title = Localization.GetLocalizedText("Mrityu Bhaga", lang);
             HeaderLabel.Text = Localization.GetLocalizedText("Choose how to calculate Mrityu Bhaga:", lang);
 
-            OptionNEQUALLabel.Text = Localization.GetLocalizedText("From (N° - 30') to (N° + 30')", lang);
-            OptionNLESSLabel.Text = Localization.GetLocalizedText("From (N - 1)° to N°", lang);
-            OptionNMORELabel.Text = Localization.GetLocalizedText("From N° to (N + 1)°", lang);
-            OptionNERNSTLabel.Text = Localization.GetLocalizedText("From (N - 1)° to (N + 1)°", lang);
+            OptionNEQUALLabel.Text = Localization.GetLocalizedText("From (NÂ° - 30') to (NÂ° + 30')", lang);
+            OptionNLESSLabel.Text = Localization.GetLocalizedText("From (N - 1)Â° to NÂ°", lang);
+            OptionNMORELabel.Text = Localization.GetLocalizedText("From NÂ° to (N + 1)Â°", lang);
+            OptionNERNSTLabel.Text = Localization.GetLocalizedText("From (N - 1)Â° to (N + 1)Â°", lang);
 
             NoteLabel.Text = Localization.GetLocalizedText("Where 'N' is the Mrityu Bhaga", lang);
         }

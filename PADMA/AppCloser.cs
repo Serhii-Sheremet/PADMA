@@ -7,6 +7,6 @@ public static partial class AppCloser
         ClosePlatform();
     }
 
-    // ÂÀÆÍÎ: áåç public/internal/private !
+    // Important: no access modifier (public/internal/private)!
     static partial void ClosePlatform();
 }

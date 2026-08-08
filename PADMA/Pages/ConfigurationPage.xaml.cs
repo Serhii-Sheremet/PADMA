@@ -21,7 +21,7 @@ namespace PADMA.Pages
             }
         }
 
-        private string _busyText = "Please wait…";
+        private string _busyText = "Please waitвЂ¦";
         public string BusyText
         {
             get => _busyText;
@@ -38,7 +38,7 @@ namespace PADMA.Pages
             BusyText = text;
             IsBusy = true;
 
-            await Task.Yield(); // дать UI шанс отрисовать overlay
+            await Task.Yield(); // give the UI time to show the overlay
 
             try { await action(); }
             finally { IsBusy = false; }
@@ -47,9 +47,9 @@ namespace PADMA.Pages
         public ConfigurationPage()
         {
             InitializeComponent();
-            BindingContext = this;   // чтобы IsBusy/BusyText брались из code-behind
+            BindingContext = this;   // so IsBusy/BusyText bindings resolve against code-behind
 
-            // Универсальная подписка на событие "SettingsChanged" от всех дочерних страниц
+            // (re-)subscribe to the "SettingsChanged" event each time the page is constructed
             MessagingCenter.Subscribe<object>(this, "SettingsChanged", async _ =>
             {
                 _hasConfigChanges = true;
@@ -116,18 +116,18 @@ namespace PADMA.Pages
         private async Task CloseAsync()
         {
             var lang = DataCache.Instance.CurrentLanguageCode;
-            await RunBusyAsync(Localization.GetLocalizedText("Applying settings…", lang), async () =>
+            await RunBusyAsync(Localization.GetLocalizedText("Applying settingsвЂ¦", lang), async () =>
             {
-                // Проверяем, были ли изменения с дочерних страниц
+                // notify only if something actually changed in the configuration hub
                 if (_hasConfigChanges)
                 {
-                    // Шлём глобальное сообщение для MainPage о необходимости обновления календаря
+                    // so MainPage knows it needs to recalculate/refresh with the new settings
                     MessagingCenter.Send<object>(this, "ConfigurationHubClosedWithChanges");
                 }
 
                 await Shell.Current.GoToAsync("//main", true);
 
-                // чуть сгладит переход, чтобы MainPage успел показать свой overlay
+                // give navigation a moment to complete, so MainPage can show its own overlay
                 await Task.Yield();
             });
         }

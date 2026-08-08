@@ -65,11 +65,11 @@ namespace PADMA.UI.Templates
         }
 
         /// <summary>
-        /// ”ниверсальный метод диалога подтверждени€ изменений
+        /// Shows a confirmation dialog before discarding unsaved changes
         /// </summary>
-        /// <param name="titleKey"> люч дл€ заголовка</param>
-        /// <param name="messageKey"> люч дл€ сообщени€</param>
-        /// <returns>True Ч сохранить, False Ч не сохран€ть</returns>
+        /// <param name="titleKey">Localization key for the dialog title</param>
+        /// <param name="messageKey">Localization key for the dialog message</param>
+        /// <returns>True if confirmed, False if not</returns>
         protected async Task<bool> TrySaveChangesAsync(string titleKey, string messageKey)
         {
             string titleText = Localization.GetLocalizedText(titleKey, DataCache.Instance.CurrentLanguageCode);

@@ -19,32 +19,32 @@ namespace PADMA.Core.TransitBuilder
             // Prepare swapped zodiac list: birth zodiac becomes index 0
             var swappedZodiacs = TransitBuilderUtility.SwapZodiacs(DataCache.Instance.ZodiacList.ToList(), birthZodiacMoonId);
 
-            // стартуем с первой точки
+            // initialize with the first entry
             int currentZodiacId = mList[0].ZodiacId;
             DateTime currentStartUtc = mList[0].DateTimeUtc;
 
             for (int i = 1; i < mList.Count; i++)
             {
-                // zodiac поменялcя - закрываем предыдущий интервал
+                // zodiac changed - close the previous segment
                 if (mList[i].ZodiacId != currentZodiacId)
                 {
                     (houseNumber, colorId) = GetChandraBalaColorAndHouse(currentZodiacId, swappedZodiacs);
                     result.Add(new ChandraBalaSlice
                     {
                         StartUtc = currentStartUtc,
-                        EndUtc = mList[i].DateTimeUtc, // до момента смены
+                        EndUtc = mList[i].DateTimeUtc, // up to this point in time
                         ZodiacCode = (EZodiac)currentZodiacId,
                         HouseNumber = houseNumber,
                         ColorId = colorId
                     });
 
-                    // начинаем новый интервал
+                    // start tracking the new segment
                     currentZodiacId = mList[i].ZodiacId;
                     currentStartUtc = mList[i].DateTimeUtc;
                 }
             }
 
-            // закрываем последнюю чандру балу до последней точки ряда
+            // append the last open segment, running to the end of the period
             var last = mList[mList.Count - 1];
             (houseNumber, colorId) = GetChandraBalaColorAndHouse(currentZodiacId, swappedZodiacs);
             var lastSlice = new ChandraBalaSlice

@@ -4,7 +4,6 @@ namespace PADMA;
 
 public partial class App : Application
 {
-    private bool _initializedOnce;
     private readonly SemaphoreSlim _profileInitLock = new(1, 1);
 
     public App()
@@ -18,7 +17,6 @@ public partial class App : Application
     protected override async void OnStart()
     {
         base.OnStart();
-        _initializedOnce = true;
 
         /*
         try

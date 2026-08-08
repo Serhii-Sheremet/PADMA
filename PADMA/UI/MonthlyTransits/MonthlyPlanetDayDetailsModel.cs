@@ -27,7 +27,7 @@ public sealed class MonthlyPlanetDayPadaPeriodBlock
 
     public IReadOnlyList<MonthlyPlanetDayDetailsLine> Lines { get; init; } = [];
 
-    public string RangeText => $"{StartLocal:dd.MM.yyyy HH:mm:ss} – {EndLocal:dd.MM.yyyy HH:mm:ss}";
+    public string RangeText => $"{StartLocal:dd.MM.yyyy HH:mm:ss} â€“ {EndLocal:dd.MM.yyyy HH:mm:ss}";
 }
 
 public sealed class MonthlyPlanetDayDetailsLine
@@ -41,7 +41,7 @@ public sealed class MonthlyPlanetDayDetailsLine
     public bool HasRange => StartLocal.HasValue && EndLocal.HasValue;
 
     public string RangeText => HasRange
-        ? $"{StartLocal:dd.MM.yyyy HH:mm:ss} – {EndLocal:dd.MM.yyyy HH:mm:ss}"
+        ? $"{StartLocal:dd.MM.yyyy HH:mm:ss} â€“ {EndLocal:dd.MM.yyyy HH:mm:ss}"
         : string.Empty;
 }
 
@@ -58,6 +58,6 @@ public sealed class MonthlyPlanetDayDetailsRow
 
     public string Value { get; init; } = string.Empty;
 
-    public string RangeText => $"{StartLocal:dd.MM.yyyy HH:mm:ss} – {EndLocal:dd.MM.yyyy HH:mm:ss}";
+    public string RangeText => $"{StartLocal:dd.MM.yyyy HH:mm:ss} â€“ {EndLocal:dd.MM.yyyy HH:mm:ss}";
 }
 

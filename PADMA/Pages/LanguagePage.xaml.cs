@@ -29,11 +29,11 @@ namespace PADMA.Pages
             var settings = _db.GetAppSettingsList();
             var active = settings.FirstOrDefault(x => x.GroupCode == "LANGUAGE" && x.Active == 1);
 
-            // если нет активного языка — по умолчанию ENGLISH
+            // fall back to ENGLISH if no active language setting is found
             _originalLanguageCode = active?.SettingCode ?? "ENGLISH";
             _currentLanguageCode = _originalLanguageCode;
 
-            // выставляем активный радиобаттон
+            // reflect the current selection in the radio buttons
             EnglishRadioButton.IsChecked = _currentLanguageCode == "ENGLISH";
             UkrainianRadioButton.IsChecked = _currentLanguageCode == "UKRAINIAN";
             PolishRadioButton.IsChecked = _currentLanguageCode == "POLISH";
@@ -90,7 +90,7 @@ namespace PADMA.Pages
 
         protected override async void OnNavigatingFrom(NavigatingFromEventArgs args)
         {
-            // если выходим через крестик — пропускаем (обработка будет там)
+            // if closing via the close button, the setting was already saved there (avoid double-save)
             if (IsClosingByButton)
             {
                 base.OnNavigatingFrom(args);
@@ -101,7 +101,7 @@ namespace PADMA.Pages
             {
                 if (await TrySaveChangesAsync("Save changes?", "Apply new language setting?"))
                 {
-                    // сохраняем выбранный язык и обновляем кеш
+                    // mark the selected language as the active app setting
                     _db.SetAppSettingActive("LANGUAGE", _currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
                     MessagingCenter.Send<object>(this, "SettingsChanged");
@@ -120,7 +120,7 @@ namespace PADMA.Pages
             {
                 if (await TrySaveChangesAsync("Save changes?", "Apply new language setting?"))
                 {
-                    // сохраняем выбранный язык и обновляем кеш
+                    // mark the selected language as the active app setting
                     _db.SetAppSettingActive("LANGUAGE", _currentLanguageCode);
                     SetCurrentLanguageCode(_currentLanguageCode);
                     MessagingCenter.Send<object>(this, "SettingsChanged");

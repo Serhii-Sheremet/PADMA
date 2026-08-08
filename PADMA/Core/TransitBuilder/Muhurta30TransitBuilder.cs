@@ -85,7 +85,7 @@ namespace PADMA.Core.TransitBuilder
             var stepDay = TimeSpan.FromTicks(dayLen.Ticks / 15);
             var stepNightAfter = TimeSpan.FromTicks(nightAfter.Ticks / 15);
 
-            // Build “with buffer”: prev night(15) + current day(15) + current night(15)
+            // Build "with buffer": prev night(15) + current day(15) + current night(15)
             var all = new List<Muhurta30Slice>(45);
 
             // prev night (use 16..30 => index 15..29)

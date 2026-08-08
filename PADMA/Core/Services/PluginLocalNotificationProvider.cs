@@ -45,7 +45,7 @@ public sealed class PluginLocalNotificationProvider : ILocalNotificationProvider
         if (!CanScheduleExactAlarms())
         {
             RequestExactAlarmPermission();
-            // Не блокируем и не ждём результата тут: пользователь подтверждает в системном экране.
+            // We don't wait for a result here вЂ” fire and forget; the user grants the permission via system settings.
         }
         #endif
 

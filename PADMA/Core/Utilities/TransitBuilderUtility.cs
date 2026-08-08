@@ -48,7 +48,7 @@ namespace PADMA.Core.Utilities
         }
 
         /// <summary>
-        /// ¬озвращает (TaraBalaId 1..9, Percent 100/50/25) из уже предсобранной матрицы.
+        /// Determines (TaraBalaId 1..9, Percent 100/50/25) from the precomputed matrix.
         /// </summary>
         public static (int taraBalaId, int percent) ComputeTaraBalaFromMatrix(int nakshatraId, int[,] matrix)
         {

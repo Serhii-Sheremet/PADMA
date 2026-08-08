@@ -41,7 +41,7 @@ namespace PADMA.Core.Utilities
 
             foreach (var slice in slicesUtc)
             {
-                var sliceStartUtc = slice.StartUtc; // или slice.StartDateUtc / Start
+                var sliceStartUtc = slice.StartUtc; // or slice.StartDateUtc / Start
                 var sliceEndUtc = slice.EndUtc;
 
                 var sliceStartLocal = TimeZoneInfo.ConvertTimeFromUtc(sliceStartUtc, tz);
@@ -61,17 +61,17 @@ namespace PADMA.Core.Utilities
                 var colorCode = getColorCode(slice);
                 var color = cache.GetColor(colorCode);
 
-                var core = getText?.Invoke(slice); // например "4.Rohini"
+                var core = getText?.Invoke(slice); // example: "4.Rohini"
                 string? text = core;
 
                 if (!string.IsNullOrWhiteSpace(core))
                 {
-                    // dayLocal — локальное время, соответствует началу суток (00:00) для строящегося дня
-                    dayStartLocal = dayLocal.Date; // 00:00 локально
+                    // dayLocal is a local date; recompute the day boundary (00:00) for this calendar day
+                    dayStartLocal = dayLocal.Date; // 00:00 local time
                     startLocal = effStart.LocalDateTime;
 
-                    // если сегмент начался НЕ в самом начале дня, то добавляем время
-                    if (startLocal > dayStartLocal.AddSeconds(1)) // маленький допуск
+                    // if the segment doesn't start exactly at the day boundary, show the time
+                    if (startLocal > dayStartLocal.AddSeconds(1)) // small tolerance
                     {
                         text = includeStartTimeInText ? $"{startLocal:HH:mm} {core}" : $"{ core}";
                     }

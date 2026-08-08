@@ -35,7 +35,7 @@ namespace PADMA.Core.Services
                     if (!Directory.Exists(targetDir))
                         Directory.CreateDirectory(targetDir);
             
-                    // если уже распаковано (типичных файлов > 100), не трогаем
+                    // Already extracted (file count > 100) вАФ skip
                     if (Directory.Exists(targetDir) && Directory.GetFiles(targetDir, "*.se*").Length > 100)
                     {
                         System.Diagnostics.Debug.WriteLine($"[EPHE] Already extracted: {targetDir}");
@@ -43,25 +43,25 @@ namespace PADMA.Core.Services
                     else
                     {
                         string zipPath = Path.Combine(FileSystem.AppDataDirectory, "ephe.zip");
-                        // копируем из ресурсов в локальный файл
+                        // copy from the app package to local storage
                         await using (var stream = await FileSystem.OpenAppPackageFileAsync("ephe.zip"))
                         await using (var file = File.Create(zipPath))
                         {
                             await stream.CopyToAsync(file);
                         }
-            
-                        // распаковываем (перезапись разрешена)
+
+                        // extract (overwrite existing files)
                         System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, targetDir, overwriteFiles: true);
-            
-                        // удал€ем временный zip, чтобы не висел в lock
+
+                        // delete the temp zip so it doesn't linger and hold a file lock
                         try { File.Delete(zipPath); } catch { /* ignore */ }
                     }
-            
+
                     SwissEphemerisNative.swe_set_ephe_path(targetDir);
                 }
                 catch (Exception ex)
                 {
-                    // лог + пробрасываем с контекстом
+                    // log + rethrow as a more descriptive exception
                     System.Diagnostics.Debug.WriteLine("[EPHE][ERROR] " + ex);
                     throw new InvalidOperationException("Failed to initialize ephemeris on Android. " +
                         "Make sure Resources/Raw/ephe.zip exists and has Build Action = MauiAsset.", ex);
@@ -71,7 +71,7 @@ namespace PADMA.Core.Services
                 SwissEphemerisNative.swe_set_ephe_path(defaultPath);
             #endif
 
-            // сидерика Ћахири по умолчанию
+            // set default sidereal mode (Lahiri ayanamsha)
             SwissEphemerisNative.swe_set_sid_mode(SweConst.SE_SIDM_LAHIRI, 0, 0);
 
             _initialized = true;
@@ -89,10 +89,10 @@ namespace PADMA.Core.Services
             if (!SwissUtility.IsSupportedPlanet(planetId))
                 throw new ArgumentException($"Unsupported planetId {planetId}. Ketu is handled separately.", nameof(planetId));
 
-            // ∆Єстко к UTC
+            // ensure UTC
             var utc = utcDate.Kind == DateTimeKind.Utc ? utcDate : utcDate.ToUniversalTime();
 
-            // JD(UT) безопасно через swe_utc_to_jd
+            // JD(UT) is computed via swe_utc_to_jd
             var dret = new double[2];
             var serr = new StringBuilder(256);
             int conv = SwissEphemerisNative.swe_utc_to_jd(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, utc.Second,
@@ -170,7 +170,7 @@ namespace PADMA.Core.Services
 
         public static double ToJulianDay(DateTime utc)
         {
-            // utc Ч DateTimeKind.Utc
+            // utc must be DateTimeKind.Utc
             var dret = new double[2];
             var sb = new StringBuilder(256);
             SwissEphemerisNative.swe_utc_to_jd(
@@ -259,7 +259,7 @@ namespace PADMA.Core.Services
 
                 // --- Get current sunrise calculation setting from AppSettings ---
                 EAppSetting sunriseSetting = DataCache.Instance.GetActiveSunriseSetting();
-                // TIP: ничего не добавл€ем (верхн€€ кромка по умолчанию)
+                // TIP: default is disc edge (disc center only if explicitly selected)
                 if (sunriseSetting == EAppSetting.SUNRISECENTER)
                 {
                     rsmi |= SweConst.SE_BIT_DISC_CENTER; // center of disc

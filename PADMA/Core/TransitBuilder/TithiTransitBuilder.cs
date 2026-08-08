@@ -24,7 +24,7 @@ namespace PADMA.Core.TransitBuilder
                     ? list[i + 1].DateTimeUtc
                     : endUtc;
 
-                // защита на всякий случай
+                // skip zero-length or invalid segments
                 if (nextStart <= current.DateTimeUtc)
                     continue;
 

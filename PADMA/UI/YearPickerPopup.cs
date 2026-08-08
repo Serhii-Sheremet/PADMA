@@ -30,7 +30,7 @@ public sealed class YearPickerPopup : Popup<int?>
 
         _previousButton = new Button
         {
-            Text = "‹",
+            Text = "â—€",
             FontSize = 26,
             Padding = new Thickness(8, 0),
             HorizontalOptions = LayoutOptions.Start,
@@ -44,7 +44,7 @@ public sealed class YearPickerPopup : Popup<int?>
 
         _nextButton = new Button
         {
-            Text = "›",
+            Text = "â–¶",
             FontSize = 26,
             Padding = new Thickness(8, 0),
             HorizontalOptions = LayoutOptions.End,

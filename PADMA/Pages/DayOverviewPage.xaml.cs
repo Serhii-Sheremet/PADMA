@@ -56,7 +56,7 @@ namespace PADMA.Pages
             }
         }
 
-        private string _busyText = "Please waitЕ";
+        private string _busyText = "Please waitвА¶";
         public string BusyText
         {
             get => _busyText;
@@ -83,7 +83,7 @@ namespace PADMA.Pages
             BusyText = text;
             IsBusy = true;
 
-            await Task.Yield(); // дать UI шанс отрисовать overlay
+            await Task.Yield(); // give the UI time to show the overlay
 
             try { await action(); }
             finally { IsBusy = false; }
@@ -134,10 +134,10 @@ namespace PADMA.Pages
                     _window = window;
             }
 
-            // парсим query синхронно
+            // read query parameters
             ReadQuery(query);
 
-            // дальше Ч асинхронна€ инициализаци€
+            // fire-and-forget carousel initialization
             _ = InitializeCarouselAsync();
 
             if (query.TryGetValue("Day", out var obj) && obj is DayItem day)
@@ -169,14 +169,14 @@ namespace PADMA.Pages
         {
             if (_window == null) return;
 
-            BuildCarousel(); // создаЄт _items, ставит ItemsSource, Position
+            BuildCarousel(); // fills _items, sets ItemsSource, Position
 
             if (_items == null || _items.Count == 0) return;
 
             var pos = Math.Clamp(_window.SelectedIndex, 0, _items.Count - 1);
             var item = _items[pos];
 
-            Day = item.Day; // обновит title
+            Day = item.Day; // sets the page title
             await EnsureOverviewLoadedAsync(item);
             _ = PreloadNeighborsAsync(pos);
         }
@@ -291,7 +291,7 @@ namespace PADMA.Pages
         {
             if (_items == null) return;
 
-            // 1 шаг в обе стороны Ч обычно достаточно
+            // one neighboring day in each direction
             if (idx - 1 >= 0) await EnsureOverviewLoadedAsync(_items[idx - 1]);
             if (idx + 1 < _items.Count) await EnsureOverviewLoadedAsync(_items[idx + 1]);
             

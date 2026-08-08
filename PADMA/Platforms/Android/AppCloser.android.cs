@@ -5,7 +5,7 @@ public static partial class AppCloser
     static partial void ClosePlatform()
     {
         var activity = Platform.CurrentActivity;
-        activity?.FinishAndRemoveTask();   // корректный выход на Android
-        // activity?.Finish();             // fallback при желании
+        activity?.FinishAndRemoveTask();   // removes the task from Android's recent apps
+        // activity?.Finish();             // fallback option, currently unused
     }
 }

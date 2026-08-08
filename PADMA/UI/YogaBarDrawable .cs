@@ -21,7 +21,7 @@ public sealed class YogaBarDrawable : IDrawable
         var fontSize = Math.Max(10f, barHeight * 0.55f);
         canvas.FontSize = fontSize;
 
-        // рамка дня
+        // bar outline
         canvas.StrokeColor = Colors.Black;
         canvas.StrokeSize = 1;
         canvas.DrawRectangle(0, 0, width, height);
@@ -31,7 +31,7 @@ public sealed class YogaBarDrawable : IDrawable
         var totalMinutes = (dayEnd - dayStart).TotalMinutes;
         if (totalMinutes <= 0) return;
 
-        // 1) рисуем сегменты (под текстом)
+        // 1) draw background segments (behind the text)
         foreach (var seg in st.Segments)
         {
             var segStart = seg.StartLocal;
@@ -52,7 +52,7 @@ public sealed class YogaBarDrawable : IDrawable
             canvas.FillColor = st.SegmentColor;
             canvas.FillRectangle(x1, 0, wSeg, height);
 
-            // линии и время
+            // boundary line and text
             canvas.FillColor = Colors.Black;
 
             if (seg.ShowStartBoundary)
@@ -68,7 +68,7 @@ public sealed class YogaBarDrawable : IDrawable
             }
         }
 
-        // 2) Title поверх всего (чтобы не перекрывалось заливкой)
+        // 2) draw the title on top of everything (over the segments)
         DrawLeftText(canvas, st.Title, 2, 0, width, height);
     }
 
@@ -82,7 +82,7 @@ public sealed class YogaBarDrawable : IDrawable
             .Replace("\n", " ")
             .Trim();
 
-        // параметры строки (как в PanchangaBarDrawable)
+        // consistent font sizing (same as PanchangaBarDrawable)
         float height = h;
         var font = GFont.Default;
         var fontSize = Math.Max(10f, height * 0.55f);
@@ -91,7 +91,7 @@ public sealed class YogaBarDrawable : IDrawable
         canvas.FontSize = fontSize; 
         var oneLineH = fontSize + 2f;
 
-        // центрирование по высоте
+        // center vertically
         var yy = y + (h - oneLineH) / 2f;
 
         var pad = 1f;
@@ -101,8 +101,8 @@ public sealed class YogaBarDrawable : IDrawable
         canvas.SaveState();
         canvas.ClipRectangle(x, y, w, h);
 
-        // canvas.FontSize уже установлен
-        // FontColor оставь как есть (у тебя по умолчанию черный, либо можно принудительно)
+        // canvas.FontSize was already set above
+        // FontColor is left as-is (caller sets it beforehand if needed)
         // canvas.FontColor = Colors.Black;
 
         foreach (var ch in drawText)

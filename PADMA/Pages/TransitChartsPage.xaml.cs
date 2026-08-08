@@ -12,8 +12,6 @@ namespace PADMA.Pages
     public partial class TransitChartsPage : ConfigBasePage
     {
         private bool _showCurrentTransits = true;
-        private bool _maxDateReachedShown = false;
-        private bool _minDateReachedShown = false;
         private bool _maximumTransitDateMessageShown;
         private bool _minimumTransitDateMessageShown;
 

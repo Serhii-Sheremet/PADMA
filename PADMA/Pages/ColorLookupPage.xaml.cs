@@ -13,7 +13,7 @@ public partial class ColorLookupPage : ContentPage
 
     public string StartArgb
     {
-        // Shell передаёт query как string, парсим
+        // Shell passes query parameters as string, hence the conversion
         get => _startArgb.ToString();
         set
         {

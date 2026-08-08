@@ -23,11 +23,11 @@ namespace PADMA.Pages
             {
                 if (_isBusy == value) return;
                 _isBusy = value;
-                OnPropertyChanged(); // ContentPage это BindableObject Ч работает
+                OnPropertyChanged(); // ContentPage is a BindableObject вАФ inherited
             }
         }
 
-        private string _busyText = "Please waitЕ";
+        private string _busyText = "Please waitвА¶";
         public string BusyText
         {
             get => _busyText;
@@ -44,7 +44,7 @@ namespace PADMA.Pages
             BusyText = text;
             IsBusy = true;
 
-            // важно: дать UI шанс отрисовать overlay
+            // note: give the UI time to show the overlay
             await Task.Yield();
 
             try
@@ -172,7 +172,7 @@ namespace PADMA.Pages
 
             _database.SetDefaultProfile(_selectedProfile.Id);
 
-            // обновить список и сохранить выбор
+            // reload the list, keeping the current selection
             int keepId = _selectedProfile.Id;
             LoadProfiles();
 
@@ -196,7 +196,7 @@ namespace PADMA.Pages
             if (profile == null) return;
 
             var lang = DataCache.Instance.CurrentLanguageCode;
-            await RunBusyAsync(Localization.GetLocalizedText("Switching profileЕ", lang), async () =>
+            await RunBusyAsync(Localization.GetLocalizedText("Switching profileвА¶", lang), async () =>
             {
                 DataCache.Instance.ActiveProfile = profile;
                 DataCache.Instance.ReloadLocations(_database);
@@ -204,17 +204,17 @@ namespace PADMA.Pages
 
                 MessagingCenter.Send<object>(this, "ProfileChanged");
 
-                // пересобираем расписание нотификаций
+                // refresh note reminders for the newly active profile
                 var reminder = ServiceLocator.Services.GetService<IUserNoteReminderService>();
                 if (reminder != null)
                     await reminder.RefreshAsync();
 
                 SwissAnalysis.ClearZodiacBoundaryCache();
                 ClearSelection();
-                
+
                 await Shell.Current.GoToAsync("//main", true);
 
-                // ƒать UI шанс показать MainPage overlay
+                // give the UI time to show MainPage's overlay
                 await Task.Yield();
             });
         }
@@ -237,12 +237,12 @@ namespace PADMA.Pages
 
             if (_pendingProfileChanged)
             {
-                await RunBusyAsync(Localization.GetLocalizedText("Updating profileЕ", lang), async () =>
+                await RunBusyAsync(Localization.GetLocalizedText("Updating profileвА¶", lang), async () =>
                 {
                     ClearSelection();
                     await Shell.Current.GoToAsync("//main", true);
 
-                    // ƒать UI шанс показать MainPage overlay
+                    // give the UI time to show MainPage's overlay
                     await Task.Yield();
                 });
             }

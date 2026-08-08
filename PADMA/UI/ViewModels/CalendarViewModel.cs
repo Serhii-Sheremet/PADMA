@@ -156,7 +156,7 @@ namespace PADMA.UI.ViewModels
                     OnPropertyChanged(nameof(CurrentCulture));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 CultureCode = CultureInfo.CurrentUICulture.Name;
                 OnPropertyChanged(nameof(CurrentCulture));

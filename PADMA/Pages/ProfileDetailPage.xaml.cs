@@ -533,7 +533,7 @@ public partial class ProfileDetailPage : ContentPage
             );
             return true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             //System.Diagnostics.Debug.WriteLine($"[PADMA] Save profile error: {ex.Message}");
             await DisplayAlert(

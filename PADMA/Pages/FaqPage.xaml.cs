@@ -17,7 +17,7 @@ public partial class FaqPage : ContentPage
         }
     }
 
-    private string _busyText = "Please wait…";
+    private string _busyText = "Please waitâ€¦";
     public string BusyText
     {
         get => _busyText;
@@ -109,7 +109,7 @@ public partial class FaqPage : ContentPage
     private async Task CloseAsync()
     {
         var lang = DataCache.Instance.CurrentLanguageCode;
-        await RunBusyAsync(Localization.GetLocalizedText("Please wait…", lang), async () =>
+        await RunBusyAsync(Localization.GetLocalizedText("Please waitâ€¦", lang), async () =>
         {
             await Shell.Current.GoToAsync("//main");
             await Task.Yield();
@@ -121,7 +121,7 @@ public partial class FaqPage : ContentPage
         BusyText = text;
         IsBusy = true;
 
-        await Task.Yield(); // äàòü UI øàíñ îòğèñîâàòü overlay
+        await Task.Yield(); // give the UI time to show the overlay
 
         try { await action(); }
         finally { IsBusy = false; }

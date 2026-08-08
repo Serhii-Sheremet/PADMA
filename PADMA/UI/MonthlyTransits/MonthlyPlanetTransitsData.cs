@@ -20,19 +20,19 @@ public sealed class MonthlyMasaShunyaDetailSegment
     public DateTime EndLocal { get; init; }
 
     // Main line text, for example:
-    // "Джиештха", "7.Пунарвасу", "4.Чатуртхи"
+    // "Pushya", "7.Punarvasu", "4.Krittika"
     public string NameText { get; init; } = string.Empty;
 
     // Optional. Used for Masa and Shunya Nakshatra.
-    // For example: "Кету", "Юпитер".
+    // For example: "Sun", "Moon".
     public string RulerText { get; init; } = string.Empty;
 
     // Optional. Used only for Masa.
-    // For example: "19.Мула".
+    // For example: "19.Mula".
     public string FullMoonNakshatraText { get; init; } = string.Empty;
 
     // Optional. Used only for Masa.
-    // For example: "Кету".
+    // For example: "Ketu".
     public string FullMoonNakshatraRulerText { get; init; } = string.Empty;
 }
 

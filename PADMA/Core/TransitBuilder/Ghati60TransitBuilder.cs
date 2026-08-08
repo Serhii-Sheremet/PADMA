@@ -30,7 +30,7 @@ namespace PADMA.Core.TransitBuilder
             var code = setting?.SettingCode ?? "MUHURTAGHATIEQUAL";
 
             var gList = DataCache.Instance.Ghati60List
-                .OrderBy(g => g.Id) // важно: 1..60
+                .OrderBy(g => g.Id) // order: 1..60
                 .ToList();
 
             if (gList.Count < 60)

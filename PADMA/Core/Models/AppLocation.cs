@@ -37,7 +37,7 @@ namespace PADMA.Core.Models
         [Column("LONGITUDE")]
         public string Longitude { get; set; } = "0";
 
-        // ------- UI-only поля -------
+        // ------- UI-only fields -------
         private bool _isSelected;
         [Ignore]
         public bool IsSelected

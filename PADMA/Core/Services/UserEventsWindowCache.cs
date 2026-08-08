@@ -47,7 +47,7 @@ namespace PADMA.Core.Services
         {
             _events.Clear();
             _byDay.Clear();
-            // НЕ сбрасываем _profileId/_windowStart/_windowEndExclusive
+            // intentionally not resetting _profileId/_windowStart/_windowEndExclusive
             //_profileId = 0;
             //_windowStart = DateTime.MinValue;
             //_windowEndExclusive = DateTime.MinValue;
