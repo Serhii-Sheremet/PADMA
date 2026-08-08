@@ -17,10 +17,8 @@ public partial class MonthlyPlanetTransitsPage : ContentPage, IQueryAttributable
     private MonthlyPlanetTransitsViewModel Vm => BindingContext as MonthlyPlanetTransitsViewModel;
     private bool _needsRefreshAfterConfig;
 
-    private bool _isPageAppeared;
-    private bool _isBuildingTimeline;
-    private bool _timelineBuildPending;
     private bool _skipNextAppearingReset;
+    private bool _isMonthPopupOpen;
 
     private int? _requestedYear;
     private int? _requestedMonth;
@@ -225,8 +223,6 @@ public partial class MonthlyPlanetTransitsPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-
-        _isPageAppeared = true;
 
         if (Shell.Current is not null)
             Shell.Current.FlyoutIsPresented = false;
@@ -474,9 +470,22 @@ public partial class MonthlyPlanetTransitsPage : ContentPage, IQueryAttributable
 
     private async void OnMonthTitleTapped(object sender, EventArgs e)
     {
-        if (Vm is null)
+        if (Vm is null || _isMonthPopupOpen)
             return;
 
+        _isMonthPopupOpen = true;
+        try
+        {
+            await OnMonthTitleTappedCore();
+        }
+        finally
+        {
+            _isMonthPopupOpen = false;
+        }
+    }
+
+    private async Task OnMonthTitleTappedCore()
+    {
         // Closing the popup may trigger OnAppearing().
         // That appearing must not reset the selected month back to today.
         _skipNextAppearingReset = true;

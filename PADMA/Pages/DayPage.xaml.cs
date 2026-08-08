@@ -262,9 +262,6 @@ namespace PADMA.Pages
         private UserEvent? _editingEvent;
         private int _editingArgb;
 
-        private bool _userEventEditorIsEdit;    // редактируем существующий?
-        private int? _editingUserEventId;       // ID редактируемого (если есть)
-
         private string _origTitle = string.Empty;
         private string _origMessage = string.Empty;
         private TimeSpan _origStartTime;
@@ -273,7 +270,6 @@ namespace PADMA.Pages
 
         private readonly Dictionary<int, Frame> _eventFramesById = new();
         private BoxView? _slotSelectionBox;
-        private bool _overlayLayoutAdjusted;
         private double _lastW, _lastH;
 
         private bool _isBusy;
@@ -2249,19 +2245,43 @@ namespace PADMA.Pages
             var segments = new List<PanchangaSegment>();
             var transitMode = DataCache.Instance.GetActiveTransitSettings();
 
-            foreach (var s in slices)
+            // FIX: последний slice может быть нулевой длительности (EndUtc == StartUtc) —
+            // текущий, ещё не завершившийся транзит. Растягиваем его до конца суток ДО
+            // склейки по Паде, иначе слияние с предыдущим слайсом той же Пады "похоронит"
+            // этот растянутый конец внутри объединённого сегмента.
+            var fixedSlices = slices;
+            if (slices.Count > 0)
+            {
+                var lastSlice = slices[slices.Count - 1];
+                var lastStartUtc = DateTime.SpecifyKind(lastSlice.StartUtc, DateTimeKind.Utc);
+                var lastEndUtc = DateTime.SpecifyKind(lastSlice.EndUtc, DateTimeKind.Utc);
+
+                if (lastEndUtc <= lastStartUtc)
+                {
+                    var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
+                    var patched = slices.ToList();
+                    patched[patched.Count - 1] = new PlanetSlice
+                    {
+                        PlanetId = lastSlice.PlanetId,
+                        NodeType = lastSlice.NodeType,
+                        ZodiacId = lastSlice.ZodiacId,
+                        NakshatraId = lastSlice.NakshatraId,
+                        PadaId = lastSlice.PadaId,
+                        StartUtc = lastStartUtc,
+                        EndUtc = dayEndUtc
+                    };
+                    fixedSlices = patched;
+                }
+            }
+
+            // Минимальная единица Пада-дорожки — сама Пада, а не PlanetSlice: слайсы
+            // режутся ещё и по смене ретроградности (см. HasStateChanged в SwissAnalysis),
+            // поэтому подряд идущие слайсы с одинаковым PadaId склеиваем в один визуальный
+            // сегмент, иначе разворот в ретро посреди Пады рисует лишнюю разделительную линию.
+            foreach (var s in MergeConsecutiveByPadaId(fixedSlices))
             {
                 var startUtc = DateTime.SpecifyKind(s.StartUtc, DateTimeKind.Utc);
                 var endUtc = DateTime.SpecifyKind(s.EndUtc, DateTimeKind.Utc);
-
-                // FIX: последний slice может быть нулевой длительности (EndUtc == StartUtc)
-                // Тогда для отрисовки текущего транзита растягиваем его до конца суток.
-                if (endUtc <= startUtc)
-                {
-                    // dayEndLocal -> UTC в таймзоне профиля
-                    var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tzInfo);
-                    endUtc = dayEndUtc;
-                }
 
                 // переводим в local
                 var startLocal = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tzInfo);
@@ -2287,6 +2307,51 @@ namespace PADMA.Pages
                 });
             }
             return segments;
+        }
+
+        /// <summary>
+        /// Склеивает подряд идущие слайсы с одинаковым PadaId в один. Слайсы также режутся
+        /// по смене ретроградности (см. HasStateChanged в SwissAnalysis) — сама по себе она
+        /// не должна делить Пада-дорожку на отдельные визуальные сегменты.
+        /// </summary>
+        private static List<PlanetSlice> MergeConsecutiveByPadaId(IReadOnlyList<PlanetSlice> slices)
+        {
+            var result = new List<PlanetSlice>();
+            if (slices.Count == 0)
+                return result;
+
+            var runFirst = slices[0];
+            var runLast = slices[0];
+
+            void FlushRun()
+            {
+                result.Add(new PlanetSlice
+                {
+                    PlanetId = runFirst.PlanetId,
+                    NodeType = runFirst.NodeType,
+                    ZodiacId = runFirst.ZodiacId,
+                    NakshatraId = runFirst.NakshatraId,
+                    PadaId = runFirst.PadaId,
+                    StartUtc = runFirst.StartUtc,
+                    EndUtc = runLast.EndUtc
+                });
+            }
+
+            for (int i = 1; i < slices.Count; i++)
+            {
+                if (slices[i].PadaId == runFirst.PadaId)
+                {
+                    runLast = slices[i];
+                    continue;
+                }
+
+                FlushRun();
+                runFirst = slices[i];
+                runLast = slices[i];
+            }
+
+            FlushRun();
+            return result;
         }
 
         private string PreparePlanetSegmentText(PlanetSlice slice)
@@ -2345,23 +2410,37 @@ namespace PADMA.Pages
             if (!transitPack.TryGetValue(planet, out var slices) || slices == null || slices.Count == 0)
                 return;
 
+            // Середина сегмента — используем её и для поиска слайса (fallback ниже), и как
+            // якорь для GetPlanetPadaBoundariesUtc: в отличие от seg.TransitStart, она
+            // гарантированно лежит СТРОГО ВНУТРИ слайса/прогона, а не на стыке с соседним.
+            var anchorUtc = seg.TransitStart + TimeSpan.FromTicks((seg.TransitEnd - seg.TransitStart).Ticks / 2);
+
             // Найдем slice, по которому был построен сегмент
             var slice = slices.FirstOrDefault(s =>
                 s.StartUtc == seg.TransitStart && s.EndUtc == seg.TransitEnd);
 
-            // fallback: если по равенству не нашлось (на всякий случай)
+            // fallback: если по равенству не нашлось (сегмент мог быть склеен из нескольких
+            // слайсов одной Пады — см. MergeConsecutiveByPadaId). ВАЖНО: ищем по anchorUtc
+            // (середина), а не по seg.TransitStart — TransitStart после склейки точно
+            // совпадает с границей между слайсами, и нестрогие <=/>= там неоднозначны
+            // (могут найти предыдущий слайс вместо нужного).
             if (slice == null)
             {
-                var t = seg.TransitStart;
-                slice = slices.FirstOrDefault(s => s.StartUtc <= t && s.EndUtc >= t);
+                slice = slices.FirstOrDefault(s => s.StartUtc <= anchorUtc && s.EndUtc >= anchorUtc);
                 if (slice == null)
                     return;
             }
 
+            // Границы тултипа — не границы seg/slice (которые могут быть искусственно
+            // обрезаны сменой ретроградности внутри той же Пады), а настоящие границы
+            // Пады, найденные заново независимым поиском.
+            var (padaStartUtc, padaEndUtc) = SwissAnalysis.GetPlanetPadaBoundariesUtc(
+                slice.PlanetId, slice.PadaId, anchorUtc, slice.NodeType);
+
             // переводим в local
-            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitStart, tzInfo);
-            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(seg.TransitEnd, tzInfo);
-            
+            var startLocal = TimeZoneInfo.ConvertTimeFromUtc(padaStartUtc, tzInfo);
+            var endLocal = TimeZoneInfo.ConvertTimeFromUtc(padaEndUtc, tzInfo);
+
             ResetTooltipBodyMeasure();
 
             // Заголовок и диапазон – в стиле остальных тултипов
@@ -3000,9 +3079,17 @@ namespace PADMA.Pages
             OkButton.Text = L("OK"); 
         }
 
+        private void OnTitleEntryTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(e.NewTextValue))
+                TitleValidationLabel.IsVisible = false;
+        }
+
         private void ShowUserEventOverlay(DateTime start, DateTime end, string name, string message, int argb)
         {
             UserEventOverlay.IsVisible = true;
+
+            TitleValidationLabel.IsVisible = false;
 
             UserEventHeader.Text = _editingEvent == null ? L("New note") : L("Edit note");
             ApplyUserEventOverlayLocalization();
@@ -3174,8 +3261,12 @@ namespace PADMA.Pages
             if (db == null)
                 return;
 
+            var ctx = DataCache.Instance.ProfileContextService.Current;
+            if (ctx == null)
+                return;
+
             var dayLocal = new DateTime(Day.Date.Year, Day.Date.Month, Day.Date.Day, 0, 0, 0);
-            int profileId = DataCache.Instance.ProfileContextService.Current.ProfileId;
+            int profileId = ctx.ProfileId;
 
             // читаем UI
             var startTime = StartTimePicker.Time;
@@ -3195,6 +3286,13 @@ namespace PADMA.Pages
             var title = (TitleEntry.Text ?? string.Empty);
             var message = (MessageEditor.Text ?? string.Empty);
             var argb = _editingArgb;
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                TitleValidationLabel.Text = L("Title is required.");
+                TitleValidationLabel.IsVisible = true;
+                return;
+            }
 
             // --- ВАЖНО: если это EDIT и ничего не изменилось — просто закрываем ---
             if (_editingEvent != null)

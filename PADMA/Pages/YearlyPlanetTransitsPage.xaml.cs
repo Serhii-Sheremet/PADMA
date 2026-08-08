@@ -27,6 +27,7 @@ public partial class YearlyPlanetTransitsPage : ContentPage
     private bool _syncingVerticalScroll;
     private bool _hasInitialized;
     private bool _needsRefreshAfterConfig;
+    private bool _isYearPopupOpen;
     private int? _selectedMonth;
     private bool _resetToCurrentYearOnNextAppear;
 
@@ -220,36 +221,44 @@ public partial class YearlyPlanetTransitsPage : ContentPage
 
     private async void OnYearTitleTapped(object? sender, TappedEventArgs e)
     {
-        if (Vm is null || IsBusy)
+        if (Vm is null || IsBusy || _isYearPopupOpen)
             return;
 
-        var popup = new YearPickerPopup(Vm.Year);
-
-        var popupResult = await this.ShowPopupAsync<int?>(
-                popup,
-                PopupOptions.Empty,
-                CancellationToken.None);
-
-        if (popupResult.WasDismissedByTappingOutsideOfPopup ||
-            popupResult.Result is not int year ||
-            year == Vm.Year)
+        _isYearPopupOpen = true;
+        try
         {
-            return;
-        }
+            var popup = new YearPickerPopup(Vm.Year);
 
-        _selectedMonth = null;
+            var popupResult = await this.ShowPopupAsync<int?>(
+                    popup,
+                    PopupOptions.Empty,
+                    CancellationToken.None);
 
-        await RunBusyAsync(
-            Localization.GetLocalizedText(
-                "Please wait…",
-                DataCache.Instance.CurrentLanguageCode),
-            async () =>
+            if (popupResult.WasDismissedByTappingOutsideOfPopup ||
+                popupResult.Result is not int year ||
+                year == Vm.Year)
             {
-                Vm.SetYear(year);
+                return;
+            }
 
-                await Task.Yield();
-                await ResetScrollPositionsAsync();
-            });
+            _selectedMonth = null;
+
+            await RunBusyAsync(
+                Localization.GetLocalizedText(
+                    "Please wait…",
+                    DataCache.Instance.CurrentLanguageCode),
+                async () =>
+                {
+                    Vm.SetYear(year);
+
+                    await Task.Yield();
+                    await ResetScrollPositionsAsync();
+                });
+        }
+        finally
+        {
+            _isYearPopupOpen = false;
+        }
     }
 
     private async void ChangeYear(int delta)

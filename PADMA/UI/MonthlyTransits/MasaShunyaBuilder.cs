@@ -383,21 +383,11 @@ public static class MasaShunyaBuilder
             .Where(x =>
                 x.TithiId == 15 &&
                 x.EndUtc > masaStartUtc &&
-                x.StartUtc < masaEndUtc)
+                x.EndUtc < masaEndUtc)
             .OrderBy(x => x.StartUtc)
             .FirstOrDefault();
 
-        if (purnima == null)
-            return null;
-
-        var startUtc = Max(purnima.StartUtc, masaStartUtc);
-        var endUtc = Min(purnima.EndUtc, masaEndUtc);
-
-        if (endUtc <= startUtc)
-            return null;
-
-        // Берём середину 15-й титхи, чтобы не попасть на границу смены титхи/накшатры.
-        return startUtc + TimeSpan.FromTicks((endUtc - startUtc).Ticks / 2);
+        return purnima?.EndUtc;
     }
 
     private static int GetMasaIdByMoonZodiac(

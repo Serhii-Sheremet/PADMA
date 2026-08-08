@@ -556,7 +556,12 @@
                                         PropertyChanged="OnEndTimeChanged"/>
                         </Grid>
 
-                        <Entry x:Name="TitleEntry" Placeholder="Title" />
+                        <Entry x:Name="TitleEntry" Placeholder="Title" TextChanged="OnTitleEntryTextChanged" />
+
+                        <Label x:Name="TitleValidationLabel"
+                               IsVisible="False"
+                               TextColor="Red"
+                               FontSize="12" />
 
                         <!-- 3–4 lines area -->
                         <Editor x:Name="MessageEditor"

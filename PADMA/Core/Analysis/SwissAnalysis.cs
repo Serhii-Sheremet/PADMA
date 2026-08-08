@@ -22,6 +22,9 @@ namespace PADMA.Core.Analysis
         private static readonly Dictionary<string, (DateTime StartUtc, DateTime EndUtc)> _nakshatraBoundaryCache = new();
         private static readonly object _nakshatraBoundaryCacheLock = new();
 
+        private static readonly Dictionary<string, (DateTime StartUtc, DateTime EndUtc)> _padaBoundaryCache = new();
+        private static readonly object _padaBoundaryCacheLock = new();
+
         public static (DateTime StartUtc, DateTime EndUtc) GetNakshatraBoundariesCached(
             int planetId,
             int nakshatraId,
@@ -102,6 +105,62 @@ namespace PADMA.Core.Analysis
                 stateAtT.NakshatraId,
                 TimeSpan.FromDays(1),
                 TimeSpan.FromDays(1500));
+        }
+
+        /// <summary>
+        /// Full Pada period containing anchorUtc, tracking only PadaId — deliberately
+        /// ignores IsRetrograde, so a mid-Pada retrograde/direct station does not
+        /// truncate the range (unlike the PlanetSlice boundaries used for the transit
+        /// timeline, which do split on retrograde for the calendar/.R-marker consumers).
+        /// </summary>
+        public static (DateTime StartUtc, DateTime EndUtc) GetPlanetPadaBoundariesUtc(
+            int planetId,
+            int padaId,
+            DateTime anchorUtc,
+            EAppSetting nodeType)
+        {
+            if (anchorUtc.Kind != DateTimeKind.Utc)
+                anchorUtc = DateTime.SpecifyKind(anchorUtc, DateTimeKind.Utc);
+
+            var anchorKey = anchorUtc.ToString("yyyyMMddHHmm");
+            var key = $"{planetId}:{padaId}:{(int)nodeType}:{anchorKey}";
+
+            lock (_padaBoundaryCacheLock)
+            {
+                if (_padaBoundaryCache.TryGetValue(key, out var cached))
+                    return cached;
+            }
+
+            var start = FindPreviousStateBoundaryUtc_ByDirectBinarySearch(
+                planetId,
+                anchorUtc,
+                nodeType,
+                x => x.PadaId,
+                padaId,
+                TimeSpan.FromDays(1),
+                TimeSpan.FromDays(1500));
+
+            var end = FindNextStateBoundaryUtc_ByDirectBinarySearch(
+                planetId,
+                anchorUtc,
+                nodeType,
+                x => x.PadaId,
+                padaId,
+                TimeSpan.FromDays(1),
+                TimeSpan.FromDays(1500));
+
+            lock (_padaBoundaryCacheLock)
+            {
+                _padaBoundaryCache[key] = (start, end);
+            }
+
+            return (start, end);
+        }
+
+        public static void ClearPadaBoundaryCache()
+        {
+            lock (_padaBoundaryCacheLock)
+                _padaBoundaryCache.Clear();
         }
 
         private static DateTime FindPreviousStateBoundaryUtc_ByDirectBinarySearch(
@@ -248,6 +307,7 @@ namespace PADMA.Core.Analysis
         {
             ClearZodiacBoundaryCache();
             ClearNakshatraBoundaryCache();
+            ClearPadaBoundaryCache();
         }
 
         private static PlanetData CalculatePlanetDataForBoundarySearch(

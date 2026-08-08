@@ -20,6 +20,7 @@ public partial class LocationSearchPage : ContentPage
     private const int DebounceMs = 350;
 
     private AppLocation? _selected;
+    private bool _isCountryPopupOpen;
     public string Mode { get; set; } = ""; // "birth" | "living"
 
     public ICommand ItemTappedCommand { get; }
@@ -90,12 +91,25 @@ public partial class LocationSearchPage : ContentPage
 
     private async void OnCountryClicked(object sender, EventArgs e)
     {
-        var lang = DataCache.Instance.CurrentLanguageCode;
-        var popup = new CountrySelectPopup(lang);
-        await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
+        if (_isCountryPopupOpen)
+            return;
+
+        _isCountryPopupOpen = true;
+        CountrySelectPopup popup;
+        try
         {
-            await this.ShowPopupAsync(popup);
-        });
+            var lang = DataCache.Instance.CurrentLanguageCode;
+            popup = new CountrySelectPopup(lang);
+            await RunBusyAsync(Localization.GetLocalizedText(BusyText, lang), async () =>
+            {
+                await this.ShowPopupAsync(popup);
+            });
+        }
+        finally
+        {
+            _isCountryPopupOpen = false;
+        }
+
         var item = popup.SelectedCountry;
         if (item != null)
         {

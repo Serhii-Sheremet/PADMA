@@ -17,6 +17,7 @@ namespace PADMA.Pages
         private bool _notificationsPermissionChecked;
 
         private bool _firstRunHintChecked = false;
+        private bool _isMonthPopupOpen;
 
         public MainPage()
         {
@@ -278,21 +279,29 @@ namespace PADMA.Pages
 
         private async void OnMonthTitleTapped(object sender, EventArgs e)
         {
-            if (Vm is null) return;
+            if (Vm is null || _isMonthPopupOpen) return;
 
-            var popup = new MonthPickerPopup(Vm.CurrentCulture, Vm.Year, Vm.Month);
+            _isMonthPopupOpen = true;
+            try
+            {
+                var popup = new MonthPickerPopup(Vm.CurrentCulture, Vm.Year, Vm.Month);
 
-            var res = await this.ShowPopupAsync<DateTime?>(
-                popup,
-                PopupOptions.Empty,
-                CancellationToken.None);
+                var res = await this.ShowPopupAsync<DateTime?>(
+                    popup,
+                    PopupOptions.Empty,
+                    CancellationToken.None);
 
-            if (res.WasDismissedByTappingOutsideOfPopup)
-                return;
+                if (res.WasDismissedByTappingOutsideOfPopup)
+                    return;
 
-            var dt = res.Result;
-            if (dt.HasValue)
-                Vm.SetMonthYear(dt.Value.Year, dt.Value.Month);
+                var dt = res.Result;
+                if (dt.HasValue)
+                    Vm.SetMonthYear(dt.Value.Year, dt.Value.Month);
+            }
+            finally
+            {
+                _isMonthPopupOpen = false;
+            }
         }
 
         protected override bool OnBackButtonPressed()
