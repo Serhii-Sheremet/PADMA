@@ -9,7 +9,8 @@ namespace PADMA.Core.Services
     {
         private readonly HttpClient _httpClient = new();
 
-        private const string ServiceId = "service_pssu2i8";
+        // Switched to a Custom SMTP service — the previous Gmail OAuth grant kept expiring.
+        private const string ServiceId = "service_ob5xncn";
         private const string TemplateId = "template_a49aqst";
         private const string PublicKey = "jcWHLIKr_QOgybDKM";
         private const string Endpoint = "https://api.emailjs.com/api/v1.0/email/send";
