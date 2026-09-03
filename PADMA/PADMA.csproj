@@ -15,7 +15,7 @@
     <ApplicationTitle>Personal Astrological Diary</ApplicationTitle>
     <ApplicationId>com.ssheremet.padma</ApplicationId>
     <ApplicationDisplayVersion>0.7.9</ApplicationDisplayVersion>
-    <ApplicationVersion>23</ApplicationVersion>
+    <ApplicationVersion>24</ApplicationVersion>
 
     <!-- Windows -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -35,7 +35,14 @@
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <AndroidPackageFormat>aab</AndroidPackageFormat>
   </PropertyGroup>
-  
+
+  <!-- R8 code shrinking/obfuscation for Java-side (AndroidX/bindings) code, Release only.
+       Required by Google Play's code-optimization quality threshold. Debug stays unlinked
+       for faster, more debuggable builds. -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' AND '$(Configuration)' == 'Release'">
+    <AndroidLinkTool>r8</AndroidLinkTool>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(TargetFramework)'=='net9.0-android' AND '$(Configuration)'=='Debug'">
     <RuntimeIdentifier>android-x64</RuntimeIdentifier>
   </PropertyGroup>
